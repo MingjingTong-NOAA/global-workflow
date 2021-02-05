@@ -1,0 +1,17 @@
+#!/bin/ksh -x
+
+########## config.analcalc ##########
+# GFS post-anal specific (non-diag)
+
+echo "BEGIN: config.analcalc"
+
+# Get task specific resources
+. $EXPDIR/config.resources analcalc
+
+if [ $full_hydro_anl = "YES" ]; then
+   export calcanl_nvar=13
+else
+   export calcanl_nvar=10
+fi
+
+echo "END: config.analcalc"

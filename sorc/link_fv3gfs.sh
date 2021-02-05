@@ -36,6 +36,7 @@ elif [ $machine = "dell" ]; then
     FIX_DIR="/gpfs/dell2/emc/modeling/noscrub/emc.glopara/git/fv3gfs/fix_nco_gfsv16"
 elif [ $machine = "hera" ]; then
     FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix_nco_gfsv16"
+    FIX_SHiELD="/scratch2/GFDL/gfdlscr/Mingjing.Tong/fix_shield"
 elif [ $machine = "orion" ]; then
     FIX_DIR="/work/noaa/global/glopara/fix_nco_gfsv16"
 fi
@@ -47,6 +48,7 @@ for dir in fix_am fix_fv3_gmted2010 fix_gldas fix_orog fix_verif fix_wave_gfs ; 
     fi
     $LINK $FIX_DIR/$dir .
 done
+$LINK $FIX_SHiELD .
 
 if [ -d ${pwd}/ufs_utils.fd ]; then
   cd ${pwd}/ufs_utils.fd/sorc
@@ -126,6 +128,7 @@ cd ${pwd}/../jobs               ||exit 8
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ATMOS_CHGRES_FORENKF    .
 cd ${pwd}/../scripts            ||exit 8
     $LINK ../sorc/gsi.fd/scripts/exglobal_atmos_analysis.sh       .
+    $LINK ../sorc/gsi.fd/scripts/exglobal_atmos_analysis_shield.sh .
     $LINK ../sorc/gsi.fd/scripts/exglobal_atmos_analysis_calc.sh  .
     $LINK ../sorc/gsi.fd/scripts/exglobal_diag.sh                 .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_select_obs.sh        .

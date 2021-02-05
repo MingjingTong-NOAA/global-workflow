@@ -2,26 +2,22 @@
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
-# Script name:         gaussian_sfcanl.sh
-# Script description:  Makes a global gaussian grid surface analysis file
+# Script name:         gaussian_atmsfcst.sh
+# Script description:  Makes a global gaussian grid atmospheric forecast files
 #
-# Author:        George Gayno       Org: NP23         Date: 2018-01-30
+# Author:        Mingjing Tong       Org: NP23         Date: 2020-01-30
 #
-# Abstract: This script makes a global gaussian grid surface analysis from
-#           fv3gfs surface analysis tiles
+# Abstract: This script makes a global gaussian grid atmospheric forecast from
+#           fv3gfs forecast tiles
 #
 # Script history log:
-# 2018-01-30  Gayno  initial script
-# 2019-1030   Gayno  updates to output analysis file in netcdf or nemsio
+# 2019-12-26  Tong  initial script
 #
-# Usage:  gaussian_sfcanl.sh
+# Usage:  gaussian_atmsfcst.sh
 #
 #   Imported Shell Variables:
 #     CASE          Model resolution.  Defaults to C768.
 #     DONST         Process NST fields when 'yes'.  Default is 'no'.
-#     OUTPUT_FILE   Output gaussian analysis file format.  Default is "nemsio"
-#                   Set to "netcdf" for netcdf output file
-#                   Otherwise, output in nemsio.
 #     BASEDIR       Root directory where all scripts and fixed files reside.
 #                   Default is /nwprod2.
 #     HOMEgfs       Directory for gfs version.  Default is
@@ -40,8 +36,8 @@
 #                   (if nonexistent will be made)
 #                   defaults to current working directory
 #     XC            Suffix to add to executables. Defaults to none.
-#     GAUSFCANLEXE  Program executable.
-#                   Defaults to $EXECgfs/gaussian_sfcanl.exe
+#     GAUATMSEXE    Program executable.
+#                   Defaults to $EXECgfs/gaussian_atms.exe
 #     INISCRIPT     Preprocessing script.  Defaults to none.
 #     LOGSCRIPT     Log posting script.  Defaults to none.
 #     ERRSCRIPT     Error processing script
@@ -80,7 +76,7 @@
 #                  $ERRSCRIPT
 #                  $ENDSCRIPT
 #
-#     programs   : $GAUSFCANLEXE
+#     programs   : $GAUATMSEXE
 #
 #     fixed data : $FIXfv3/${CASE}/${CASE}_oro_data.tile*.nc
 #                  $FIXWGTS
@@ -109,6 +105,11 @@
 #
 ################################################################################
 
+# Source FV3GFS workflow modules
+. $HOMEgfs/ush/load_fv3gfs_modules.sh
+status=$?
+[[ $status -ne 0 ]] && exit $status
+
 #  Set environment.
 VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
@@ -118,19 +119,6 @@ fi
 
 CASE=${CASE:-C768}
 res=$(echo $CASE | cut -c2-)
-LONB_CASE=$((res*4))
-LATB_CASE=$((res*2))
-LONB_SFC=${LONB_SFC:-$LONB_CASE}
-LATB_SFC=${LATB_SFC:-$LATB_CASE}
-DONST=${DONST:-"NO"}
-LEVS=${LEVS:-64}
-LEVSP1=$(($LEVS+1))
-OUTPUT_FILE=${OUTPUT_FILE:-"nemsio"}
-if [ $OUTPUT_FILE = "netcdf" ]; then
-    export NETCDF_OUT=".true."
-else
-    export NETCDF_OUT=".false."
-fi
 
 #  Directories.
 gfs_ver=${gfs_ver:-v15.0.0}
@@ -139,15 +127,12 @@ HOMEgfs=${HOMEgfs:-$BASEDIR/gfs_ver.${gfs_ver}}
 EXECgfs=${EXECgfs:-$HOMEgfs/exec}
 FIXfv3=${FIXfv3:-$HOMEgfs/fix/fix_fv3_gmted2010}
 FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
-FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
-FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
+FIXC2G=${FIXC2G:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 DATA=${DATA:-$(pwd)}
-COMOUT=${COMOUT:-$(pwd)}
 
 #  Filenames.
 XC=${XC}
-GAUSFCANLEXE=${GAUSFCANLEXE:-$EXECgfs/gaussian_sfcanl.exe}
-SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVSP1}.txt}
+GAUATMSEXE=${GAUATMSEXE:-$EXECgfs/gaussian_atms.x}
 
 CDATE=${CDATE:?}
 
@@ -171,65 +156,99 @@ else
    mkdata=YES
 fi
 cd $DATA||exit 99
-[[ -d $COMOUT ]]||mkdir -p $COMOUT
-cd $DATA
+mkdir -p gaussian_atmsf$( printf "%03d" $RHR)
+cd gaussian_atmsf$( printf "%03d" $RHR)
 
 ################################################################################
-#  Make surface analysis
-export PGM=$GAUSFCANLEXE
+#  Make forecast file on gaussian grid
+export PGM=$GAUATMSEXE
 export pgm=$PGM
 $LOGSCRIPT
 
-PDY=$(echo $CDATE | cut -c1-8)
-cyc=$(echo $CDATE | cut -c9-10)
-iy=$(echo $CDATE | cut -c1-4)
-im=$(echo $CDATE | cut -c5-6)
-id=$(echo $CDATE | cut -c7-8)
-ih=$(echo $CDATE | cut -c9-10)
+$NCP $GAUATMSEXE ./
 
-export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
+export OMP_NUM_THREADS=${OMP_NUM_THREADS_ATMS:-40}
 
-# input interpolation weights
-$NLN $FIXWGTS ./weights.nc
-$NLN $FIXWGTS2 ./weightb.nc
+RSTR=${RSTR:-"3"}
+RINTV=${RINTV:-"1"}
+REND=${REND:-"9"}
 
-# input analysis tiles (with nst records)
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile1.nc   ./anal.tile1.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile2.nc   ./anal.tile2.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile3.nc   ./anal.tile3.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile4.nc   ./anal.tile4.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile5.nc   ./anal.tile5.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile6.nc   ./anal.tile6.nc
+yyyy=$(echo $CDATE | cut -c1-4)
+mm=$(echo $CDATE | cut -c5-6)
+dd=$(echo $CDATE | cut -c7-8)
+hh=$(echo $CDATE | cut -c9-10)
 
-# input orography tiles
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile2.nc   ./orog.tile2.nc
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile3.nc   ./orog.tile3.nc
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile4.nc   ./orog.tile4.nc
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile5.nc   ./orog.tile5.nc
-$NLN $FIXfv3/$CASE/${CASE}_oro_data.tile6.nc   ./orog.tile6.nc
-
-$NLN $SIGLEVEL                                 ./vcoord.txt
-
-# output gaussian global surface analysis files
-$NLN $COMOUT/${APREFIX}sfcanl${ASUFFIX} ./sfc.gaussian.file
+if [ $OUTPUT_FILE = "netcdf" ]; then
+   nemsio=".false."
+else
+   nemsio=".true."
+fi
 
 # Executable namelist
-cat <<EOF > fort.41
- &setup
-  yy=$iy,
-  mm=$im,
-  dd=$id,
-  hh=$ih,
-  igaus=$LONB_SFC,
-  jgaus=$LATB_SFC,
-  donst=$DONST,
-  netcdf_out=$NETCDF_OUT
- /
+cat > fv3_da.nml <<EOF
+   &fv3_da_nml
+    finer_steps = 0
+    nvar3dout = 14
+    write_res = .true.
+    read_res = .true.
+    write_nemsio = $nemsio
+    rmhydro = ${rmhydro}
+    pseudo_ps = ${pseudo_ps}
+    data_file(1) = "fv_tracer.res"
+    data_file(2) = "fv_core.res"
+    data_file(3) = "${phy_data}"
+    data_out = "atmf${ASUFFIX}"
+    gaus_file = "gaus_N${res}"
+    atmos_nthreads = $OMP_NUM_THREADS
+    yy=$yyyy,
+    mm=$mm,
+    dd=$dd,
+    hh=$hh,
+    fhr=$fhour,
+    ideflate=1,
+    nbits=14,
+
+/
 EOF
 
-$APRUNSFC $GAUSFCANLEXE
+# input interpolation weights
+$NLN $FIXC2G ./gaus_N${res}.nc
 
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile1.nc ./grid_spec.tile1.nc
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile2.nc ./grid_spec.tile2.nc
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile3.nc ./grid_spec.tile3.nc
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile4.nc ./grid_spec.tile4.nc
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile5.nc ./grid_spec.tile5.nc
+$NLN $DATA/grid_spec_${yyyy}_${mm}.tile6.nc ./grid_spec.tile6.nc
+$NLN $DATA/control.dat ./control.dat
+
+rPDY=$(echo $RDATE | cut -c1-8)
+rcyc=$(echo $RDATE | cut -c9-10)
+if [[ $RHR -ne $REND ]] ; then
+   list1=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_core.res.*`
+   list2=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_tracer.res.*`
+   list3=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.phy_data.*`
+   list4=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.coupler.res`	
+else
+   list1=`ls -C1 $DATA/RESTART/fv_core.res.*`
+   list2=`ls -C1 $DATA/RESTART/fv_tracer.res.*`
+   list3=`ls -C1 $DATA/RESTART/phy_data.*`
+   list4=`ls -C1 $DATA/RESTART/coupler.res`
+fi
+for list in $list1 $list2 $list3; do
+    for file in $list; do
+       if [[ $RHR -ne $REND ]] ; then
+          $NLN $file ./${file#$DATA/RESTART/${rPDY}.${rcyc}0*.}
+       else
+          $NLN $file ./${file#$DATA/RESTART/}
+       fi
+    done
+done  
+   
+# output gaussian global forecast files
+$NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf${ASUFFIX}
+$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt ../${APREFIX}logf$( printf "%03d" $fhour).txt
+$APRUN_GAUFCST $GAUATMSEXE > ../${APREFIX}logf$( printf "%03d" $fhour).txt
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

@@ -2,7 +2,7 @@
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
-# Script name:         gaussian_sfcanl.sh
+# Script name:         gaussian_sfcfcst.sh
 # Script description:  Makes a global gaussian grid surface analysis file
 #
 # Author:        George Gayno       Org: NP23         Date: 2018-01-30
@@ -12,9 +12,8 @@
 #
 # Script history log:
 # 2018-01-30  Gayno  initial script
-# 2019-1030   Gayno  updates to output analysis file in netcdf or nemsio
 #
-# Usage:  gaussian_sfcanl.sh
+# Usage:  gaussian_sfcfcst.sh
 #
 #   Imported Shell Variables:
 #     CASE          Model resolution.  Defaults to C768.
@@ -40,7 +39,7 @@
 #                   (if nonexistent will be made)
 #                   defaults to current working directory
 #     XC            Suffix to add to executables. Defaults to none.
-#     GAUSFCANLEXE  Program executable.
+#     GAUSFCFCSTEXE  Program executable.
 #                   Defaults to $EXECgfs/gaussian_sfcanl.exe
 #     INISCRIPT     Preprocessing script.  Defaults to none.
 #     LOGSCRIPT     Log posting script.  Defaults to none.
@@ -80,17 +79,17 @@
 #                  $ERRSCRIPT
 #                  $ENDSCRIPT
 #
-#     programs   : $GAUSFCANLEXE
+#     programs   : $GAUSFCFCSTEXE
 #
 #     fixed data : $FIXfv3/${CASE}/${CASE}_oro_data.tile*.nc
 #                  $FIXWGTS
 #                  $FIXam/global_hyblev.l65.txt
 #
-#     input data : $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile*.nc
+#     input data : $COMOUT/RESTART/${PDY}.${cyc}0000.sfcf*_data.tile*.nc
 #
 #     output data: $PGMOUT
 #                  $PGMERR
-#                  $COMOUT/${APREFIX}sfcanl${ASUFFIX}
+#                  $COMOUT/${APREFIX}sfcf${ASUFFIX}
 #
 # Remarks:
 #
@@ -125,7 +124,7 @@ LATB_SFC=${LATB_SFC:-$LATB_CASE}
 DONST=${DONST:-"NO"}
 LEVS=${LEVS:-64}
 LEVSP1=$(($LEVS+1))
-OUTPUT_FILE=${OUTPUT_FILE:-"nemsio"}
+OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
 if [ $OUTPUT_FILE = "netcdf" ]; then
     export NETCDF_OUT=".true."
 else
@@ -142,11 +141,10 @@ FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
 DATA=${DATA:-$(pwd)}
-COMOUT=${COMOUT:-$(pwd)}
 
 #  Filenames.
 XC=${XC}
-GAUSFCANLEXE=${GAUSFCANLEXE:-$EXECgfs/gaussian_sfcanl.exe}
+GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$EXECgfs/gaussian_sfcanl.exe}
 SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVSP1}.txt}
 
 CDATE=${CDATE:?}
@@ -171,12 +169,12 @@ else
    mkdata=YES
 fi
 cd $DATA||exit 99
-[[ -d $COMOUT ]]||mkdir -p $COMOUT
-cd $DATA
+mkdir -p gaussian_sfcf$( printf "%03d" $RHR)
+cd gaussian_sfcf$( printf "%03d" $RHR)
 
 ################################################################################
 #  Make surface analysis
-export PGM=$GAUSFCANLEXE
+export PGM=$GAUSFCFCSTEXE
 export pgm=$PGM
 $LOGSCRIPT
 
@@ -193,14 +191,6 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
 
-# input analysis tiles (with nst records)
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile1.nc   ./anal.tile1.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile2.nc   ./anal.tile2.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile3.nc   ./anal.tile3.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile4.nc   ./anal.tile4.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile5.nc   ./anal.tile5.nc
-$NLN $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile6.nc   ./anal.tile6.nc
-
 # input orography tiles
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile2.nc   ./orog.tile2.nc
@@ -211,25 +201,56 @@ $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile6.nc   ./orog.tile6.nc
 
 $NLN $SIGLEVEL                                 ./vcoord.txt
 
-# output gaussian global surface analysis files
-$NLN $COMOUT/${APREFIX}sfcanl${ASUFFIX} ./sfc.gaussian.file
+RSTR=${RSTR:-"3"}
+RINTV=${RINTV:-"1"}
+REND=${REND:-"9"}
+
+rPDY=$(echo $RDATE | cut -c1-8)
+rcyc=$(echo $RDATE | cut -c9-10)
+# input forecast tiles (with nst records)
+if [[ $RHR -ne $REND ]] ; then
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./anal.tile1.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./anal.tile2.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./anal.tile3.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./anal.tile4.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./anal.tile5.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./anal.tile6.nc
+else
+   $NLN $DATA/RESTART/sfc_data.tile1.nc   ./anal.tile1.nc
+   $NLN $DATA/RESTART/sfc_data.tile2.nc   ./anal.tile2.nc
+   $NLN $DATA/RESTART/sfc_data.tile3.nc   ./anal.tile3.nc
+   $NLN $DATA/RESTART/sfc_data.tile4.nc   ./anal.tile4.nc
+   $NLN $DATA/RESTART/sfc_data.tile5.nc   ./anal.tile5.nc
+   $NLN $DATA/RESTART/sfc_data.tile6.nc   ./anal.tile6.nc
+fi
+
+$NLN $DATA/RESTART/coupler.res ./coupler.res
+
+# output gaussian global surface forecast files
+$NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.file
+
+riy=$(echo $RDATE | cut -c1-4)
+rim=$(echo $RDATE | cut -c5-6)
+rid=$(echo $RDATE | cut -c7-8)
+rih=$(echo $RDATE | cut -c9-10)
 
 # Executable namelist
 cat <<EOF > fort.41
- &setup
-  yy=$iy,
-  mm=$im,
-  dd=$id,
-  hh=$ih,
-  igaus=$LONB_SFC,
-  jgaus=$LATB_SFC,
-  donst=$DONST,
-  netcdf_out=$NETCDF_OUT
- /
+    &setup
+     yy=$iy,
+     mm=$im,
+     dd=$id,
+     hh=$ih,
+     fhr=$fhour,
+     igaus=$LONB_SFC,
+     jgaus=$LATB_SFC,
+     donst=$DONST
+     netcdf_out=$NETCDF_OUT
+    /
 EOF
 
-$APRUNSFC $GAUSFCANLEXE
-
+$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt ../${APREFIX}logf$( printf "%03d" $fhour).txt
+$APRUNSFC $GAUSFCFCSTEXE >> ../${APREFIX}logf$( printf "%03d" $fhour).txt
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

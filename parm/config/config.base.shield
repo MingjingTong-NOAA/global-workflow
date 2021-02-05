@@ -47,7 +47,7 @@ export NOSCRUB="@NOSCRUB@"
 export BASE_GIT="@BASE_GIT@"
 
 # Toggle to turn on/off GFS downstream processing.
-export DO_BUFRSND="YES"    # BUFR sounding products
+export DO_BUFRSND="NO"    # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
@@ -67,6 +67,7 @@ export REALTIME="YES"
 ####################################################
 # Build paths relative to $HOMEgfs
 export FIXgsi="$HOMEgfs/fix/fix_gsi"
+export FIXshield="$HOMEgfs/fix/fix_shield"
 export HOMEfv3gfs="$HOMEgfs/sorc/fv3gfs.fd"
 export HOMEpost="$HOMEgfs"
 export HOMEobsproc_prep="$BASE_GIT/obsproc/gfsv16b/obsproc_prep_RB-5.4.0"
@@ -135,7 +136,7 @@ export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
 # Resolution specific parameters
-export LEVS=128
+export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
 
@@ -154,7 +155,7 @@ fi
 # Output frequency of the forecast model (for cycling)
 export FHMIN=0
 export FHMAX=9
-export FHOUT=3
+export FHOUT=1
 
 # Cycle to run EnKF  (set to BOTH for both gfs and gdas)
 export EUPD_CYC="gdas"
@@ -183,11 +184,11 @@ export restart_interval_gfs=0
 # I/O QUILTING, true--use Write Component; false--use GFDL FMS
 # if quilting=true, choose OUTPUT_GRID as cubed_sphere_grid in netcdf or gaussian_grid
 # if gaussian_grid, set OUTPUT_FILE for nemsio or netcdf
-# WRITE_DOPOST=true, use inline POST
-export QUILTING=".true."
+# WRITE_DOPOST=true, use inline POST (not for SHiELD)
+export QUILTING=".false."
 export OUTPUT_GRID="gaussian_grid"
 export OUTPUT_FILE="netcdf"
-export WRITE_DOPOST=".true."
+export WRITE_DOPOST=".false."
 
 # suffix options depending on file format
 if [ $OUTPUT_FILE = "netcdf" ]; then
@@ -198,13 +199,6 @@ else
     export SUFFIX=".nemsio"
     export NEMSIO_IN=".true."
     export NETCDF_IN=".false."
-fi
-
-# Cold starting
-if [[ "$CDATE" = "$FDATE" && $EXP_WARM_START = ".false." ]]; then
-   export cold_start_global=".true."
-else
-   export cold_start_global=".false."
 fi
 
 # IAU related parameters
@@ -225,11 +219,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="YES"
+export DO_GLDAS="NO"
 export gldas_cyc=00
 
 # run wave component
-export DO_WAVE="YES"
+export DO_WAVE="NO"
 export WAVE_CDUMP="both"
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
@@ -256,14 +250,24 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
-export DONST="YES"
+export DONST="NO"
 if [ $DONST = "YES" ]; then export FNTSFA="        "; fi
 
 # The switch to apply SST elevation correction or not
 export nst_anl=.true.
 
+# full hydrometeors assimilation
+export full_hydro_anl="NO"
+export update_hydro="NO"
+
 # Analysis increments to zero in CALCINCEXEC
-export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc'"
+if [ $update_hydro != "YES" ]; then
+   if [ $full_hydro_anl = "YES" ]; then
+      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+   else
+      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc'"
+   fi
+fi
 
 if [ $OUTPUT_FILE = "nemsio" ]; then
     export DO_CALC_INCREMENT="YES"
@@ -271,7 +275,11 @@ if [ $OUTPUT_FILE = "nemsio" ]; then
 fi
 
 # Stratospheric increments to zero
-export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc'"
+if [ $full_hydro_anl = "YES" ]; then
+   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+else
+   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc'"
+fi
 export INCVARS_EFOLD="5"
 
 # Swith to generate netcdf or binary diagnostic files.  If not specified,
@@ -281,8 +289,8 @@ export netcdf_diag=".true."
 export binary_diag=".false."
 
 # Verification options
-export DO_METP="YES"         # Run METPLUS jobs - set METPLUS settings in config.metp
-export DO_VSDB="YES"         # Run VSDB package - set VSDB settings in config.vrfy
+export DO_METP="YES"                  # Run MET+ jobs
+export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive

@@ -70,9 +70,13 @@ if [ $type = "gfs" ]; then
 
   echo  "./logs/${CDATE}/gfs*.log                          " >>gfsa.txt
   echo  "${dirname}${head}gsistat                          " >>gfsa.txt
+  if [ $DONST = "YES" ]; then
   echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+  fi
   echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
+  if [ $DO_MAKEPREPBUFR = "YES" ]; then
   echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
+  fi
   echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
   echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
   echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
@@ -148,7 +152,9 @@ if [ $type = "gfs" ]; then
   echo  "${dirname}${head}atmanl${SUFFIX}            " >>gfs_${format}a.txt
   echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
   echo  "${dirname}${head}atmi*.nc                   " >>gfs_${format}a.txt
+  if [ $DONST = "YES" ]; then
   echo  "${dirname}${head}dtfanl.nc                  " >>gfs_${format}a.txt
+  fi
   echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
 
   #..................
@@ -270,7 +276,9 @@ if [ $type = "gdas" ]; then
   if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
      echo  "${dirname}${head}radstat               " >>gdas_restarta.txt
   fi
+  if [ $DONST = "YES" ]; then
   echo  "${dirname}${head}nsstbufr                 " >>gdas_restarta.txt
+  fi
   echo  "${dirname}${head}prepbufr                 " >>gdas_restarta.txt
   echo  "${dirname}${head}prepbufr_pre-qc          " >>gdas_restarta.txt
   echo  "${dirname}${head}prepbufr.acft_profiles   " >>gdas_restarta.txt
@@ -279,7 +287,9 @@ if [ $type = "gdas" ]; then
   echo  "${dirname}${head}abias_int                " >>gdas_restarta.txt
   echo  "${dirname}${head}abias_pc                 " >>gdas_restarta.txt
   echo  "${dirname}${head}atmi*nc                  " >>gdas_restarta.txt
+  if [ $DONST = "YES" ]; then
   echo  "${dirname}${head}dtfanl.nc                " >>gdas_restarta.txt
+  fi
   echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
 
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt

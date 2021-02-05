@@ -18,7 +18,7 @@
 !
 ! Output files:
 ! -------------
-! sfc.gaussian.analysis.file  surface data on gaussian grid - 
+! sfc.gaussian.file  surface data on gaussian grid - 
 !                             nemsio or netcdf.
 !
 ! Namelist variables:
@@ -47,6 +47,7 @@
  integer, parameter :: num_tiles = 6
 
  integer :: itile, jtile, igaus, jgaus
+ real :: fhr
 
  integer(nemsio_intkind) :: idate(8)
 
@@ -124,20 +125,22 @@
 
  character(len=12)       :: weightfile
 
- integer                 :: i, error, ncid, id_ns, n_s
+ integer                 :: i, error, ncid, id_ns, n_s, n_s2
  integer                 :: id_col, id_row, id_s, n
  integer                 :: yy, mm, dd, hh
- integer, allocatable    :: col(:), row(:)
+ integer, allocatable    :: col(:), row(:), col2(:), row2(:)
 
  logical                 :: netcdf_out
 
- real(kind=8), allocatable :: s(:)
+ real(kind=8), allocatable :: s(:), s2(:)
 
- namelist /setup/ yy, mm, dd, hh, igaus, jgaus, donst, netcdf_out
+ namelist /setup/ yy, mm, dd, hh, fhr, igaus, jgaus, donst, netcdf_out
 
  call w3tagb('GAUSSIAN_SFCANL',2018,0179,0055,'NP20')
 
  print*,"- BEGIN EXECUTION"
+
+ fhr = 0.
 
  netcdf_out = .true.
 
@@ -160,7 +163,7 @@
  idate(4) = hh
 
 !------------------------------------------------------------------------------
-! Read interpolation weight file.
+! Read interpolation weight file (Nearest).
 !------------------------------------------------------------------------------
 
  print*
@@ -192,6 +195,43 @@
  error=nf90_inq_varid(ncid, 'S', id_s)
  call netcdf_err(error, 'READING s id' )
  error=nf90_get_var(ncid, id_s, s)
+ call netcdf_err(error, 'READING s' )
+
+ error = nf90_close(ncid)
+
+!------------------------------------------------------------------------------
+! Read interpolation weight file (Bilinear).
+!------------------------------------------------------------------------------
+
+ print*
+ print*,"- READ INTERPOLATION WEIGHT FILE"
+
+ weightfile = "./weightb.nc"
+
+ error=nf90_open(trim(weightfile),nf90_nowrite,ncid)
+ call netcdf_err(error, 'OPENING weights.nc' )
+
+ error=nf90_inq_dimid(ncid, 'n_s', id_ns)
+ call netcdf_err(error, 'READING n_s id' )
+ error=nf90_inquire_dimension(ncid,id_ns,len=n_s2)
+ call netcdf_err(error, 'READING n_s' )
+
+ allocate(col2(n_s2))
+ error=nf90_inq_varid(ncid, 'col', id_col)
+ call netcdf_err(error, 'READING col id' )
+ error=nf90_get_var(ncid, id_col, col2)
+ call netcdf_err(error, 'READING col' )
+
+ allocate(row2(n_s2))
+ error=nf90_inq_varid(ncid, 'row', id_row)
+ call netcdf_err(error, 'READING row id' )
+ error=nf90_get_var(ncid, id_row, row2)
+ call netcdf_err(error, 'READING row' )
+
+ allocate(s2(n_s2))
+ error=nf90_inq_varid(ncid, 'S', id_s)
+ call netcdf_err(error, 'READING s id' )
+ error=nf90_get_var(ncid, id_s, s2)
  call netcdf_err(error, 'READING s' )
 
  error = nf90_close(ncid)
@@ -262,11 +302,53 @@
    allocate(gaussian_data%zc(igaus*jgaus)) 
  endif
 
+ gaussian_data%orog=0.0 
+ gaussian_data%t2m=0.0
+ gaussian_data%tisfc=0.0
+ gaussian_data%q2m=0.0
+ gaussian_data%stype=0.0
+ gaussian_data%snwdph=0.0
+ gaussian_data%slope=0.0
+ gaussian_data%shdmax=0.0
+ gaussian_data%shdmin=0.0
+ gaussian_data%snoalb=0.0
+ gaussian_data%slmask=0.0
+ gaussian_data%tg3=0.0
+ gaussian_data%alvsf=0.0
+ gaussian_data%alvwf=0.0
+ gaussian_data%alnsf=0.0
+ gaussian_data%alnwf=0.0
+ gaussian_data%facsf=0.0
+ gaussian_data%facwf=0.0
+ gaussian_data%ffhh=0.0
+ gaussian_data%ffmm=0.0
+ gaussian_data%sheleg=0.0
+ gaussian_data%canopy=0.0
+ gaussian_data%vfrac=0.0
+ gaussian_data%vtype=0.0
+ gaussian_data%zorl=0.0
+ gaussian_data%tsea=0.0
+ gaussian_data%f10m=0.0
+ gaussian_data%tprcp=0.0
+ gaussian_data%uustar=0.0
+ gaussian_data%fice=0.0
+ gaussian_data%hice=0.0
+ gaussian_data%srflag=0.0
+ gaussian_data%slc=0.0
+ gaussian_data%smc=0.0
+ gaussian_data%stc=0.0
+
+ do i = 1, n_s2
+!   gaussian_data%orog(row2(i))   = gaussian_data%orog(row2(i)) + s2(i)*tile_data%orog(col2(i))
+   gaussian_data%t2m(row2(i))    = gaussian_data%t2m(row2(i)) + s2(i)*tile_data%t2m(col2(i))
+   gaussian_data%q2m(row2(i))    = gaussian_data%q2m(row2(i)) + s2(i)*tile_data%q2m(col2(i))
+ enddo
+ 
  do i = 1, n_s
    gaussian_data%orog(row(i))   = gaussian_data%orog(row(i)) + s(i)*tile_data%orog(col(i))
-   gaussian_data%t2m(row(i))    = gaussian_data%t2m(row(i)) + s(i)*tile_data%t2m(col(i))
+!   gaussian_data%t2m(row(i))    = gaussian_data%t2m(row(i)) + s(i)*tile_data%t2m(col(i))
    gaussian_data%tisfc(row(i))  = gaussian_data%tisfc(row(i)) + s(i)*tile_data%tisfc(col(i))
-   gaussian_data%q2m(row(i))    = gaussian_data%q2m(row(i)) + s(i)*tile_data%q2m(col(i))
+!   gaussian_data%q2m(row(i))    = gaussian_data%q2m(row(i)) + s(i)*tile_data%q2m(col(i))
    gaussian_data%stype(row(i))  = gaussian_data%stype(row(i)) + s(i)*tile_data%stype(col(i))
    gaussian_data%snwdph(row(i)) = gaussian_data%snwdph(row(i)) + s(i)*tile_data%snwdph(col(i))
    gaussian_data%slope(row(i))  = gaussian_data%slope(row(i)) + s(i)*tile_data%slope(col(i))
@@ -321,6 +403,7 @@
  enddo
 
  deallocate(col, row, s)
+ deallocate(col2, row2, s2)
 
  deallocate(tile_data%orog)
  deallocate(tile_data%t2m)
@@ -684,7 +767,7 @@
                  "m/k", &
                  "m"/
 
- outfile = "./sfc.gaussian.analysis.file"
+ outfile = "./sfc.gaussian.file"
 
  print*,"- WRITE SURFACE DATA TO NETCDF FILE: ", trim(outfile)
 
@@ -703,6 +786,9 @@
  call netcdf_err(error, 'DEFINING TIME DIMENSION')
 
 ! global attributes
+
+ error = nf90_put_att(ncid, nf90_global, 'ncld', 5)
+ call netcdf_err(error, 'DEFINING NCLD ATTRIBUTE')
 
  error = nf90_put_att(ncid, nf90_global, 'nsoil', 4)
  call netcdf_err(error, 'DEFINING NSOIL ATTRIBUTE')
@@ -894,7 +980,7 @@
  error = nf90_put_var(ncid, id_lat, dummy)
  call netcdf_err(error, 'WRITING LAT')
 
- error = nf90_put_var(ncid, id_time, 0)
+ error = nf90_put_var(ncid, id_time, fhr)
  call netcdf_err(error, 'WRITING TIME')
 
  do n = 1, num_vars
@@ -991,16 +1077,24 @@
      dummy = reshape(gaussian_data%vtype, (/igaus,jgaus/))
    case ('soill1')
      dummy = reshape(gaussian_data%slc(:,1), (/igaus,jgaus/))
-     where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     if(fhr == 0.) then
+        where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     endif
    case ('soill2')
      dummy = reshape(gaussian_data%slc(:,2), (/igaus,jgaus/))
-     where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     if(fhr == 0.) then
+        where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     endif
    case ('soill3')
      dummy = reshape(gaussian_data%slc(:,3), (/igaus,jgaus/))
-     where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     if(fhr == 0.) then
+        where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     endif
    case ('soill4')
      dummy = reshape(gaussian_data%slc(:,4), (/igaus,jgaus/))
-     where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     if(fhr == 0.) then
+        where (dummy > 0.99) dummy = 0.0  ! replace flag value at water/landice
+     endif
    case ('soilt1')
      dummy = reshape(gaussian_data%stc(:,1), (/igaus,jgaus/))
    case ('soilt2')
@@ -1231,13 +1325,13 @@
  print*
  print*,"- OPEN GAUSSIAN NEMSIO SURFACE FILE"
 
- call nemsio_open(gfileo, "sfc.gaussian.analysis.file", 'write',   &
+ call nemsio_open(gfileo, "sfc.gaussian.file", 'write',   &
                   modelname="FV3GFS", gdatatype="bin4", version=version,  &
                   nmeta=8, nrec=nrec, dimx=igaus, dimy=jgaus, dimz=(levs_vcoord-1),     &
                   nframe=0, nsoil=4, ntrac=8, jcap=-9999,  &
                   ncldt=5, idvc=-9999, idsl=-9999, idvm=-9999, &
                   idrt=4, lat=lat, lon=lon, vcoord=vcoord, &
-                  nfhour=0, nfminute=0, nfsecondn=0,  &
+                  nfhour=int(fhr), nfminute=0, nfsecondn=0,  &
                   nfsecondd=1, nfday=0, idate=idate, &
                   recname=recname, reclevtyp=reclevtyp, &
                   reclev=reclev, extrameta=.true., &
@@ -2051,10 +2145,18 @@
 
    call netcdf_err(error, 'OPENING FILE' )
 
-   error=nf90_inq_varid(ncid, "orog_raw", id_var)
-   call netcdf_err(error, 'READING orog_raw ID' )
-   error=nf90_get_var(ncid, id_var, dummy)
-   call netcdf_err(error, 'READING orog_raw' )
+   if (fhr > 0.) then
+      ! use filtered orog
+      error=nf90_inq_varid(ncid, "orog_filt", id_var)
+      call netcdf_err(error, 'READING orog_filt ID' )
+      error=nf90_get_var(ncid, id_var, dummy)
+      call netcdf_err(error, 'READING orog_filt' )
+   else
+      error=nf90_inq_varid(ncid, "orog_raw", id_var)
+      call netcdf_err(error, 'READING orog_raw ID' )
+      error=nf90_get_var(ncid, id_var, dummy)
+      call netcdf_err(error, 'READING orog_raw' )
+   endif
    print*,'- OROG: ',maxval(dummy),minval(dummy)
    tile_data%orog(istart:iend) = reshape(dummy, (/ijtile/))
 
