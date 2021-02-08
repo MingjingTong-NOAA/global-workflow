@@ -70,14 +70,28 @@ echo " .... Library build not currently supported .... "
 #------------------------------------
 # build fv3
 #------------------------------------
-$Build_fv3gfs && {
-echo " .... Building fv3 .... "
-export RUN_CCPP=${RUN_CCPP:-"NO"}
-./build_fv3.sh > $logs_dir/build_fv3.log 2>&1
+#$Build_fv3gfs && {
+#echo " .... Building fv3 .... "
+#export RUN_CCPP=${RUN_CCPP:-"NO"}
+#./build_fv3.sh > $logs_dir/build_fv3.log 2>&1
+#rc=$?
+#if [[ $rc -ne 0 ]] ; then
+#    echo "Fatal error in building fv3."
+#    echo "The log file is in $logs_dir/build_fv3.log"
+#fi
+#((err+=$rc))
+#}
+
+#------------------------------------
+# build cube2gaus
+#------------------------------------
+$Build_cube2gaus && {
+echo " .... Building cube2gaus .... "
+./build_cube2gaus.sh > $logs_dir/build_cube2gaus.log 2>&1
 rc=$?
 if [[ $rc -ne 0 ]] ; then
-    echo "Fatal error in building fv3."
-    echo "The log file is in $logs_dir/build_fv3.log"
+    echo "Fatal error in building cube2gaus."
+    echo "The log file is in $logs_dir/build_cube2gaus.log"
 fi
 ((err+=$rc))
 }

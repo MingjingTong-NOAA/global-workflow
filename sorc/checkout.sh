@@ -42,6 +42,15 @@ else
     echo 'Skip.  Directory fv3gfs.fd already exists.'
 fi
 
+echo cube2gaus checkout ...
+if [[ ! -d cube2gaus.fd ]] ; then
+    rm -f ${topdir}/checkout-cube2gaus.log
+    git clone https://github.com/MingjingTong-NOAA/cube2gaus.git cube2gaus.fd >> ${topdir}/checkout-cube2gaus.log 2>&1
+    cd ${topdir}
+else
+    echo 'Skip.  Directory cube2gaus.fd already exists.'
+fi
+
 echo gsi checkout ...
 if [[ ! -d gsi.fd ]] ; then
     rm -f ${topdir}/checkout-gsi.log
