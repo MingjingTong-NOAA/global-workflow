@@ -46,8 +46,8 @@
  integer, parameter :: num_tiles = 6
 
  integer :: itile, jtile, igaus, jgaus, itime, ntile
- integer :: fhzero, imp_physics, dtp, iu, iv
- real :: fhr, diag_fhr
+ integer :: fhzero, imp_physics, iu10, iv10, iuh1, ivh1
+ real :: fhr, dtp, diag_fhr
 
  integer(nemsio_intkind) :: idate(8)
 
@@ -58,13 +58,13 @@
  character(len=30)       :: name_noah_2(num_noah_2)
 
 ! post variables
- integer, parameter      :: num_post=82
+ integer, parameter      :: num_post=88
  character(len=30)       :: name_post(num_post)
  character(len=30)       :: intpl_method_post(num_post)
  character(len=30)       :: units_post(num_post)
  character(len=128)      :: desc_post(num_post)
 
- real, dimension(:,:), allocatable      :: var_tile(:,:)
+ real, dimension(:,:), allocatable      :: var_tile, varh1_tile
  real, dimension(:),   allocatable      :: xlon, ylat 
  real, dimension(:,:,:,:), allocatable  :: elon_cubsph, elat_cubsph
  real, dimension(:,:,:),   allocatable  :: elon_latlon, elat_latlon
@@ -142,14 +142,17 @@
                   "prateb_ave", &
                   "prate_ave", &
                   "pressfc", &
+                  "pwatclm", &
                   "sfexc", &
                   "shtfl_ave", &
                   "shtfl", &
                   "sunsd_acc", &
                   "spfhmax_max2m", &
                   "spfhmin_min2m", &
+                  "spfh_hyblev1", &
                   "tmax_max2m", &
                   "tmin_min2m", &
+                  "tmp_hyblev1", &
                   "ulwrf", &
                   "ulwrf_ave", &
                   "ulwrf_avetoa", &
@@ -167,6 +170,7 @@
                   "fldcp", &
                   "gflux", &
                   "gflux_ave", &
+                  "hgt_hyblev1", &
                   "pevpr_ave", &
                   "pevpr", &
                   "prescnvclt", &
@@ -197,7 +201,9 @@
                   "watr_acc", &
                   "wilt", &
                   "ugrd10m", &
-                  "vgrd10m" / 
+                  "vgrd10m", &
+                  "ugrd_hyblev1", &
+                  "vgrd_hyblev1" / 
 
  type(sfc_data) :: tile_data, gaussian_data
 
@@ -297,9 +303,9 @@
 ! Read interpolation weight file (Bilinear).
 !------------------------------------------------------------------------------
 
- intpl_method_post(1:44)='bilinear'
- intpl_method_post(45:80)='nearest_stod'
- intpl_method_post(81:82)='vector_bilinear'
+ intpl_method_post(1:47)='bilinear'
+ intpl_method_post(48:84)='nearest_stod'
+ intpl_method_post(85:88)='vector_bilinear'
 
  print*
  print*,"- READ INTERPOLATION WEIGHT FILE"
@@ -418,14 +424,35 @@
                    +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
    enddo
  enddo
- print *,'elon_latlon ', maxval(elon_latlon), minval(elon_latlon)
- print *,'ua_latlon ', maxval(ua_latlon), minval(ua_latlon)
 
- print *,'elat_latlon ', maxval(elat_latlon), minval(elat_latlon)
- print *,'va_latlon ', maxval(va_latlon), minval(va_latlon)
+ gaussian_data%sfc_post(:,iu10)=reshape (ua_latlon, (/igaus*jgaus/) )
+ gaussian_data%sfc_post(:,iv10)=reshape (va_latlon, (/igaus*jgaus/) )
 
- gaussian_data%sfc_post(:,iu)=reshape (ua_latlon, (/igaus*jgaus/) )
- gaussian_data%sfc_post(:,iv)=reshape (va_latlon, (/igaus*jgaus/) )
+ var_gaus=0.0
+ do icoor=1,3
+   do i = 1, n_s2
+     var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*varh1_tile(col2(i),icoor)
+   enddo
+   xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
+ enddo
+
+ do j=1,jgaus
+   do i=1,igaus
+     ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
+                   +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
+                   +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
+   enddo
+ enddo
+ do j=1,jgaus
+   do i=1,igaus
+     va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
+                   +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
+                   +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
+   enddo
+ enddo
+
+ gaussian_data%sfc_post(:,iuh1)=reshape (ua_latlon, (/igaus*jgaus/) )
+ gaussian_data%sfc_post(:,ivh1)=reshape (va_latlon, (/igaus*jgaus/) )
 
  deallocate(col, row, s)
  deallocate(col2, row2, s2)
@@ -433,6 +460,7 @@
  deallocate(tile_data%sfc_noah_1)
  deallocate(tile_data%sfc_noah_2)
  deallocate(tile_data%sfc_post)
+ deallocate(var_tile, varh1_tile)
  deallocate(xyz_latlon, var_gaus)
  deallocate(ua_latlon, va_latlon)
  deallocate(elon_latlon, elat_latlon) 
@@ -495,7 +523,8 @@
  real, parameter         :: missing = 9.99e20
  real(kind=4) :: fillvalue = 9.99e20
 
- real(kind=4), allocatable :: dummy(:,:), slat(:), wlat(:)
+ real(kind=4), allocatable :: dummy(:,:)
+ real, dimension(:,:), allocatable :: lon2d, lat2d
 
 ! define noah fields
 
@@ -826,29 +855,32 @@
 !-------------------------------------------------------------------------------------------
 
  allocate(dummy(igaus,jgaus))
+ allocate(lon2d(igaus,jgaus),lat2d(igaus,jgaus))
 
  do j=1,jgaus
-   dummy(:,j)=todeg*xlon(:)
+   lon2d(:,j)=todeg*xlon(:)
  end do
 
- error = nf90_put_var(ncid, id_xt, dummy(:,1))
+ error = nf90_put_var(ncid, id_xt, lon2d(:,1))
  call netcdf_err(error, 'WRITING GRID_XT')
 
- error = nf90_put_var(ncid, id_lon, dummy)
+ error = nf90_put_var(ncid, id_lon, lon2d)
  call netcdf_err(error, 'WRITING LON')
 
  do i=1, igaus
-   dummy(i,:)=todeg*ylat(:)
+   lat2d(i,:)=todeg*ylat(:)
  end do
 
- error = nf90_put_var(ncid, id_yt, dummy(1,:))
+ error = nf90_put_var(ncid, id_yt, lat2d(1,:))
  call netcdf_err(error, 'WRITING GRID_YT')
 
- error = nf90_put_var(ncid, id_lat, dummy)
+ error = nf90_put_var(ncid, id_lat, lat2d)
  call netcdf_err(error, 'WRITING LAT')
 
  error = nf90_put_var(ncid, id_time, fhr)
  call netcdf_err(error, 'WRITING TIME')
+
+ deallocate(lon2d,lat2d)
 
  do n = 1, num_vars
    print*,'- WRITE VARIABLE ',trim(var(n))
@@ -885,10 +917,15 @@
  real(kind=4), intent(out) :: dummy(igaus,jgaus)
 
  if (n <= 32) then
-   dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/))
-   if (trim(var) == 'sfcr') dummy=dummy * 0.01
-   if (trim(var) == 'snod') dummy=dummy * 0.001
-   if (trim(var) == 'veg') dummy=dummy * 100.0
+   if (trim(var) == 'sfcr') then
+     dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/)) * 0.01
+   else if (trim(var) == 'snod') then
+     dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/)) * 0.001
+   else if (trim(var) == 'veg') then
+     dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/)) * 100.0
+   else
+     dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/))
+   endif 
  else
    select case (var)
      case ('soill1')
@@ -970,7 +1007,7 @@
  real(nemsio_realkind), allocatable :: the_data(:)
  real(nemsio_realkind)              :: varrval(nmetavarr)
  real(nemsio_realkind), allocatable :: lat(:), lon(:)
- real(kind=4), allocatable          :: dummy(:,:), slat(:), wlat(:)
+ real, allocatable                  :: dummy(:,:)
  real(nemsio_realkind), allocatable :: vcoord(:,:,:)
 
  type(nemsio_gfile)                 :: gfileo
@@ -1248,8 +1285,8 @@
 
  real(kind=8), allocatable  :: dummy(:,:), dummy3d(:,:,:)
  real(kind=8), allocatable  :: timeh(:), dummy3t(:,:,:)
- real, allocatable  :: u10m(:,:,:)
- real, allocatable  :: v10m(:,:,:)
+ real, allocatable  :: u10m(:,:,:), uh1(:,:,:)
+ real, allocatable  :: v10m(:,:,:), vh1(:,:,:)
  real, allocatable  :: var_cubsph(:,:,:)
 
 !-------------------------------------------------------------------------------------------
@@ -1279,8 +1316,11 @@
  allocate(tile_data%sfc_post(ijtile*num_tiles,num_post))
  allocate(u10m(itile,jtile,num_tiles))
  allocate(v10m(itile,jtile,num_tiles))
+ allocate(uh1(itile,jtile,num_tiles))
+ allocate(vh1(itile,jtile,num_tiles))
  allocate(var_cubsph(itile,jtile,num_tiles))
  allocate(var_tile(ijtile*num_tiles,3))
+ allocate(varh1_tile(ijtile*num_tiles,3))
 
  error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
  error=nf90_inq_dimid(ncid, 'time', id_dim)
@@ -1388,12 +1428,20 @@
       error=nf90_get_var(ncid, id_var, dummy3t)
       dummy=dummy3t(:,:,ith)
       if (name_post(i) == 'ugrd10m') then
-        iu=i
+        iu10=i
         u10m(:,:,tile)=dummy
       endif
       if (name_post(i) == 'vgrd10m') then
-        iv=i
+        iv10=i
         v10m(:,:,tile)=dummy
+      endif
+      if (name_post(i) == 'ugrd_hyblev1') then
+        iuh1=i
+        uh1(:,:,tile)=dummy
+      endif
+      if (name_post(i) == 'vgrd_hyblev1') then
+        ivh1=i
+        vh1(:,:,tile)=dummy
       endif
       call netcdf_err(error, 'READING '//trim(name_post(i)))
       print*,'- '//trim(name_post(i))//': ',maxval(dummy),minval(dummy)
@@ -1438,7 +1486,25 @@
    enddo
  enddo
 
+ do icoor=1,3
+   do tile=1,num_tiles
+     do j=1,jtile
+       do i=1,itile
+         var_cubsph(i,j,tile)=uh1(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
+                             +vh1(i,j,tile) * elat_cubsph(icoor,i,j,tile)
+       enddo
+     enddo
+   enddo
+
+   do tile = 1, num_tiles
+     istart = (ijtile) * (tile-1) + 1
+     iend   = istart + ijtile - 1
+     varh1_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
+   enddo
+ enddo
+
  deallocate (dummy, dummy3d, dummy3t, timeh, u10m, v10m, var_cubsph)
+ deallocate (uh1, vh1)
  deallocate (elon_cubsph, elat_cubsph)
 
  end subroutine read_data_nc
