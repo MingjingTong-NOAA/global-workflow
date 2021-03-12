@@ -65,8 +65,12 @@
  character(len=128)      :: desc_post(num_post)
 
  real, dimension(:,:), allocatable      :: var_tile(:,:)
+ real, dimension(:),   allocatable      :: xlon, ylat 
  real, dimension(:,:,:,:), allocatable  :: elon_cubsph, elat_cubsph
  real, dimension(:,:,:),   allocatable  :: elon_latlon, elat_latlon
+
+ real, parameter :: pi = 3.141592653589793
+ real, parameter :: todeg=180./pi
 
  type :: sfc_data
 ! surface variables
@@ -124,7 +128,6 @@
                   "csulf", &
                   "csulftoa", &
                   "cwork_aveclm", &
-                  "cnvprcp", &
                   "dlwrf", &
                   "dlwrf_ave", &
                   "dswrf", &
@@ -158,6 +161,7 @@
                   "vbdsf_ave", &
                   "vddsf_ave", &
                   "albdo_ave", &
+                  "cnvprcp", &
                   "evbs_ave", &
                   "evcw_ave", &
                   "fldcp", &
@@ -293,8 +297,8 @@
 ! Read interpolation weight file (Bilinear).
 !------------------------------------------------------------------------------
 
- intpl_method_post(1:45)='bilinear'
- intpl_method_post(46:80)='nearest_stod'
+ intpl_method_post(1:44)='bilinear'
+ intpl_method_post(45:80)='nearest_stod'
  intpl_method_post(81:82)='vector_bilinear'
 
  print*
@@ -822,9 +826,10 @@
 !-------------------------------------------------------------------------------------------
 
  allocate(dummy(igaus,jgaus))
- do i = 1, igaus
-   dummy(i,:) = real((i-1),4) * 360.0_4 / real(igaus,4)
- enddo
+
+ do j=1,jgaus
+   dummy(:,j)=todeg*xlon(:)
+ end do
 
  error = nf90_put_var(ncid, id_xt, dummy(:,1))
  call netcdf_err(error, 'WRITING GRID_XT')
@@ -832,19 +837,9 @@
  error = nf90_put_var(ncid, id_lon, dummy)
  call netcdf_err(error, 'WRITING LON')
 
- allocate(slat(jgaus))
- allocate(wlat(jgaus))
- call splat(4, jgaus, slat, wlat)
-
- do i = (jgaus/2+1), jgaus
-   dummy(:,i) = 90.0 - (acos(slat(i)) * 180.0 / (4.0*atan(1.0)))
- enddo
-
- do i = 1, (jgaus/2)
-   dummy(:,i) = -(dummy(:,(jgaus-i+1)))
- enddo
-
- deallocate(slat, wlat)
+ do i=1, igaus
+   dummy(i,:)=todeg*ylat(:)
+ end do
 
  error = nf90_put_var(ncid, id_yt, dummy(1,:))
  call netcdf_err(error, 'WRITING GRID_YT')
@@ -891,6 +886,9 @@
 
  if (n <= 32) then
    dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/))
+   if (trim(var) == 'sfcr') dummy=dummy * 0.01
+   if (trim(var) == 'snod') dummy=dummy * 0.001
+   if (trim(var) == 'veg') dummy=dummy * 100.0
  else
    select case (var)
      case ('soill1')
@@ -1098,28 +1096,17 @@
  aryilen = jgaus
 
  allocate(dummy(igaus,jgaus))
- do i = 1, igaus
-   dummy(i,:) = float(i-1) * 360.0 / float(igaus)
- enddo
+
+ do j=1,jgaus
+   dummy(:,j)=todeg*xlon(:)
+ end do
 
  allocate(lon(igaus*jgaus))
  lon = reshape (dummy, (/igaus*jgaus/) )
 
-! Call 4-byte version of splib to match latitudes in history files.
-
- allocate(slat(jgaus))
- allocate(wlat(jgaus))
- call splat(4, jgaus, slat, wlat)
-
- do i = (jgaus/2+1), jgaus
-   dummy(:,i) = 90.0 - (acos(slat(i)) * 180.0 / (4.0*atan(1.0)))
- enddo
-
- do i = 1, (jgaus/2)
-   dummy(:,i) = -(dummy(:,(jgaus-i+1)))
- enddo
-
- deallocate(slat, wlat)
+ do i=1, igaus
+   dummy(i,:)=todeg*ylat(:)
+ end do
 
  allocate(lat(igaus*jgaus))
  lat = reshape (dummy, (/igaus*jgaus/) )
@@ -1468,8 +1455,9 @@
  implicit none
 
  integer :: ncid, id_npx, npx, id_npy, npy, id_nlon, nlon, id_nlat, nlat
- integer :: id_elonc, id_elatc, id_elonl, id_elatl, error
+ integer :: id_xlon, id_ylat, id_elonc, id_elatc, id_elonl, id_elatl, error, j
  character(len=30) :: case
+ real, allocatable :: lat1d(:)
 
 !-------------------------------------------------------------------------------------------
 ! Get dimensions
@@ -1531,6 +1519,18 @@
    call errexit(23)
  endif  
 
+ allocate(xlon(nlon), ylat(nlat))
+
+ error=nf90_inq_varid(ncid, 'xlon', id_xlon)
+ call netcdf_err(error, 'READING xlon id_xlon' )
+ error=nf90_get_var(ncid, id_xlon, xlon)
+ call netcdf_err(error, 'READING xlon' )
+
+ error=nf90_inq_varid(ncid, 'ylat', id_ylat)
+ call netcdf_err(error, 'READING ylat id_ylat' )
+ error=nf90_get_var(ncid, id_ylat, ylat)
+ call netcdf_err(error, 'READING ylat' )
+
  error=nf90_inq_varid(ncid, 'elon_cubsph', id_elonc)
  call netcdf_err(error, 'READING elon_cubsph id_elonc' )
  error=nf90_get_var(ncid, id_elonc, elon_cubsph)
@@ -1552,6 +1552,15 @@
  call netcdf_err(error, 'READING elat_latlon' )
 
  error = nf90_close(ncid)
+
+ if (ylat(1) < 0.0) then
+    allocate(lat1d(nlat))
+    do j=1,nlat
+       lat1d(j) = ylat(nlat-j+1)
+    end do
+    ylat(:)=lat1d(:)
+    deallocate(lat1d)
+ endif
 
  end subroutine read_c2g_weight
 
