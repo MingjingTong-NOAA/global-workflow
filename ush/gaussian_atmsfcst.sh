@@ -115,6 +115,7 @@ VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
+   exec > $DATA/logf$( printf "%03d" $RHR) 2>&1
 fi
 
 CASE=${CASE:-C768}
@@ -214,12 +215,12 @@ EOF
 # input interpolation weights
 $NLN $FIXC2G ./gaus_N${res}.nc
 
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile1.nc ./grid_spec.tile1.nc
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile2.nc ./grid_spec.tile2.nc
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile3.nc ./grid_spec.tile3.nc
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile4.nc ./grid_spec.tile4.nc
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile5.nc ./grid_spec.tile5.nc
-$NLN $DATA/grid_spec_${yyyy}_${mm}.tile6.nc ./grid_spec.tile6.nc
+$NLN $DATA/grid_spec.tile1.nc ./grid_spec.tile1.nc
+$NLN $DATA/grid_spec.tile2.nc ./grid_spec.tile2.nc
+$NLN $DATA/grid_spec.tile3.nc ./grid_spec.tile3.nc
+$NLN $DATA/grid_spec.tile4.nc ./grid_spec.tile4.nc
+$NLN $DATA/grid_spec.tile5.nc ./grid_spec.tile5.nc
+$NLN $DATA/grid_spec.tile6.nc ./grid_spec.tile6.nc
 $NLN $DATA/control.dat ./control.dat
 
 rPDY=$(echo $RDATE | cut -c1-8)
@@ -247,8 +248,8 @@ done
    
 # output gaussian global forecast files
 $NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf${ASUFFIX}
-$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt ../${APREFIX}logf$( printf "%03d" $fhour).txt
-$APRUN_GAUFCST $GAUATMSEXE > ../${APREFIX}logf$( printf "%03d" $fhour).txt
+
+eval $GAUATMSEXE > ./${APREFIX}logf$( printf "%03d" $fhour).txt
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

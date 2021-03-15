@@ -521,7 +521,7 @@
  integer, allocatable                 :: id_var(:)
 
  real, parameter         :: missing = 9.99e20
- real(kind=4) :: fillvalue = 9.99e20
+ real(kind=4), parameter :: fillvalue = 9.99e20
 
  real(kind=4), allocatable :: dummy(:,:)
  real, dimension(:,:), allocatable :: lon2d, lat2d
@@ -1336,6 +1336,7 @@
  do i=1,itime
     if (timeh(i) == diag_fhr) then
        ith=i
+       print *,'diag_fhr, ith ', diag_fhr, ith
        EXIT
     endif
  end do

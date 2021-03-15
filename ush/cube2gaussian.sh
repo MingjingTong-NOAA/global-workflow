@@ -7,13 +7,22 @@ if [[ "$VERBOSE" = "YES" ]] ; then
 fi
 
 export RHR=_RHR
-export RDATE=_RDATE
-export REND=_REND
-export fhour=_fhour
-cdate=_CDATE
-export rmhydro=_rmhydro
-export pseudo_ps=_pseudo_ps
-export phy_data=_phy_data
+export REND=$FHMAX
+export rmhydro=${rmhydro:-".true."}
+export pseudo_ps=${pseudo_ps:-".true."}
+export phy_data=${phy_data=:-""}
+
+if [[ $RHR == 0 ]]; then
+  export fhour=$((DELTIM/3600.))
+else
+  export fhour=$((1.0*(RHR-iau_halfdelthrs)))
+fi
+
+export diag_fhr=$((fhour+2*iau_halfdelthrs))
+export RDATE=$($NDATE +$RHR $sCDATE)
+
+COMOUT=${COMOUTatmos:-"."}
+$NLN $COMOUT/${APREFIX}logf$( printf "%03d" $RHR) $DATA/logf$( printf "%03d" $RHR)
 
 GAUSSIANATMSSH=${GAUSSIANATMSSH:-$HOMEgfs/ush/gaussian_atmsfcst.sh}
 
@@ -23,11 +32,8 @@ GAUSSIANSFCSH=${GAUSSIANSFCSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
 
 $GAUSSIANSFCSH
 
-COMOUT=${COMOUT:-"."}
-$NLN $COMOUT/${APREFIX}logf$( printf "%03d" $RHR) $DATA/logf$( printf "%03d" $RHR)
-
 if [[ $err == 0 ]]; then
-  printf " completed fv3gfs fhour=%.*f %s" 3 $fhour $cdate > $DATA/logf$( printf "%03d" $RHR)
+   printf " completed fv3gfs fhour=%.*f %s" 3 $fhour $CDATE >> $DATA/logf$( printf "%03d" $RHR)
 fi
 
 set +x

@@ -3,22 +3,23 @@
 ####  UNIX Script Documentation Block
 #                      .                                             .
 # Script name:         gaussian_sfcfcst.sh
-# Script description:  Makes a global gaussian grid surface analysis file
+# Script description:  Makes a global gaussian grid surface forecast file
 #
 # Author:        George Gayno       Org: NP23         Date: 2018-01-30
 #
-# Abstract: This script makes a global gaussian grid surface analysis from
-#           fv3gfs surface analysis tiles
+# Abstract: This script makes a global gaussian grid surface forecast from
+#           fv3gfs surface forecast tiles
 #
 # Script history log:
 # 2018-01-30  Gayno  initial script
+# 2021-02-18  Mingjing Tong modified to process forecast files for SHiELD
 #
 # Usage:  gaussian_sfcfcst.sh
 #
 #   Imported Shell Variables:
 #     CASE          Model resolution.  Defaults to C768.
 #     DONST         Process NST fields when 'yes'.  Default is 'no'.
-#     OUTPUT_FILE   Output gaussian analysis file format.  Default is "nemsio"
+#     OUTPUT_FILE   Output gaussian forecast file format.  Default is "nemsio"
 #                   Set to "netcdf" for netcdf output file
 #                   Otherwise, output in nemsio.
 #     BASEDIR       Root directory where all scripts and fixed files reside.
@@ -40,14 +41,14 @@
 #                   defaults to current working directory
 #     XC            Suffix to add to executables. Defaults to none.
 #     GAUSFCFCSTEXE  Program executable.
-#                   Defaults to $EXECgfs/gaussian_sfcanl.exe
+#                   Defaults to $EXECgfs/gaussian_sfcfcst.exe
 #     INISCRIPT     Preprocessing script.  Defaults to none.
 #     LOGSCRIPT     Log posting script.  Defaults to none.
 #     ERRSCRIPT     Error processing script
 #                   defaults to 'eval [[ $err = 0 ]]'
 #     ENDSCRIPT     Postprocessing script
 #                   defaults to none
-#     CDATE         Output analysis date in yyyymmddhh format. Required.
+#     CDATE         Output forecast date in yyyymmddhh format. Required.
 #     PGMOUT        Executable standard output
 #                   defaults to $pgmout, then to '&1'
 #     PGMERR        Executable standard error
@@ -113,6 +114,7 @@ VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
+   exec >> $DATA/logf$( printf "%03d" $RHR) 2>&1
 fi
 
 CASE=${CASE:-C768}
@@ -122,8 +124,7 @@ LATB_CASE=$((res*2))
 LONB_SFC=${LONB_SFC:-$LONB_CASE}
 LATB_SFC=${LATB_SFC:-$LATB_CASE}
 DONST=${DONST:-"NO"}
-LEVS=${LEVS:-64}
-LEVSP1=$(($LEVS+1))
+LEVS=${LEVS:-91}
 OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
 if [ $OUTPUT_FILE = "netcdf" ]; then
     export NETCDF_OUT=".true."
@@ -138,14 +139,16 @@ HOMEgfs=${HOMEgfs:-$BASEDIR/gfs_ver.${gfs_ver}}
 EXECgfs=${EXECgfs:-$HOMEgfs/exec}
 FIXfv3=${FIXfv3:-$HOMEgfs/fix/fix_fv3_gmted2010}
 FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
+FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
+FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_elonelat_${CASE}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
 XC=${XC}
-GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$EXECgfs/gaussian_sfcanl.exe}
-SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVSP1}.txt}
+GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$EXECgfs/gaussian_sfcfcst.exe}
+SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVS}.txt}
 
 CDATE=${CDATE:?}
 
@@ -173,7 +176,7 @@ mkdir -p gaussian_sfcf$( printf "%03d" $RHR)
 cd gaussian_sfcf$( printf "%03d" $RHR)
 
 ################################################################################
-#  Make surface analysis
+#  Make surface forecast
 export PGM=$GAUSFCFCSTEXE
 export pgm=$PGM
 $LOGSCRIPT
@@ -190,6 +193,7 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 # input interpolation weights
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
+$NLN $FIXELONELAT ./c2g_elonelat_${CASE}.nc
 
 # input orography tiles
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
@@ -209,25 +213,22 @@ rPDY=$(echo $RDATE | cut -c1-8)
 rcyc=$(echo $RDATE | cut -c9-10)
 # input forecast tiles (with nst records)
 if [[ $RHR -ne $REND ]] ; then
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./anal.tile1.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./anal.tile2.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./anal.tile3.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./anal.tile4.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./anal.tile5.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./anal.tile6.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./fcst.tile1.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./fcst.tile2.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./fcst.tile3.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./fcst.tile4.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./fcst.tile5.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./fcst.tile6.nc
 else
-   $NLN $DATA/RESTART/sfc_data.tile1.nc   ./anal.tile1.nc
-   $NLN $DATA/RESTART/sfc_data.tile2.nc   ./anal.tile2.nc
-   $NLN $DATA/RESTART/sfc_data.tile3.nc   ./anal.tile3.nc
-   $NLN $DATA/RESTART/sfc_data.tile4.nc   ./anal.tile4.nc
-   $NLN $DATA/RESTART/sfc_data.tile5.nc   ./anal.tile5.nc
-   $NLN $DATA/RESTART/sfc_data.tile6.nc   ./anal.tile6.nc
+   $NLN $DATA/RESTART/sfc_data.tile1.nc   ./fcst.tile1.nc
+   $NLN $DATA/RESTART/sfc_data.tile2.nc   ./fcst.tile2.nc
+   $NLN $DATA/RESTART/sfc_data.tile3.nc   ./fcst.tile3.nc
+   $NLN $DATA/RESTART/sfc_data.tile4.nc   ./fcst.tile4.nc
+   $NLN $DATA/RESTART/sfc_data.tile5.nc   ./fcst.tile5.nc
+   $NLN $DATA/RESTART/sfc_data.tile6.nc   ./fcst.tile6.nc
 fi
 
-$NLN $DATA/RESTART/coupler.res ./coupler.res
-
-# output gaussian global surface forecast files
-$NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.file
+$NLN $DATA/gfs_surface.tile*.nc   ./
 
 riy=$(echo $RDATE | cut -c1-4)
 rim=$(echo $RDATE | cut -c5-6)
@@ -242,15 +243,20 @@ cat <<EOF > fort.41
      dd=$id,
      hh=$ih,
      fhr=$fhour,
+     diag_fhr=$diag_fhr,
      igaus=$LONB_SFC,
      jgaus=$LATB_SFC,
-     donst=$DONST
      netcdf_out=$NETCDF_OUT
+     fhzero=$FHZER
+     imp_physics=11
+     dtp=$DELTIM 
     /
 EOF
 
-$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt ../${APREFIX}logf$( printf "%03d" $fhour).txt
-$APRUNSFC $GAUSFCFCSTEXE >> ../${APREFIX}logf$( printf "%03d" $fhour).txt
+# output gaussian global surface forecast files
+$NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.nc
+
+eval $GAUSFCFCSTEXE > ./${APREFIX}logf$( printf "%03d" $fhour).txt
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2
