@@ -1336,10 +1336,11 @@
  do i=1,itime
     if (timeh(i) == diag_fhr) then
        ith=i
-       print *,'diag_fhr, ith ', diag_fhr, ith
        EXIT
     endif
  end do
+ if (itime == 1) ith=1
+ print *,'diag_fhr, ith ', diag_fhr, ith
 
  do tile = 1, num_tiles
 
