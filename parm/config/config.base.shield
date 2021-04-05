@@ -166,20 +166,19 @@ export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4:
 # GFS output and frequency
 export FHMIN_GFS=0
 
-export FHMAX_GFS_00=384
+export FHMAX_GFS_00=240
 export FHMAX_GFS_06=384
 export FHMAX_GFS_12=384
 export FHMAX_GFS_18=384
 export FHMAX_GFS=$(eval echo \${FHMAX_GFS_$cyc})
 
-export FHOUT_GFS=3
+export FHOUT_GFS=6
 export FHMAX_HF_GFS=0
 export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
-
 
 # I/O QUILTING, true--use Write Component; false--use GFDL FMS
 # if quilting=true, choose OUTPUT_GRID as cubed_sphere_grid in netcdf or gaussian_grid
@@ -200,6 +199,9 @@ else
     export NEMSIO_IN=".true."
     export NETCDF_IN=".false."
 fi
+
+# SHiELD output format for long-term forecast
+export DO_CUBE2GAUS="YES"
 
 # IAU related parameters
 export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
@@ -236,6 +238,9 @@ export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
+
+# forecast w/o DA increment for restart
+export fcst_wo_da="NO"
 
 # EnKF output frequency
 if [ $DOHYBVAR = "YES" ]; then
@@ -289,7 +294,7 @@ export netcdf_diag=".true."
 export binary_diag=".false."
 
 # Verification options
-export DO_METP="YES"                  # Run MET+ jobs
+export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options

@@ -18,5 +18,9 @@ else
 fi
 module list
 
-cd ${cwd}/gaussian_sfcfcst.fd
+cd ${cwd}/gaussian_sfcfcst.fd/gaussian_sfcfcst_vector
 ./makefile.sh
+
+cd ${cwd}/gaussian_sfcfcst.fd/gaussian_sfcfcst_scalar
+./makefile.sh
+

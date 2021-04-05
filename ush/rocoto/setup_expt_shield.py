@@ -76,12 +76,12 @@ def edit_baseconfig():
     top = os.path.abspath(os.path.join(
         os.path.abspath(here), '../..'))
 
-    if os.path.exists(base_config):
-        os.unlink(base_config)
+    # make a copy of the default before editing
+    shutil.copy(base_config, base_config + '.default')
 
     print '\nSDATE = %s\nEDATE = %s' % (idate, edate)
-    with open(base_config + '.shield', 'rt') as fi:
-        with open(base_config, 'wt') as fo:
+    with open(base_config + '.default', 'rt') as fi:
+        with open(base_config + '.new', 'wt') as fo:
             for line in fi:
                 line = line.replace('@MACHINE@', machine.upper()) \
                     .replace('@PSLOT@', pslot) \
@@ -105,6 +105,8 @@ def edit_baseconfig():
                     .replace('@QUEUE_SERVICE@', queue_service) \
                     .replace('@PARTITION_BATCH@', partition_batch) \
                     .replace('@EXP_WARM_START@', exp_warm_start) \
+                    .replace('@DO_OmFonly@', runomf) \
+                    .replace('@DO_POST@', runpost) \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
                     .replace('@HPSSARCH@', hpssarch) \
@@ -116,6 +118,8 @@ def edit_baseconfig():
                 if 'ICSDIR' in line:
                     continue
                 fo.write(line)
+    os.unlink(base_config)
+    os.rename(base_config + '.new', base_config)
 
     print ''
     print 'EDITED:  %s/config.base as per user input.' % expdir
@@ -148,6 +152,8 @@ link initial condition files from $ICSDIR to $COMROT'''
     parser.add_argument('--gfs_cyc', help='GFS cycles to run', type=int, choices=[0, 1, 2, 4], default=1, required=False)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
+    parser.add_argument('--runomf', help='run GSI for OmF', type=str, choices=['YES', 'NO'], required=False, default='NO')
+    parser.add_argument('--runpost', help='run post and verification', type=str, choices=['YES', 'NO'], required=False, default='YES')
 
     args = parser.parse_args()
 
@@ -170,6 +176,8 @@ link initial condition files from $ICSDIR to $COMROT'''
     gfs_cyc = args.gfs_cyc
     partition = args.partition
     start = args.start
+    runomf = args.runomf
+    runpost = args.runpost
 
     # Set restart setting in config.base
     if start == 'cold':

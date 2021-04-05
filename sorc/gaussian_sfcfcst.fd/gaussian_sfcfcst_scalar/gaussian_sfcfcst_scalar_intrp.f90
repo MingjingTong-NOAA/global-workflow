@@ -28,9 +28,7 @@
 ! netcdf_out              When 'true', output gaussian file in
 !                         netcdf.  Otherwise output nemsio format.
 !
-! 2018-Jan-30 Gayno       Initial version
-! 2019-Oct-30 Gayno       Option to output gaussian analysis file
-!                         in netcdf.
+! 2021-March-11 Tong      Initial version
 !
 ! pwatclm, hgt_hyblev1, spfh_hyblev1, ugrd_hyblev1, vgrd_hyblev1
 ! tmp_hyblev1 (not required by post)
@@ -46,8 +44,9 @@
  integer, parameter :: num_tiles = 6
 
  integer :: itile, jtile, igaus, jgaus, itime, ntile
- integer :: fhzero, imp_physics, iu10, iv10, iuh1, ivh1
+ integer :: fhzero, imp_physics
  real :: fhr, dtp, diag_fhr
+ character(len=128) :: gaus_file
 
  integer(nemsio_intkind) :: idate(8)
 
@@ -64,10 +63,7 @@
  character(len=30)       :: units_post(num_post)
  character(len=128)      :: desc_post(num_post)
 
- real, dimension(:,:), allocatable      :: var_tile, varh1_tile
  real, dimension(:),   allocatable      :: xlon, ylat 
- real, dimension(:,:,:,:), allocatable  :: elon_cubsph, elat_cubsph
- real, dimension(:,:,:),   allocatable  :: elon_latlon, elat_latlon
 
  real, parameter :: pi = 3.141592653589793
  real, parameter :: todeg=180./pi
@@ -226,17 +222,12 @@
  integer                 :: id_col, id_row, id_s, n, icoor
  integer                 :: yy, mm, dd, hh
  integer, allocatable    :: col(:), row(:), col2(:), row2(:)
-
  logical                 :: netcdf_out
 
  real(kind=8), allocatable :: s(:), s2(:)
 
- real, allocatable :: var_gaus(:,:)
- real, allocatable :: xyz_latlon(:,:,:)
- real, allocatable :: ua_latlon(:,:), va_latlon(:,:)
-
- namelist /setup/ yy, mm, dd, hh, fhr, diag_fhr, igaus, jgaus, netcdf_out, &
-                  fhzero, imp_physics, dtp 
+ namelist /setup/ yy, mm, dd, hh, fhr, diag_fhr, igaus, jgaus, gaus_file, &
+                  netcdf_out, fhzero, imp_physics, dtp 
 
  call w3tagb('GAUSSIAN_SFCFCST',2018,0179,0055,'NP20')
 
@@ -305,7 +296,9 @@
 
  intpl_method_post(1:47)='bilinear'
  intpl_method_post(48:84)='nearest_stod'
- intpl_method_post(85:88)='vector_bilinear'
+! winds from GFS physics are defined on the lat-lon grid, 
+! need to do a vector interpolation
+ intpl_method_post(85:88)='bilinear'
 
  print*
  print*,"- READ INTERPOLATION WEIGHT FILE"
@@ -353,12 +346,10 @@
  allocate(gaussian_data%sfc_noah_1(igaus*jgaus,num_noah_1))    ! sfc
  allocate(gaussian_data%sfc_noah_2(igaus*jgaus,4,num_noah_2))
  allocate(gaussian_data%sfc_post(igaus*jgaus,num_post))
- allocate(var_gaus(igaus*jgaus,3))
 
  gaussian_data%sfc_noah_1=0.0 
  gaussian_data%sfc_noah_2=0.0
  gaussian_data%sfc_post=0.0
- var_gaus=0.0
 
 !------------------------------------------------------------------------------
 ! interpolation (Bilinear or Nearest).
@@ -400,70 +391,12 @@
    endif
  enddo
 
- allocate(xyz_latlon(igaus,jgaus,3))
- do icoor=1,3
-   do i = 1, n_s2
-     var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*var_tile(col2(i),icoor)
-   enddo
-   xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
- enddo
-
-! need to flip elon_latlon and elat_latlon, because here lat(1) > 0 
- allocate(ua_latlon(igaus,jgaus),va_latlon(igaus,jgaus))
- do j=1,jgaus
-   do i=1,igaus
-     ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
- do j=1,jgaus
-   do i=1,igaus
-     va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
-
- gaussian_data%sfc_post(:,iu10)=reshape (ua_latlon, (/igaus*jgaus/) )
- gaussian_data%sfc_post(:,iv10)=reshape (va_latlon, (/igaus*jgaus/) )
-
- var_gaus=0.0
- do icoor=1,3
-   do i = 1, n_s2
-     var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*varh1_tile(col2(i),icoor)
-   enddo
-   xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
- enddo
-
- do j=1,jgaus
-   do i=1,igaus
-     ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
- do j=1,jgaus
-   do i=1,igaus
-     va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
-
- gaussian_data%sfc_post(:,iuh1)=reshape (ua_latlon, (/igaus*jgaus/) )
- gaussian_data%sfc_post(:,ivh1)=reshape (va_latlon, (/igaus*jgaus/) )
-
  deallocate(col, row, s)
  deallocate(col2, row2, s2)
 
  deallocate(tile_data%sfc_noah_1)
  deallocate(tile_data%sfc_noah_2)
  deallocate(tile_data%sfc_post)
- deallocate(var_tile, varh1_tile)
- deallocate(xyz_latlon, var_gaus)
- deallocate(ua_latlon, va_latlon)
- deallocate(elon_latlon, elat_latlon) 
 
 !------------------------------------------------------------------------------
 ! Write gaussian data to either netcdf or nemsio file.
@@ -524,6 +457,7 @@
  real(kind=4), parameter :: fillvalue = 9.99e20
 
  real(kind=4), allocatable :: dummy(:,:)
+ real :: dlon, dlat
  real, dimension(:,:), allocatable :: lon2d, lat2d
 
 ! define noah fields
@@ -855,10 +789,15 @@
 !-------------------------------------------------------------------------------------------
 
  allocate(dummy(igaus,jgaus))
+ allocate(xlon(igaus), ylat(jgaus))
  allocate(lon2d(igaus,jgaus),lat2d(igaus,jgaus))
 
+! read gaussian grid
+
+ call read_gaus_grid(gaus_file, xlon, ylat, igaus, jgaus)
+
  do j=1,jgaus
-   lon2d(:,j)=todeg*xlon(:)
+   lon2d(:,j)=xlon(:)
  end do
 
  error = nf90_put_var(ncid, id_xt, lon2d(:,1))
@@ -868,7 +807,9 @@
  call netcdf_err(error, 'WRITING LON')
 
  do i=1, igaus
-   lat2d(i,:)=todeg*ylat(:)
+   do j=1,jgaus
+     lat2d(i,j)=ylat(jgaus-j+1)
+   end do
  end do
 
  error = nf90_put_var(ncid, id_yt, lat2d(1,:))
@@ -900,6 +841,51 @@
  error = nf90_close(ncid)
 
  end subroutine write_sfc_data_netcdf
+
+ subroutine read_gaus_grid(gaus_file, xlon, ylat, nlon, nlat)
+
+ use netcdf
+
+ implicit none
+
+ character(len=128), intent(in) :: gaus_file
+ integer, intent(in)  :: nlon, nlat
+ real,    intent(out) :: xlon(nlon), ylat(nlat)
+ !------------------------------------------------------------------!
+ ! local variables                                                  !
+ !------------------------------------------------------------------!
+ integer :: ncid, lon_id, lat_id, ndims, dimids(1), error
+ character(len=120) :: filename
+ logical :: exists
+
+ ! form file name and check existance
+ write(filename,100) trim(gaus_file)
+100 format(a,'.nc')
+ inquire(file=filename, exist=exists)
+ if (.not. exists) then
+   print 110, trim(filename)
+110    format(/,"Gaussian grid file ",a," doesn't exist",/)
+   stop
+ endif
+
+ ! open nc file
+ error=nf90_open(trim(filename), 0, ncid)
+ call netcdf_err(error, 'OPENING gaus_file' )
+
+ ! get nlon
+ error=nf90_inq_varid(ncid, "lon", lon_id)
+ error=nf90_get_var(ncid, lon_id, xlon)
+ call netcdf_err(error, 'READING lon' )
+
+ ! get nlat
+ error=nf90_inq_varid(ncid, "lat", lat_id)
+ error=nf90_get_var(ncid, lat_id, ylat)
+ call netcdf_err(error, 'READING lat' )
+
+ ! close nc file
+ error=nf90_close(ncid)
+
+ end subroutine read_gaus_grid
 
 !-------------------------------------------------------------------------------------------
 ! Retrieve variable based on its netcdf identifier.
@@ -1135,14 +1121,14 @@
  allocate(dummy(igaus,jgaus))
 
  do j=1,jgaus
-   dummy(:,j)=todeg*xlon(:)
+   dummy(:,j)=xlon(:)
  end do
 
  allocate(lon(igaus*jgaus))
  lon = reshape (dummy, (/igaus*jgaus/) )
 
  do i=1, igaus
-   dummy(i,:)=todeg*ylat(:)
+   dummy(i,:)=ylat(:)
  end do
 
  allocate(lat(igaus*jgaus))
@@ -1285,9 +1271,6 @@
 
  real(kind=8), allocatable  :: dummy(:,:), dummy3d(:,:,:)
  real(kind=8), allocatable  :: timeh(:), dummy3t(:,:,:)
- real, allocatable  :: u10m(:,:,:), uh1(:,:,:)
- real, allocatable  :: v10m(:,:,:), vh1(:,:,:)
- real, allocatable  :: var_cubsph(:,:,:)
 
 !-------------------------------------------------------------------------------------------
 ! Get tile dimensions from the first forecast file.
@@ -1314,13 +1297,6 @@
  allocate(tile_data%sfc_noah_1(ijtile*num_tiles,num_noah_1))
  allocate(tile_data%sfc_noah_2(ijtile*num_tiles,4,num_noah_2))
  allocate(tile_data%sfc_post(ijtile*num_tiles,num_post))
- allocate(u10m(itile,jtile,num_tiles))
- allocate(v10m(itile,jtile,num_tiles))
- allocate(uh1(itile,jtile,num_tiles))
- allocate(vh1(itile,jtile,num_tiles))
- allocate(var_cubsph(itile,jtile,num_tiles))
- allocate(var_tile(ijtile*num_tiles,3))
- allocate(varh1_tile(ijtile*num_tiles,3))
 
  error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
  error=nf90_inq_dimid(ncid, 'time', id_dim)
@@ -1429,29 +1405,12 @@
       call netcdf_err(error, 'READING '//trim(name_post(i))//' ID' )
       error=nf90_get_var(ncid, id_var, dummy3t)
       dummy=dummy3t(:,:,ith)
-      if (name_post(i) == 'ugrd10m') then
-        iu10=i
-        u10m(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'vgrd10m') then
-        iv10=i
-        v10m(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'ugrd_hyblev1') then
-        iuh1=i
-        uh1(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'vgrd_hyblev1') then
-        ivh1=i
-        vh1(:,:,tile)=dummy
-      endif
       call netcdf_err(error, 'READING '//trim(name_post(i)))
       print*,'- '//trim(name_post(i))//': ',maxval(dummy),minval(dummy)
       tile_data%sfc_post(istart:iend,i) = reshape(dummy, (/ijtile/))
       if (tile == 1) then
          error=nf90_get_att(ncid, id_var, 'units', units_post(i))
          error=nf90_get_att(ncid, id_var, 'long_name', desc_post(i))
-         !error=nf90_get_att(ncid, id_var, 'interp_method', intpl_method_post(i))
       endif
    end do
 
@@ -1459,178 +1418,9 @@
 
  enddo
 
-!------------------------------------------------------------------------------
-! Read elon, elat.
-!------------------------------------------------------------------------------
-
- print *,'itile, jtile, igaus, jgaus=', itile, jtile, igaus, jgaus
- allocate(elon_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
-          elat_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
-          elon_latlon(3,igaus,jgaus), &
-          elat_latlon(3,igaus,jgaus))
-
- call read_c2g_weight
-
- do icoor=1,3
-   do tile=1,num_tiles
-     do j=1,jtile
-       do i=1,itile
-         var_cubsph(i,j,tile)=u10m(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
-                             +v10m(i,j,tile) * elat_cubsph(icoor,i,j,tile)
-       enddo
-     enddo
-   enddo
-
-   do tile = 1, num_tiles
-     istart = (ijtile) * (tile-1) + 1
-     iend   = istart + ijtile - 1
-     var_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
-   enddo
- enddo
-
- do icoor=1,3
-   do tile=1,num_tiles
-     do j=1,jtile
-       do i=1,itile
-         var_cubsph(i,j,tile)=uh1(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
-                             +vh1(i,j,tile) * elat_cubsph(icoor,i,j,tile)
-       enddo
-     enddo
-   enddo
-
-   do tile = 1, num_tiles
-     istart = (ijtile) * (tile-1) + 1
-     iend   = istart + ijtile - 1
-     varh1_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
-   enddo
- enddo
-
- deallocate (dummy, dummy3d, dummy3t, timeh, u10m, v10m, var_cubsph)
- deallocate (uh1, vh1)
- deallocate (elon_cubsph, elat_cubsph)
+ deallocate (dummy, dummy3d, dummy3t, timeh)
 
  end subroutine read_data_nc
-
-!-------------------------------------------------------------------------------------------
-! Read elon, elat from cube2gaus 
-!-------------------------------------------------------------------------------------------
-
- subroutine read_c2g_weight
-
- use netcdf
- use io
-
- implicit none
-
- integer :: ncid, id_npx, npx, id_npy, npy, id_nlon, nlon, id_nlat, nlat
- integer :: id_xlon, id_ylat, id_elonc, id_elatc, id_elonl, id_elatl, error, j
- character(len=30) :: case
- real, allocatable :: lat1d(:)
-
-!-------------------------------------------------------------------------------------------
-! Get dimensions
-!-------------------------------------------------------------------------------------------
-
- print *,'itile', itile
- if (itile < 100) then
-   write (case, "(A1,I2)") "C", itile
- else if (itile < 1000) then
-   write (case, "(A1,I3)") "C", itile
- else
-   write (case, "(A1,I4)") "C", itile
- endif
-
- error=nf90_open("./c2g_elonelat_"//trim(case)// ".nc",nf90_nowrite,ncid)
- call netcdf_err(error, "OPENING c2g_elonelat_"//trim(case)// ".nc" )
-
- error=nf90_inq_dimid(ncid, 'npx', id_npx)
- call netcdf_err(error, 'READING npx id' )
- error=nf90_inquire_dimension(ncid,id_npx,len=npx)
- call netcdf_err(error, 'READING npx' )
-
- if (npx-2 /= itile) then
-   print*,'** FATAL ERROR: npx=', npx, 'itile=', itile
-   print*,'STOP.'
-   call errexit(23)
- endif  
-
- error=nf90_inq_dimid(ncid, 'npy', id_npy)
- call netcdf_err(error, 'READING npy id' )
- error=nf90_inquire_dimension(ncid,id_npy,len=npy)
- call netcdf_err(error, 'READING npy' )
-
- if (npy-2 /= jtile) then
-   print*,'** FATAL ERROR: npy=', npy, 'jtile=', jtile
-   print*,'STOP.'
-   call errexit(23)
- endif
-
- error=nf90_inq_dimid(ncid, 'nlon', id_nlon)
- call netcdf_err(error, 'READING nlon id' )
- error=nf90_inquire_dimension(ncid,id_nlon,len=nlon)
- call netcdf_err(error, 'READING nlon' )
-
- if (nlon /= igaus) then 
-   print*,'** FATAL ERROR: nlon=', nlon, 'igaus=', igaus 
-   print*,'STOP.'
-   call errexit(23)
- endif  
-
- error=nf90_inq_dimid(ncid, 'nlat', id_nlat)
- call netcdf_err(error, 'READING nlat id' )
- error=nf90_inquire_dimension(ncid,id_nlat,len=nlat)
- call netcdf_err(error, 'READING nlat' )
-
- if (nlat /= jgaus) then 
-   print*,'** FATAL ERROR: nlat=', nlat, 'jgaus=', jgaus
-   print*,'STOP.'
-   call errexit(23)
- endif  
-
- allocate(xlon(nlon), ylat(nlat))
-
- error=nf90_inq_varid(ncid, 'xlon', id_xlon)
- call netcdf_err(error, 'READING xlon id_xlon' )
- error=nf90_get_var(ncid, id_xlon, xlon)
- call netcdf_err(error, 'READING xlon' )
-
- error=nf90_inq_varid(ncid, 'ylat', id_ylat)
- call netcdf_err(error, 'READING ylat id_ylat' )
- error=nf90_get_var(ncid, id_ylat, ylat)
- call netcdf_err(error, 'READING ylat' )
-
- error=nf90_inq_varid(ncid, 'elon_cubsph', id_elonc)
- call netcdf_err(error, 'READING elon_cubsph id_elonc' )
- error=nf90_get_var(ncid, id_elonc, elon_cubsph)
- call netcdf_err(error, 'READING elon_cubsph' )
-
- error=nf90_inq_varid(ncid, 'elat_cubsph', id_elatc)
- call netcdf_err(error, 'READING elat_cubsph id_elatc' )
- error=nf90_get_var(ncid, id_elatc, elat_cubsph)
- call netcdf_err(error, 'READING elat_cubsph' )
- 
- error=nf90_inq_varid(ncid, 'elon_latlon', id_elonl)
- call netcdf_err(error, 'READING elon_latlon id_elonl' )
- error=nf90_get_var(ncid, id_elonl, elon_latlon)
- call netcdf_err(error, 'READING elon_latlon' )
-
- error=nf90_inq_varid(ncid, 'elat_latlon', id_elatl)
- call netcdf_err(error, 'READING elat_latlon id_elatl' )
- error=nf90_get_var(ncid, id_elatl, elat_latlon)
- call netcdf_err(error, 'READING elat_latlon' )
-
- error = nf90_close(ncid)
-
- if (ylat(1) < 0.0) then
-    allocate(lat1d(nlat))
-    do j=1,nlat
-       lat1d(j) = ylat(nlat-j+1)
-    end do
-    ylat(:)=lat1d(:)
-    deallocate(lat1d)
- endif
-
- end subroutine read_c2g_weight
 
 !-------------------------------------------------------------------------------------------
 ! Netcdf error routine.

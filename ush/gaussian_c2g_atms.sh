@@ -13,11 +13,10 @@
 # Script history log:
 # 2019-12-26  Tong  initial script
 #
-# Usage:  gaussian_atmsfcst.sh
+# Usage:  gaussian_c2g_atms.sh
 #
 #   Imported Shell Variables:
 #     CASE          Model resolution.  Defaults to C768.
-#     DONST         Process NST fields when 'yes'.  Default is 'no'.
 #     BASEDIR       Root directory where all scripts and fixed files reside.
 #                   Default is /nwprod2.
 #     HOMEgfs       Directory for gfs version.  Default is
@@ -44,7 +43,7 @@
 #                   defaults to 'eval [[ $err = 0 ]]'
 #     ENDSCRIPT     Postprocessing script
 #                   defaults to none
-#     CDATE         Output analysis date in yyyymmddhh format. Required.
+#     CDATE         Output forecast date in yyyymmddhh format. Required.
 #     PGMOUT        Executable standard output
 #                   defaults to $pgmout, then to '&1'
 #     PGMERR        Executable standard error
@@ -82,11 +81,13 @@
 #                  $FIXWGTS
 #                  $FIXam/global_hyblev.l65.txt
 #
-#     input data : $COMOUT/RESTART/${PDY}.${cyc}0000.sfcanl_data.tile*.nc
+#     input data : $COMOUT/RESTART/${PDY}.${cyc}0000.fv_core.res.tile*.nc
+#                  $COMOUT/RESTART/${PDY}.${cyc}0000.fv_tracer.res.tile*.nc
+#                  $COMOUT/RESTART/${PDY}.${cyc}0000.phy_data.res.tile*.nc
 #
 #     output data: $PGMOUT
 #                  $PGMERR
-#                  $COMOUT/${APREFIX}sfcanl${ASUFFIX}
+#                  $COMOUT/${APREFIX}atmf${ASUFFIX}
 #
 # Remarks:
 #
@@ -115,7 +116,7 @@ VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
-   exec > $DATA/logf$( printf "%03d" $RHR) 2>&1
+   exec > $DATA/logf$( printf "%03d" $fhour) 2>&1
 fi
 
 CASE=${CASE:-C768}
@@ -133,7 +134,7 @@ DATA=${DATA:-$(pwd)}
 
 #  Filenames.
 XC=${XC}
-GAUATMSEXE=${GAUATMSEXE:-$EXECgfs/gaussian_atms.x}
+GAUATMSEXE=${GAUATMSEXE:-$EXECgfs/gaussian_c2g_atms.x}
 
 CDATE=${CDATE:?}
 
@@ -188,19 +189,19 @@ fi
 # Executable namelist
 cat > fv3_da.nml <<EOF
    &fv3_da_nml
-    finer_steps = 0
-    nvar3dout = 14
-    write_res = .true.
-    read_res = .true.
-    write_nemsio = $nemsio
-    rmhydro = ${rmhydro}
-    pseudo_ps = ${pseudo_ps}
-    data_file(1) = "fv_tracer.res"
-    data_file(2) = "fv_core.res"
-    data_file(3) = "${phy_data}"
-    data_out = "atmf${ASUFFIX}"
-    gaus_file = "gaus_N${res}"
-    atmos_nthreads = $OMP_NUM_THREADS
+    finer_steps = 0,
+    nvar3dout = 14,
+    write_res = .true.,
+    read_res = .true.,
+    write_nemsio = $nemsio,
+    rmhydro = ${rmhydro},
+    pseudo_ps = ${pseudo_ps},
+    data_file(1) = "fv_tracer.res",
+    data_file(2) = "fv_core.res",
+    data_file(3) = "${phy_data}",
+    data_out = "atmf$( printf "%03d" $fhour)${ASUFFIX}",
+    gaus_file = "gaus_N${res}",
+    atmos_nthreads = $OMP_NUM_THREADS,
     yy=$yyyy,
     mm=$mm,
     dd=$dd,
@@ -247,9 +248,9 @@ for list in $list1 $list2 $list3; do
 done  
    
 # output gaussian global forecast files
-$NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf${ASUFFIX}
+$NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf$( printf "%03d" $fhour)${ASUFFIX}
 
-eval $GAUATMSEXE > ./${APREFIX}logf$( printf "%03d" $fhour).txt
+eval $GAUATMSEXE > ./logf$( printf "%03d" $fhour)
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

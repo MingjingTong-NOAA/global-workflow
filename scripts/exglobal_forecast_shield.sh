@@ -53,6 +53,7 @@ FHMAX_HF=${FHMAX_HF:-0}
 FHOUT_HF=${FHOUT_HF:-1}
 NSOUT=${NSOUT:-"-1"}
 FDIAG=$FHOUT
+first_time_step=${first_time_step:-".false."}
 if [ $FHMAX_HF -gt 0 -a $FHOUT_HF -gt 0 ]; then FDIAG=$FHOUT_HF; fi
 WRITE_DOPOST=${WRITE_DOPOST:-".false."}
 restart_interval=${restart_interval:-0}
@@ -119,6 +120,7 @@ fi
 cores_per_node=${cores_per_node:-${npe_node_max:-24}}
 ntiles=${ntiles:-6}
 NTASKS_FV3=${NTASKS_FV3:-$npe_fv3}
+NNODES=$((NTASKS_FV3/npe_node_fcst))
 
 TYPE=${TYPE:-"nh"}                  # choices:  nh, hydro
 MONO=${MONO:-"non-mono"}            # choices:  mono, non-mono
@@ -135,11 +137,12 @@ affix="nemsio"
 rCDUMP=${rCDUMP:-$CDUMP}
 
 # interpolate from cubesphere grid to gaussian grid
+DO_CUBE2GAUS=${DO_CUBE2GAUS:-"YES"}
 C2GSH=${C2GSH:-$HOMEgfs/ush/cube2gaussian.sh}
-export GAUATMSEXE=${GAUATMSFCSTEXC:-$HOMEgfs/exec/gaussian_atms.x}
+export GAUATMSEXE=${GAUATMSEXE:-$HOMEgfs/exec/gaussian_c2g_atms.x}
 NTHREADS_GAUATMS=${NTHREADS_GAUATMS:-24}
 GAUSFCFCSTSH=${GAUSFCFCSTSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
-export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcanl.exe}
+export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcfcst.exe}
 NTHREADS_GAUSFCFCST=${NTHREADS_GAUSFCFCST:-1}
 
 APRUN_C2G=${APRUN_C2G:-${APRUN:-""}}
@@ -248,6 +251,7 @@ fi
 #-------------------------------------------------------
 # initial conditions
 warm_start=${warm_start:-".false."}
+fcst_wo_da=${fcst_wo_da:-"NO"}
 read_increment=${read_increment:-".false."}
 res_latlon_dynamics="''"
 
@@ -270,17 +274,26 @@ if [ $DOIAU = "YES" -a $warm_start = ".false." ] || [ $DOIAU_coldstart = "YES" -
   tcyc=$cyc
 fi
 
-if [ $DOIAU = "YES" ]; then
-  
+if [[ $DOIAU = "YES" ]]; then
   FHMIN=$((IAU_DELTHRS/2+FHMIN))
   FHMAX=$((IAU_DELTHRS/2+FHMAX))
-  restart_start_secs=$((FHMIN*3600))
   iau_halfdelthrs=$((IAU_DELTHRS/2))
+  if [ $FHOUT -ge 6 ]; then
+    FDIAG=$((IAU_DELTHRS/2))
+  fi
 else
   iau_halfdelthrs=0
+  if [[ $FHMIN -eq 0 ]]; then
+    first_time_step=".true."
+  fi
 fi
-restart_secs=$((FHOUT*3600))
 
+restart_start_secs=$((FHMIN*3600))
+restart_secs=$((FHOUT*3600))
+if [[ "$CDUMP" == "gfs" && "$DO_CUBE2GAUS" == "NO" ]] ; then
+   restart_start_secs=0
+   restart_secs=0
+fi
 #-------------------------------------------------------
 if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
 #-------------------------------------------------------
@@ -339,11 +352,15 @@ EOF
       read_increment=".false."
       res_latlon_dynamics=""
     else
-      increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
-      if [ -f $increment_file ]; then
-        $NLN $increment_file $DATA/INPUT/fv_increment.nc
-        read_increment=".true."
-        res_latlon_dynamics="fv_increment.nc"
+      if [ $fcst_wo_da = "NO" ]; then 
+        increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
+        if [ -f $increment_file ]; then
+          $NLN $increment_file $DATA/INPUT/fv_increment.nc
+          read_increment=".true."
+          res_latlon_dynamics="fv_increment.nc"
+        fi
+      else
+        read_increment=".false."
       fi
     fi
   
@@ -402,7 +419,7 @@ fi
 
 # If doing IAU, change forecast hours
 if [[ "$DOIAU" = "YES" ]]; then
-#  FHMAX=$((FHMAX+6))
+# FHMAX=$((FHMAX+6))
   if [ $FHMAX_HF -gt 0 ]; then
      FHMAX_HF=$((FHMAX_HF+6))
   fi
@@ -611,7 +628,7 @@ NST_RESV=${NST_RESV-0}
 ZSEA1=${ZSEA1:-0}
 ZSEA2=${ZSEA2:-0}
 nstf_name=${nstf_name:-"$NST_MODEL,$NST_SPINUP,$NST_RESV,$ZSEA1,$ZSEA2"}
-nst_anl=${nst_anl:-".false."}
+nst_anl=${nst_anl:-".true."}
 
 
 # blocking factor used for threading and general physics performance
@@ -742,7 +759,7 @@ if [ $DO_SPPT = "YES" ]; then
 fi
 
 # copy over the tables
-DIAG_TABLE=${DIAG_TABLE:-$PARM_FV3DIAG/diag_table}
+DIAG_TABLE=${DIAG_TABLE:-$PARM_FV3DIAG/diag_table_shield_da}
 DATA_TABLE=${DATA_TABLE:-$PARM_FV3DIAG/data_table}
 FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 
@@ -759,6 +776,7 @@ FV3 Forecast
 ${sPDY:0:4} ${sPDY:4:2} ${sPDY:6:2} ${scyc} 0 0
 EOF
 cat $DIAG_TABLE >> diag_table
+sed -i "s/YYYY MM DD HH/${PDY:0:4} ${PDY:4:2} ${PDY:6:2} ${cyc}/g" diag_table
 fi
 
 $NCP $DATA_TABLE  data_table
@@ -783,7 +801,8 @@ cat > input.nml <<EOF
   chksum_debug = $chksum_debug
   dycore_only = $dycore_only
   fdiag = $FDIAG
-  first_time_step = .false.
+  first_time_step = $first_time_step
+  fprint = .false.
   $atmos_model_nml
 /
 
@@ -968,7 +987,7 @@ cat > input.nml <<EOF
 EOF
 
 # Add namelist for IAU
-if [ $DOIAU = "YES" ]; then
+if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
   cat >> input.nml << EOF
   iaufhrs      = ${IAUFHRS}
   iau_delthrs  = ${IAU_DELTHRS}
@@ -1229,13 +1248,18 @@ if [ $QUILTING = ".true." -a $OUTPUT_GRID = "gaussian_grid" ]; then
   done
 else
   echo 'shield history files'
-  #for n in $(seq 1 $ntiles); do
-  #  eval $NLN nggps2d.tile${n}.nc       $memdir/nggps2d.tile${n}.nc
-  #  eval $NLN nggps3d.tile${n}.nc       $memdir/nggps3d.tile${n}.nc
-  #  eval $NLN grid_spec.tile${n}.nc     $memdir/grid_spec.tile${n}.nc
-  #  eval $NLN atmos_static.tile${n}.nc  $memdir/atmos_static.tile${n}.nc
-  #  eval $NLN atmos_4xdaily.tile${n}.nc $memdir/atmos_4xdaily.tile${n}.nc
-  #done
+  if [[ "$CDUMP" == "gfs" && "$DO_CUBE2GAUS" == "NO" ]] ; then
+     for n in $(seq 1 $ntiles); do
+       eval $NLN $memdir/grid_spec.tile${n}.nc        grid_spec.tile${n}.nc
+       eval $NLN $memdir/atmos_4xdaily.tile${n}.nc    atmos_4xdaily.tile${n}.nc
+       eval $NLN $memdir/atmos_static.tile${n}.nc     atmos_static.tile${n}.nc
+       eval $NLN $memdir/atmos_sos.tile${n}.nc        atmos_sos.tile${n}.nc
+       eval $NLN $memdir/nggps2d.tile${n}.nc          nggps2d.tile${n}.nc
+       eval $NLN $memdir/nggps3d_4xdaily.tile${n}.nc  nggps3d_4xdaily.tile${n}.nc
+       eval $NLN $memdir/tracer3d_4xdaily.tile${n}.nc tracer3d_4xdaily.tile${n}.nc
+     done
+  fi
+  #eval $NLN $memdir/tendency.dat  fort.555
 fi
 
 #------------------------------------------------------------------
@@ -1249,6 +1273,7 @@ export err=$ERR
 $ERRSCRIPT || exit $err
 
 #------------------------------------------------------------------
+
 if [ $SEND = "YES" ]; then
 
   # Copy gdas and enkf member restart files
@@ -1284,49 +1309,43 @@ fi
 #------------------------------------------------------------------
 # cubesphere to gaussian
 #------------------------------------------------------------------
+if [[ "$CDUMP" == "gdas" || "$DO_CUBE2GAUS" == "YES" ]] ; then
+  cd $DATA
 
-cd $DATA
-
-cat > serial-tasks.config <<EOF
-# rank command
+  cat > serial-tasks.config <<EOF
+  # rank command
 EOF
 
-export OMP_NUM_THREADS_ATMS=$NTHREADS_GAUATMS
-export OMP_NUM_THREADS_SFC=$NTHREADS_GAUSFCFCST
-export rmhydro=${rmhydro:-".false."}
-export pseudo_ps=${pseudo_ps:-".false."}
-export phy_data=${phy_data=:-""}
+  export OMP_NUM_THREADS_ATMS=$nth_fcst
+  export OMP_NUM_THREADS_SFC=$NTHREADS_GAUSFCFCST
+  export rmhydro=${rmhydro:-".false."}
+  export pseudo_ps=${pseudo_ps:-".false."}
+  export phy_data=${phy_data=:-""}
+  export sCDATE=$sCDATE
+  export FHMIN=$FHMIN
+  export FHMAX=$FHMAX
+  export DELTIM=$DELTIM
+  export iau_halfdelthrs=$iau_halfdelthrs
+  export FHZER=$FHZER
 
-RHR=$FHMIN
-RDATE=$($NDATE +$FHMIN $sCDATE)
-while [[ $RHR -le $FHMAX ]] ; do
-   mc=$((RHR-$FHMIN))
-   if [[ $RHR == 0 ]]; then
-     export fhour=$((DELTIM/3600.))
-   else
-     export fhour=$((1.0*(RHR-iau_halfdelthrs)))
-   fi
-   echo "s/_RHR/$RHR/"              > changedate
-   echo "s/_RDATE/$RDATE/"          >>changedate
-   echo "s/_REND/$FHMAX/"           >>changedate
-   echo "s/_CDATE/$CDATE/"          >>changedate
-   echo "s/_fhour/$fhour/"          >>changedate
-   echo "s/_rmhydro/$rmhydro/"      >>changedate
-   echo "s/_pseudo_ps/${pseudo_ps}/" >>changedate
-   echo "s/_phy_data/${phy_data}/" >>changedate
-   sed -f changedate $C2GSH > c2g_$( printf "%03d" $RHR).sh
-   chmod 755 c2g_$( printf "%03d" $RHR).sh
-   cat >> serial-tasks.config <<EOF
-$mc c2g_$( printf "%03d" $RHR).sh
+  RHR=$FHMIN
+  mc=0
+  while [[ $RHR -le $FHMAX ]] ; do
+     echo "s/_RHR/$RHR/"  > changedate
+     sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+     chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
 EOF
-   RHR=$(($RHR+$FHOUT))
-   RDATE=$($NDATE +$RHR $sCDATE)
-done
-$APRUN_C2G serial-tasks.config 1>&1 2>&2
-rc=$?
-export ERR=$rc
-export err=$ERR
-$ERRSCRIPT || exit 11
+     RHR=$(($RHR+$FHOUT))
+     mc=$((mc+1)) 
+  done
+  $APRUN_C2G serial-tasks.config 1>&1 2>&2
+  rc=$?
+  export ERR=$rc
+  export err=$ERR
+  $ERRSCRIPT || exit 11
+fi
 
 #------------------------------------------------------------------
 # Clean up before leaving

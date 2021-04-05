@@ -10,7 +10,7 @@ export RHR=_RHR
 export REND=$FHMAX
 export rmhydro=${rmhydro:-".true."}
 export pseudo_ps=${pseudo_ps:-".true."}
-export phy_data=${phy_data=:-""}
+export phy_data=${phy_data:-""}
 
 if [[ $RHR == 0 ]]; then
   export fhour=$((DELTIM/3600.))
@@ -22,9 +22,9 @@ export diag_fhr=$((fhour+2*iau_halfdelthrs))
 export RDATE=$($NDATE +$RHR $sCDATE)
 
 COMOUT=${COMOUTatmos:-"."}
-$NLN $COMOUT/${APREFIX}logf$( printf "%03d" $RHR) $DATA/logf$( printf "%03d" $RHR)
+$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt $DATA/logf$( printf "%03d" $fhour)
 
-GAUSSIANATMSSH=${GAUSSIANATMSSH:-$HOMEgfs/ush/gaussian_atmsfcst.sh}
+GAUSSIANATMSSH=${GAUSSIANATMSSH:-$HOMEgfs/ush/gaussian_c2g_atms.sh}
 
 $GAUSSIANATMSSH
 
@@ -33,7 +33,7 @@ GAUSSIANSFCSH=${GAUSSIANSFCSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
 $GAUSSIANSFCSH
 
 if [[ $err == 0 ]]; then
-   printf " completed fv3gfs fhour=%.*f %s" 3 $fhour $CDATE >> $DATA/logf$( printf "%03d" $RHR)
+   printf " completed fv3gfs fhour=%.*f %s" 3 $fhour $CDATE >> $DATA/logf$( printf "%03d" $fhour)
 fi
 
 set +x

@@ -1,7 +1,7 @@
 #output files
 "grid_spec",   -1,  "hours",    1, "hours", "time"
 #"gfs_physics", 6,  "hours",    1, "hours", "time"
-"gfs_surface",  1,  "hours",    1, "hours", "time"
+"gfs_surface",  3,  "hours",    1, "hours", "time"
 
 #
 #output variables

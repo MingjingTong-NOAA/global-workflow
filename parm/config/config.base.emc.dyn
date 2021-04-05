@@ -18,7 +18,7 @@ export QUEUE_SERVICE="@QUEUE_SERVICE@"
 export PARTITION_BATCH="@PARTITION_BATCH@"
 
 # Project to use in mass store:
-HPSS_PROJECT=emc-da
+HPSS_PROJECT=emc-global
 
 # Directories relative to installation areas:
 export HOMEgfs=@HOMEgfs@
@@ -198,13 +198,6 @@ else
     export SUFFIX=".nemsio"
     export NEMSIO_IN=".true."
     export NETCDF_IN=".false."
-fi
-
-# Cold starting
-if [[ "$CDATE" = "$FDATE" && $EXP_WARM_START = ".false." ]]; then
-   export cold_start_global=".true."
-else
-   export cold_start_global=".false."
 fi
 
 # IAU related parameters

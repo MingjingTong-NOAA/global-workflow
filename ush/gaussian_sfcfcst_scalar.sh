@@ -140,6 +140,7 @@ EXECgfs=${EXECgfs:-$HOMEgfs/exec}
 FIXfv3=${FIXfv3:-$HOMEgfs/fix/fix_fv3_gmted2010}
 FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
 FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
+FIXGAUS=${FIXGAUS:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
 FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_elonelat_${CASE}.nc}
@@ -193,7 +194,7 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 # input interpolation weights
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
-$NLN $FIXELONELAT ./c2g_elonelat_${CASE}.nc
+$NLN $FIXGAUS  ./gaus_N${res}.nc
 
 # input orography tiles
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
@@ -260,6 +261,7 @@ cat <<EOF > fort.41
      diag_fhr=$diag_fhr,
      igaus=$LONB_SFC,
      jgaus=$LATB_SFC,
+     gaus_file="gaus_N${res}"
      netcdf_out=$NETCDF_OUT
      fhzero=$FHZER
      imp_physics=11

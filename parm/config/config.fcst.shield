@@ -147,7 +147,11 @@ export USE_COUPLER_RES="NO"
 if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
 
     # Variables used in DA cycling
-    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_da"
+    if [ $DOIAU = "YES" ]; then
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_da"
+    else
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_da_ic"
+    fi
 
     # Write restart files, where $number is current model start time.
     # restart_interval:        $number
@@ -168,7 +172,11 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
     # Write more variables to output
-    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_6species"
+    if [ $DOIAU = "YES" ]; then
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
+    else
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
+    fi
 
     # Write gfs restart files to rerun fcst from any break point
     export restart_interval_gfs=${restart_interval_gfs:-0}
@@ -202,12 +210,16 @@ export REMAPSH="$HOMEgfs/ush/fv3gfs_remap.sh"
 export master_grid="0p25deg"                   # 1deg 0p5deg 0p25deg 0p125deg etc
 export npe_remap=$((npe_fcst < 240 ? npe_fcst : 240))
 
-export npe_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
+if [[ "$CDUMP" == "gdas" ]] ; then
+   export npe_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
+else
+   export npe_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
+fi
 
 # Global latlon NetCDF to nemsio utility parameters
 export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
 
-export GAUATMSEXE=$HOMEgfs/exec/gaussian_atms.x
+export GAUATMSEXE=$HOMEgfs/exec/gaussian_c2g_atms.x
 
 export SIGLEVEL="$FIXshield/global_hyblev.l${LEVS}.txt"
 
@@ -215,8 +227,6 @@ export SIGLEVEL="$FIXshield/global_hyblev.l${LEVS}.txt"
 export rmhydro=".true."
 export pseudo_ps=".true."
 export phy_data=""
-
-export KEEPDATA="NO"
 
 # Remember config.efcs will over-ride these values for ensemble forecasts
 # if these variables are re-defined there.

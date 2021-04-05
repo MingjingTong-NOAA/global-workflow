@@ -74,7 +74,6 @@ case $case_in in
         export layout_y=6
         export layout_x_gfs=5
         export layout_y_gfs=6
-        export npe_node_fcst=9
         export nth_fv3=2
         export cdmbgwd="0.2,2.5"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=1
@@ -92,7 +91,6 @@ case $case_in in
         export layout_y=10
         export layout_x_gfs=6
         export layout_y_gfs=10
-        export npe_node_fcst=18
         export nth_fv3=2
         export cdmbgwd="1.0,1.2"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=1
@@ -109,7 +107,6 @@ case $case_in in
         export layout_y=15
         export layout_x_gfs=6
         export layout_y_gfs=15
-        export npe_node_fcst=54
         export nth_fv3=2
         export cdmbgwd="3.5,0.25"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=2
@@ -124,7 +121,6 @@ case $case_in in
         export layout_y=16
         export layout_x_gfs=8
         export layout_y_gfs=16
-        export npe_node_fcst=6
         export nth_fv3=4
         export cdmbgwd="4.0,0.10,1.0,1.0"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=4
@@ -139,7 +135,6 @@ case $case_in in
         export layout_y=32
         export layout_x_gfs=16
         export layout_y_gfs=32
-        export npe_node_fcst=6
         export nth_fv3=4
         export cdmbgwd="4.0,0.05,1.0,1.0"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=4

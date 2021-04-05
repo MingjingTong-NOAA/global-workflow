@@ -280,7 +280,9 @@ if [ $type = "gdas" ]; then
   echo  "${dirname}${head}nsstbufr                 " >>gdas_restarta.txt
   fi
   echo  "${dirname}${head}prepbufr                 " >>gdas_restarta.txt
+  if [ $DO_MAKEPREPBUFR = "YES" ]; then
   echo  "${dirname}${head}prepbufr_pre-qc          " >>gdas_restarta.txt
+  fi
   echo  "${dirname}${head}prepbufr.acft_profiles   " >>gdas_restarta.txt
   echo  "${dirname}${head}abias                    " >>gdas_restarta.txt
   echo  "${dirname}${head}abias_air                " >>gdas_restarta.txt

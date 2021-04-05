@@ -13,10 +13,10 @@ gaussian_sfcfcst.o:  gaussian_sfcfcst.f90
 	$(FCOMP) $(FFLAGS) -I$(NEMSIO_INC) $(NETCDF_INCLUDE) -c gaussian_sfcfcst.f90
 
 install:
-	cp ${CMD} ../../exec
+	cp ${CMD} ../../../exec
 
 clean:
-	rm -f *.o *.mod ${CMD} ../../exec/${CMD}
+	rm -f *.o *.mod ${CMD} ../../../exec/${CMD}
 
 test:
 	@echo NO TESTS YET
