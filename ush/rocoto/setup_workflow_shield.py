@@ -90,6 +90,7 @@ def get_gfs_cyc_dates(base):
     gfs_cyc = base['gfs_cyc']
     sdate = base['SDATE']
     edate = base['EDATE']
+    gfs_delay = base['gfs_delay']
 
     interval_gfs = wfu.get_gfs_interval(gfs_cyc)
 
@@ -107,7 +108,7 @@ def get_gfs_cyc_dates(base):
             hrdet = 6
     elif gfs_cyc == 4:
         hrinc = 6
-    sdate_gfs = sdate + timedelta(hours=hrinc)
+    sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
     edate_gfs = edate - timedelta(hours=hrdet)
     if sdate_gfs > edate:
         print 'W A R N I N G!'
