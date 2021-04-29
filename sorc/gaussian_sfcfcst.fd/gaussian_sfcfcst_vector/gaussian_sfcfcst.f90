@@ -1331,13 +1331,22 @@
  call netcdf_err(error, 'READING time')
  error = nf90_close(ncid)
 
- do i=1,itime
-    if (timeh(i) == diag_fhr) then
-       ith=i
-       EXIT
+ if (itime == 1 .and. int(diag_fhr) == 0) then
+    ith=1
+ else
+    ith=0
+    do i=1,itime
+       if (timeh(i) == diag_fhr) then
+          ith=i
+          EXIT
+       endif
+    end do
+    if (ith == 0) then 
+       print*,'** FATAL ERROR: diag hour', diag_fhr, 'not found'
+       print*,'STOP.'
+       call errexit(23)
     endif
- end do
- if (itime == 1) ith=1
+ endif
  print *,'diag_fhr, ith ', diag_fhr, ith
 
  do tile = 1, num_tiles

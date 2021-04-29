@@ -270,7 +270,7 @@ EOF
 # output gaussian global surface forecast files
 $NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.nc
 
-eval $GAUSFCFCSTEXE > ./logf$( printf "%03d" $fhour)
+eval $GAUSFCFCSTEXE >> $DATA/logf$( printf "%03d" $fhour)
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

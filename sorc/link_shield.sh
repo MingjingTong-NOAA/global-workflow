@@ -8,16 +8,16 @@ machine=${2}
 
 if [ $# -lt 2 ]; then
     echo '***ERROR*** must specify two arguements: (1) RUN_ENVIR, (2) machine'
-    echo ' Syntax: link_fv3gfs.sh ( nco | emc ) ( cray | dell | hera | orion )'
+    echo ' Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 
-if [ $RUN_ENVIR != emc -a $RUN_ENVIR != nco ]; then
-    echo 'Syntax: link_fv3gfs.sh ( nco | emc ) ( cray | dell | hera | orion )'
+if [ $RUN_ENVIR != emc -a $RUN_ENVIR != nco -a $RUN_ENVIR != gfdl ]; then
+    echo 'Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 if [ $machine != cray -a $machine != dell -a $machine != hera -a $machine != orion ]; then
-    echo 'Syntax: link_fv3gfs.sh ( nco | emc ) ( cray | dell | hera | orion )'
+    echo 'Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 
@@ -50,9 +50,15 @@ for dir in fix_am fix_fv3_gmted2010 fix_gldas fix_orog fix_verif fix_wave_gfs ; 
 done
 $LINK $FIX_SHiELD .
 
+if [ $RUN_ENVIR != nco ]; then
+   RUN_ENVIR_FIX="emc"
+else
+   RUN_ENVIR_FIX=$RUN_ENVIR
+fi
+
 if [ -d ${pwd}/ufs_utils.fd ]; then
   cd ${pwd}/ufs_utils.fd/sorc
-  ./link_fixdirs.sh $RUN_ENVIR $machine
+  ./link_fixdirs.sh $RUN_ENVIR_FIX $machine
 fi
 
 #---------------------------------------
@@ -201,25 +207,25 @@ cd ${pwd}/../ush                ||exit 8
 cd $pwd/../exec
 [[ -s global_fv3gfs.x ]] && rm -f global_fv3gfs.x
 $LINK ../sorc/fv3gfs.fd/NEMS/exe/global_fv3gfs.x .
-#if [ -d ../sorc/fv3gfs.fd/WW3/exec ]; then # Wave execs
-#  for waveexe in ww3_gint ww3_grib ww3_grid ww3_multi ww3_ounf ww3_ounp ww3_outf ww3_outp ww3_prep ww3_prnc; do
-#    [[ -s $waveexe ]] && rm -f $waveexe
-#    $LINK ../sorc/fv3gfs.fd/WW3/exec/$waveexe .
-#  done
-#fi
+if [ -d ../sorc/fv3gfs.fd/WW3/exec -a $RUN_ENVIR != gfdl ]; then # Wave execs
+  for waveexe in ww3_gint ww3_grib ww3_grid ww3_multi ww3_ounf ww3_ounp ww3_outf ww3_outp ww3_prep ww3_prnc; do
+    [[ -s $waveexe ]] && rm -f $waveexe
+    $LINK ../sorc/fv3gfs.fd/WW3/exec/$waveexe .
+  done
+fi
 
 [[ -s gfs_ncep_post ]] && rm -f gfs_ncep_post
 $LINK ../sorc/gfs_post.fd/exec/ncep_post gfs_ncep_post
 
-#if [ -d ${pwd}/gfs_wafs.fd ]; then 
-#    for wafsexe in \
-#          wafs_awc_wafavn  wafs_blending  wafs_blending_0p25 \
-#          wafs_cnvgrib2  wafs_gcip  wafs_grib2_0p25 \
-#          wafs_makewafs  wafs_setmissing; do
-#        [[ -s $wafsexe ]] && rm -f $wafsexe
-#        $LINK ../sorc/gfs_wafs.fd/exec/$wafsexe .
-#    done
-#fi
+if [ -d ${pwd}/gfs_wafs.fd -a $RUN_ENVIR != gfdl ]; then 
+    for wafsexe in \
+          wafs_awc_wafavn  wafs_blending  wafs_blending_0p25 \
+          wafs_cnvgrib2  wafs_gcip  wafs_grib2_0p25 \
+          wafs_makewafs  wafs_setmissing; do
+        [[ -s $wafsexe ]] && rm -f $wafsexe
+        $LINK ../sorc/gfs_wafs.fd/exec/$wafsexe .
+    done
+fi
 
 for ufs_utilsexe in \
      emcsfc_ice_blend  emcsfc_snow2mdl  global_chgres  global_cycle chgres_cube; do
@@ -332,7 +338,7 @@ cd $pwd/../parm/config
 [[ -s config.base ]] && rm -f config.base 
 if [ $RUN_ENVIR = nco ] ; then
  cp -p config.base.nco.static config.base
-else
+elif [ $RUN_ENVIR = emc ]; then
  cp -p config.base.emc.dyn config.base
 fi
 #------------------------------

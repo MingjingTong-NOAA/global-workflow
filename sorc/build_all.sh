@@ -183,6 +183,20 @@ fi
 }
 
 #------------------------------------
+# build gaussian_sfcfcst
+#------------------------------------
+$Build_gaussian_sfcfcst && {
+echo " .... Building gaussian_sfcfcst .... "
+./build_gaussian_sfcfcst.sh > $logs_dir/build_gaussian_sfcfcst.log 2>&1
+rc=$?
+if [[ $rc -ne 0 ]] ; then
+    echo "Fatal error in building gaussian_sfcfcst."
+    echo "The log file is in $logs_dir/build_gaussian_sfcfcst.log"
+fi
+((err+=$rc))
+}
+
+#------------------------------------
 # build enkf_chgres_recenter
 #------------------------------------
 $Build_enkf_chgres_recenter && {

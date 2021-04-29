@@ -646,6 +646,7 @@ na_init=${na_init:-1}
 
 # variables for controlling initialization of NCEP/NGGPS ICs
 filtered_terrain=${filtered_terrain:-".true."}
+ncep_levs=${ncep_levs:-128}
 gfs_dwinds=${gfs_dwinds:-".true."}
 
 # various debug options
@@ -765,18 +766,24 @@ FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 
 # build the diag_table with the experiment name and date stamp
 if [ $DOIAU = "YES" ]; then
-cat > diag_table << EOF
-FV3 Forecast
-${gPDY:0:4} ${gPDY:4:2} ${gPDY:6:2} ${gcyc} 0 0
+  cat > diag_table << EOF
+  FV3 Forecast
+  ${gPDY:0:4} ${gPDY:4:2} ${gPDY:6:2} ${gcyc} 0 0
 EOF
-cat $DIAG_TABLE >> diag_table
+  cat $DIAG_TABLE >> diag_table
+  if [ $FHOUT -gt 1 ]; then
+    sed -i "s/IH/3/g" diag_table
+  else
+    sed -i "s/IH/1/g" diag_table
+  fi
 else
-cat > diag_table << EOF
-FV3 Forecast
-${sPDY:0:4} ${sPDY:4:2} ${sPDY:6:2} ${scyc} 0 0
+  cat > diag_table << EOF
+  FV3 Forecast
+  ${sPDY:0:4} ${sPDY:4:2} ${sPDY:6:2} ${scyc} 0 0
 EOF
-cat $DIAG_TABLE >> diag_table
-sed -i "s/YYYY MM DD HH/${PDY:0:4} ${PDY:4:2} ${PDY:6:2} ${cyc}/g" diag_table
+  cat $DIAG_TABLE >> diag_table
+  sed -i "s/YYYY MM DD HH/${PDY:0:4} ${PDY:4:2} ${PDY:6:2} ${cyc}/g" diag_table
+  sed -i "s/IH/$FHOUT/g" diag_table
 fi
 
 $NCP $DATA_TABLE  data_table
@@ -918,7 +925,7 @@ cat > input.nml <<EOF
 
 &external_ic_nml
   filtered_terrain = $filtered_terrain
-  levp = 64
+  levp = $ncep_levs
   gfs_dwinds = $gfs_dwinds
   checker_tr = .false.
   nt_checker = 0

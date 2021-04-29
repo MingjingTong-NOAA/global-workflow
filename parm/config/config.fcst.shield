@@ -34,15 +34,18 @@ if [ $QUILTING = ".true." ]; then
     export npe_fcst_gfs=$(echo " $npe_fcst_gfs  + $WRITE_GROUP_GFS * $WRTTASK_PER_GROUP_GFS" | bc)
 fi
 
+# External IC configuration
+export ncep_levs=64
+
 # Model configuration
 export TYPE="nh"
 export MONO="non-mono"
 export MODE="32bit"
 
-# Use stratosphere h2o physics
+# Use stratosphere h2o physics (not for SHiELD)
 export h2o_phys=".true."
 
-# Options of stratosphere O3 physics reaction coefficients
+# Options of stratosphere O3 physics reaction coefficients (not for SHiELD)
 export new_o3forc="YES"
 
 # do_ugwp=T: use unified CGWD and OGWD, and turbulent orographic form drag (TOFD)
@@ -147,10 +150,10 @@ export USE_COUPLER_RES="NO"
 if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
 
     # Variables used in DA cycling
-    if [ $DOIAU = "YES" ]; then
-       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_da"
+    if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] ; then
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
     else
-       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_da_ic"
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
     fi
 
     # Write restart files, where $number is current model start time.
@@ -172,10 +175,10 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
     # Write more variables to output
-    if [ $DOIAU = "YES" ]; then
-       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
-    else
+    if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] ; then
        export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
+    else
+       export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
     fi
 
     # Write gfs restart files to rerun fcst from any break point

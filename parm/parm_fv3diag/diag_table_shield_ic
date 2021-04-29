@@ -1,7 +1,7 @@
 #output files
 "grid_spec",   -1,  "hours",    1, "hours", "time"
 #"gfs_physics", 6,  "hours",    1, "hours", "time"
-"gfs_surface",  6,  "hours",    1, "hours", "time"
+"gfs_surface", IH,  "hours",    1, "hours", "time"
 "gfs_surface_ic%4yr%2mo%2dy%2hr", 240,  "seconds", 1, "hours", "time", 20, "days", "YYYY MM DD HH 0 0", 240, "seconds"
 
 #

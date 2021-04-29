@@ -116,7 +116,7 @@ VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
-   exec > $DATA/logf$( printf "%03d" $fhour) 2>&1
+   exec >> $DATA/logf$( printf "%03d" $fhour) 2>&1
 fi
 
 CASE=${CASE:-C768}
@@ -250,7 +250,7 @@ done
 # output gaussian global forecast files
 $NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf$( printf "%03d" $fhour)${ASUFFIX}
 
-eval $GAUATMSEXE > ./logf$( printf "%03d" $fhour)
+eval $GAUATMSEXE >> $DATA/logf$( printf "%03d" $fhour)
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2
