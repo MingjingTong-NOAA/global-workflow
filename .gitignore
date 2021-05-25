@@ -2,12 +2,14 @@
 #--------------------------
 __pycache__
 *.pyc
-*.o
+*.[aox]
 *.mod
 
-# Ignore exec folder
+# Ignore folders
 #-------------------
 exec/
+build*/
+install*/
 
 # Ignore fix directory symlinks
 #------------------------------
@@ -80,8 +82,10 @@ sorc/recentersigp.fd
 sorc/shave.fd
 sorc/wafs_awc_wafavn.fd
 sorc/wafs_blending.fd
+sorc/wafs_blending_0p25.fd
 sorc/wafs_cnvgrib2.fd
 sorc/wafs_gcip.fd
+sorc/wafs_grib2_0p25.fd
 sorc/wafs_makewafs.fd
 sorc/wafs_setmissing.fd
 
