@@ -143,7 +143,7 @@ FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
 FIXGAUS=${FIXGAUS:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
-FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_elonelat_${CASE}.nc}
+FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_weight_${CASE}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.

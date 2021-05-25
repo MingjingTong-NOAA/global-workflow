@@ -113,10 +113,15 @@ status=$?
 
 #  Set environment.
 VERBOSE=${VERBOSE:-"NO"}
+if [[ $atminc = ".true." ]]; then
+   AFHR=inc 
+else
+   AFHR=f$( printf "%03d" $fhour)
+fi
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
-   exec >> $DATA/logf$( printf "%03d" $fhour) 2>&1
+   exec >> $DATA/log${AFHR} 2>&1
 fi
 
 CASE=${CASE:-C768}
@@ -158,8 +163,8 @@ else
    mkdata=YES
 fi
 cd $DATA||exit 99
-mkdir -p gaussian_atmsf$( printf "%03d" $RHR)
-cd gaussian_atmsf$( printf "%03d" $RHR)
+mkdir -p gaussian_atms$AFHR
+cd gaussian_atms$AFHR
 
 ################################################################################
 #  Make forecast file on gaussian grid
@@ -171,8 +176,6 @@ $NCP $GAUATMSEXE ./
 
 export OMP_NUM_THREADS=${OMP_NUM_THREADS_ATMS:-40}
 
-RSTR=${RSTR:-"3"}
-RINTV=${RINTV:-"1"}
 REND=${REND:-"9"}
 
 yyyy=$(echo $CDATE | cut -c1-4)
@@ -186,6 +189,53 @@ else
    nemsio=".true."
 fi
 
+# input interpolation weights
+$NLN $FIXC2G ./gaus_N${res}.nc
+
+$NLN $DATA/grid_spec.tile1.nc ./grid_spec.tile1.nc
+$NLN $DATA/grid_spec.tile2.nc ./grid_spec.tile2.nc
+$NLN $DATA/grid_spec.tile3.nc ./grid_spec.tile3.nc
+$NLN $DATA/grid_spec.tile4.nc ./grid_spec.tile4.nc
+$NLN $DATA/grid_spec.tile5.nc ./grid_spec.tile5.nc
+$NLN $DATA/grid_spec.tile6.nc ./grid_spec.tile6.nc
+$NLN $DATA/control.dat ./control.dat
+
+if [[ $atminc = ".false." ]]; then
+  rPDY=$(echo $RDATE | cut -c1-8)
+  rcyc=$(echo $RDATE | cut -c9-10)
+  if [[ $RHR -ne $REND ]] ; then
+     list1=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_core.res.*`
+     list2=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_tracer.res.*`
+     list3=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.phy_data.*`
+     list4=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.coupler.res`	
+  else
+     list1=`ls -C1 $DATA/RESTART/fv_core.res.*`
+     list2=`ls -C1 $DATA/RESTART/fv_tracer.res.*`
+     list3=`ls -C1 $DATA/RESTART/phy_data.*`
+     list4=`ls -C1 $DATA/RESTART/coupler.res`
+  fi
+  for list in $list1 $list2 $list3; do
+      for file in $list; do
+         if [[ $RHR -ne $REND ]] ; then
+            $NLN $file ./${file#$DATA/RESTART/${rPDY}.${rcyc}0*.}
+         else
+            $NLN $file ./${file#$DATA/RESTART/}
+         fi
+      done
+  done  
+else
+  list1=`ls -C1 $DATA/ATMINC/atminc.fv_core.res.*`
+  list2=`ls -C1 $DATA/ATMINC/atminc.fv_tracer.res.*`
+  for list in $list1 $list2 $list3; do
+      for file in $list; do
+         $NLN $file ./${file#$DATA/ATMINC/atminc.}
+      done
+  done
+fi
+
+# output gaussian global forecast files
+$NLN $memdir/${APREFIX}atm${AFHR}${ASUFFIX} ./atm${AFHR}${ASUFFIX}
+
 # Executable namelist
 cat > fv3_da.nml <<EOF
    &fv3_da_nml
@@ -196,10 +246,11 @@ cat > fv3_da.nml <<EOF
     write_nemsio = $nemsio,
     rmhydro = ${rmhydro},
     pseudo_ps = ${pseudo_ps},
+    atminc = ${atminc},
     data_file(1) = "fv_tracer.res",
     data_file(2) = "fv_core.res",
     data_file(3) = "${phy_data}",
-    data_out = "atmf$( printf "%03d" $fhour)${ASUFFIX}",
+    data_out = "atm${AFHR}${ASUFFIX}",
     gaus_file = "gaus_N${res}",
     atmos_nthreads = $OMP_NUM_THREADS,
     yy=$yyyy,
@@ -213,44 +264,7 @@ cat > fv3_da.nml <<EOF
 /
 EOF
 
-# input interpolation weights
-$NLN $FIXC2G ./gaus_N${res}.nc
-
-$NLN $DATA/grid_spec.tile1.nc ./grid_spec.tile1.nc
-$NLN $DATA/grid_spec.tile2.nc ./grid_spec.tile2.nc
-$NLN $DATA/grid_spec.tile3.nc ./grid_spec.tile3.nc
-$NLN $DATA/grid_spec.tile4.nc ./grid_spec.tile4.nc
-$NLN $DATA/grid_spec.tile5.nc ./grid_spec.tile5.nc
-$NLN $DATA/grid_spec.tile6.nc ./grid_spec.tile6.nc
-$NLN $DATA/control.dat ./control.dat
-
-rPDY=$(echo $RDATE | cut -c1-8)
-rcyc=$(echo $RDATE | cut -c9-10)
-if [[ $RHR -ne $REND ]] ; then
-   list1=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_core.res.*`
-   list2=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.fv_tracer.res.*`
-   list3=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.phy_data.*`
-   list4=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.coupler.res`	
-else
-   list1=`ls -C1 $DATA/RESTART/fv_core.res.*`
-   list2=`ls -C1 $DATA/RESTART/fv_tracer.res.*`
-   list3=`ls -C1 $DATA/RESTART/phy_data.*`
-   list4=`ls -C1 $DATA/RESTART/coupler.res`
-fi
-for list in $list1 $list2 $list3; do
-    for file in $list; do
-       if [[ $RHR -ne $REND ]] ; then
-          $NLN $file ./${file#$DATA/RESTART/${rPDY}.${rcyc}0*.}
-       else
-          $NLN $file ./${file#$DATA/RESTART/}
-       fi
-    done
-done  
-   
-# output gaussian global forecast files
-$NLN $memdir/${APREFIX}atmf$( printf "%03d" $fhour)${ASUFFIX} ./atmf$( printf "%03d" $fhour)${ASUFFIX}
-
-eval $GAUATMSEXE >> $DATA/logf$( printf "%03d" $fhour)
+eval $GAUATMSEXE >> $DATA/log$AFHR
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2

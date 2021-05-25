@@ -142,7 +142,7 @@ FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
 FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
-FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_elonelat_${CASE}.nc}
+FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_weight_${CASE}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
@@ -172,8 +172,8 @@ else
    mkdata=YES
 fi
 cd $DATA||exit 99
-mkdir -p gaussian_sfcf$( printf "%03d" $RHR)
-cd gaussian_sfcf$( printf "%03d" $RHR)
+mkdir -p gaussian_sfcf$( printf "%03d" $fhour)
+cd gaussian_sfcf$( printf "%03d" $fhour)
 
 ################################################################################
 #  Make surface forecast
@@ -193,7 +193,7 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 # input interpolation weights
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
-$NLN $FIXELONELAT ./c2g_elonelat_${CASE}.nc
+$NLN $FIXELONELAT ./c2g_weight_${CASE}.nc
 
 # input orography tiles
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
