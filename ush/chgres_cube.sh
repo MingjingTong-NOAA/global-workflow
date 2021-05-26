@@ -1,1 +1,0 @@
-../sorc/ufs_utils.fd/ush/chgres_cube.sh
