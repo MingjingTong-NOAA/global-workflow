@@ -1,1 +1,0 @@
-/scratch2/GFDL/gfdlscr/Mingjing.Tong/GSI/gsi_mtong_gfdl.fd/scripts/exglobal_atmos_analysis_shield.sh

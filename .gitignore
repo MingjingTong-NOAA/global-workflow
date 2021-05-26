@@ -139,6 +139,7 @@ scripts/exgfs_atmos_wafs_grib.sh
 scripts/exgfs_atmos_wafs_grib2.sh
 scripts/exgfs_atmos_wafs_grib2_0p25.sh
 scripts/exglobal_atmos_analysis.sh
+scripts/exglobal_atmos_analysis_shield.sh
 scripts/exglobal_atmos_analysis_calc.sh
 scripts/exglobal_atmos_pmgr.sh
 scripts/exglobal_diag.sh
@@ -186,6 +187,7 @@ ush/trim_rh.sh
 ush/wafs_blending.sh
 ush/wafs_grib2.regrid.sh
 ush/wafs_intdsk.sh
+ush/chgres_cube.sh
 # util symlinks
 util/sub_slurm
 util/sub_wcoss_c

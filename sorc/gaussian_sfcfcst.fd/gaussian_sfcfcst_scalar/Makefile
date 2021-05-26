@@ -1,6 +1,6 @@
 SHELL=	/bin/sh
 
-CMD= gaussian_sfcfcst_scalar_intrp.exe
+CMD= gaussian_sfcfcst_scalar_intrp.x
 
 OBJS = gaussian_sfcfcst_scalar_intrp.o
 

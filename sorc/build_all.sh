@@ -158,20 +158,6 @@ if [ -d gfs_wafs.fd ]; then
 fi
 
 #------------------------------------
-# build gaussian_sfcanl
-#------------------------------------
-$Build_gaussian_sfcanl && {
-echo " .... Building gaussian_sfcanl .... "
-./build_gaussian_sfcanl.sh > $logs_dir/build_gaussian_sfcanl.log 2>&1
-rc=$?
-if [[ $rc -ne 0 ]] ; then
-    echo "Fatal error in building gaussian_sfcanl."
-    echo "The log file is in $logs_dir/build_gaussian_sfcanl.log"
-fi
-((err+=$rc))
-}
-
-#------------------------------------
 # build gaussian_sfcfcst
 #------------------------------------
 $Build_gaussian_sfcfcst && {
