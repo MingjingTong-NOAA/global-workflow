@@ -1,6 +1,6 @@
 SHELL=	/bin/sh
 
-CMD= gaussian_sfcfcst.x
+CMD= gaussian_sfcfcst.exe
 
 OBJS = gaussian_sfcfcst.o
 

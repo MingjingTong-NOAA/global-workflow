@@ -151,51 +151,11 @@ export deflate_level=1
 # Disable the use of coupler.res; get model start time from model_configure
 export USE_COUPLER_RES="NO"
 
-if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]; then
-   export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
+if [ $EXP_WARM_START = ".false." ]; then
+  export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
 else
-   export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
+  export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
 fi
-
-# The following (restart_interval) are for GFS
-if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
-
-    # Write restart files, where $number is current model start time.
-    # restart_interval:        $number
-    #    number=0, writes out restart files at the end of forecast.
-    #    number>0, writes out restart files at the frequency of $number and at the end of forecast.
-    # restart_interval:        "$number -1"
-    #    writes out restart files only once at $number forecast hour.
-    # restart_interval:        "$number1 $number2 $number3 ..."
-    #    writes out restart file at the specified forecast hours
-    export restart_interval=${restart_interval:-6}
-
-    # For IAU, write restarts at beginning of window also
-    if [ $DOIAU = "YES" ]; then
-       export restart_interval="6 9"
-       if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]; then export restart_interval="3 6"; fi # Cold starting
-    fi
-
-elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
-
-    # Write gfs restart files to rerun fcst from any break point
-    export restart_interval_gfs=${restart_interval_gfs:-0}
-    if [ $restart_interval_gfs -le 0 ]; then
-        export restart_interval=0
-    else
-        rst_list=""
-        IAU_OFFSET=${IAU_OFFSET:-0}
-        [[ $DOIAU = "NO" ]] && export IAU_OFFSET=0
-        xfh=$((restart_interval_gfs+(IAU_OFFSET/2)))
-        while [ $xfh -le $FHMAX_GFS ]; do
-          rst_list="$rst_list $xfh"
-          xfh=$((xfh+restart_interval_gfs))
-        done
-        export restart_interval="$rst_list"
-    fi
-
-fi
-
 
 # Regrid tiles to global Gaussian grid in NEMSIO
 export REGRID_NEMSIO_SH="$HOMEgfs/ush/fv3gfs_regrid_nemsio.sh"

@@ -1,0 +1,20 @@
+#!/bin/ksh -x
+
+########## config.archomg ##########
+# Archive specific
+
+echo "BEGIN: config.archomg"
+
+# Get task specific resources
+. $EXPDIR/config.resources archomg
+
+#--online archive of nemsio files for fit2obs verification
+export FITSARC="NO"
+export FHMAX_FITS=132
+[[ "$FHMAX_FITS" -gt "$FHMAX_GFS" ]] && export FHMAX_FITS=$FHMAX_GFS
+
+#--starting and ending hours of previous cycles to be removed from rotating directory
+export RMOLDSTD=144
+export RMOLDEND=24
+
+echo "END: config.archomg"

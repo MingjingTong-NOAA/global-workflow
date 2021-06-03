@@ -41,7 +41,7 @@
 #                   defaults to current working directory
 #     XC            Suffix to add to executables. Defaults to none.
 #     GAUSFCFCSTEXE  Program executable.
-#                   Defaults to $EXECgfs/gaussian_sfcfcst.exe
+#                   Defaults to $EXECgfs/gaussian_sfcanl.exe
 #     INISCRIPT     Preprocessing script.  Defaults to none.
 #     LOGSCRIPT     Log posting script.  Defaults to none.
 #     ERRSCRIPT     Error processing script
@@ -124,7 +124,8 @@ LATB_CASE=$((res*2))
 LONB_SFC=${LONB_SFC:-$LONB_CASE}
 LATB_SFC=${LATB_SFC:-$LATB_CASE}
 DONST=${DONST:-"NO"}
-LEVS=${LEVS:-91}
+LEVS=${LEVS:-64}
+LEVSP1=$(($LEVS+1))
 OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
 if [ $OUTPUT_FILE = "netcdf" ]; then
     export NETCDF_OUT=".true."
@@ -139,17 +140,14 @@ HOMEgfs=${HOMEgfs:-$BASEDIR/gfs_ver.${gfs_ver}}
 EXECgfs=${EXECgfs:-$HOMEgfs/exec}
 FIXfv3=${FIXfv3:-$HOMEgfs/fix/fix_fv3_gmted2010}
 FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
-FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
-FIXGAUS=${FIXGAUS:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
-FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_weight_${CASE}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
 XC=${XC}
-GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$EXECgfs/gaussian_sfcfcst_scalar_intrp.exe}
-SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVS}.txt}
+GAUSFCFCSTEXE=$EXECgfs/gaussian_sfcanl.exe
+SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVSP1}.txt}
 
 CDATE=${CDATE:?}
 
@@ -194,7 +192,6 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 # input interpolation weights
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
-$NLN $FIXGAUS  ./gaus_N${res}.nc
 
 # input orography tiles
 $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile1.nc   ./orog.tile1.nc
@@ -214,36 +211,22 @@ rPDY=$(echo $RDATE | cut -c1-8)
 rcyc=$(echo $RDATE | cut -c9-10)
 # input forecast tiles (with nst records)
 if [[ $RHR -ne $REND ]] ; then
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./fcst.tile1.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./fcst.tile2.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./fcst.tile3.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./fcst.tile4.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./fcst.tile5.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./fcst.tile6.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./anal.tile1.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./anal.tile2.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./anal.tile3.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./anal.tile4.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./anal.tile5.nc
+   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./anal.tile6.nc
 else
-   $NLN $DATA/RESTART/sfc_data.tile1.nc   ./fcst.tile1.nc
-   $NLN $DATA/RESTART/sfc_data.tile2.nc   ./fcst.tile2.nc
-   $NLN $DATA/RESTART/sfc_data.tile3.nc   ./fcst.tile3.nc
-   $NLN $DATA/RESTART/sfc_data.tile4.nc   ./fcst.tile4.nc
-   $NLN $DATA/RESTART/sfc_data.tile5.nc   ./fcst.tile5.nc
-   $NLN $DATA/RESTART/sfc_data.tile6.nc   ./fcst.tile6.nc
+   $NLN $DATA/RESTART/sfc_data.tile1.nc   ./anal.tile1.nc
+   $NLN $DATA/RESTART/sfc_data.tile2.nc   ./anal.tile2.nc
+   $NLN $DATA/RESTART/sfc_data.tile3.nc   ./anal.tile3.nc
+   $NLN $DATA/RESTART/sfc_data.tile4.nc   ./anal.tile4.nc
+   $NLN $DATA/RESTART/sfc_data.tile5.nc   ./anal.tile5.nc
+   $NLN $DATA/RESTART/sfc_data.tile6.nc   ./anal.tile6.nc
 fi
 
-if [[ $RHR -eq 0 ]]; then
-   $NLN $DATA/gfs_surface_ic*.tile1.nc   ./gfs_surface.tile1.nc
-   $NLN $DATA/gfs_surface_ic*.tile2.nc   ./gfs_surface.tile2.nc
-   $NLN $DATA/gfs_surface_ic*.tile3.nc   ./gfs_surface.tile3.nc
-   $NLN $DATA/gfs_surface_ic*.tile4.nc   ./gfs_surface.tile4.nc
-   $NLN $DATA/gfs_surface_ic*.tile5.nc   ./gfs_surface.tile5.nc
-   $NLN $DATA/gfs_surface_ic*.tile6.nc   ./gfs_surface.tile6.nc
-else
-   $NLN $DATA/gfs_surface.tile1.nc       ./gfs_surface.tile1.nc
-   $NLN $DATA/gfs_surface.tile2.nc       ./gfs_surface.tile2.nc
-   $NLN $DATA/gfs_surface.tile3.nc       ./gfs_surface.tile3.nc
-   $NLN $DATA/gfs_surface.tile4.nc       ./gfs_surface.tile4.nc
-   $NLN $DATA/gfs_surface.tile5.nc       ./gfs_surface.tile5.nc
-   $NLN $DATA/gfs_surface.tile6.nc       ./gfs_surface.tile6.nc
-fi
+#$NLN $DATA/RESTART/coupler.res ./coupler.res
 
 riy=$(echo $RDATE | cut -c1-4)
 rim=$(echo $RDATE | cut -c5-6)
@@ -258,20 +241,17 @@ cat <<EOF > fort.41
      dd=$id,
      hh=$ih,
      fhr=$fhour,
-     diag_fhr=$diag_fhr,
      igaus=$LONB_SFC,
      jgaus=$LATB_SFC,
-     gaus_file="gaus_N${res}"
+     donst=$DONST
      netcdf_out=$NETCDF_OUT
-     fhzero=$FHZER
-     imp_physics=11
-     dtp=$DELTIM 
     /
 EOF
 
 # output gaussian global surface forecast files
-$NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.nc
-
+$NLN $memdir/${APREFIX}sfcf$( printf "%03d" $fhour)${ASUFFIX} ./sfc.gaussian.file
+#$NLN $memdir/${APREFIX}logf$( printf "%03d" $fhour).txt ../${APREFIX}logf$( printf "%03d" $fhour).txt
+#eval $GAUSFCFCSTEXE >> ../${APREFIX}logf$( printf "%03d" $fhour).txt
 eval $GAUSFCFCSTEXE > ./logf$( printf "%03d" $fhour)
 export ERR=$?
 export err=$ERR

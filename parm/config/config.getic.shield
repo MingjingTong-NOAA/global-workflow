@@ -16,10 +16,15 @@ fi
 
 # Provide a parallel experiment name and path to HPSS archive
 if [ $ics_from = "pargfs" ]; then
-   #export parexp="prnemsrn"
-   #export HPSS_PAR_PATH="/5year/NCEPDEV/emc-global/emc.glopara/WCOSS_C/$parexp"
-   export parexp="v16rt2"
+   if [ $FDATE -gt 2020123000 ]; then
+      export parexp="v16rt2n"
+   else
+      export parexp="v16rt2"
+   fi
    export HPSS_PAR_PATH="/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/$parexp"
+fi
+
+if [ $ics_from = "shield" ]; then
    export parexp="S20i"
    export HPSS_PAR_PATH="/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch/$parexp"
 fi

@@ -41,7 +41,7 @@ export DATA="$RUNDIR/$CDATE/$CDUMP/fv3ic$$"
 [[ -d $DATA ]] && rm -rf $DATA
 
 # Input GFS initial condition directory
-export INIDIR="$ICSDIR/$CDATE/$CDUMP/$CDUMP.$PDY/$cyc"
+export INIDIR="$ICSDIR/input/$ICDUMP.$PDY/$cyc"
 
 # Output FV3 initial condition directory
 export OUTDIR="$ICSDIR/$CDATE/$CDUMP/$CASE/INPUT"
@@ -64,6 +64,7 @@ cd $COMOUT || exit 99
 rm -rf INPUT
 $NLN $OUTDIR .
 
+[[ $KEEPDATA = "NO" && -d $DATA ]] && rm -rf $DATA
 ###############################################################
 # Exit cleanly
 exit 0

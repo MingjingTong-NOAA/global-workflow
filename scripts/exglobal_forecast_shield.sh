@@ -21,6 +21,7 @@
 # 2019-12-12  Henrique Alves Added wave model blocks for coupled run
 # 2020-01-31  Henrique Alves Added IAU capability for wave component
 # 2020-06-02  Fanglin Yang   restore restart capability when IAU is turned on.                     
+# 2021-05-01  Mingjing Tong  remodifed for replay option
 #
 # $Id$
 #
@@ -47,6 +48,8 @@ CDUMP=${CDUMP:-gdas}
 FHMIN=${FHMIN:-0}
 FHMAX=${FHMAX:-9}
 FHOUT=${FHOUT:-1}
+FHOUT_aux=${FHOUT_aux:-0}
+FHDUR_aux=${FHDUR_aux:-0}
 FHZER=${FHZER:-6}
 FHCYC=${FHCYC:-24}
 FHMAX_HF=${FHMAX_HF:-0}
@@ -99,6 +102,7 @@ DOIAU=${DOIAU:-"NO"}
 IAUFHRS=${IAUFHRS:-0}
 IAU_DELTHRS=${IAU_DELTHRS:-0}
 IAU_OFFSET=${IAU_OFFSET:-0}
+replay=${replay:-0}
 
 # Model specific stuff
 FCSTEXECDIR=${FCSTEXECDIR:-$HOMEgfs/sorc/fv3gfs.fd/NEMS/exe}
@@ -140,7 +144,7 @@ rCDUMP=${rCDUMP:-$CDUMP}
 DO_CUBE2GAUS=${DO_CUBE2GAUS:-"YES"}
 C2GSH=${C2GSH:-$HOMEgfs/ush/cube2gaussian.sh}
 export GAUATMSEXE=${GAUATMSEXE:-$HOMEgfs/exec/gaussian_c2g_atms.x}
-NTHREADS_GAUATMS=${NTHREADS_GAUATMS:-24}
+NTHREADS_GAUATMS=${NTHREADS_GAUATMS:-40}
 GAUSFCFCSTSH=${GAUSFCFCSTSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
 export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcfcst.exe}
 NTHREADS_GAUSFCFCST=${NTHREADS_GAUSFCFCST:-1}
@@ -219,6 +223,11 @@ fi
 if [ $MEMBER -lt 0 ]; then
   prefix=$CDUMP
   rprefix=$rCDUMP
+  if [ $replay -gt 0 ]; then
+    rprefix=$CDUMP
+  else
+    rprefix=$rCDUMP
+  fi
   memchar=""
 else
   prefix=enkf$CDUMP
@@ -248,6 +257,21 @@ else
   tcyc=$cyc
 fi
 
+if [ $replay = 1 ]; then
+  if [ $nrestartbg = 1 ]; then
+    rst_hrs="6"
+  elif [ $nrestartbg = 3 ]; then
+    rst_hrs="3 6 9"
+  elif [ $nrestartbg = 7 ]; then
+    rst_hrs="3 4 5 6 7 8 9"
+  else
+    echo "Unknown background number, ABORT!"
+    exit 1
+  fi
+else
+  rst_hrs="0"
+fi
+
 #-------------------------------------------------------
 # initial conditions
 warm_start=${warm_start:-".false."}
@@ -260,7 +284,7 @@ if [ -f $gmemdir/RESTART/${sPDY}.${scyc}0000.coupler.res ]; then
   export warm_start=".true."
 fi
 
-# turn IAU off for cold start
+# turn IAU and replay off for cold start
 DOIAU_coldstart=${DOIAU_coldstart:-"NO"}
 if [ $DOIAU = "YES" -a $warm_start = ".false." ] || [ $DOIAU_coldstart = "YES" -a $warm_start = ".true." ]; then
   export DOIAU="NO"
@@ -272,6 +296,7 @@ if [ $DOIAU = "YES" -a $warm_start = ".false." ] || [ $DOIAU_coldstart = "YES" -
   scyc=$cyc
   tPDY=$sPDY
   tcyc=$cyc
+  replay=0
 fi
 
 if [[ $DOIAU = "YES" ]]; then
@@ -293,6 +318,17 @@ restart_secs=$((FHOUT*3600))
 if [[ "$CDUMP" == "gfs" && "$DO_CUBE2GAUS" == "NO" ]] ; then
    restart_start_secs=0
    restart_secs=0
+fi
+if [[ $FHOUT_aux > 0 ]]; then
+   FHMIN_aux=$((FHMIN+3))
+   FHMAX_aux=$((FHMIN_aux+FHDUR_aux))
+   restart_secs_aux=$((FHOUT_aux*3600))
+   restart_start_secs_aux=$((FHMIN_aux*3600))
+   restart_duration_secs_aux=$((FHDUR_aux*3600))
+else
+   restart_secs_aux=0
+   restart_start_secs_aux=0 
+   restart_duration_secs_aux=0
 fi
 #-------------------------------------------------------
 if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
@@ -333,34 +369,40 @@ EOF
     fi
 
   # Link increments
-    if [ $DOIAU = "YES" ]; then
-      for i in $(echo $IAUFHRS | sed "s/,/ /g" | rev); do
-        incfhr=$(printf %03i $i)
-        if [ $incfhr = "006" ]; then
-          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
-        else
-          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
-        fi
-        if [ ! -f $increment_file ]; then
-          echo "ERROR: DOIAU = $DOIAU, but missing increment file for fhr $incfhr at $increment_file"
-          echo "Abort!"
-          exit 1
-        fi
-        $NLN $increment_file $DATA/INPUT/fv_increment$i.nc
-        IAU_INC_FILES="'fv_increment$i.nc',$IAU_INC_FILES"
-      done
+    if [ $replay = 1 ]; then 
+      # compute increment inside model
       read_increment=".false."
-      res_latlon_dynamics=""
+      IAU_FORCING_VAR=${IAU_FORCING_VAR:-"'ua','va','temp','delp','delz','sphum','o3mr',"}
     else
-      if [ $fcst_wo_da = "NO" ]; then 
-        increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
-        if [ -f $increment_file ]; then
-          $NLN $increment_file $DATA/INPUT/fv_increment.nc
-          read_increment=".true."
-          res_latlon_dynamics="fv_increment.nc"
-        fi
-      else
+      if [ $DOIAU = "YES" ]; then
+        for i in $(echo $IAUFHRS | sed "s/,/ /g" | rev); do
+          incfhr=$(printf %03i $i)
+          if [ $incfhr = "006" ]; then
+            increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
+          else
+            increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
+          fi
+          if [ ! -f $increment_file ]; then
+            echo "ERROR: DOIAU = $DOIAU, but missing increment file for fhr $incfhr at $increment_file"
+            echo "Abort!"
+            exit 1
+          fi
+          $NLN $increment_file $DATA/INPUT/fv_increment$i.nc
+          IAU_INC_FILES="'fv_increment$i.nc',$IAU_INC_FILES"
+        done
         read_increment=".false."
+        res_latlon_dynamics=""
+      else
+        if [ $fcst_wo_da = "NO" ]; then 
+          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
+          if [ -f $increment_file ]; then
+            $NLN $increment_file $DATA/INPUT/fv_increment.nc
+            read_increment=".true."
+            res_latlon_dynamics="fv_increment.nc"
+          fi
+        else
+          read_increment=".false."
+        fi
       fi
     fi
   
@@ -386,11 +428,13 @@ EOF
 
     rst_list_rerun=""
     xfh=$restart_interval_gfs
-    while [ $xfh -le $FHMAX_GFS ]; do
-      rst_list_rerun="$rst_list_rerun $xfh"
-      xfh=$((xfh+restart_interval_gfs))
-    done
-    restart_interval="$rst_list_rerun"
+    if [ $xfh -gt 0 ]; then
+       while [ $xfh -le $FHMAX_GFS ]; do
+         rst_list_rerun="$rst_list_rerun $xfh"
+         xfh=$((xfh+restart_interval_gfs))
+       done
+       restart_interval="$rst_list_rerun"
+    fi
 
   fi
 #.............................
@@ -407,6 +451,56 @@ else ## cold start
 
 #-------------------------------------------------------
 fi 
+
+# link analysis and restart files for replay
+if [ $replay = 1 ]; then
+   # link external IC
+   mkdir -p $DATA/EXTIC
+   mkdir -p $DATA/ATMINC
+   mkdir -p $DATA/ATMANL
+   for file in $(ls $memdir/INPUT/*.nc); do
+     file2=$(echo $(basename $file))
+     fsuf=$(echo $file2 | cut -c1-3)
+     if [ $fsuf = "gfs" -o $fsuf = "sfc" ]; then
+       $NLN $file $DATA/EXTIC/$file2
+     fi
+   done
+
+   # Link restart background files
+   gCDATE=$($NDATE -6 $CDATE) 
+   
+   nbg=1
+   for rst_int in $rst_hrs; do
+     if [[ $rst_int -ge 0 ]]; then
+       mkdir -p $DATA/INPUT${nbg}    
+       RDATE=$($NDATE +$rst_int $gCDATE)
+       rPDY=$(echo $RDATE | cut -c1-8)
+       rcyc=$(echo $RDATE | cut -c9-10)
+       if [[ -s $gmemdir/RESTART/${rPDY}.${rcyc}0000.coupler.res ]]; then
+          for file in $(ls $gmemdir/RESTART/${rPDY}.${rcyc}0000.*.nc); do
+             file2=$(echo $(basename $file))
+             file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
+             fsuf=$(echo $file2 | cut -d. -f1)
+             if [ $fsuf != "sfc_data" ]; then
+                $NLN $file $DATA/INPUT${nbg}/$file2
+             fi
+          done
+       elif [[ $rst_int -eq 9 && -s $gmemdir/RESTART/coupler.res ]]; then
+          $NLN $gmemdir/RESTART/fv_core*.nc $DATA/INPUT${nbg}/
+          $NLN $gmemdir/RESTART/fv_tracer*.nc $DATA/INPUT${nbg}/
+          $NLN $gmemdir/RESTART/fv_srf_wnd*.nc $DATA/INPUT${nbg}/
+          $NLN $gmemdir/RESTART/phy_data*.nc $DATA/INPUT${nbg}/
+          $NLN $gmemdir/RESTART/sfc_data*.nc $DATA/INPUT${nbg}/
+          $NLN $gmemdir/RESTART/coupler.res $DATA/INPUT${nbg}/
+       else
+          echo "missing restart file at $rst_int hour, ABORT!"
+          exit 1
+       fi 
+       nbg=$((nbg+1))
+     fi
+   done
+fi
+
 #-------------------------------------------------------
 
 nfiles=$(ls -1 $DATA/INPUT/* | wc -l)
@@ -716,10 +810,16 @@ fi
 
 if [ $warm_start = ".true." ]; then # warm start from restart file
 
-  nggps_ic=".false."
-  ncep_ic=".false."
   external_ic=".false."
   mountain=".true."
+  if [ $replay = 1 ]; then
+    nggps_ic=${nggps_ic:-".true."}
+    ncep_ic=${ncep_ic:-".false."}
+  else
+    nggps_ic=".false."
+    ncep_ic=".false."
+  fi
+
   if [ $read_increment = ".true." ]; then # add increment on the fly to the restarts
     res_latlon_dynamics="fv_increment.nc"
   else
@@ -760,7 +860,7 @@ if [ $DO_SPPT = "YES" ]; then
 fi
 
 # copy over the tables
-DIAG_TABLE=${DIAG_TABLE:-$PARM_FV3DIAG/diag_table_shield_da}
+DIAG_TABLE=${DIAG_TABLE:-$PARM_FV3DIAG/diag_table_shield}
 DATA_TABLE=${DATA_TABLE:-$PARM_FV3DIAG/data_table}
 FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 
@@ -903,9 +1003,24 @@ cat > input.nml <<EOF
   agrid_vel_rst = ${agrid_vel_rst:-".true."}
   read_increment = $read_increment
   res_latlon_dynamics = $res_latlon_dynamics
+EOF
+
+# Add namelist for replay
+if [ $replay -gt 0 ]; then
+  cat >> input.nml << EOF
+  replay = $replay
+  nrestartbg = $nrestartbg
+EOF
+fi
+
+cat >> input.nml <<EOF
   $fv_core_nml
 /
+EOF
 
+echo "" >> input.nml
+
+cat >> input.nml <<EOF
 &coupler_nml
   months = ${months:-0}
   days = ${days:-$((FHMAX/24))}
@@ -919,6 +1034,17 @@ cat > input.nml <<EOF
   use_hyper_thread = ${hyperthread:-".false."}
   restart_secs = ${restart_secs:-3600}
   restart_start_secs = ${restart_start_secs:-10800}
+EOF
+
+if [ $restart_secs_aux -gt 0 ]; then
+  cat >> input.nml << EOF
+  restart_secs_aux = ${restart_secs_aux:-0}
+  restart_start_secs_aux = ${restart_start_secs_aux:-0}
+  restart_duration_secs_aux = ${restart_duration_secs_aux:-0}
+EOF
+fi
+
+cat >> input.nml <<EOF
   iau_offset   = ${IAU_OFFSET}
   $coupler_nml
 /
@@ -995,12 +1121,22 @@ EOF
 
 # Add namelist for IAU
 if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
-  cat >> input.nml << EOF
-  iaufhrs      = ${IAUFHRS}
-  iau_delthrs  = ${IAU_DELTHRS}
-  iau_inc_files= ${IAU_INC_FILES}
-  iau_drymassfixer = ${iau_drymassfixer:-".false."}
+  if [[ $replay = 1 ]]; then
+    cat >> input.nml << EOF
+    iaufhrs      = ${IAUFHRS}
+    iau_delthrs  = ${IAU_DELTHRS}
+    iau_forcing_var = ${IAU_FORCING_VAR}
+    iau_drymassfixer = ${iau_drymassfixer:-".false."}
+    iau_filter_increments = ${iau_filter_increments:-".true."}
 EOF
+  else
+    cat >> input.nml << EOF
+    iaufhrs      = ${IAUFHRS}
+    iau_delthrs  = ${IAU_DELTHRS}
+    iau_inc_files= ${IAU_INC_FILES}
+    iau_drymassfixer = ${iau_drymassfixer:-".false."}
+EOF
+  fi
 fi
 
 cat >> input.nml <<EOF
@@ -1266,7 +1402,58 @@ else
        eval $NLN $memdir/tracer3d_4xdaily.tile${n}.nc tracer3d_4xdaily.tile${n}.nc
      done
   fi
-  #eval $NLN $memdir/tendency.dat  fort.555
+  eval $NLN $memdir/tendency.dat  fort.555
+fi
+
+# Link restart files for replay
+rst_hrs1=`echo $rst_hrs |cut -d " " -f 1`
+gFHMAX=$FHMAX
+if [[ $CDUMP = "gdas" || $rst_hrs1 -gt 0 ]]; then
+  if [[ $rst_hrs1 -gt 0 ]]; then
+    if [ $nrestartbg = 1 ]; then
+      rst_link_list="3 6"
+    else
+      rst_link_list=$rst_hrs
+      gFHMAX=$((FHMAX - 3)) 
+    fi
+  else
+    if [ $DOIAU = "YES" ] || [ $DOIAU_coldstart = "YES" ]; then
+      rst_link_list="3 6"
+    else
+      rst_link_list="6"
+    fi
+  fi
+  mkdir -p $memdir/RESTART
+  for rst_int in $rst_link_list ; do
+    if [ $rst_int -ge 0 ]; then
+      RDATE=$($NDATE +$rst_int $CDATE)
+      rPDY=$(echo $RDATE | cut -c1-8)
+      rcyc=$(echo $RDATE | cut -c9-10)
+      if [ $rst_int -lt $gFHMAX ]; then
+        for file in "fv_core.res" "fv_tracer.res" "phy_data" "fv_srf_wnd.res" "sfc_data" ; do
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile1.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile1.nc
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile2.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile2.nc
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile3.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile3.nc
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile4.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile4.nc
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile5.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile5.nc
+          $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.${file}.tile6.nc $DATA/RESTART/${rPDY}.${rcyc}0000.${file}.tile6.nc
+        done
+        $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.fv_core.res.nc $DATA/RESTART/${rPDY}.${rcyc}0000.fv_core.res.nc
+        $NLN $memdir/RESTART/${rPDY}.${rcyc}0000.coupler.res $DATA/RESTART/${rPDY}.${rcyc}0000.coupler.res
+      else
+        for file in "fv_core.res" "fv_tracer.res" "phy_data" "fv_srf_wnd.res" "sfc_data" ; do
+          $NLN $memdir/RESTART/${file}.tile1.nc $DATA/RESTART/${file}.tile1.nc
+          $NLN $memdir/RESTART/${file}.tile2.nc $DATA/RESTART/${file}.tile2.nc
+          $NLN $memdir/RESTART/${file}.tile3.nc $DATA/RESTART/${file}.tile3.nc
+          $NLN $memdir/RESTART/${file}.tile4.nc $DATA/RESTART/${file}.tile4.nc
+          $NLN $memdir/RESTART/${file}.tile5.nc $DATA/RESTART/${file}.tile5.nc
+          $NLN $memdir/RESTART/${file}.tile6.nc $DATA/RESTART/${file}.tile6.nc
+        done
+        $NLN $memdir/RESTART/fv_core.res.nc $DATA/RESTART/fv_core.res.nc
+        $NLN $memdir/RESTART/coupler.res $DATA/RESTART/coupler.res
+      fi
+    fi
+  done
 fi
 
 #------------------------------------------------------------------
@@ -1278,40 +1465,6 @@ $APRUN_FV3 $DATA/$FCSTEXEC 1>&1 2>&2
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT || exit $err
-
-#------------------------------------------------------------------
-
-if [ $SEND = "YES" ]; then
-
-  # Copy gdas and enkf member restart files
-  if [ $CDUMP = "gdas" -a $rst_invt1 -gt 0 ]; then
-    cd $DATA/RESTART
-    mkdir -p $memdir/RESTART
-    for rst_int in $restart_interval ; do
-     if [ $rst_int -ge 0 ]; then
-       RDATE=$($NDATE +$rst_int $CDATE)
-       rPDY=$(echo $RDATE | cut -c1-8)
-       rcyc=$(echo $RDATE | cut -c9-10)
-       for file in $(ls ${rPDY}.${rcyc}0000.*) ; do
-         $NCP $file $memdir/RESTART/$file
-       done
-     fi
-    done
-    if [ $DOIAU = "YES" ] || [ $DOIAU_coldstart = "YES" ]; then
-      # if IAU is on, save restart at start of IAU window
-      rst_iau=$(( ${IAU_OFFSET} - (${IAU_DELTHRS}/2) ))
-      if [ $rst_iau -lt 0 ];then
-         rst_iau=$(( (${IAU_DELTHRS}) - ${IAU_OFFSET} ))
-      fi
-      RDATE=$($NDATE +$rst_iau $CDATE)
-      rPDY=$(echo $RDATE | cut -c1-8)
-      rcyc=$(echo $RDATE | cut -c9-10)
-      for file in $(ls ${rPDY}.${rcyc}0000.*) ; do
-         $NCP $file $memdir/RESTART/$file
-      done
-    fi
-  fi
-fi
 
 #------------------------------------------------------------------
 # cubesphere to gaussian
@@ -1338,7 +1491,9 @@ EOF
   RHR=$FHMIN
   mc=0
   while [[ $RHR -le $FHMAX ]] ; do
-     echo "s/_RHR/$RHR/"  > changedate
+     echo "s/_RHR/$RHR/"          > changedate
+     echo "s/_auxfhr/"NO"/"      >> changedate
+     echo "s/_atminc/".false."/" >> changedate
      sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
      chmod 755 c2g_$( printf "%03d" $mc).sh
      cat >> serial-tasks.config <<EOF
@@ -1347,6 +1502,52 @@ EOF
      RHR=$(($RHR+$FHOUT))
      mc=$((mc+1)) 
   done
+
+# Auxiliary forecast hours
+  if [[ $restart_secs_aux -gt 0 ]]; then
+     RHR_aux=$FHMIN_aux
+     while [[ $RHR_aux -le $FHMAX_aux ]] ; do 
+        # check if duplicated
+        found=0
+        drhr=$((FHMIN+FHOUT))
+        while [[ $drhr -le $FHMAX_aux ]]; do
+           if [[ $RHR_aux == $drhr ]]; then
+              found=1
+              break
+           fi
+           drhr=$((drhr+FHOUT))
+        done
+        if [[ $found == 0 ]]; then
+           echo "s/_RHR/$RHR_aux/"      > changedate
+           echo "s/_auxfhr/"YES"/"     >> changedate
+           echo "s/_atminc/".false."/" >> changedate
+           sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+           chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
+EOF
+           mc=$((mc+1))
+        fi
+        RHR_aux=$((RHR_aux+FHOUT_aux))
+     done
+  fi
+
+# replay increment file
+  if [[ $replay = 1 && $warm_start = ".true." ]]; then
+     echo "s/_RHR/0/"            > changedate
+     echo "s/_auxfhr/"NO"/"     >> changedate
+     echo "s/_atminc/".true."/" >> changedate
+     sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+     chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
+EOF
+     mc=$((mc+1))
+  fi
+
+  npe_c2g=$mc
+  APRUN_C2G="$launcher -n $npe_c2g -l --multi-prog"
+
   $APRUN_C2G serial-tasks.config 1>&1 2>&2
   rc=$?
   export ERR=$rc

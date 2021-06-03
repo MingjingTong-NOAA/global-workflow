@@ -262,7 +262,7 @@ for gldasexe in gdas2gldas  gldas2gdas  gldas_forcing  gldas_model  gldas_post  
 done
 
 [[ -s gaussian_c2g_atms.x ]] && rm -f gaussian_c2g_atms.x
-$LINK ../sorc/cube2gaus.fd/scripts/Build/bin/fv3_da_out_32bit.x gaussian_c2g_atms.x 
+$LINK ../sorc/cube2gaus.fd/scripts/Build/bin/fv3_da_out_32bit.x gaussian_c2g_atms.x
 
 #------------------------------
 #--link source code directories

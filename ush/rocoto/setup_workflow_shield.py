@@ -7,6 +7,9 @@
     AUTHOR:
         Rahul.Mahajan
         rahul.mahajan@noaa.gov
+        Modified for SHiELD
+        Mingjing.Tong
+        mingjing.tong@noaa.gov
 
     FILE DEPENDENCIES:
         1. config files for the parallel; e.g. config.base, config.fcst[.gfs], etc.
@@ -145,8 +148,8 @@ def get_preamble():
     strings.append('\t\tMain workflow manager for cycling Global Forecast System\n')
     strings.append('\n')
     strings.append('\tAUTHOR:\n')
-    strings.append('\t\tRahul Mahajan\n')
-    strings.append('\t\trahul.mahajan@noaa.gov\n')
+    strings.append('\t\tMingjing Tong\n')
+    strings.append('\t\tmingjing.tong@noaa.gov\n')
     strings.append('\n')
     strings.append('\tNOTES:\n')
     strings.append('\t\tThis workflow was automatically generated at %s\n' % datetime.now())

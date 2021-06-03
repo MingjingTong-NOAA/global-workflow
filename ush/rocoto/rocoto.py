@@ -195,6 +195,10 @@ def add_data_tag(dep_dict):
     dep_type = dep_dict.get('type', None)
     dep_data = dep_dict.get('data', None)
     dep_offset = dep_dict.get('offset', None)
+    dep_age = dep_dict.get('age', None)
+    dep_minsize = dep_dict.get('minsize',None)
+    dep_data2 = dep_dict.get('data2', None)
+    dep_offset2 = dep_dict.get('offset2', None)
 
     if dep_data is None:
         msg = 'a data value is necessary for %s dependency' % dep_type
@@ -211,8 +215,32 @@ def add_data_tag(dep_dict):
         offset_string_b = '<cyclestr offset="%s">' % dep_offset
         offset_string_e = '</cyclestr>'
 
-    string = '<datadep>'
+    if dep_age is None:
+        string = '<datadep>'
+    else:
+        if dep_minsize is None:
+            string = '<datadep age="%s">' % dep_age
+        else:
+            string = '<datadep age="%s" minsize="%s">' % (dep_age, dep_minsize)
+        
     string += '%s%s%s' % (offset_string_b, dep_data, offset_string_e)
+
+    if dep_data2 is None:
+        string2 = ''
+    else:
+        if dep_offset2 is None:
+            if '@' in dep_data:
+                offset_string_b = '<cyclestr>'
+                offset_string_e = '</cyclestr>'
+            else:
+                offset_string_b = ''
+                offset_string_e = ''
+        else:
+            offset_string_b = '<cyclestr offset="%s">' % dep_offset2
+            offset_string_e = '</cyclestr>'
+        string2 = '%s%s%s' % (offset_string_b, dep_data2, offset_string_e) 
+
+    string += string2
     string += '</datadep>'
 
     return string

@@ -202,7 +202,7 @@ def create_wf_task(task, cdump='gdas', cycledef=None, envar=None, dependency=Non
     if get_scheduler(detectMachine()) in ['slurm'] and detectMachine() in ['ORION']:
         task_dict['partition'] = '&PARTITION_BATCH;'
     # Add PARTITION_SERVICE to all service jobs (SLURM)
-    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','arch','earc']:
+    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','arch','earc','archomg','archfcst']:
         task_dict['partition'] = '&PARTITION_%s_%s;' % (task.upper(),cdump.upper())
 
     if metatask is None:
@@ -214,7 +214,7 @@ def create_wf_task(task, cdump='gdas', cycledef=None, envar=None, dependency=Non
     return task
 
 
-def create_firstcyc_task(cdump='gdas'):
+def create_firstcyc_task(cdump='gdas', arch='ARCH'):
     '''
     This task is needed to run to finalize the first half cycle
     '''
@@ -238,9 +238,9 @@ def create_firstcyc_task(cdump='gdas'):
                  'jobname': '&PSLOT;_%s_@H' % taskstr, \
                  'account': '&ACCOUNT;', \
                  'queue': '&QUEUE_SERVICE;', \
-                 'walltime': '&WALLTIME_ARCH_%s;' % cdump.upper(), \
-                 'native': '&NATIVE_ARCH_%s;' % cdump.upper(), \
-                 'resources': '&RESOURCES_ARCH_%s;' % cdump.upper(), \
+                 'walltime': '&WALLTIME_%s_%s;' % (arch, cdump.upper()), \
+                 'native': '&NATIVE_%s_%s;' % (arch, cdump.upper()), \
+                 'resources': '&RESOURCES_%s_%s;' % (arch, cdump.upper()), \
                  'log': '&ROTDIR;/logs/@Y@m@d@H/%s.log' % taskstr, \
                  'dependency': dependencies}
 

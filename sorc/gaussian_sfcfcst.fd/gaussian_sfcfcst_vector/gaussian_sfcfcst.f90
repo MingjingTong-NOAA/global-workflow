@@ -1547,8 +1547,8 @@
    write (case, "(A1,I4)") "C", itile
  endif
 
- error=nf90_open("./c2g_elonelat_"//trim(case)// ".nc",nf90_nowrite,ncid)
- call netcdf_err(error, "OPENING c2g_elonelat_"//trim(case)// ".nc" )
+ error=nf90_open("./c2g_weight_"//trim(case)// ".nc",nf90_nowrite,ncid)
+ call netcdf_err(error, "OPENING c2g_weight_"//trim(case)// ".nc" )
 
  error=nf90_inq_dimid(ncid, 'npx', id_npx)
  call netcdf_err(error, 'READING npx id' )

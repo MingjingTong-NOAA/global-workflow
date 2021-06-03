@@ -5,15 +5,30 @@
 
 echo "BEGIN: config.fv3ic"
 
-# Task and thread configuration
+# Task and thread configuration: 
+# tasks=npe_task, ppn=npe_node_task, threads=nth_task, 
+# nodes=np.int(np.ceil(np.float(tasks) / np.float(ppn)))
+
 export wtime_fv3ic="00:30:00"
 export npe_fv3ic=1
 export npe_node_fv3ic=1
 export nth_fv3ic=${NTHREADS_CHGRES:-24}
 if [ $machine = HERA ]; then
-  export npe_fv3ic=4
-  export npe_node_fv3ic=4
+  export npe_fv3ic=18
+  export npe_node_fv3ic=6
   export nth_fv3ic=1
+  if [ $CASE == 'C768' ]; then
+     export npe_fv3ic=36
+  elif [ $CASE == 'C1152' ] ; then
+     export npe_fv3ic=48
+  fi
 fi 
+
+if [ $gfs_ver = v16 ]; then
+  export LEVS=128
+else
+  export LEVS=65
+fi
+export VCOORD_FILE=${VCOORD_FILE:-${FIXshield}/global_hyblev.l${LEVS}.txt}
 
 echo "END: config.fv3ic"

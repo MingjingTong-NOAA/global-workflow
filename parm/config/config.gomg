@@ -1,0 +1,37 @@
+#!/bin/ksh -x
+
+########## config.eobs config.eomg ##########
+# Ensemble innovation specific, dependency config.anal
+
+echo "BEGIN: config.gomg"
+
+# Get task specific resources
+. $EXPDIR/config.resources gomg
+
+export npe_gsi=$npe_gomg
+
+# GSI namelist options
+export DOHYBVAR="NO"
+export DO_CALC_INCREMENT="NO"
+export DO_CALC_ANALYSIS="NO"
+export USE_CORRELATED_OBERRS="NO"
+export write_fv3_increment=".false."
+
+export USE_RADSTAT="NO" # This can be only used when bias correction is non-zero.
+export GENDIAG="YES"    # Diagnostic files must be created for gsi omg
+export SETUP='diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.'
+
+# GSI Namelist options for observation operator only
+export SETUP="miter=0,niter=1,"
+export BKGVERR="bkgv_flowdep=.false."
+export STRONGOPTS="tlnmc_option=0,nstrong=0,nvmodes_keep=0,baldiag_full=.false.,baldiag_inc=.false.,"
+
+export BERRORprefix=$FIXshield/global_berror.l${LEVS}
+
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
+
+export GBIAS=$FIXshield/abias/gfs${gfs_ver}/gdas.t00z.abias
+export GBIASPC=$FIXshield/abias/gfs${gfs_ver}/gdas.t00z.abias_pc
+export GBIASAIR=$FIXshield/abias/gfs${gfs_ver}/gdas.t00z.abias_air
+
+echo "END: config.gomg"

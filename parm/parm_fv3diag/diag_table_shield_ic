@@ -1,6 +1,6 @@
 #output files
 "grid_spec",   -1,  "hours",    1, "hours", "time"
-#"gfs_physics", 6,  "hours",    1, "hours", "time"
+#"gfs_physics", 12,  "hours",    1, "hours", "time"
 "gfs_surface", IH,  "hours",    1, "hours", "time"
 "gfs_surface_ic%4yr%2mo%2dy%2hr", 240,  "seconds", 1, "hours", "time", 20, "days", "YYYY MM DD HH 0 0", 240, "seconds"
 
@@ -209,6 +209,7 @@
 #"gfs_phys",   "skebv_wts"  "skebv_wts"  "gfs_physics",   "all",  .false.,  "none",  2
 #"gfs_phys",   "sppt_wts"   "sppt_wts"   "gfs_physics",   "all",  .false.,  "none",  2
 #"gfs_phys",   "shum_wts"   "shum_wts"   "gfs_physics",   "all",  .false.,  "none",  2
+#"gfs_phys",   "ps_dt"      "ps_dt"      "gfs_physics",   "all",  .false.,  "none",  2
 #
 #=============================================================================================
 #

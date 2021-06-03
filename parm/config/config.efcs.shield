@@ -58,4 +58,6 @@ fi
 export k_split=1
 export n_split=12
 
+export replay=0
+
 echo "END: config.efcs"

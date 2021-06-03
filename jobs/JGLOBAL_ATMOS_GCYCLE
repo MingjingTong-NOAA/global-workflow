@@ -5,50 +5,38 @@ export RUN_ENVIR=${RUN_ENVIR:-"nco"}
 export PS4='$SECONDS + '
 date
 
-#--------------------------------
-if [ $RUN_ENVIR = "emc" ]; then
-#--------------------------------
 
 #############################
 # Source relevant config files
 #############################
-configs="base fcst"
 export EXPDIR=${EXPDIR:-$HOMEgfs/parm/config}
+configs="base gcycle"
 config_path=${EXPDIR:-$NWROOT/gfs.${gfs_ver}/parm/config}
 for config in $configs; do
     . $config_path/config.$config
     status=$?
     [[ $status -ne 0 ]] && exit $status
 done
-# Source additional configs
-if [ ${DO_WAVE:-"NO"} = "YES" ]; then
-  configs="wave"
-  for config in $configs; do
-    . $config_path/config.$config
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-  done
-fi
+
 
 ##########################################
 # Source machine runtime environment
 ##########################################
-. $HOMEgfs/env/${machine}.env fcst
+. $HOMEgfs/env/${machine}.env gcycle
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
-#--------------------------------
-fi
-#--------------------------------
 
 ##############################################
 # Obtain unique process id (pid) and make temp directory
 ##############################################
 export pid=${pid:-$$}
 export outid=${outid:-"LL$job"}
+
 export DATA=${DATA:-${DATAROOT}/${jobid:?}}
 mkdir -p $DATA
 cd $DATA
+
 
 ##############################################
 # Run setpdy and initialize PDY variables
@@ -66,93 +54,68 @@ export pgmerr=errfile
 
 
 ##############################################
-# Set variables used in the exglobal script
+# Set variables used in the script
 ##############################################
 export CDATE=${CDATE:-${PDY}${cyc}}
 export CDUMP=${CDUMP:-${RUN:-"gfs"}}
-
+export COMPONENT=${COMPONENT:-atmos}
 if [ $RUN_ENVIR = "nco" ]; then
     export ROTDIR=${COMROOT:?}/$NET/$envir
-    export RSTDIR=${GESROOT:?}/$envir
 fi
+export DO_CALC_ANALYSIS=${DO_CALC_ANALYSIS:-"NO"} 
 
-
-#--------------------------------
-if [ $RUN_ENVIR = "nco" ]; then
-#--------------------------------
-
-#############################
-# Source relevant config files
-#############################
-configs="base fcst"
-export EXPDIR=${EXPDIR:-$HOMEgfs/parm/config}
-config_path=${EXPDIR:-$NWROOT/gfs.${gfs_ver}/parm/config}
-for config in $configs; do
-    . $config_path/config.$config
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-done
-# Source additional configs
-if [ ${DO_WAVE:-"NO"} = "YES" ]; then
-  configs="wave"
-  for config in $configs; do
-    . $config_path/config.$config
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-  done
-fi
-
-##########################################
-# Source machine runtime environment
-##########################################
-. $HOMEgfs/env/${machine}.env fcst
-status=$?
-[[ $status -ne 0 ]] && exit $status
-
-#--------------------------------
-fi
-#--------------------------------
-
-
-# Set wave variables
-if [ ${DO_WAVE:-"NO"} = "YES" ]; then
-  # WAVE component directory
-  export CDUMPwave=${CDUMPwave:-${CDUMP}wave}
-  export COMINwave=${COMINwave:-${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave}
-  export COMOUTwave=${COMOUTwave:-${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave}
-fi
 
 ##############################################
 # Begin JOB SPECIFIC work
 ##############################################
 
-# Restart conditions for GFS cycle come from GDAS
-rCDUMP=$CDUMP
-[[ $CDUMP = "gfs" ]] && export rCDUMP="gdas"
+GDATE=$($NDATE -$assim_freq $CDATE)
+gPDY=$(echo $GDATE | cut -c1-8)
+gcyc=$(echo $GDATE | cut -c9-10)
+GDUMP=${GDUMP:-${CDUMP}}
 
-# Forecast length for GFS forecast
-if [[ $CDUMP = "gfs" && $replay = 0 ]]; then
-    export FHMAX=$FHMAX_GFS
-    export FHOUT=$FHOUT_GFS
-    export FHMAX_HF=$FHMAX_HF_GFS
-    export FHOUT_HF=$FHOUT_HF_GFS
+export OPREFIX="${CDUMP}.t${cyc}z."
+export GPREFIX="${GDUMP}.t${gcyc}z."
+export APREFIX="${CDUMP}.t${cyc}z."
+export GSUFFIX=${GSUFFIX:-$SUFFIX}
+export ASUFFIX=${ASUFFIX:-$SUFFIX}
+
+
+if [ $RUN_ENVIR = "nco" -o ${ROTDIR_DUMP:-NO} = "YES" ]; then
+    export COMIN=${COMIN:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
+    export COMOUT=${COMOUT:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
+    export COMIN_OBS=${COMIN_OBS:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
+    export COMIN_GES_OBS=${COMIN_GES_OBS:-$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT}
 else
-    export FHMAX_HF=0
-    export FHOUT_HF=0
+    export COMOUT="$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
+    export COMIN_OBS="$DMPDIR/$CDATE/$CDUMP"
+    export COMIN_GES_OBS="$DMPDIR/$GDATE/$GDUMP"
 fi
-
+mkdir -m 775 -p $COMOUT
+# COMIN_GES and COMIN_GES_ENS are used in script
+export COMIN_GES="$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
+export COMIN_GES_ENS="$ROTDIR/enkfgdas.$gPDY/$gcyc/$COMPONENT"
 
 ###############################################################
-# Run relevant exglobal script
+# Run relevant script
 env
 msg="HAS BEGUN on `hostname`"
 postmsg "$jlogfile" "$msg"
 $LOGSCRIPT
 
-
-${FORECASTSH:-$SCRgfs/exglobal_forecast.sh}
+${GCYCLESH:-$SCRgfs/exglobal_gcycle_shield.sh}
 status=$?
 [[ $status -ne 0 ]] && exit $status
+
+
+##############################################
+# Send Alerts
+##############################################
+if [ $SENDDBN = YES -a $RUN = gdas ] ; then
+    $DBNROOT/bin/dbn_alert MODEL GDAS_MSC_abias $job $COMOUT/${APREFIX}abias
+    $DBNROOT/bin/dbn_alert MODEL GDAS_MSC_abias_pc $job $COMOUT/${APREFIX}abias_pc
+    $DBNROOT/bin/dbn_alert MODEL GDAS_MSC_abias_air $job $COMOUT/${APREFIX}abias_air
+fi
 
 
 ##############################################
@@ -166,8 +129,10 @@ if [ -e "$pgmout" ] ; then
   cat $pgmout
 fi
 
+
 msg="ENDED NORMALLY."
 postmsg "$jlogfile" "$msg"
+
 
 ##########################################
 # Remove the Temporary working directory

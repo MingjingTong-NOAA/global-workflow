@@ -1,0 +1,60 @@
+#!/bin/ksh -x
+
+########## config.omgprep ##########
+# Prep step specific
+
+echo "BEGIN: config.omgprep"
+
+# Get task specific resources
+. $EXPDIR/config.resources omgprep
+
+export DO_MAKEPREPBUFR="NO"   # if NO, will copy prepbufr from globaldump
+
+# Relocation and syndata QC
+export PROCESS_TROPCY=${PROCESS_TROPCY:-NO}
+[[ $RUN_ENVIR == "nco" && $envir == "prod" ]] && export PROCESS_TROPCY="YES"
+export DO_RELOCATE="NO"
+export TROPCYQCRELOSH="$HOMEgfs/scripts/exglobal_atmos_tropcy_qc_reloc.sh"
+export SENDCOM=YES
+
+export COMINsyn=${COMINsyn:-${COMROOT}/gfs/prod/syndat}
+
+export HOMERELO=$HOMEgfs
+export EXECRELO=${HOMERELO}/exec
+export FIXRELO=${HOMERELO}/fix/fix_am
+export USHRELO=${HOMERELO}/ush
+
+# Adjust observation error for GFS v16 parallels
+#
+#   NOTE:  Remember to set OBERROR in config.anal as PRVT is set below
+#
+# Set default prepobs_errtable.global
+export PRVT=$FIXgsi/prepobs_errtable.global
+
+NDATE=/home/$USER/bin/ndate
+GDATE=$($NDATE +$assim_freq $CDATE)
+
+# Set prepobs.errtable.global for GFS v16 retrospective parallels
+if [[ $RUN_ENVIR == "emc" ]]; then
+    if [[ "$GDATE" -ge "2019021900" && "$GDATE" -lt "2019110706" ]]; then
+	export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019021900
+    fi
+
+#   Place GOES-15 AMVs in monitor, assimilate GOES-17 AMVs, assimilate KOMPSAT-5 gps
+    if [[ "$GDATE" -ge "2019110706" && "$GDATE" -lt "2020040718" ]]; then
+	export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019110706
+    fi
+
+#   NOTE:
+#   As of 2020040718, gfsv16_historical/prepobs_errtable.global.2020040718 is
+#   identical to ../prepobs_errtable.global.  Thus, the logic below is not
+#   needed at this time
+
+#   Set observation errors for type 135 (T) & 235 (uv) Canadian AMDAR observations
+#   if [[ "$GDATE" -ge "2020040718" && "$GDATE" -lt "YYYMMDDHH" ]]; then
+#     export PRVT=$EXPDIR/prepobs_errtable.global
+#   fi
+
+fi
+
+echo "END: config.omgprep"

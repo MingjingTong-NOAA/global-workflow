@@ -1,0 +1,14 @@
+#!/bin/ksh -x
+
+########## config.gcycle ##########
+
+echo "BEGIN: config.gcycle"
+
+# Get task specific resources
+. $EXPDIR/config.resources gcycle
+
+export npe_gsi=$npe_gcycle
+
+export GCYCLESH="$HOMEgfs/scripts/exglobal_gcycle_shield.sh"
+
+echo "END: config.gcycle"
