@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, res, idate, edate, finterval
+global expdir, configdir, comrot, pslot, res, idate, edate, gfs_cyc
 
 
 def makedirs_if_missing(d):
@@ -84,7 +84,7 @@ def edit_baseconfig():
                     .replace('@DO_POST@', runpost) \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
-                    .replace('@finterval@', '%d' % finterval)
+                    .replace('@gfs_cyc@', '%d' % gfs_cyc)
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -124,7 +124,7 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--icdump', help='initial condition dump', type=str, choices=['gdas', 'gfs'], default='gfs', required=False)
     parser.add_argument('--idate', help='starting date of experiment, initial conditions must exist!', type=str, required=True)
     parser.add_argument('--edate', help='end date experiment', type=str, required=True)
-    parser.add_argument('--finterval', help='forecast interval in hours', type=int, required=False, default=24)
+    parser.add_argument('--gfs_cyc', help='forecast cycle', type=int, required=False, default=1)
     parser.add_argument('--configdir', help='full path to directory containing the config files', type=str, required=False, default=None)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
@@ -143,7 +143,7 @@ Create COMROT experiment directory structure'''
     pslot = args.pslot
     idate = datetime.strptime(args.idate, '%Y%m%d%H')
     edate = datetime.strptime(args.edate, '%Y%m%d%H')
-    finterval = args.finterval
+    gfs_cyc = args.gfs_cyc
     res = args.res
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)

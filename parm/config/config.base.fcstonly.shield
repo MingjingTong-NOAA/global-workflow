@@ -165,8 +165,9 @@ export FHMIN=0
 export FHMAX=12
 export FHOUT=6
 
-# SHiELD forecast interval in hours
-export shield_fcst_interval=@finterval@
+# SHiELD forecast cycle
+export gfs_cyc=@gfs_cyc@ # 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
+export SDATE_GFS=$SDATE
 
 # GFS output and frequency
 export FHMIN_GFS=0
@@ -264,7 +265,7 @@ export binary_diag=".false."
 export DO_POST=@DO_POST@
 
 # Verification options
-export DO_METP="NO"        # Run MET+ jobs
+export DO_METP="YES"        # Run MET+ jobs
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options

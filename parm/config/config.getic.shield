@@ -15,8 +15,8 @@ if [ $EXP_WARM_START = ".true." ]; then
 fi
 
 # Provide a parallel experiment name and path to HPSS archive
-if [ $ics_from = "pargfs" ]; then
-   if [ $FDATE -gt 2020123000 ]; then
+if [[ $ics_from = "pargfs" ]]; then
+   if [[ "$CDATE" -gt "2020122300" ]]; then
       export parexp="v16rt2n"
    else
       export parexp="v16rt2"

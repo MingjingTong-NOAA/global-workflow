@@ -180,22 +180,19 @@ export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # SGFS cycle info
-# Number of days to delay SHiELD gfs (for replay spin-up)
-export SGFS_delay=@sgfs_delay@
-# SHiELD gfs forecast interval (options: 24, 12, 6, 0)
-# SGFS_interval= 0, turn off long-term forecast, only run cycling
-export SGFS_interval=@sgfs_interval@
-export SDATE_SGFS=@sgfs_sdate@
+export gfs_cyc=@gfs_cyc@ # 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
+export gfs_delay=@gfs_delay@
+export SDATE_GFS=@gfs_sdate@
 
 # auxiliary forecast hours
 export FHOUT_aux=0
 export FHDUR_aux=6
 
 if [[ $replay -gt 0 ]]; then 
-   if [[ "$CDATE" -ge "$SDATE_SGFS" ]]; then
-      if [[ ($SGFS_interval = 24 && $cyc = "00") || \
-            ($SGFS_interval = 12 && ($cyc = "00" || $cyc = "12")) || \
-             $SGFS_interval = 6 ]]; then
+   if [[ "$CDATE" -ge "$SDATE_GFS" ]]; then
+      if [[ ($gfs_cyc = 1 && $cyc = "00") || \
+            ($gfs_cyc = 2 && ($cyc = "00" || $cyc = "12")) || \
+             $gfs_cyc = 4 ]]; then
          export FHMAX=$FHMAX_GFS
          export FHOUT=$FHOUT_GFS
          export FHOUT_aux=1 
@@ -248,7 +245,7 @@ fi
 
 if [[ $replay == 1 ]]; then
    export IAUFHRS="6"
-   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr',"
+   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr','liq_wat','rainwat','ice_wat','snowwat','graupel'"
    export iau_filter_increments=".true."
 fi
 
@@ -284,7 +281,7 @@ export binary_diag=".false."
 export DO_POST=@DO_POST@
 
 # Verification options
-export DO_METP="NO"         # Run MET+ jobs
+export DO_METP="YES"        # Run MET+ jobs
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options

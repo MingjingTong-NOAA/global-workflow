@@ -199,7 +199,7 @@ def get_resources(dict_configs, cdump='gdas'):
 
 def get_gomg_cyc_dates(base):
     '''
-        Generate SHiELD forecast dates from experiment dates and SGFS_interval choice
+        Generate SHiELD forecast dates from experiment dates
     '''
 
     base_out = base.copy()
@@ -521,8 +521,8 @@ def create_xml(dict_configs):
         XML directory containing XML templates, create the workflow XML
     '''
 
-
-    dict_configs['base']['INTERVAL'] = '%s:00:00'%(dict_configs['base']['shield_fcst_interval'])
+    gfs_cyc=dict_configs['base']['gfs_cyc']
+    dict_configs['base']['INTERVAL'] = '%s:00:00'%(24/gfs_cyc)
     base = dict_configs['base']
 
     preamble = get_preamble()

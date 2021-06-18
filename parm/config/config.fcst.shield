@@ -176,6 +176,9 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
        if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]; then export restart_interval="3 6"; fi # Cold starting
     fi
 
+    # Turn on dry mass adjustment in GDAS
+    export adjust_dry_mass=".true."
+
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
     # Write gfs restart files to rerun fcst from any break point
@@ -193,6 +196,9 @@ elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
         done
         export restart_interval="$rst_list"
     fi
+
+    # Turn off dry mass adjustment in GFS
+    export adjust_dry_mass=".false."
 
 fi
 

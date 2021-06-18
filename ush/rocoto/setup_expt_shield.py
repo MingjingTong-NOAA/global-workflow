@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, resdet, resens, nens, cdump, idate, edate, gfs_cyc, gfs_delay
+global expdir, configdir, comrot, pslot, resdet, resens, nens, cdump, idate, edate, gfs_cyc, gfs_delay, sdate_gfs
 
 
 def makedirs_if_missing(d):
@@ -111,7 +111,8 @@ def edit_baseconfig():
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
                     .replace('@HPSSARCH@', hpssarch) \
                     .replace('@gfs_cyc@', '%d' % gfs_cyc) \
-                    .replace('@gfs_delay@', '%d' % gfs_delay)
+                    .replace('@gfs_delay@', '%d' % gfs_delay) \
+                    .replace('@gfs_sdate@', sdate_gfs.strftime('%Y%m%d%H'))
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -177,6 +178,18 @@ link initial condition files from $ICSDIR to $COMROT'''
     cdump = args.cdump
     gfs_cyc = args.gfs_cyc
     gfs_delay = args.gfs_delay
+
+    if gfs_cyc == 1:
+        hrinc = 24 - idate.hour
+    elif gfs_cyc == 2:
+        if idate.hour in [0, 12]:
+            hrinc = 12
+        elif idate.hour in [6, 18]:
+            hrinc = 6
+    elif gfs_cyc == 4:
+        hrinc = 6
+    sdate_gfs = idate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
+
     partition = args.partition
     start = args.start
     runomf = args.runomf

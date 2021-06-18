@@ -44,6 +44,7 @@ else
    format="nemsio"
 fi
 
+gfsanl=${gfsanl:-"YES"}
 
 # Realtime parallels run GFS MOS on 1 day delay
 # If realtime parallel, back up CDATE_MOS one day
@@ -181,8 +182,13 @@ if [ $CDUMP = "gfs" ]; then
     done
 
     #for targrp in gfs_flux gfs_netcdf/nemsio gfs_pgrb2b; do
+    if [ $gfsanl = "YES" ]; then
+       gfstarblist="gfs_flux gfs_${format}a gfs_${format}b gfs_pgrb2b"
+    else
+       gfstarblist="gfs_flux gfs_${format}b gfs_pgrb2b"
+    fi
     if [ ${SAVEFCSTNEMSIO:-"YES"} = "YES" ]; then
-        for targrp in gfs_flux gfs_${format}a gfs_${format}b gfs_pgrb2b; do
+        for targrp in $gfstarblist; do
             htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar `cat $ARCH_LIST/${targrp}.txt`
             status=$?
             if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
@@ -205,7 +211,7 @@ if [ $CDUMP = "gfs" ]; then
     fi
 
     #for restarts    
-    if [ $SAVEFCSTIC = "YES" ]; then
+    if [[ $SAVEFCSTIC = "YES" && $gfsanl = "YES" ]]; then
         htar -P -cvf $ATARDIR/$CDATE/gfs_restarta.tar `cat $ARCH_LIST/gfs_restarta.txt`
         status=$?
         if [ $status -ne 0  -a $CDATE -ge $firstday ]; then

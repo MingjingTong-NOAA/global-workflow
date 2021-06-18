@@ -61,6 +61,7 @@ if [ $FHMAX_HF -gt 0 -a $FHOUT_HF -gt 0 ]; then FDIAG=$FHOUT_HF; fi
 WRITE_DOPOST=${WRITE_DOPOST:-".false."}
 restart_interval=${restart_interval:-0}
 rst_invt1=`echo $restart_interval |cut -d " " -f 1`
+gfsanl=${gfsanl:-"YES"}
 
 PDY=$(echo $CDATE | cut -c1-8)
 cyc=$(echo $CDATE | cut -c9-10)
@@ -348,7 +349,12 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
     done
 
   # Link sfcanl_data restart files from $memdir
-    for file in $(ls $memdir/RESTART/${sPDY}.${scyc}0000.*.nc); do
+    if [[ $CDUMP = "gfs" && $replay = 0 && $gfsanl = "NO" ]]; then
+      sfcanldir=$ROTDIR/gdas.$PDY/$cyc/atmos/$memchar
+    else
+      sfcanldir=$memdir
+    fi
+    for file in $(ls $sfcanldir/RESTART/${sPDY}.${scyc}0000.*.nc); do
       file2=$(echo $(basename $file))
       file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
       fsufanl=$(echo $file2 | cut -d. -f1)
@@ -374,13 +380,20 @@ EOF
       read_increment=".false."
       IAU_FORCING_VAR=${IAU_FORCING_VAR:-"'ua','va','temp','delp','delz','sphum','o3mr',"}
     else
+      if [[ $CDUMP = "gfs" && $gfsanl = "NO" ]]; then
+         INCDUMP="gdas"
+         incmemdir=$ROTDIR/${INCDUMP}.$PDY/$cyc/atmos/$memchar
+      else
+         INCDUMP=$CDUMP
+         incmemdir=$memdir
+      fi
       if [ $DOIAU = "YES" ]; then
         for i in $(echo $IAUFHRS | sed "s/,/ /g" | rev); do
           incfhr=$(printf %03i $i)
           if [ $incfhr = "006" ]; then
-            increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
+            increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
           else
-            increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
+            increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
           fi
           if [ ! -f $increment_file ]; then
             echo "ERROR: DOIAU = $DOIAU, but missing increment file for fhr $incfhr at $increment_file"
@@ -394,7 +407,7 @@ EOF
         res_latlon_dynamics=""
       else
         if [ $fcst_wo_da = "NO" ]; then 
-          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
+          increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
           if [ -f $increment_file ]; then
             $NLN $increment_file $DATA/INPUT/fv_increment.nc
             read_increment=".true."

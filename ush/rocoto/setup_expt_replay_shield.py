@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, res, idate, edate, finterval, fdelay, sidate
+global expdir, configdir, comrot, pslot, res, idate, edate, gfs_cyc, gfs_delay, sdate_gfs
 
 
 def makedirs_if_missing(d):
@@ -84,9 +84,9 @@ def edit_baseconfig():
                     .replace('@DO_POST@', runpost) \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
-                    .replace('@sgfs_delay@', '%d' % fdelay) \
-                    .replace('@sgfs_sdate@', sidate.strftime('%Y%m%d%H')) \
-                    .replace('@sgfs_interval@', '%d' % finterval)
+                    .replace('@gfs_cyc@', '%d' % gfs_cyc) \
+                    .replace('@gfs_delay@', '%d' % gfs_delay) \
+                    .replace('@gfs_sdate@', sdate_gfs.strftime('%Y%m%d%H'))
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -123,8 +123,8 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--icdump', help='initial condition dump', type=str, choices=['gdas', 'gfs'], default='gfs', required=False)
     parser.add_argument('--idate', help='starting date of experiment, initial conditions must exist!', type=str, required=True)
     parser.add_argument('--edate', help='end date experiment', type=str, required=True)
-    parser.add_argument('--finterval', help='forecast interval in hours', type=int, required=False, default=24)
-    parser.add_argument('--fdelay', help='number of days to delay forecast', type=int, required=False, default=0)
+    parser.add_argument('--gfs_cyc', help='forecast cycle', type=int, required=False, default=1)
+    parser.add_argument('--gfs_delay', help='number of days to delay GFS cycle', type=int, default=0, required=False)
     parser.add_argument('--configdir', help='full path to directory containing the config files', type=str, required=False, default=None)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
@@ -143,9 +143,20 @@ Create COMROT experiment directory structure'''
     pslot = args.pslot
     idate = datetime.strptime(args.idate, '%Y%m%d%H')
     edate = datetime.strptime(args.edate, '%Y%m%d%H')
-    finterval = args.finterval
-    fdelay = args.fdelay
-    sidate = idate + timedelta(days=fdelay)
+    gfs_cyc = args.gfs_cyc
+    gfs_delay = args.gfs_delay
+
+    if gfs_cyc == 1:
+        hrinc = 24 - idate.hour
+    elif gfs_cyc == 2:
+        if idate.hour in [0, 12]:
+            hrinc = 12
+        elif idate.hour in [6, 18]:
+            hrinc = 6
+    elif gfs_cyc == 4:
+        hrinc = 6
+    sdate_gfs = idate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
+
     res = args.res
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)

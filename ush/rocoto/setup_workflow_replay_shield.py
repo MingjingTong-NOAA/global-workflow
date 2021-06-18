@@ -51,8 +51,8 @@ def main():
 
     dict_configs['base']['CDUMP'] = args.cdump
 
-    if dict_configs['base']['SGFS_interval'] != 0:
-        dict_configs['base'] = get_sgfs_cyc_dates(dict_configs['base'])
+    if dict_configs['base']['gfs_cyc'] != 0:
+        dict_configs['base'] = get_gfs_cyc_dates(dict_configs['base'])
 
     # First create workflow XML
     create_xml(dict_configs)
@@ -62,45 +62,52 @@ def main():
 
     return
 
-def get_sgfs_cyc_dates(base):
+def get_gfs_cyc_dates(base):
     '''
-        Generate SHiELD forecast dates from experiment dates and SGFS_interval choice
+        Generate GFS dates from experiment dates and gfs_cyc choice
     '''
 
     base_out = base.copy()
 
-    interval = base['SGFS_interval']
+    gfs_cyc = base['gfs_cyc']
     sdate = base['SDATE']
     edate = base['EDATE']
-    sdate_sgfs = datetime.strptime('%s'%base['SDATE_SGFS'],'%Y%m%d%H')
+    gfs_delay = base['gfs_delay']
 
-    # Set SHiELD global forecast cycling dates
+    interval_gfs = wfu.get_gfs_interval(gfs_cyc)
+
+    # Set GFS cycling dates
     hrdet = 0
-    if interval == 24:
-        hrinc = 24 - sdate_sgfs.hour 
+    if gfs_cyc == 1:
+        hrinc = 24 - sdate.hour
         hrdet = edate.hour
-    elif interval == 12:
-        if sdate_sgfs.hour in [0, 12]:
+    elif gfs_cyc == 2:
+        if sdate.hour in [0, 12]:
             hrinc = 12
-        elif sdate_sgfs.hour in [6, 18]:
+        elif sdate.hour in [6, 18]:
             hrinc = 6
         if edate.hour in [6, 18]:
             hrdet = 6
-    elif interval == 6:
+    elif gfs_cyc == 4:
         hrinc = 6
-    sdate_sgfs = sdate_sgfs + timedelta(hours=hrinc)
-    edate_sgfs = edate - timedelta(hours=hrdet)
-    if sdate_sgfs > edate:
+    sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
+    edate_gfs = edate - timedelta(hours=hrdet)
+    if sdate_gfs > edate:
         print 'W A R N I N G!'
-        print 'Starting date for SHiELD GFS cycles is after Ending date of experiment'
+        print 'Starting date for GFS cycles is after Ending date of experiment'
         print 'SDATE = %s,     EDATE = %s' % (sdate.strftime('%Y%m%d%H'), edate.strftime('%Y%m%d%H'))
-        print 'SDATE_SGFS = %s, EDATE_SGFS = %s' % (sdate_sgfs.strftime('%Y%m%d%H'), edate_sgfs.strftime('%Y%m%d%H'))
-        interval = 0
+        print 'SDATE_GFS = %s, EDATE_GFS = %s' % (sdate_gfs.strftime('%Y%m%d%H'), edate_gfs.strftime('%Y%m%d%H'))
+        gfs_cyc = 0
 
-    base['SGFS_interval'] = interval 
-    base_out['SDATE_SGFS'] = sdate_sgfs
-    base_out['EDATE_SGFS'] = edate_sgfs
-    base_out['INTERVAL_SGFS'] = '%s:00:00' % interval
+    base_out['gfs_cyc'] = gfs_cyc
+    base_out['SDATE_GFS'] = sdate_gfs
+    base_out['EDATE_GFS'] = edate_gfs
+    base_out['INTERVAL_GFS'] = interval_gfs
+
+    fhmax_gfs = {}
+    for hh in ['00', '06', '12', '18']:
+        fhmax_gfs[hh] = base.get('FHMAX_GFS_%s' % hh, 'FHMAX_GFS_00')
+    base_out['FHMAX_GFS'] = fhmax_gfs
 
     return base_out
 
@@ -113,9 +120,9 @@ def get_sgfs_dates(base):
 
     strings.append('\n')
     strings.append('\t<!-- Starting and ending dates for SGFS cycle -->\n')
-    strings.append('\t<!ENTITY SDATE_SGFS    "%s">\n' % base['SDATE_SGFS'].strftime('%Y%m%d%H%M'))
-    strings.append('\t<!ENTITY EDATE_SGFS    "%s">\n' % base['EDATE_SGFS'].strftime('%Y%m%d%H%M'))
-    strings.append('\t<!ENTITY INTERVAL_SGFS "%s">\n' % base['INTERVAL_SGFS'])
+    strings.append('\t<!ENTITY SDATE_SGFS    "%s">\n' % base['SDATE_GFS'].strftime('%Y%m%d%H%M'))
+    strings.append('\t<!ENTITY EDATE_SGFS    "%s">\n' % base['EDATE_GFS'].strftime('%Y%m%d%H%M'))
+    strings.append('\t<!ENTITY INTERVAL_SGFS "%s">\n' % base['INTERVAL_GFS'])
 
     return ''.join(strings)
 
@@ -163,7 +170,7 @@ def get_definitions(base):
     strings.append('\t<!-- Experiment parameters such as starting, ending dates -->\n')
     strings.append('\t<!ENTITY SDATE    "%s">\n' % base['SDATE'].strftime('%Y%m%d%H%M'))
     strings.append('\t<!ENTITY EDATE    "%s">\n' % base['EDATE'].strftime('%Y%m%d%H%M'))
-    if base.get('SGFS_interval',0) != 0:
+    if base.get('gfs_cyc',1) != 0:
         strings.append(get_sgfs_dates(base))
         strings.append('\n')
     strings.append('\n')
@@ -431,7 +438,9 @@ def get_workflow(dict_configs, cdump='gdas'):
         deps = []
         dep_dict = {'type': 'task', 'name': '%sanaldiag' % cdump}
         deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
+        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         task = wfu.create_wf_task('archomg', cdump=cdump, envar=envars, dependency=dependencies)
         tasks.append(task)
         tasks.append('\n')
@@ -517,7 +526,7 @@ def get_workflow_body(dict_configs, cdump='gdas'):
     strings.append('\t<!-- Define the cycles -->\n')
     strings.append('\t<cycledef group="first">&SDATE;     &SDATE;     06:00:00</cycledef>\n')
     strings.append('\t<cycledef group="%s" >&SDATE;     &EDATE;     06:00:00</cycledef>\n' % cdump)
-    if dict_configs['base']['SGFS_interval'] != 0:
+    if dict_configs['base']['gfs_cyc'] != 0:
         strings.append('\t<cycledef group="sgfs"  >&SDATE_SGFS; &EDATE_SGFS; &INTERVAL_SGFS;</cycledef>\n')
     strings.append('\n')
     strings.append(get_workflow(dict_configs, cdump=cdump))
@@ -541,8 +550,8 @@ def create_xml(dict_configs):
         XML directory containing XML templates, create the workflow XML
     '''
 
-
-    dict_configs['base']['INTERVAL'] = '%s:00:00'%(dict_configs['base']['SGFS_interval'])
+    gfs_cyc=dict_configs['base']['gfs_cyc']
+    dict_configs['base']['INTERVAL'] = '%s:00:00'%(24/gfs_cyc)
     base = dict_configs['base']
 
     preamble = get_preamble()

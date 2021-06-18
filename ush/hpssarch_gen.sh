@@ -63,23 +63,25 @@ if [ $type = "gfs" ]; then
   head="gfs.t${cyc}z."
 
   #..................
-  echo  "${dirname}${head}pgrb2b.0p25.anl                  " >>gfs_pgrb2b.txt
-  echo  "${dirname}${head}pgrb2b.0p25.anl.idx              " >>gfs_pgrb2b.txt
-  echo  "${dirname}${head}pgrb2b.0p50.anl                  " >>gfs_pgrb2b.txt
-  echo  "${dirname}${head}pgrb2b.0p50.anl.idx              " >>gfs_pgrb2b.txt
-
-  echo  "./logs/${CDATE}/gfs*.log                          " >>gfsa.txt
-  echo  "${dirname}${head}gsistat                          " >>gfsa.txt
-  if [ $DONST = "YES" ]; then
-  echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+  if [ $gfsanl = "YES" ]; then
+    echo  "${dirname}${head}pgrb2b.0p25.anl                  " >>gfs_pgrb2b.txt
+    echo  "${dirname}${head}pgrb2b.0p25.anl.idx              " >>gfs_pgrb2b.txt
+    echo  "${dirname}${head}pgrb2b.0p50.anl                  " >>gfs_pgrb2b.txt
+    echo  "${dirname}${head}pgrb2b.0p50.anl.idx              " >>gfs_pgrb2b.txt
+  
+    echo  "./logs/${CDATE}/gfs*.log                          " >>gfsa.txt
+    echo  "${dirname}${head}gsistat                          " >>gfsa.txt
+    if [ $DONST = "YES" ]; then
+    echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+    fi
+    echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
+    if [ $DO_MAKEPREPBUFR = "YES" ]; then
+    echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
+    fi
+    echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
+    echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
+    echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   fi
-  echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
-  if [ $DO_MAKEPREPBUFR = "YES" ]; then
-  echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
-  fi
-  echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
-  echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
-  echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   echo  "${dirname}avno.t${cyc}z.cyclone.trackatcfunix     " >>gfsa.txt
   echo  "${dirname}avnop.t${cyc}z.cyclone.trackatcfunix    " >>gfsa.txt
   echo  "${dirname}trak.gfso.atcfunix.${PDY}${cyc}         " >>gfsa.txt
@@ -107,11 +109,12 @@ if [ $type = "gfs" ]; then
    fi
   fi
 
-  echo  "${dirname}${head}pgrb2.0p50.anl                   " >>gfsb.txt
-  echo  "${dirname}${head}pgrb2.0p50.anl.idx               " >>gfsb.txt
-  echo  "${dirname}${head}pgrb2.1p00.anl                   " >>gfsb.txt
-  echo  "${dirname}${head}pgrb2.1p00.anl.idx               " >>gfsb.txt
-
+  if [ $gfsanl = "YES" ]; then
+    echo  "${dirname}${head}pgrb2.0p50.anl                   " >>gfsb.txt
+    echo  "${dirname}${head}pgrb2.0p50.anl.idx               " >>gfsb.txt
+    echo  "${dirname}${head}pgrb2.1p00.anl                   " >>gfsb.txt
+    echo  "${dirname}${head}pgrb2.1p00.anl.idx               " >>gfsb.txt
+  fi
 
   fh=0
   while [ $fh -le $FHMAX_GFS ]; do
@@ -149,6 +152,7 @@ if [ $type = "gfs" ]; then
 
 
   #..................
+  if [ $gfsanl = YES ]; then
   echo  "${dirname}${head}atmanl${SUFFIX}            " >>gfs_${format}a.txt
   echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
   echo  "${dirname}${head}atmi*.nc                   " >>gfs_${format}a.txt
@@ -156,6 +160,7 @@ if [ $type = "gfs" ]; then
   echo  "${dirname}${head}dtfanl.nc                  " >>gfs_${format}a.txt
   fi
   echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
+  fi
 
   #..................
   if [ $OUTPUT_HISTORY = ".true." ]; then
@@ -169,12 +174,14 @@ if [ $type = "gfs" ]; then
   fi
 
   #..................
+  if [ $gfsanl = YES ]; then
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gfs_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gfs_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gfs_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gfs_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gfs_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gfs_restarta.txt
+  fi
 
   #..................
   if [ $DO_WAVE = "YES" ]; then

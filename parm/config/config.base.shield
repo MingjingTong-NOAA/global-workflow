@@ -135,6 +135,9 @@ export SENDDBN_NTC=${SENDDBN_NTC:-"NO"}
 export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
+# GFS ICs version (for cold start cycle)
+export gfs_ver=v15
+
 # Resolution specific parameters
 export LEVS=91
 export CASE="@CASECTL@"
@@ -163,6 +166,8 @@ export EUPD_CYC="gdas"
 # GFS cycle info
 export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
 export gfs_delay=@gfs_delay@
+export SDATE_GFS=@gfs_sdate@
+export gfsanl="NO"
 
 # GFS output and frequency
 export FHMIN_GFS=0
