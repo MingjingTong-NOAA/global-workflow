@@ -155,6 +155,8 @@ Create COMROT experiment directory structure'''
             hrinc = 6
     elif gfs_cyc == 4:
         hrinc = 6
+    else:
+        hrinc = 0
     sdate_gfs = idate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
 
     res = args.res

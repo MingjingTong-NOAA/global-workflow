@@ -188,7 +188,7 @@ export SDATE_GFS=@gfs_sdate@
 export FHOUT_aux=0
 export FHDUR_aux=6
 
-if [[ $replay -gt 0 ]]; then 
+if [[ $replay -gt 0 && $gfs_cyc -gt 0 ]]; then 
    if [[ "$CDATE" -ge "$SDATE_GFS" ]]; then
       if [[ ($gfs_cyc = 1 && $cyc = "00") || \
             ($gfs_cyc = 2 && ($cyc = "00" || $cyc = "12")) || \

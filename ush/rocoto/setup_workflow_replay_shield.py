@@ -91,7 +91,7 @@ def get_gfs_cyc_dates(base):
     elif gfs_cyc == 4:
         hrinc = 6
     sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
-    edate_gfs = edate - timedelta(hours=hrdet)
+    edate_gfs = edate + timedelta(days=gfs_delay) - timedelta(hours=hrdet)
     if sdate_gfs > edate:
         print 'W A R N I N G!'
         print 'Starting date for GFS cycles is after Ending date of experiment'
@@ -311,6 +311,7 @@ def get_workflow(dict_configs, cdump='gdas'):
     dumpsuffix = base.get('DUMP_SUFFIX', '')
     gridsuffix = base.get('SUFFIX', '')
     nrestartbg = base.get('nrestartbg', 1)
+    gfs_cyc = base.get('gfs_cyc', 1)
 
     tasks = []
 
@@ -477,7 +478,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
     
     # metp
-    if do_metp in ['Y', 'YES'] and do_post in ['Y', 'YES']:
+    if do_metp in ['Y', 'YES'] and do_post in ['Y', 'YES'] and gfs_cyc > 0:
         deps = []
         dep_dict = {'type':'metatask', 'name':'%spost' % cdump}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -550,8 +551,6 @@ def create_xml(dict_configs):
         XML directory containing XML templates, create the workflow XML
     '''
 
-    gfs_cyc=dict_configs['base']['gfs_cyc']
-    dict_configs['base']['INTERVAL'] = '%s:00:00'%(24/gfs_cyc)
     base = dict_configs['base']
 
     preamble = get_preamble()
