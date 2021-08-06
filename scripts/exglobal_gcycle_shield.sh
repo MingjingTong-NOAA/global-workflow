@@ -169,6 +169,21 @@ OSUFFIX=${OSUFFIX:-""}
     $ERRSCRIPT || exit 11
 
 ################################################################################
+# Postprocessing
+cd $pwd
+[[ $mkdata = "YES" ]] && rm -rf $DATA
+
+##############################################################
+# Add this statement to release the forecast job once the
+# atmopsheric analysis and updated surface RESTARTS are
+# available.  Do not release forecast when RUN=enkf
+##############################################################
+if [ $SENDECF = "YES" -a "$RUN" != "enkf" ]; then
+   ecflow_client --event release_fcst
+fi
+echo "$CDUMP $CDATE tiled sfcanl done at `date`" > $COMOUT/${APREFIX}loginc.txt
+
+################################################################################
 set +x
 if [ $VERBOSE = "YES" ]; then
    echo $(date) EXITING $0 with return code $err >&2

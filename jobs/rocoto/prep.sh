@@ -28,23 +28,32 @@ export OPREFIX="${CDUMP}.t${cyc}z."
 export COMOUT="$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
 [[ ! -d $COMOUT ]] && mkdir -p $COMOUT
 
+# For free and replay mode, always use gdas dump
+if [ $MODE = "cycled" ]; then
+   GDUMP=$CDUMP
+else
+   GDUMP="gdas"
+fi
+
 ###############################################################
 # If ROTDIR_DUMP=YES, copy dump files to rotdir 
 if [ $ROTDIR_DUMP = "YES" ]; then
-   $HOMEgfs/ush/getdump.sh $CDATE $CDUMP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc} $COMOUT
+   $HOMEgfs/ush/getdump.sh $CDATE $GDUMP $DMPDIR/${GDUMP}${DUMP_SUFFIX}.${PDY}/${cyc} $COMOUT
    status=$?
    [[ $status -ne 0 ]] && exit $status
 
+   if [ $MODE = "cycled" ]; then
 #  Ensure previous cycle gdas dumps are available (used by cycle & downstream)
-   GDATE=$($NDATE -$assim_freq $CDATE)
-   gPDY=$(echo $GDATE | cut -c1-8)
-   gcyc=$(echo $GDATE | cut -c9-10)
-   GDUMP=gdas
-   gCOMOUT="$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
-   if [ ! -s $gCOMOUT/$GDUMP.t${gcyc}z.updated.status.tm00.bufr_d ]; then
-     $HOMEgfs/ush/getdump.sh $GDATE $GDUMP $DMPDIR/${GDUMP}${DUMP_SUFFIX}.${gPDY}/${gcyc} $gCOMOUT
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
+      GDATE=$($NDATE -$assim_freq $CDATE)
+      gPDY=$(echo $GDATE | cut -c1-8)
+      gcyc=$(echo $GDATE | cut -c9-10)
+      GDUMP=gdas
+      gCOMOUT="$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
+      if [ ! -s $gCOMOUT/$GDUMP.t${gcyc}z.updated.status.tm00.bufr_d ]; then
+        $HOMEgfs/ush/getdump.sh $GDATE $GDUMP $DMPDIR/${GDUMP}${DUMP_SUFFIX}.${gPDY}/${gcyc} $gCOMOUT
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+      fi
    fi
 
 fi

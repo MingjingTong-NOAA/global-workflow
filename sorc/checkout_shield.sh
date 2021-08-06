@@ -51,17 +51,17 @@ else
     echo 'Skip.  Directory cube2gaus.fd already exists.'
 fi
 
-#echo gsi checkout ...
-#if [[ ! -d gsi.fd ]] ; then
-#    rm -f ${topdir}/checkout-gsi.log
-#    git clone --recursive https://github.com/MingjingTong-NOAA/GSI.git gsi.fd >> ${topdir}/checkout-gsi.log 2>&1
-#    cd gsi.fd
-#    git checkout gfdl-mtong
-#    git submodule update
-#    cd ${topdir}
-#else
-#    echo 'Skip.  Directory gsi.fd already exists.'
-#fi
+echo gsi checkout ...
+if [[ ! -d gsi.fd ]] ; then
+    rm -f ${topdir}/checkout-gsi.log
+    git clone --recursive https://github.com/MingjingTong-NOAA/GSI.git gsi.fd >> ${topdir}/checkout-gsi.log 2>&1
+    cd gsi.fd
+    git checkout gfdl-mtong
+    git submodule update
+    cd ${topdir}
+else
+    echo 'Skip.  Directory gsi.fd already exists.'
+fi
 
 echo gldas checkout ...
 if [[ ! -d gldas.fd ]] ; then

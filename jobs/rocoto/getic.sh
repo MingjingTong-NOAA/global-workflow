@@ -7,7 +7,7 @@
 ## HOMEgfs   : /full/path/to/workflow
 ## EXPDIR : /full/path/to/config/files
 ## CDATE  : current date (YYYYMMDDHH)
-## ICDUMP  : cycle name (gdas / gfs)
+## CDUMP  : cycle name (gdas / gfs)
 ## PDY    : current date (YYYYMMDD)
 ## cyc    : current cycle (HH)
 ###############################################################
@@ -20,7 +20,7 @@ status=$?
 
 ###############################################################
 # Source relevant configs
-configs="base getic"
+configs="base getic init"
 for config in $configs; do
     . $EXPDIR/config.${config}
     status=$?
@@ -36,332 +36,163 @@ status=$?
 ###############################################################
 # Set script and dependency variables
 
-yyyy=$(echo $CDATE | cut -c1-4)
-mm=$(echo $CDATE | cut -c5-6)
-dd=$(echo $CDATE | cut -c7-8)
-cyc=${cyc:-$(echo $CDATE | cut -c9-10)}
+export yy=$(echo $CDATE | cut -c1-4)
+export mm=$(echo $CDATE | cut -c5-6)
+export dd=$(echo $CDATE | cut -c7-8)
+export hh=${cyc:-$(echo $CDATE | cut -c9-10)}
+export GDATE=$($NDATE -${assim_freq:-"06"} $CDATE)
+export gyy=$(echo $GDATE | cut -c1-4)
+export gmm=$(echo $GDATE | cut -c5-6)
+export gdd=$(echo $GDATE | cut -c7-8)
+export ghh=$(echo $GDATE | cut -c9-10)
+export IAUSDATE=$($NDATE -3 $CDATE)
+export iyy=$(echo $IAUSDATE | cut -c1-4)
+export imm=$(echo $IAUSDATE | cut -c5-6)
+export idd=$(echo $IAUSDATE | cut -c7-8)
+export ihh=$(echo $IAUSDATE | cut -c9-10)
 
-export COMPONENT=${COMPONENT:-atmos}
+export DATA=${DATA:-${DATAROOT}/getic}
+export EXTRACT_DIR=${DATA:-$EXTRACT_DIR}
+export PRODHPSSDIR=${PRODHPSSDIR:-/NCEPPROD/hpssprod/runhistory}
+export COMPONENT="atmos"
+export gfs_ver=${gfs_ver:-"v16"}
+export OPS_RES=${OPS_RES:-"C768"}
+export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
+export getpgbanl=${getpgbanl:-"YES"}
 
-###############################################################
+# Create ROTDIR/EXTRACT_DIR
+if [ ! -d $ROTDIR ]; then mkdir -p $ROTDIR ; fi
+if [ ! -d $EXTRACT_DIR ]; then mkdir -p $EXTRACT_DIR ; fi
+cd $EXTRACT_DIR
 
-if [ $ics_from = "opsgfs" ]; then
-  if [ $yyyy$mm$dd$cyc -lt 2012052100 ]; then
-    set +x
-    echo FATAL ERROR: SCRIPTS DO NOT SUPPORT OLD GFS DATA
-    exit 2
-  elif [ $yyyy$mm$dd$cyc -lt 2016051000 ]; then
-    gfs_ver=v12
-  elif [ $yyyy$mm$dd$cyc -lt 2017072000 ]; then
-    gfs_ver=v13
-  elif [ $yyyy$mm$dd$cyc -lt 2019061200 ]; then
-    gfs_ver=v14
-  elif [ $yyyy$mm$dd$cyc -lt 2021032100 ]; then
-    gfs_ver=v15
-  else
-    gfs_ver=v16
+# Check version, cold/warm start, and resolution
+if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then # Pull warm start ICs - no chgres
+
+  # Pull RESTART files off HPSS
+  if [ ${RETRO:-"NO"} = "YES" ]; then # Retrospective parallel input
+
+    # Pull prior cycle restart files
+    htar -xvf ${HPSSDIR}/${GDATE}/gdas_restartb.tar
+    status=$?
+    [[ $status -ne 0 ]] && exit $status
+
+    # Pull current cycle restart files
+    htar -xvf ${HPSSDIR}/${CDATE}/gfs_restarta.tar
+    status=$?
+    [[ $status -ne 0 ]] && exit $status
+
+    # Pull IAU increment files
+    htar -xvf ${HPSSDIR}/${CDATE}/gfs_netcdfa.tar
+    status=$?
+    [[ $status -ne 0 ]] && exit $status
+
+  else # Opertional input - warm starts
+
+    # Pull CDATE gfs restart tarball
+    htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/com_gfs_prod_gfs.${yy}${mm}${dd}_${hh}.gfs_restart.tar
+    # Pull GDATE gdas restart tarball
+    htar -xvf ${PRODHPSSDIR}/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}/com_gfs_prod_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
   fi
+
+else # Pull chgres cube inputs for cold start IC generation
+
+  # Run UFS_UTILS GETICSH
+  sh ${GETICSH} ${ICDUMP}
+  status=$?
+  [[ $status -ne 0 ]] && exit $status
+
 fi
 
-if [[ $EXP_WARM_START = ".false." || $replay -gt 0 ]] ; then
-   target_dir=$ICSDIR/input
+# Move extracted data to ROTDIR
+if [ ! -d ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then mkdir -p ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ; fi
+if [ $gfs_ver = "v16" ]; then
+  if [ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
+    mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/* ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  else
+    mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/* ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  fi
 else
-   target_dir=$ROTDIR
+  mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/* ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/
 fi
-if [[ ! -d $target_dir ]]; then
-   mkdir -p $target_dir
+
+# Pull sfcanl restart file for replay
+if [[ $replay > 0 && $rungcycle = "NO" && $gfs_ver = v16 ]]; then
+   cd $EXTRACT_DIR
+
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
+   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+
+   if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
+      export tarball="${ICDUMP}_restarta.tar"
+      htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./list.txt 
+   else   
+      export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+      htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./list.txt
+   fi     
+   mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
 fi
-cd $target_dir/
 
-if [ $ics_from = "opsgfs" ]; then
+# Pull pgbanl file for verification/archival - v14+
+if [ $getpgbanl = "YES" ]; then
+if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
+  for grid in 0p25 0p50 1p00
+  do
+    file=${ICDUMP}.t${hh}z.pgrb2.${grid}.anl
 
-    # Location of production tarballs on HPSS
-    hpssdir="/NCEPPROD/hpssprod/runhistory/rh$yyyy/$yyyy$mm/$PDY"
+    if [ $gfs_ver = v14 ]; then # v14 production source
 
-    # Handle nemsio and pre-nemsio GFS filenames
-    case $gfs_ver in
-      v14)
-        # Add ICDUMP.PDY/CYC to target_dir
-        target_dir=$ICSDIR/$CDATE/$ICDUMP/${ICDUMP}.$yyyy$mm$dd/$cyc
-        mkdir -p $target_dir
-        cd $target_dir
+      cd $ROTDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
+      export tarball="gpfs_hps_nco_ops_com_gfs_prod_gfs.${yy}${mm}${dd}${hh}.pgrb2_${grid}.tar"
+      htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
 
-        nfanal=4
-        fanal[1]="./${ICDUMP}.t${cyc}z.atmanl.nemsio"
-        fanal[2]="./${ICDUMP}.t${cyc}z.sfcanl.nemsio"
-        fanal[3]="./${ICDUMP}.t${cyc}z.nstanl.nemsio"
-        fanal[4]="./${ICDUMP}.t${cyc}z.pgrbanl"
-        flanal="${fanal[1]} ${fanal[2]} ${fanal[3]} ${fanal[4]}"
-        tarpref="gpfs_hps_nco_ops_com"
-        if [ $IICDUMP = "gdas" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${CDATE}.tar"
-        elif [ $IICDUMP = "gfs" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${CDATE}.anl.tar"
-        fi
-        if [[ -s $target_dir/${ICDUMP}.t${cyc}z.atmanl.nemsio && \
-              -s $target_dir/${ICDUMP}.t${cyc}z.sfcanl.nemsio && \
-              -s $target_dir/${ICDUMP}.t${cyc}z.nstanl.nemsio && \
-              -s $target_dir/${ICDUMP}.t${cyc}z.pgrbanl ]]; then
-           echo "IC data exist, exit getic"
-           exit 0 
-        fi
-       ;;
-      v15)
-        nfanal=2
-        fanal[1]="./${ICDUMP}.$yyyy$mm$dd/$cyc/${ICDUMP}.t${cyc}z.atmanl.nemsio"
-        fanal[2]="./${ICDUMP}.$yyyy$mm$dd/$cyc/${ICDUMP}.t${cyc}z.sfcanl.nemsio"
-        flanal="${fanal[1]} ${fanal[2]}"
-        if [ $CDATE -ge "2020022600" ]; then 
-          tarpref="com"
-        else 
-          tarpref="gpfs_dell1_nco_ops_com"
-        fi
+    elif [ $gfs_ver = v15 ]; then # v15 production source
+
+      cd $EXTRACT_DIR
+      export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+      htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${file}
+      mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${file} ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
+
+    elif [ $gfs_ver = v16 ]; then # v16 - determine RETRO or production source next
+
+      if [ $RETRO = "YES" ]; then # Retrospective parallel source
+
+        cd $EXTRACT_DIR
         if [ $ICDUMP = "gdas" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${yyyy}${mm}${dd}_${cyc}.${ICDUMP}_nemsio.tar"
-        elif [ $ICDUMP = "gfs" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${yyyy}${mm}${dd}_${cyc}.${ICDUMP}_nemsioa.tar"
+          export tarball="gdas.tar"
+        elif [ $grid = "0p25" ]; then # anl file spread across multiple tarballs
+          export tarball="gfsa.tar"
+        elif [ $grid = "0p50" -o $grid = "1p00" ]; then
+          export tarball="gfsb.tar"
         fi
-        if [[ -s $target_dir/${ICDUMP}.$yyyy$mm$dd/$cyc/${ICDUMP}.t${cyc}z.atmanl.nemsio && \
-              -s $target_dir/${ICDUMP}.$yyyy$mm$dd/$cyc/${ICDUMP}.t${cyc}z.sfcanl.nemsio ]]; then
-           echo "IC data exist, exit getic"
-           exit 0
-        fi
-       ;;
-      v16)
-        tarpref="com"
-        if [[ $EXP_WARM_START = ".false." || $replay -gt 0 ]] ; then
-          nfanal=2
-          fanal[1]="./${ICDUMP}.$yyyy$mm$dd/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl.nc"
-          fanal[2]="./${ICDUMP}.$yyyy$mm$dd/$cyc/atmos/${ICDUMP}.t${cyc}z.sfcanl.nc"
-          flanal="${fanal[1]} ${fanal[2]}"
-          if [ $ICDUMP = "gdas" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${yyyy}${mm}${dd}_${cyc}.${ICDUMP}_nc.tar"
-          else
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${yyyy}${mm}${dd}_${cyc}.${ICDUMP}_nca.tar"
-          fi
-          if [[ -s $target_dir/${ICDUMP}.$yyyy$mm$dd/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl.nc && \
-                -s $target_dir/${ICDUMP}.$yyyy$mm$dd/$cyc/atmos/${ICDUMP}.t${cyc}z.sfcanl.nc ]]; then
-            echo "IC data exist, exit getic"
-            exit 0
-          fi
-        else  
-          # can only warm start from gdas
-          if [ $ICDUMP = "gdas" ]; then
-            tarball="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${yyyy}${mm}${dd}_${cyc}.${ICDUMP}_restart.tar"
-        
-            GDATE=$($NDATE -$assim_freq $CDATE)
-            gyyyy=$(echo $GDATE | cut -c1-4)
-            gmm=$(echo $GDATE | cut -c5-6)
-            gdd=$(echo $GDATE | cut -c7-8)
-            gcyc=$(echo $GDATE | cut -c9-10)
-            tarball_b="$hpssdir/${tarpref}_gfs_prod_${ICDUMP}.${gyyyy}${gmm}${gdd}_${gcyc}.${ICDUMP}_restart.tar"
-       
-            IAUDATE=$($NDATE +3 $GDATE)
-            iyyyy=$(echo $IAUDATE | cut -c1-4)
-            imm=$(echo $IAUDATE | cut -c5-6)
-            idd=$(echo $IAUDATE | cut -c7-8)
-            icyc=$(echo $IAUDATE | cut -c9-10)
+        htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
+        mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
 
-            # surface data 
-            >fname1
-            for i in $(seq 1 6); do
-              echo ./gdas.${yyyy}${mm}${dd}/${cyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.sfcanl_data.tile${i}.nc >>fname1
-            done
-            echo ./gdas.${yyyy}${mm}${dd}/${cyc}/atmos/gdas.t${cyc}z.atmi003.nc >>fname1
-            echo ./gdas.${yyyy}${mm}${dd}/${cyc}/atmos/gdas.t${cyc}z.atmi009.nc >>fname1
-            echo ./gdas.${yyyy}${mm}${dd}/${cyc}/atmos/gdas.t${cyc}z.atminc.nc >>fname1
+      else # Production source
 
-            # atmosphere data
-            >fname2
-            for i in $(seq 1 6); do
-              echo ./gdas.${gyyyy}${gmm}${gdd}/${gcyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.fv_core.res.tile1.nc >>fname2
-              echo ./gdas.${gyyyy}${gmm}${gdd}/${gcyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.fv_srf_wnd.res.tile1.nc >>fname2
-              echo ./gdas.${gyyyy}${gmm}${gdd}/${gcyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.fv_tracer.res.tile1.nc >>fname2
-              echo ./gdas.${gyyyy}${gmm}${gdd}/${gcyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.phy_data.res.tile1.nc >>fname2
-              echo ./gdas.${gyyyy}${gmm}${gdd}/${gcyc}/atmos/RESTART/${iyyyy}${imm}${idd}.${icyc}0000.sfc_data.res.tile1.nc >>fname2
-            done
-            hpsstar get $tarball $fname1
-            rc=$?
-            if [ $rc -ne 0 ]; then
-              echo "untarring $tarball failed, ABORT!"
-              exit $rc 
-            fi  
-            hpsstar get $tarball_b $fname2
-            rc=$?
-            if [ $rc -ne 0 ]; then
-              echo "untarring $tarball_b failed, ABORT!"
-              exit $rc
-            fi
-          else
-            echo "can only restart from gdas"
-            exit 99
-          fi
-        fi
-       ;;
- esac
+        cd $ROTDIR
+        export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+        htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}
 
-    # First check the COMROOT for files, if present copy over
-    rc=0
-    if [ $machine = "WCOSS_C" ]; then
+      fi # RETRO vs production
 
-        # Need COMROOT
-        module load prod_envir/1.1.0 >> /dev/null 2>&1
-
-        comdir="$COMROOT/$ICDUMP/prod/$ICDUMP.$PDY"
-        for i in `seq 1 $nfanal`; do
-            if [ -f $comdir/${fanal[i]} ]; then
-                $NCP $comdir/${fanal[i]} ${fanal[i]}
-            else
-                rb=1 ; ((rc+=rb))
-            fi
-        done
-
+    fi # Version check
+     
+    if [[ $MODE = "free" && $grid = "1p00" ]]; then
+       $NCP $ROTDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} $ARCDIR/pgbanl.${ICDUMP}.${CDATE}.grib2
     fi
-
-    # Get initial conditions from HPSS
-    if [[ $rc -ne 0 || $machine != "WCOSS_C" ]]; then
-
-        # check if the tarball exists
-        hsi ls -l $tarball
-        rc=$?
-        if [[ $rc -ne 0 ]]; then
-            echo "$tarball does not exist and should, ABORT!"
-            exit $rc
-        fi
-        # get the tarball
-        htar -xvf $tarball $flanal
-        rc=$?
-        if [[ $rc -ne 0 ]]; then
-            echo "untarring $tarball failed, ABORT!"
-            exit $rc
-        fi
-
-        # Move the files to legacy EMC filenames
-        if [ $CDATE -le "2019061118" ]; then #GFSv14
-           for i in `seq 1 $nfanal`; do
-             $NMV ${fanal[i]} ${flanal[i]}
-           done
-        fi
-
-    fi
-
-    # If found, exit out
-    if [[ $rc -ne 0 ]]; then
-        echo "Unable to obtain operational GFS initial conditions, ABORT!"
-        exit 1
-    fi
-
-elif [ $ics_from = "pargfs" ]; then
-
-    case $gfs_ver in
-      v14)
-        nfanal=4
-        fanal[1]="gfnanl.${ICDUMP}.$CDATE"
-        fanal[2]="sfnanl.${ICDUMP}.$CDATE"
-        fanal[3]="nsnanl.${ICDUMP}.$CDATE"
-        fanal[4]="pgbanl.${ICDUMP}.$CDATE"
-        flanal="${fanal[1]} ${fanal[2]} ${fanal[3]} ${fanal[4]}"
-
-        # Get initial conditions from HPSS from retrospective parallel
-        tarball="$HPSS_PAR_PATH/${CDATE}${ICDUMP}.tar"
-       ;;
-      v15)
-        nfanal=2
-        fanal[1]="gfnanl.${ICDUMP}.$CDATE"
-        fanal[2]="sfnanl.${ICDUMP}.$CDATE"
-        flanal="${fanal[1]} ${fanal[2]}"
-
-        # Get initial conditions from HPSS from retrospective parallel
-        tarball="$HPSS_PAR_PATH/${CDATE}/${ICDUMP}.tar"
-       ;;
-      v16)
-        if [[ $EXP_WARM_START = ".false." || $replay -gt 0 ]] ; then
-          nfanal=2
-          fanal[1]="./${ICDUMP}.${yyyy}${mm}${dd}/${cyc}/atmos/${ICDUMP}.t${cyc}z.atmanl.nc"
-          fanal[2]="./${ICDUMP}.${yyyy}${mm}${dd}/${cyc}/atmos/${ICDUMP}.t${cyc}z.sfcanl.nc"
-          fanal[3]="./${ICDUMP}.${yyyy}${mm}${dd}/${cyc}/${ICDUMP}.t${cyc}z.atmanl.nc"
-          fanal[4]="./${ICDUMP}.${yyyy}${mm}${dd}/${cyc}/${ICDUMP}.t${cyc}z.sfcanl.nc"
-          flanal="${fanal[1]} ${fanal[2]} ${fanal[3]} ${fanal[4]}"
-  
-          if [[ $ICDUMP = "gfs" ]]; then
-            tarball="$HPSS_PAR_PATH/${yyyy}${mm}${dd}${cyc}/${ICDUMP}_netcdfa.tar"
-          else
-            tarball="$HPSS_PAR_PATH/${yyyy}${mm}${dd}${cyc}/${ICDUMP}.tar"
-          fi
-        else
-          tarball="$HPSS_PAR_PATH/${yyyy}${mm}${dd}${cyc}/${ICDUMP}_restarta.tar"
-
-          # check if the tarball exists
-          hsi ls -l $tarball
-          rc=$?
-          if [ $rc -ne 0 ]; then
-              echo "$tarball does not exist and should, ABORT!"
-              exit $rc
-          fi
-
-          htar -xvf $tarball
-          rc=$?
-          if [ $rc -ne 0 ]; then
-              echo "untarring $tarball failed, ABORT!"
-              exit $rc
-          fi
-
-          GDATE=$($NDATE -$assim_freq $CDATE)
-          gyyyy=$(echo $GDATE | cut -c1-4)
-          gmm=$(echo $GDATE | cut -c5-6)
-          gdd=$(echo $GDATE | cut -c7-8)
-          gcyc=$(echo $GDATE | cut -c9-10)
-          tarball="$HPSS_PAR_PATH/${gyyyy}${gmm}${gdd}${gcyc}/${ICDUMP}_restartb.tar"
-
-          # check if the tarball exists
-          hsi ls -l $tarball
-          rc=$?
-          if [ $rc -ne 0 ]; then
-              echo "$tarball does not exist and should, ABORT!"
-              exit $rc
-          fi
-
-          htar -xvf $tarball
-          rc=$?
-          if [ $rc -ne 0 ]; then
-              echo "untarring $tarball failed, ABORT!"
-              exit $rc
-          fi
-        fi
-       ;;
-    esac
-
-    # get the tarball
-    if [[ $EXP_WARM_START = ".false." || $replay -gt 0 ]] ; then
-       # check if the tarball exists
-       hsi ls -l $tarball
-       rc=$?
-       if [ $rc -ne 0 ]; then
-           echo "$tarball does not exist and should, ABORT!"
-           exit $rc
-       fi
-       htar -xvf $tarball $flanal
-       rc=$?
-       if [ $rc -ne 0 ]; then
-           echo "untarring $tarball failed, ABORT!"
-           exit $rc
-       fi
-    fi
-
-else
-
-    echo "ics_from = $ics_from is not supported, ABORT!"
-    exit 1
-
+  done # grid loop
+fi # v14-v16 pgrb anl file pull
 fi
-###############################################################
 
-# Copy pgbanl file to COMROT for verification - GFSv14 only
-if [ $CDATE -le "2019061118" ]; then #GFSv14
-  COMROT=$ROTDIR/${ICDUMP}.$PDY/$cyc/$COMPONENT
-  [[ ! -d $COMROT ]] && mkdir -p $COMROT
-  $NCP ${fanal[4]} $COMROT/${ICDUMP}.t${cyc}z.pgrbanl
-fi
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd $DATAROOT
+[[ $KEEPDATA = "NO" ]] && rm -rf $DATA
 
 ###############################################################
 # Exit out cleanly

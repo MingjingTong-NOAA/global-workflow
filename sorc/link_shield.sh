@@ -8,16 +8,16 @@ machine=${2}
 
 if [ $# -lt 2 ]; then
     echo '***ERROR*** must specify two arguements: (1) RUN_ENVIR, (2) machine'
-    echo ' Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
+    echo ' Syntax: link_shield.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 
 if [ $RUN_ENVIR != emc -a $RUN_ENVIR != nco -a $RUN_ENVIR != gfdl ]; then
-    echo 'Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
+    echo 'Syntax: link_shield.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 if [ $machine != cray -a $machine != dell -a $machine != hera -a $machine != orion ]; then
-    echo 'Syntax: link_fv3gfs.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
+    echo 'Syntax: link_shield.sh ( nco | emc | gfdl ) ( cray | dell | hera | orion )'
     exit 1
 fi
 
@@ -57,7 +57,7 @@ else
 fi
 
 if [ -d ${pwd}/ufs_utils.fd ]; then
-  cd ${pwd}/ufs_utils.fd/sorc
+  cd ${pwd}/ufs_utils.fd/fix
   ./link_fixdirs.sh $RUN_ENVIR_FIX $machine
 fi
 
@@ -85,8 +85,7 @@ cd ${pwd}/../ush                ||exit 8
         $LINK ../sorc/gfs_post.fd/ush/$file                  .
     done
     for file in emcsfc_ice_blend.sh  fv3gfs_driver_grid.sh  fv3gfs_make_orog.sh  global_cycle_driver.sh \
-        emcsfc_snow.sh  fv3gfs_filter_topo.sh  global_chgres_driver.sh  global_cycle.sh \
-        fv3gfs_chgres.sh  fv3gfs_make_grid.sh  global_chgres.sh  chgres_cube.sh; do
+        emcsfc_snow.sh  fv3gfs_filter_topo.sh  global_cycle.sh fv3gfs_make_grid.sh  ; do
         $LINK ../sorc/ufs_utils.fd/ush/$file                  .
     done
     for file in gldas_archive.sh  gldas_forcing.sh gldas_get_data.sh  gldas_process_data.sh gldas_liscrd.sh  gldas_post.sh ; do
@@ -243,7 +242,7 @@ if [ -d ${pwd}/gfs_wafs.fd -a $RUN_ENVIR != gfdl ]; then
 fi
 
 for ufs_utilsexe in \
-     emcsfc_ice_blend  emcsfc_snow2mdl  global_chgres  global_cycle chgres_cube; do
+     emcsfc_ice_blend  emcsfc_snow2mdl  global_cycle ; do
     [[ -s $ufs_utilsexe ]] && rm -f $ufs_utilsexe
     $LINK ../sorc/ufs_utils.fd/exec/$ufs_utilsexe .
 done
@@ -322,13 +321,10 @@ cd ${pwd}/../sorc   ||   exit 8
 
     $SLINK gfs_post.fd/sorc/ncep_post.fd                                                   gfs_ncep_post.fd
 
-    $SLINK ufs_utils.fd/sorc/fre-nctools.fd/tools/shave.fd                                 shave.fd
-    for prog in filter_topo fregrid make_hgrid make_solo_mosaic ; do
+    for prog in fregrid make_hgrid make_solo_mosaic ; do
         $SLINK ufs_utils.fd/sorc/fre-nctools.fd/tools/$prog                                ${prog}.fd                                
     done
-    for prog in  global_cycle.fd   nemsio_read.fd  nemsio_chgdate.fd \
-        emcsfc_ice_blend.fd  nst_tf_chg.fd \
-        emcsfc_snow2mdl.fd   global_chgres.fd  nemsio_get.fd    orog.fd ;do
+    for prog in global_cycle.fd emcsfc_ice_blend.fd emcsfc_snow2mdl.fd ; do
         $SLINK ufs_utils.fd/sorc/$prog                                                     $prog
     done
 

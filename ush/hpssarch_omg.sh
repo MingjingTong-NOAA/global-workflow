@@ -32,7 +32,11 @@ if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
    echo  "${dirname}${head}radstat" >>${type}omg.txt
 fi
 
-echo  "${dirname}${head}atminc${SUFFIX}" >>${type}omg.txt
+# run replayinc for free mode for diagnostic purpose
+# atminc.nc is in standard archive for other mode
+if [[ $MODE = "free" && -s $ROTDIR/${dirpath}${head}atminc.nc ]]; then
+   echo  "${dirname}${head}atminc.nc" >>${type}omg.txt
+fi
 
 exit 0
 

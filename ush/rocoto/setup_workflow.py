@@ -90,6 +90,7 @@ def get_gfs_cyc_dates(base):
     gfs_cyc = base['gfs_cyc']
     sdate = base['SDATE']
     edate = base['EDATE']
+    gfs_delay = base['gfs_delay']
 
     interval_gfs = wfu.get_gfs_interval(gfs_cyc)
 
@@ -107,7 +108,7 @@ def get_gfs_cyc_dates(base):
             hrdet = 6
     elif gfs_cyc == 4:
         hrinc = 6
-    sdate_gfs = sdate + timedelta(hours=hrinc)
+    sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
     edate_gfs = edate - timedelta(hours=hrdet)
     if sdate_gfs > edate:
         print 'W A R N I N G!'
@@ -161,6 +162,7 @@ def get_definitions(base):
 
     machine = base.get('machine', wfu.detectMachine())
     scheduler = wfu.get_scheduler(machine)
+    hpssarch = base.get('HPSSARCH', 'NO').upper()
 
     strings = []
 
@@ -198,7 +200,7 @@ def get_definitions(base):
     strings.append('\t<!ENTITY SCHEDULER  "%s">\n' % scheduler)
     strings.append('\n')
     strings.append('\t<!-- Toggle HPSS archiving -->\n')
-    strings.append('\t<!ENTITY ARCHIVE_TO_HPSS "YES">\n')
+    strings.append('\t<!ENTITY ARCHIVE_TO_HPSS "%s">\n' % base['HPSSARCH'])
     strings.append('\n')
     strings.append('\t<!-- ROCOTO parameters that control workflow -->\n')
     strings.append('\t<!ENTITY CYCLETHROTTLE "3">\n')
@@ -917,8 +919,6 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     # arch
     deps = []
     dep_dict = {'type': 'task', 'name': '%svrfy' % cdump}
-    deps.append(rocoto.add_dependency(dep_dict))
-    dep_dict = {'type': 'streq', 'left': '&ARCHIVE_TO_HPSS;', 'right': 'YES'}
     deps.append(rocoto.add_dependency(dep_dict))
     if do_wave in ['Y', 'YES']:
       dep_dict = {'type': 'task', 'name': '%swavepostsbs' % cdump}

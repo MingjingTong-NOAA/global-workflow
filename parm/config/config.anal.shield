@@ -61,7 +61,7 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo.txt
 export OZINFO=$FIXgsi/global_ozinfo.txt
-export SATINFO=$FIXgsi/global_satinfo.txt.shield
+export SATINFO=$FIXshield/global_satinfo_shield.txt
 export OBERROR=$FIXgsi/prepobs_errtable.global
 
 

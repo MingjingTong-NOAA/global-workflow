@@ -72,6 +72,8 @@ NWPROD=${NWPROD:-${NWROOT:-$pwd}}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
 FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
+export FIX_AER=${FIX_AER:-$FIX_DIR/fix_aer}
+export FIX_LUT=${FIX_LUT:-$FIX_DIR/fix_lut}
 FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
 FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/fix_shield}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
@@ -224,11 +226,6 @@ fi
 if [ $MEMBER -lt 0 ]; then
   prefix=$CDUMP
   rprefix=$rCDUMP
-  if [ $replay -gt 0 ]; then
-    rprefix=$CDUMP
-  else
-    rprefix=$rCDUMP
-  fi
   memchar=""
 else
   prefix=enkf$CDUMP
@@ -258,7 +255,7 @@ else
   tcyc=$cyc
 fi
 
-if [ $replay = 1 ]; then
+if [ $replay == 1 ]; then
   if [ $nrestartbg = 1 ]; then
     rst_hrs="6"
   elif [ $nrestartbg = 3 ]; then
@@ -349,7 +346,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
     done
 
   # Link sfcanl_data restart files from $memdir
-    if [[ $CDUMP = "gfs" && $replay = 0 && $gfsanl = "NO" ]]; then
+    if [[ ($CDUMP = "gfs" && $gfsanl = "NO") || $MODE = "replay" ]]; then
       sfcanldir=$ROTDIR/gdas.$PDY/$cyc/atmos/$memchar
     else
       sfcanldir=$memdir
@@ -375,12 +372,12 @@ EOF
     fi
 
   # Link increments
-    if [ $replay = 1 ]; then 
+    if [ $replay == 1 ]; then 
       # compute increment inside model
       read_increment=".false."
       IAU_FORCING_VAR=${IAU_FORCING_VAR:-"'ua','va','temp','delp','delz','sphum','o3mr',"}
     else
-      if [[ $CDUMP = "gfs" && $gfsanl = "NO" ]]; then
+      if [[ ($CDUMP = "gfs" && $gfsanl = "NO") || $MODE = "replay" ]]; then
          INCDUMP="gdas"
          incmemdir=$ROTDIR/${INCDUMP}.$PDY/$cyc/atmos/$memchar
       else
@@ -466,12 +463,12 @@ else ## cold start
 fi 
 
 # link analysis and restart files for replay
-if [ $replay = 1 ]; then
+if [ $replay == 1 ]; then
    # link external IC
    mkdir -p $DATA/EXTIC
    mkdir -p $DATA/ATMINC
    mkdir -p $DATA/ATMANL
-   for file in $(ls $memdir/INPUT/*.nc); do
+   for file in $(ls $ROTDIR/${rprefix}.$PDY/$cyc/atmos/$memchar/INPUT/*.nc); do
      file2=$(echo $(basename $file))
      fsuf=$(echo $file2 | cut -c1-3)
      if [ $fsuf = "gfs" -o $fsuf = "sfc" ]; then
@@ -554,6 +551,16 @@ $NLN $FIX_AM/${O3FORC}                         $DATA/INPUT/global_o3prdlos.f77
 $NLN $FIX_AM/${H2OFORC}                        $DATA/INPUT/global_h2oprdlos.f77
 $NLN $FIX_AM/global_solarconstant_noaa_an.txt  $DATA/INPUT/solarconstant_noaa_an.txt
 $NLN $FIX_AM/global_sfc_emissivity_idx.txt     $DATA/INPUT/sfc_emissivity_idx.txt
+
+## merra2 aerosol climo (only for gfs)
+for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
+$NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
+done
+$NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
+$NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
+$NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
+$NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
+$NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
 
 $NLN $FIX_AM/global_co2historicaldata_glob.txt $DATA/INPUT/co2historicaldata_glob.txt
 $NLN $FIX_AM/co2monthlycyc.txt                 $DATA/INPUT/co2monthlycyc.txt
@@ -735,7 +742,7 @@ NST_RESV=${NST_RESV-0}
 ZSEA1=${ZSEA1:-0}
 ZSEA2=${ZSEA2:-0}
 nstf_name=${nstf_name:-"$NST_MODEL,$NST_SPINUP,$NST_RESV,$ZSEA1,$ZSEA2"}
-nst_anl=${nst_anl:-".true."}
+nst_anl=${nst_anl:-".false."}
 
 
 # blocking factor used for threading and general physics performance
@@ -825,7 +832,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
 
   external_ic=".false."
   mountain=".true."
-  if [ $replay = 1 ]; then
+  if [ $replay == 1 ]; then
     nggps_ic=${nggps_ic:-".true."}
     ncep_ic=${ncep_ic:-".false."}
   else
@@ -1022,7 +1029,8 @@ EOF
 if [ $replay -gt 0 ]; then
   cat >> input.nml << EOF
   replay = $replay
-  nrestartbg = $nrestartbg
+  nrestartbg = ${nrestartbg:-1}
+  write_replay_ic = ${write_replay_ic:-".true."}
 EOF
 fi
 
@@ -1134,11 +1142,19 @@ EOF
 
 # Add namelist for IAU
 if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
-  if [[ $replay = 1 ]]; then
+  if [[ $replay == 1 ]]; then
     cat >> input.nml << EOF
     iaufhrs      = ${IAUFHRS}
     iau_delthrs  = ${IAU_DELTHRS}
     iau_forcing_var = ${IAU_FORCING_VAR}
+    iau_drymassfixer = ${iau_drymassfixer:-".false."}
+    iau_filter_increments = ${iau_filter_increments:-".true."}
+EOF
+  elif [[ $replay == 2 ]]; then
+    cat >> input.nml << EOF
+    iaufhrs      = ${IAUFHRS}
+    iau_delthrs  = ${IAU_DELTHRS}
+    iau_inc_files= ${IAU_INC_FILES}
     iau_drymassfixer = ${iau_drymassfixer:-".false."}
     iau_filter_increments = ${iau_filter_increments:-".true."}
 EOF
@@ -1415,6 +1431,9 @@ else
        eval $NLN $memdir/tracer3d_4xdaily.tile${n}.nc tracer3d_4xdaily.tile${n}.nc
      done
   fi
+  for n in $(seq 1 $ntiles); do
+     eval $NLN $memdir/gfs_physics.tile${n}.nc        gfs_physics.tile${n}.nc
+  done
   eval $NLN $memdir/tendency.dat  fort.555
 fi
 
@@ -1546,7 +1565,7 @@ EOF
   fi
 
 # replay increment file
-  if [[ $replay = 1 && $warm_start = ".true." ]]; then
+  if [[ $replay == 1 && $warm_start = ".true." ]]; then
      echo "s/_RHR/0/"            > changedate
      echo "s/_auxfhr/"NO"/"     >> changedate
      echo "s/_atminc/".true."/" >> changedate

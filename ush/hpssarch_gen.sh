@@ -41,16 +41,22 @@ if [ $type = "gfs" ]; then
   rm -f gfsb.txt
   rm -f gfs_pgrb2b.txt
   rm -f gfs_flux.txt
-  rm -f gfs_${format}a.txt
-  rm -f gfs_${format}b.txt
   rm -f gfs_restarta.txt
   touch gfsa.txt
   touch gfsb.txt
   touch gfs_pgrb2b.txt
   touch gfs_flux.txt
-  touch gfs_${format}a.txt
-  touch gfs_${format}b.txt
   touch gfs_restarta.txt
+
+  if [ $MODE = "cycled" ]; then
+    rm -f gfs_${format}a.txt
+    touch gfs_${format}a.txt
+  fi
+
+  if [ $OUTPUT_HISTORY = ".true." ]; then
+    rm -f gfs_${format}b.txt
+    touch gfs_${format}b.txt
+  fi
 
   if [ $DO_DOWN = "YES" ]; then
     rm -f gfs_downstream.txt
@@ -70,24 +76,35 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}${head}pgrb2b.0p50.anl.idx              " >>gfs_pgrb2b.txt
   
     echo  "./logs/${CDATE}/gfs*.log                          " >>gfsa.txt
-    echo  "${dirname}${head}gsistat                          " >>gfsa.txt
-    if [ $DONST = "YES" ]; then
-    echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+    if [ $MODE = "cycled" ]; then
+      echo  "${dirname}${head}gsistat                          " >>gfsa.txt
+      echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+      echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
+      echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
+      echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
     fi
-    echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
-    if [ $DO_MAKEPREPBUFR = "YES" ]; then
-    echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
-    fi
-    echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
     echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
     echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   fi
+  if [ $DO_POST = "YES" ]; then
   echo  "${dirname}avno.t${cyc}z.cyclone.trackatcfunix     " >>gfsa.txt
   echo  "${dirname}avnop.t${cyc}z.cyclone.trackatcfunix    " >>gfsa.txt
   echo  "${dirname}trak.gfso.atcfunix.${PDY}${cyc}         " >>gfsa.txt
   echo  "${dirname}trak.gfso.atcfunix.altg.${PDY}${cyc}    " >>gfsa.txt
   echo  "${dirname}storms.gfso.atcf_gen.${PDY}${cyc}       " >>gfsa.txt
   echo  "${dirname}storms.gfso.atcf_gen.altg.${PDY}${cyc}  " >>gfsa.txt
+  fi
+  if [ -s $ROTDIR/${dirpath}tendency.dat ]; then
+    echo  "${dirname}tendency.dat                          " >>gfsa.txt
+  fi
+  if [ -s $ROTDIR/${dirpath}gfs_physics.tile6.nc ]; then
+    echo  "${dirname}gfs_physics.tile1.nc                  " >>gfsa.txt
+    echo  "${dirname}gfs_physics.tile2.nc                  " >>gfsa.txt
+    echo  "${dirname}gfs_physics.tile3.nc                  " >>gfsa.txt
+    echo  "${dirname}gfs_physics.tile4.nc                  " >>gfsa.txt
+    echo  "${dirname}gfs_physics.tile5.nc                  " >>gfsa.txt
+    echo  "${dirname}gfs_physics.tile6.nc                  " >>gfsa.txt
+  fi
 
   if [ $DO_DOWN = "YES" ]; then
    if [ $DO_BUFRSND = "YES" ]; then
@@ -116,6 +133,7 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}${head}pgrb2.1p00.anl.idx               " >>gfsb.txt
   fi
 
+  if [ $DO_POST = "YES" ]; then
   fh=0
   while [ $fh -le $FHMAX_GFS ]; do
     fhr=$(printf %03i $fh)
@@ -149,23 +167,29 @@ if [ $type = "gfs" ]; then
 
     fh=$((fh+inc))
   done
+  fi
 
 
   #..................
-  if [ $gfsanl = YES ]; then
-  echo  "${dirname}${head}atmanl${SUFFIX}            " >>gfs_${format}a.txt
-  echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
-  echo  "${dirname}${head}atmi*.nc                   " >>gfs_${format}a.txt
-  if [ $DONST = "YES" ]; then
-  echo  "${dirname}${head}dtfanl.nc                  " >>gfs_${format}a.txt
-  fi
-  echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
+  if [[ $MODE = "cycled" && $gfsanl = "YES" ]]; then
+    echo  "${dirname}${head}atmanl${SUFFIX}            " >>gfs_${format}a.txt
+    echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
+    echo  "${dirname}${head}atmi*.nc                   " >>gfs_${format}a.txt
+    if [ $DONST = "YES" ]; then
+      echo  "${dirname}${head}dtfanl.nc                  " >>gfs_${format}a.txt
+    fi
+    echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
   fi
 
   #..................
   if [ $OUTPUT_HISTORY = ".true." ]; then
+  if [ $FHMAX_GFS -le 36 ]; then
+     fhm=$FHMAX_GFS
+  else
+     fhm=36
+  fi
   fh=0
-  while [ $fh -le 36 ]; do
+  while [ $fh -le $fhm ]; do
     fhr=$(printf %03i $fh)
     echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
     echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
@@ -174,14 +198,29 @@ if [ $type = "gfs" ]; then
   fi
 
   #..................
-  if [ $gfsanl = YES ]; then
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gfs_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gfs_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gfs_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gfs_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gfs_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gfs_restarta.txt
+  if [[ $MODE = "cycled" && $gfsanl = "YES" ]]; then
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gfs_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gfs_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gfs_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gfs_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gfs_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gfs_restarta.txt
   fi
+  #if [ $MODE = "free" ]; then
+  #  echo  "${dirname}INPUT/gfs_ctrl.nc        " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile1.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile2.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile3.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile4.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile5.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/gfs_data.tile6.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile1.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile2.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile3.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile4.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile5.nc  " >>gfs_restarta.txt
+  #  echo  "${dirname}INPUT/sfc_data.tile6.nc  " >>gfs_restarta.txt
+  #fi
 
   #..................
   if [ $DO_WAVE = "YES" ]; then
@@ -223,20 +262,22 @@ if [ $type = "gdas" ]; then
 
   #..................
   echo  "${dirname}${head}gsistat                    " >>gdas.txt
-  echo  "${dirname}${head}pgrb2.0p25.anl             " >>gdas.txt
-  echo  "${dirname}${head}pgrb2.0p25.anl.idx         " >>gdas.txt
-  echo  "${dirname}${head}pgrb2.1p00.anl             " >>gdas.txt
-  echo  "${dirname}${head}pgrb2.1p00.anl.idx         " >>gdas.txt
-  echo  "${dirname}${head}atmanl${SUFFIX}            " >>gdas.txt
-  echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gdas.txt
-  if [ -s $ROTDIR/${dirpath}${head}atmanl.ensres${SUFFIX} ]; then
-     echo  "${dirname}${head}atmanl.ensres${SUFFIX}  " >>gdas.txt
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}atma003.ensres${SUFFIX} ]; then
-     echo  "${dirname}${head}atma003.ensres${SUFFIX}  " >>gdas.txt
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}atma009.ensres${SUFFIX} ]; then
-     echo  "${dirname}${head}atma009.ensres${SUFFIX}  " >>gdas.txt
+  if [ $MODE = "cycled" ]; then
+    echo  "${dirname}${head}pgrb2.0p25.anl             " >>gdas.txt
+    echo  "${dirname}${head}pgrb2.0p25.anl.idx         " >>gdas.txt
+    echo  "${dirname}${head}pgrb2.1p00.anl             " >>gdas.txt
+    echo  "${dirname}${head}pgrb2.1p00.anl.idx         " >>gdas.txt
+    echo  "${dirname}${head}atmanl${SUFFIX}            " >>gdas.txt
+    echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gdas.txt
+    if [ -s $ROTDIR/${dirpath}${head}atmanl.ensres${SUFFIX} ]; then
+       echo  "${dirname}${head}atmanl.ensres${SUFFIX}  " >>gdas.txt
+    fi
+    if [ -s $ROTDIR/${dirpath}${head}atma003.ensres${SUFFIX} ]; then
+       echo  "${dirname}${head}atma003.ensres${SUFFIX}  " >>gdas.txt
+    fi
+    if [ -s $ROTDIR/${dirpath}${head}atma009.ensres${SUFFIX} ]; then
+       echo  "${dirname}${head}atma009.ensres${SUFFIX}  " >>gdas.txt
+    fi
   fi
   if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
      echo  "${dirname}${head}cnvstat                 " >>gdas.txt
@@ -247,67 +288,94 @@ if [ $type = "gdas" ]; then
   if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
      echo  "${dirname}${head}radstat                 " >>gdas.txt
   fi
-  for fstep in prep anal gldas fcst vrfy radmon minmon oznmon; do
-   if [ -s $ROTDIR/logs/${CDATE}/gdas${fstep}.log ]; then
-     echo  "./logs/${CDATE}/gdas${fstep}.log         " >>gdas.txt
-   fi
-  done
-  echo  "./logs/${CDATE}/gdaspost*.log               " >>gdas.txt
 
-  fh=0
-  while [ $fh -le 9 ]; do
-    fhr=$(printf %03i $fh)
-    echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
-    echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
-    echo  "${dirname}${head}pgrb2.0p25.f${fhr}         " >>gdas.txt
-    echo  "${dirname}${head}pgrb2.0p25.f${fhr}.idx     " >>gdas.txt
-    echo  "${dirname}${head}pgrb2.1p00.f${fhr}         " >>gdas.txt
-    echo  "${dirname}${head}pgrb2.1p00.f${fhr}.idx     " >>gdas.txt
-    echo  "${dirname}${head}logf${fhr}.txt             " >>gdas.txt
-    echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
-    echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
-    fh=$((fh+3))
-  done
-  flist="001 002 004 005 007 008"
-  for fhr in $flist; do
-    echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
-    echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
-  done
+  if [[ $MODE = "cycled" || $gdaspost = "YES" ]]; then
+    for fstep in prep anal gldas fcst vrfy radmon minmon oznmon; do
+     if [ -s $ROTDIR/logs/${CDATE}/gdas${fstep}.log ]; then
+       echo  "./logs/${CDATE}/gdas${fstep}.log         " >>gdas.txt
+     fi
+    done
+    echo  "./logs/${CDATE}/gdaspost*.log               " >>gdas.txt
   
+    fh=0
+    while [ $fh -le 9 ]; do
+      fhr=$(printf %03i $fh)
+      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
+      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
+      echo  "${dirname}${head}pgrb2.0p25.f${fhr}         " >>gdas.txt
+      echo  "${dirname}${head}pgrb2.0p25.f${fhr}.idx     " >>gdas.txt
+      echo  "${dirname}${head}pgrb2.1p00.f${fhr}         " >>gdas.txt
+      echo  "${dirname}${head}pgrb2.1p00.f${fhr}.idx     " >>gdas.txt
+      echo  "${dirname}${head}logf${fhr}.txt             " >>gdas.txt
+      echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
+      echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
+      fh=$((fh+3))
+    done
+    flist="001 002 004 005 007 008"
+    for fhr in $flist; do
+      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
+      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
+    done
+  else
+    fh=0
+    while [ $fh -le 9 ]; do
+      fhr=$(printf %03i $fh)
+      echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
+      echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
+      fh=$((fh+3))
+    done
+  fi 
 
+  if [ $MODE = "replay" ]; then
+    echo  "${dirname}${head}atminc${SUFFIX}" >> gdas.txt
+  fi
+
+  if [ -s $ROTDIR/${dirpath}tendency.dat ]; then
+    echo  "${dirname}tendency.dat                        " >>gdas.txt
+  fi
+
+  if [ -s $ROTDIR/${dirpath}gfs_physics.tile6.nc ]; then
+    echo  "${dirname}gfs_physics.tile1.nc                " >>gdas.txt
+    echo  "${dirname}gfs_physics.tile2.nc                " >>gdas.txt
+    echo  "${dirname}gfs_physics.tile3.nc                " >>gdas.txt
+    echo  "${dirname}gfs_physics.tile4.nc                " >>gdas.txt
+    echo  "${dirname}gfs_physics.tile5.nc                " >>gdas.txt
+    echo  "${dirname}gfs_physics.tile6.nc                " >>gdas.txt
+  fi
 
   #..................
-  if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
-     echo  "${dirname}${head}cnvstat               " >>gdas_restarta.txt
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
-     echo  "${dirname}${head}radstat               " >>gdas_restarta.txt
-  fi
-  if [ $DONST = "YES" ]; then
-  echo  "${dirname}${head}nsstbufr                 " >>gdas_restarta.txt
-  fi
-  echo  "${dirname}${head}prepbufr                 " >>gdas_restarta.txt
-  if [ $DO_MAKEPREPBUFR = "YES" ]; then
-  echo  "${dirname}${head}prepbufr_pre-qc          " >>gdas_restarta.txt
-  fi
-  echo  "${dirname}${head}prepbufr.acft_profiles   " >>gdas_restarta.txt
-  echo  "${dirname}${head}abias                    " >>gdas_restarta.txt
-  echo  "${dirname}${head}abias_air                " >>gdas_restarta.txt
-  echo  "${dirname}${head}abias_int                " >>gdas_restarta.txt
-  echo  "${dirname}${head}abias_pc                 " >>gdas_restarta.txt
-  echo  "${dirname}${head}atmi*nc                  " >>gdas_restarta.txt
-  if [ $DONST = "YES" ]; then
-  echo  "${dirname}${head}dtfanl.nc                " >>gdas_restarta.txt
-  fi
-  echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
-
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gdas_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gdas_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gdas_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gdas_restarta.txt
-  echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gdas_restarta.txt
-
+  if [ $MODE = "cycled" ]; then
+    if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
+       echo  "${dirname}${head}cnvstat               " >>gdas_restarta.txt
+    fi
+    if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
+       echo  "${dirname}${head}radstat               " >>gdas_restarta.txt
+    fi
+    if [ $DONST = "YES" ]; then
+      echo  "${dirname}${head}nsstbufr                 " >>gdas_restarta.txt
+    fi
+    echo  "${dirname}${head}prepbufr                 " >>gdas_restarta.txt
+    if [ $DO_MAKEPREPBUFR = "YES" ]; then
+      echo  "${dirname}${head}prepbufr_pre-qc          " >>gdas_restarta.txt
+    fi
+    echo  "${dirname}${head}prepbufr.acft_profiles   " >>gdas_restarta.txt
+    echo  "${dirname}${head}abias                    " >>gdas_restarta.txt
+    echo  "${dirname}${head}abias_air                " >>gdas_restarta.txt
+    echo  "${dirname}${head}abias_int                " >>gdas_restarta.txt
+    echo  "${dirname}${head}abias_pc                 " >>gdas_restarta.txt
+    echo  "${dirname}${head}atmi*nc                  " >>gdas_restarta.txt
+    if [ $DONST = "YES" ]; then
+      echo  "${dirname}${head}dtfanl.nc                " >>gdas_restarta.txt
+    fi
+    echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
+  
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gdas_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gdas_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gdas_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gdas_restarta.txt
+    echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gdas_restarta.txt
+  fi 
 
   #..................
   echo  "${dirname}RESTART " >>gdas_restartb.txt

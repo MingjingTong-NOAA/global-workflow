@@ -63,6 +63,11 @@ cd $COMIN
 
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
 $NCP ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
+if [ $CDUMP = "gfs" ]; then 
+  $NCP tendency.dat $ARCDIR/gfs.tendency.${CDATE}
+else
+  $NCP tendency.dat $ARCDIR/tendency.${CDATE}
+fi
 $NCP ${APREFIX}pgrb2.1p00.anl $ARCDIR/pgbanl.${CDUMP}.${CDATE}.grib2
 
 # Archive 1 degree forecast GRIB2 files for verification
@@ -118,13 +123,18 @@ if [ $CDUMP = "gfs" -a $FITSARC = "YES" ]; then
     prefix=${CDUMP}.t${cyc}z
     fhmax=${FHMAX_FITS:-$FHMAX_GFS}
     fhr=0
+    if [ $fhmax -le 9 ]; then
+      dt=3
+    else
+      dt=6
+    fi
     while [[ $fhr -le $fhmax ]]; do
 	fhr3=$(printf %03i $fhr)
 	sfcfile=${prefix}.sfcf${fhr3}${ASUFFIX}
 	sigfile=${prefix}.atmf${fhr3}${ASUFFIX}
 	$NCP $sfcfile $VFYARC/${CDUMP}.$PDY/$cyc/
 	$NCP $sigfile $VFYARC/${CDUMP}.$PDY/$cyc/
-	(( fhr = $fhr + 6 ))
+	(( fhr = $fhr + $dt ))
     done
 fi
 
@@ -178,17 +188,19 @@ if [ $CDUMP = "gfs" ]; then
 
     #for targrp in gfsa gfsb - NOTE - do not check htar error status
     for targrp in gfsa gfsb; do
-        htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar `cat $ARCH_LIST/${targrp}.txt`
+        if [ -s $ARCH_LIST/${targrp}.txt ]; then
+           htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar `cat $ARCH_LIST/${targrp}.txt`
+        fi
     done
 
     #for targrp in gfs_flux gfs_netcdf/nemsio gfs_pgrb2b; do
-    if [ $gfsanl = "YES" ]; then
-       gfstarblist="gfs_flux gfs_${format}a gfs_${format}b gfs_pgrb2b"
-    else
-       gfstarblist="gfs_flux gfs_${format}b gfs_pgrb2b"
-    fi
     if [ ${SAVEFCSTNEMSIO:-"YES"} = "YES" ]; then
-        for targrp in $gfstarblist; do
+        if [[ $MODE = "cycled" && $gfsanl = "YES" ]]; then
+          targrp_list="gfs_${format}a gfs_${format}b"
+        else
+          targrp_list="gfs_${format}b"
+        fi
+        for targrp in $targrp_list; do
             htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar `cat $ARCH_LIST/${targrp}.txt`
             status=$?
             if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
@@ -196,6 +208,16 @@ if [ $CDUMP = "gfs" ]; then
                 exit $status
             fi
         done
+        if [ $DO_POST = "YES" ]; then
+           for targrp in gfs_flux gfs_pgrb2b; do
+               htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar `cat $ARCH_LIST/${targrp}.txt`
+               status=$?
+               if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
+                   echo "HTAR $CDATE ${targrp}.tar failed"
+                   exit $status
+               fi
+           done
+        fi
     fi
 
     #for targrp in gfswave
@@ -262,7 +284,8 @@ if [ $CDUMP = "gdas" ]; then
         fi
     fi
 
-    if [ $SAVEWARMICA = "YES" -o $SAVEFCSTIC = "YES" ]; then
+    if [ $MODE = "cycled" ]; then
+      if [ $SAVEWARMICA = "YES" -o $SAVEFCSTIC = "YES" ]; then
         htar -P -cvf $ATARDIR/$CDATE/gdas_restarta.tar `cat $ARCH_LIST/gdas_restarta.txt`
         status=$?
         if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
@@ -277,6 +300,7 @@ if [ $CDUMP = "gdas" ]; then
                 exit $status
             fi
         fi
+      fi
     fi
 
     if [ $SAVEWARMICB = "YES" -o $SAVEFCSTIC = "YES" ]; then
@@ -294,15 +318,17 @@ fi
 fi  ##end of HPSS archive
 ###############################################################
 
-
-
 ###############################################################
 # Clean up previous cycles; various depths
 # PRIOR CYCLE: Leave the prior cycle alone
 GDATE=$($NDATE -$assim_freq $CDATE)
 
 # PREVIOUS to the PRIOR CYCLE
-GDATE=$($NDATE -$assim_freq $GDATE)
+if [ $MODE = "replay" ]; then
+  GDATE=$($NDATE -48 $GDATE)
+else
+  GDATE=$($NDATE -$assim_freq $GDATE)
+fi
 gPDY=$(echo $GDATE | cut -c1-8)
 gcyc=$(echo $GDATE | cut -c9-10)
 

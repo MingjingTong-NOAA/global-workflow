@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# module load
+. /etc/profile
+. /etc/profile.d/modules.sh
+
+module load intel
+module load impi
+
+module list
+
 export FFLAGS="-O3 -fp-model precise -g -r8 -i4"
 # for debugging
 #export FFLAGS="-g -r8 -i4 -warn unused -check bounds"

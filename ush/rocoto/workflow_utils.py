@@ -202,7 +202,7 @@ def create_wf_task(task, cdump='gdas', cycledef=None, envar=None, dependency=Non
     if get_scheduler(detectMachine()) in ['slurm'] and detectMachine() in ['ORION']:
         task_dict['partition'] = '&PARTITION_BATCH;'
     # Add PARTITION_SERVICE to all service jobs (SLURM)
-    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','arch','earc','archomg','archfcst']:
+    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','arch','earc','archomg']:
         task_dict['partition'] = '&PARTITION_%s_%s;' % (task.upper(),cdump.upper())
 
     if metatask is None:

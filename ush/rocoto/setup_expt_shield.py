@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, resdet, resens, nens, cdump, idate, edate, gfs_cyc, gfs_delay, sdate_gfs
+global expdir, configdir, comrot, pslot, resdet, resens, nens, cdump, idate, edate, gfs_cyc, gfs_delay
 
 
 def makedirs_if_missing(d):
@@ -105,14 +105,12 @@ def edit_baseconfig():
                     .replace('@QUEUE_SERVICE@', queue_service) \
                     .replace('@PARTITION_BATCH@', partition_batch) \
                     .replace('@EXP_WARM_START@', exp_warm_start) \
-                    .replace('@DO_OmFonly@', runomf) \
-                    .replace('@DO_POST@', runpost) \
+                    .replace('@MODE@', 'cycled') \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
                     .replace('@HPSSARCH@', hpssarch) \
                     .replace('@gfs_cyc@', '%d' % gfs_cyc) \
-                    .replace('@gfs_delay@', '%d' % gfs_delay) \
-                    .replace('@gfs_sdate@', sdate_gfs.strftime('%Y%m%d%H'))
+                    .replace('@gfs_delay@', '%d' % gfs_delay)
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -155,8 +153,6 @@ link initial condition files from $ICSDIR to $COMROT'''
     parser.add_argument('--gfs_delay', help='number of days to delay GFS cycle', type=int, default=0, required=False)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
-    parser.add_argument('--runomf', help='run GSI for OmF', type=str, choices=['YES', 'NO'], required=False, default='NO')
-    parser.add_argument('--runpost', help='run post and verification', type=str, choices=['YES', 'NO'], required=False, default='YES')
 
     args = parser.parse_args()
 
@@ -178,22 +174,8 @@ link initial condition files from $ICSDIR to $COMROT'''
     cdump = args.cdump
     gfs_cyc = args.gfs_cyc
     gfs_delay = args.gfs_delay
-
-    if gfs_cyc == 1:
-        hrinc = 24 - idate.hour
-    elif gfs_cyc == 2:
-        if idate.hour in [0, 12]:
-            hrinc = 12
-        elif idate.hour in [6, 18]:
-            hrinc = 6
-    elif gfs_cyc == 4:
-        hrinc = 6
-    sdate_gfs = idate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
-
     partition = args.partition
     start = args.start
-    runomf = args.runomf
-    runpost = args.runpost
 
     # Set restart setting in config.base
     if start == 'cold':
@@ -249,7 +231,7 @@ link initial condition files from $ICSDIR to $COMROT'''
       nwprod = '/scratch1/NCEPDEV/global/glopara/nwpara'
       comroot = '/scratch1/NCEPDEV/global/glopara/com'
       homedir = '/scratch2/GFDL/gfdlscr/$USER'
-      stmp = '/scratch1/NCEPDEV/stmp2/$USER'
+      stmp = '/scratch2/NCEPDEV/stmp1/$USER'
       ptmp = '/scratch1/NCEPDEV/stmp4/$USER'
       noscrub = '$HOMEDIR'
       account = 'gfdlhires'

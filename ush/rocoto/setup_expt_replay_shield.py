@@ -80,21 +80,17 @@ def edit_baseconfig():
                     .replace('@PARTITION_BATCH@', partition_batch) \
                     .replace('@EXP_WARM_START@', exp_warm_start) \
                     .replace('@ICDUMP@', icdump) \
-                    .replace('@DO_OmF@', runomg) \
-                    .replace('@DO_POST@', runpost) \
+                    .replace('@MODE@', 'replay') \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
+                    .replace('@HPSSARCH@', hpssarch) \
                     .replace('@gfs_cyc@', '%d' % gfs_cyc) \
-                    .replace('@gfs_delay@', '%d' % gfs_delay) \
-                    .replace('@gfs_sdate@', sdate_gfs.strftime('%Y%m%d%H'))
+                    .replace('@gfs_delay@', '%d' % gfs_delay)
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
                     line = line.replace('@ROTDIR@', os.path.dirname(comrot))
-                if icsdir is not None:
-                    line = line.replace('@ICSDIR@', icsdir)
-                else:
-                    line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
+                line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
                 fo.write(line)
     os.unlink(base_config)
     os.rename(base_config + '.new', base_config)
@@ -120,7 +116,7 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--comrot', help='full path to COMROT', type=str, required=False, default=None)
     parser.add_argument('--expdir', help='full path to EXPDIR', type=str, required=False, default=None)
     parser.add_argument('--icsdir', help='full path to ICSDIR', type=str, required=False, default=None)
-    parser.add_argument('--icdump', help='initial condition dump', type=str, choices=['gdas', 'gfs'], default='gfs', required=False)
+    parser.add_argument('--icdump', help='initial condition dump', type=str, choices=['gdas', 'gfs'], default='gdas', required=False)
     parser.add_argument('--idate', help='starting date of experiment, initial conditions must exist!', type=str, required=True)
     parser.add_argument('--edate', help='end date experiment', type=str, required=True)
     parser.add_argument('--gfs_cyc', help='forecast cycle', type=int, required=False, default=1)
@@ -128,8 +124,6 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--configdir', help='full path to directory containing the config files', type=str, required=False, default=None)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
-    parser.add_argument('--runomg', help='run GSI for OmF', type=str, choices=['YES', 'NO'], required=False, default='NO')
-    parser.add_argument('--runpost', help='run post and verification', type=str, choices=['YES', 'NO'], required=False, default='YES')
     parser.add_argument('--hpssarch',help='archieve data', type=str, choices=['YES', 'NO'], required=False, default='YES')
 
     args = parser.parse_args()
@@ -146,19 +140,6 @@ Create COMROT experiment directory structure'''
     gfs_cyc = args.gfs_cyc
     gfs_delay = args.gfs_delay
 
-    if gfs_cyc == 1:
-        hrinc = 24 - idate.hour
-    elif gfs_cyc == 2:
-        if idate.hour in [0, 12]:
-            hrinc = 12
-        elif idate.hour in [6, 18]:
-            hrinc = 6
-    elif gfs_cyc == 4:
-        hrinc = 6
-    else:
-        hrinc = 0
-    sdate_gfs = idate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
-
     res = args.res
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)
@@ -166,8 +147,6 @@ Create COMROT experiment directory structure'''
     icdump = args.icdump
     partition = args.partition
     start = args.start
-    runomg = args.runomg
-    runpost = args.runpost
     hpssarch = args.hpssarch
 
     # Set restart setting in config.base
@@ -224,7 +203,7 @@ Create COMROT experiment directory structure'''
         nwprod = '/scratch1/NCEPDEV/global/glopara/nwpara'
         comroot = '/scratch1/NCEPDEV/global/glopara/com'
         homedir = '/scratch2/GFDL/gfdlscr/$USER'
-        stmp = '/scratch1/NCEPDEV/stmp2/$USER'
+        stmp = '/scratch2/NCEPDEV/stmp1/$USER'
         ptmp = '/scratch1/NCEPDEV/stmp4/$USER'
         noscrub = '$HOMEDIR'
         account = 'gfdlhires'

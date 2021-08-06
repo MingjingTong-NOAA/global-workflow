@@ -20,7 +20,7 @@ status=$?
 
 ###############################################################
 # Source relevant configs
-configs="base arch"
+configs="base archomg"
 for config in $configs; do
     . $EXPDIR/config.${config}
     status=$?
@@ -55,6 +55,7 @@ cd $COMIN
 
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
 $NCP ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
+$NCP tendency.dat $ARCDIR/tendency.${CDATE}
 
 ###############################################################
 # Archive data to HPSS
@@ -76,6 +77,24 @@ fi
 cd $ROTDIR
 
 htar -P -cvf $ATARDIR/$CDATE/${CDUMP}omg.tar `cat $ARCH_LIST/${CDUMP}omg.txt`
+
+###############################################################
+# Remove IC data directory
+###############################################################
+RMCDUMP=${RMCDUMP:-"NO"}
+GDATEEND=$($NDATE -48 $CDATE)
+GDATE=$($NDATE -96 $CDATE)
+while [ $GDATE -le $GDATEEND ]; do
+    gPDY=$(echo $GDATE | cut -c1-8)
+    gcyc=$(echo $GDATE | cut -c9-10)
+    COMIN="$ROTDIR/${ICDUMP}.$gPDY/$gcyc"
+    rm -rf $COMIN
+    if [ $RMCDUMP = "YES" ]; then
+       COMIN="$ROTDIR/${CDUMP}.$gPDY/$gcyc"
+       rm -rf $COMIN
+    fi
+    GDATE=$($NDATE +6 $GDATE)
+done
 
 ###############################################################
 fi  ##end of HPSS archive
