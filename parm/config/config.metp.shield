@@ -40,7 +40,7 @@ export log_MET_output_to_METplus="yes"
 # GRID-TO-GRID STEP 1: gfsmetpg2g1
 export g2g1_type_list="anom pres sfc"
 export g2g1_anom_truth_name="self_anl"
-if [[ $gfsanl = "YES" ]] then
+if [[ $gfsanl = "YES" ]]; then
   export g2g1_anom_truth_file_format="pgbanl.gfs.{valid?fmt=%Y%m%d%H}.grib2"
 else
   export g2g1_anom_truth_file_format="pgbanl.gdas.{valid?fmt=%Y%m%d%H}.grib2"
@@ -50,7 +50,7 @@ export g2g1_anom_fhr_max=$FHMAX_GFS
 export g2g1_anom_grid="G002"
 export g2g1_anom_gather_by="VSDB"
 export g2g1_pres_truth_name="self_anl"
-if [[ $gfsanl = "YES" ]] then
+if [[ $gfsanl = "YES" ]]; then
   export g2g1_pres_truth_file_format="pgbanl.gfs.{valid?fmt=%Y%m%d%H}.grib2"
 else
   export g2g1_pres_truth_file_format="pgbanl.gdas.{valid?fmt=%Y%m%d%H}.grib2"

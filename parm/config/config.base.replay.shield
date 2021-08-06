@@ -58,6 +58,8 @@ export WAFSF="NO"          # WAFS products
 #  use RUNMOS flag (currently in config.vrfy)
 export REALTIME="YES"
 
+# Experiment mode (cycled or free-forecast)
+export MODE="@MODE@" # cycled/free/replay
 
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
@@ -96,8 +98,8 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export ICDUMP=@ICDUMP@
 export assim_freq=6
+export export ICDUMP="@ICDUMP@"
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
 export ROTDIR="@ROTDIR@/$PSLOT"
@@ -112,18 +114,14 @@ export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
 export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
 
-# replay mode: 0 - not replay, 1 - compute increment inside model (read one analysis file)
-#              2 - read pre-computed increment
-export replay=1
-# number of forecasts used to compute mean background
-export nrestartbg=1
-
 # Commonly defined parameters in JJOBS
 export envir=${envir:-"prod"}
 export NET="gfs"
 export RUN=${RUN:-${CDUMP:-"gfs"}}
 export COMINatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMOUTatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
+export COMINwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
+export COMOUTwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
 
 export jlogfile="${EXPDIR}/logs/jlogfile"
 export ERRSCRIPT=${ERRSCRIPT:-'eval [[ $err = 0 ]]'}
@@ -140,17 +138,15 @@ export SENDDBN_NTC=${SENDDBN_NTC:-"NO"}
 export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
-# GFS ICs version
-export gfs_ver=v16
-
 # Resolution specific parameters
 export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
+export OPS_RES="C768"
 
 # Run with CCPP physics
-export RUN_CCPP="NO"
-export CCPP_SUITE="FV3_GFS_v16beta"
+export RUN_CCPP="YES"
+export CCPP_SUITE="FV3_GFS_v16"
 
 # Surface cycle update frequency
 if [[ "$CDUMP" == "gdas" ]] ; then
@@ -164,6 +160,14 @@ fi
 export FHMIN=0
 export FHMAX=9
 export FHOUT=1
+
+# Cycle to run EnKF  (set to BOTH for both gfs and gdas)
+export EUPD_CYC="gdas"
+
+# GFS cycle info
+export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
+export gfs_delay=@gfs_delay@
+export gfsanl="NO"
 
 # GFS output and frequency
 export FHMIN_GFS=0
@@ -179,32 +183,13 @@ export FHMAX_HF_GFS=0
 export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
-# SGFS cycle info
-export gfs_cyc=@gfs_cyc@ # 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
-export gfs_delay=@gfs_delay@
-export SDATE_GFS=@gfs_sdate@
-
-# auxiliary forecast hours
+# auxiliary forecast hours (restart)
 export FHOUT_aux=0
 export FHDUR_aux=6
-
-if [[ $replay -gt 0 && $gfs_cyc -gt 0 ]]; then 
-   if [[ "$CDATE" -ge "$SDATE_GFS" ]]; then
-      if [[ ($gfs_cyc = 1 && $cyc = "00") || \
-            ($gfs_cyc = 2 && ($cyc = "00" || $cyc = "12")) || \
-             $gfs_cyc = 4 ]]; then
-         export FHMAX=$FHMAX_GFS
-         export FHOUT=$FHOUT_GFS
-         export FHOUT_aux=1 
-      fi
-   fi
-fi
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
 
-# SHiELD output format
-export shield_c2g="YES"
 
 # I/O QUILTING, true--use Write Component; false--use GFDL FMS
 # if quilting=true, choose OUTPUT_GRID as cubed_sphere_grid in netcdf or gaussian_grid
@@ -238,19 +223,39 @@ export IAU_OFFSET=6
 export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
 export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
-if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] ; then # Cold starting or IAU off
+# Check if cycle is cold starting, DOIAU off, or free-forecast mode
+if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "free" && $EXP_WARM_START = ".false." ]] ; then
   export IAU_OFFSET=0
   export IAU_FHROT=0
 fi
-
-if [[ $replay == 1 ]]; then
+# replay setup
+# 1 - compute increment inside model, 2 - read pre-computed increment
+export replay=1
+# number of forecasts used to compute mean background
+export nrestartbg=1
+if [ "$MODE" = "replay" ]; then
    export IAUFHRS="6"
-   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr','liq_wat','rainwat','ice_wat','snowwat','graupel'"
+   export REPLAY_INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+   #export REPLAY_INCREMENTS_TO_ZERO="'delz_inc', 'o3mr_inc', 'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+   #export REPLAY_INCREMENTS_TO_ZERO=""
+   #export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr','liq_wat','rainwat','ice_wat','snowwat','graupel'"
+   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
    export iau_filter_increments=".true."
+else
+   export replay=0
 fi
 
 # Use Jacobians in eupd and thereby remove need to run eomg
 export lobsdiag_forenkf=".true."
+
+# run GLDAS to spin up land ICs
+export DO_GLDAS="YES"
+export gldas_cyc=00
+
+# run wave component
+export DO_WAVE="NO"
+if [[ "$SDATE" -lt "2019020100" ]]; then DO_WAVE="NO" ; fi # no rtofs in GDA
+export WAVE_CDUMP="both"
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
 export imp_physics=11
@@ -258,18 +263,58 @@ export imp_physics=11
 # Shared parameters
 # Hybrid related
 export DOHYBVAR="NO"
+export NMEM_ENKF=@NMEM_ENKF@
+export SMOOTH_ENKF="NO"
+export l4densvar=".true."
+export lwrite4danl=".true."
 
-# Run OmF (for forecast only workflow)
-export DO_OmF=@DO_OmF@
-
-# forecast w/o DA increment for warm-start
+# forecast w/o DA increment for restart
 export fcst_wo_da="NO"
+
+# EnKF output frequency
+if [ $DOHYBVAR = "YES" ]; then
+    export FHMIN_ENKF=3
+    export FHMAX_ENKF=9
+    if [ $l4densvar = ".true." ]; then
+        export FHOUT=1
+        export FHOUT_ENKF=1
+    else
+        export FHOUT_ENKF=3
+    fi
+fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
 export DONST="NO"
+if [ $DONST = "YES" ]; then export FNTSFA="        "; fi
 
-# full hydrometeors assimilation for OmG calculation
+# The switch to apply SST elevation correction or not
+export nst_anl=.false.
+
+# full hydrometeors assimilation
 export full_hydro_anl="NO"
+export update_hydro="NO"
+
+# Analysis increments to zero in CALCINCEXEC
+if [ $update_hydro != "YES" ]; then
+   if [ $full_hydro_anl = "YES" ]; then
+      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+   else
+      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc'"
+   fi
+fi
+
+if [ $OUTPUT_FILE = "nemsio" ]; then
+    export DO_CALC_INCREMENT="YES"
+    export DO_CALC_ANALYSIS="NO"
+fi
+
+# Stratospheric increments to zero
+if [ $full_hydro_anl = "YES" ]; then
+   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+else
+   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc'"
+fi
+export INCVARS_EFOLD="5"
 
 # Swith to generate netcdf or binary diagnostic files.  If not specified,
 # script default to binary diagnostic files.   Set diagnostic file
@@ -277,15 +322,19 @@ export full_hydro_anl="NO"
 export netcdf_diag=".true."
 export binary_diag=".false."
 
-# Run post (for forecast only workflow)
-export DO_POST=@DO_POST@
+# Run OmF (for forecast only or replay workflow)
+export DO_OmF="YES"
+
+# Run post (for forecast only or replay workflow)
+export DO_POST="YES"
+export gdaspost="YES"
 
 # Verification options
-export DO_METP="YES"        # Run MET+ jobs
+export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
-export HPSSARCH="YES"        # save data to HPSS archive
+export HPSSARCH="@HPSSARCH@" # save data to HPSS archive
 export ARCH_CYC=00           # Archive data at this cycle for warm_start capability
 export ARCH_WARMICFREQ=4     # Archive frequency in days for warm_start capability
 export ARCH_FCSTICFREQ=1     # Archive frequency in days for gdas and gfs forecast-only capability

@@ -5,8 +5,12 @@
 
 echo "BEGIN: config.fcst"
 
+# GFS IC version
+. $EXPDIR/config.getic
+
 # Source model specific information that is resolution dependent
 . $EXPDIR/config.fv3 $CASE
+[[ "$CDUMP" == "gfs" ]] && export nth_fv3=$nth_fv3_gfs
 
 # Get task specific resources
 . $EXPDIR/config.resources fcst
@@ -35,7 +39,7 @@ if [ $QUILTING = ".true." ]; then
 fi
 
 # External IC configuration
-if [ $gfs_ver = v16 ]; then
+if [ $gfs_ver = "v16" ]; then
   export ncep_levs=128
 else
   export ncep_levs=65
@@ -44,7 +48,6 @@ fi
 # Model configuration
 export TYPE="nh"
 export MONO="non-mono"
-export MODE="32bit"
 
 # Use stratosphere h2o physics (not for SHiELD)
 export h2o_phys=".true."
@@ -85,9 +88,9 @@ else
 fi
 
 # Radiation options 
-export IAER=111    ;#spectral band mapping method for aerosol optical properties
-export iovr_lw=3    ;#de-correlation length cloud overlap method (Barker, 2008)
-export iovr_sw=3    ;#de-correlation length cloud overlap method (Barker, 2008)
+export IAER=111     ;#spectral band mapping method for aerosol optical properties
+export iovr_lw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
+export iovr_sw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
 export icliq_sw=2   ;#cloud optical coeffs from AER's newer version v3.9-v4.0 for hu and stamnes
 
 
@@ -151,7 +154,7 @@ export deflate_level=1
 # Disable the use of coupler.res; get model start time from model_configure
 export USE_COUPLER_RES="NO"
 
-if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]; then
+if [[ $EXP_WARM_START = ".false." && ( "$MODE" = "free" || "$SDATE" = "$CDATE" ) ]]; then
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
 else
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"

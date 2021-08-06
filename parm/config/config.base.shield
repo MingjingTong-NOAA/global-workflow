@@ -58,6 +58,8 @@ export WAFSF="NO"          # WAFS products
 #  use RUNMOS flag (currently in config.vrfy)
 export REALTIME="YES"
 
+# Experiment mode (cycled or free-forecast)
+export MODE="@MODE@" # cycled/free/replay
 
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
@@ -135,17 +137,15 @@ export SENDDBN_NTC=${SENDDBN_NTC:-"NO"}
 export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
-# GFS ICs version (for cold start cycle)
-export gfs_ver=v15
-
 # Resolution specific parameters
 export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
+export OPS_RES="C768"
 
 # Run with CCPP physics
-export RUN_CCPP="NO"
-export CCPP_SUITE="FV3_GFS_v16beta"
+export RUN_CCPP="YES"
+export CCPP_SUITE="FV3_GFS_v16"
 
 # Surface cycle update frequency
 if [[ "$CDUMP" == "gdas" ]] ; then
@@ -166,16 +166,15 @@ export EUPD_CYC="gdas"
 # GFS cycle info
 export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
 export gfs_delay=@gfs_delay@
-export SDATE_GFS=@gfs_sdate@
 export gfsanl="NO"
 
 # GFS output and frequency
 export FHMIN_GFS=0
 
 export FHMAX_GFS_00=240
-export FHMAX_GFS_06=384
-export FHMAX_GFS_12=384
-export FHMAX_GFS_18=384
+export FHMAX_GFS_06=240
+export FHMAX_GFS_12=240
+export FHMAX_GFS_18=240
 export FHMAX_GFS=$(eval echo \${FHMAX_GFS_$cyc})
 
 export FHOUT_GFS=6
@@ -183,8 +182,13 @@ export FHMAX_HF_GFS=0
 export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
+# auxiliary forecast hours (restart)
+export FHOUT_aux=0
+export FHDUR_aux=6
+
 # GFS restart interval in hours
 export restart_interval_gfs=0
+
 
 # I/O QUILTING, true--use Write Component; false--use GFDL FMS
 # if quilting=true, choose OUTPUT_GRID as cubed_sphere_grid in netcdf or gaussian_grid
@@ -218,20 +222,35 @@ export IAU_OFFSET=6
 export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
 export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
-if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] ; then # Cold starting or IAU off
+# Check if cycle is cold starting, DOIAU off, or free-forecast mode
+if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "free" && $EXP_WARM_START = ".false." ]] ; then
   export IAU_OFFSET=0
   export IAU_FHROT=0
+fi
+# replay setup
+# 1 - compute increment inside model, 2 - read pre-computed increment
+export replay=0
+# number of forecasts used to compute mean background
+export nrestartbg=1
+if [ "$MODE" = "replay" ]; then
+   export IAUFHRS="6"
+   export REPLAY_INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
+   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
+   export iau_filter_increments=".true."
+else
+   export replay=0
 fi
 
 # Use Jacobians in eupd and thereby remove need to run eomg
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="NO"
+export DO_GLDAS="YES"
 export gldas_cyc=00
 
 # run wave component
 export DO_WAVE="NO"
+if [[ "$SDATE" -lt "2019020100" ]]; then DO_WAVE="NO" ; fi # no rtofs in GDA
 export WAVE_CDUMP="both"
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
@@ -265,7 +284,7 @@ export DONST="NO"
 if [ $DONST = "YES" ]; then export FNTSFA="        "; fi
 
 # The switch to apply SST elevation correction or not
-export nst_anl=.true.
+export nst_anl=.false.
 
 # full hydrometeors assimilation
 export full_hydro_anl="NO"
@@ -299,12 +318,19 @@ export INCVARS_EFOLD="5"
 export netcdf_diag=".true."
 export binary_diag=".false."
 
+# Run OmF (for forecast only or replay workflow)
+export DO_OmF="NO"
+
+# Run post (for forecast only or replay workflow)
+export DO_POST="YES"
+export gdaspost="YES"
+
 # Verification options
 export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
-export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive
+export HPSSARCH="@HPSSARCH@" # save data to HPSS archive
 export ARCH_CYC=00           # Archive data at this cycle for warm_start capability
 export ARCH_WARMICFREQ=4     # Archive frequency in days for warm_start capability
 export ARCH_FCSTICFREQ=1     # Archive frequency in days for gdas and gfs forecast-only capability
