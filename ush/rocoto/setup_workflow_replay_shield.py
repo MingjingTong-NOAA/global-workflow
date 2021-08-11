@@ -49,7 +49,7 @@ def main():
         print 'input arg:     --expdir = %s' % repr(args.expdir)
         sys.exit(1)
 
-    taskplan = ['getic', 'init', 'replayinc', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
+    taskplan = ['getic', 'init', 'analinc', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
 
     dict_configs = wfu.source_configs(configs, taskplan)
 
@@ -239,7 +239,7 @@ def get_gdasgfs_resources(dict_configs, cdump='gdas'):
         if replay == 1:
             tasks = ['getic', 'init', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'arch']
         else:
-            tasks = ['getic', 'init', 'replayinc', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'arch']
+            tasks = ['getic', 'init', 'analinc', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'arch']
     else:
         tasks = [ 'fcst', 'post', 'vrfy', 'metp', 'arch']
 
@@ -375,7 +375,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
 
         dict_tasks['%sinit' % cdump] = task
 
-    # replayinc
+    # analinc
     if cdump in ['gdas'] and replay == 2:
         deps = []
         dep_dict = {'type': 'task', 'name': '%sgetic' % cdump}
@@ -388,9 +388,9 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        task = wfu.create_wf_task('replayinc', cdump=cdump, envar=envars, dependency=dependencies)
+        task = wfu.create_wf_task('analinc', cdump=cdump, envar=envars, dependency=dependencies)
 
-        dict_tasks['%sreplayinc' % cdump] = task
+        dict_tasks['%sanalinc' % cdump] = task
 
     if cdump in ['gdas']:
     # prep

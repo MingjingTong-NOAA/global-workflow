@@ -5,6 +5,9 @@
 
 echo "BEGIN: config.fcst"
 
+# GFS IC version
+. $EXPDIR/config.getic
+
 # Source model specific information that is resolution dependent
 . $EXPDIR/config.fv3 $CASE
 [[ "$CDUMP" == "gfs" ]] && export nth_fv3=$nth_fv3_gfs

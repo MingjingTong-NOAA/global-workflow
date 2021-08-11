@@ -14,4 +14,6 @@ else
    export calcanl_nvar=10
 fi
 
+export cliptracers="NO"
+
 echo "END: config.analcalc"

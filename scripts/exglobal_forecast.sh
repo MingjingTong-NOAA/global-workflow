@@ -79,7 +79,7 @@ DMPDIR=${DMPDIR:-$pwd}         # global dumps for seaice, snow and sst analysis
 DELTIM=${DELTIM:-225}
 layout_x=${layout_x:-8}
 layout_y=${layout_y:-16}
-LEVS=${LEVS:-65}
+LEVS=${LEVS:-128}
 
 # Utilities
 NCP=${NCP:-"/bin/cp -p"}
@@ -206,7 +206,7 @@ else
   rprefix=enkf$rCDUMP
   memchar=mem$(printf %03i $MEMBER)
 fi
-memdir=$ROTDIR/${prefix}.$PDY/$cyc/atmos/$memchar
+export memdir=$ROTDIR/${prefix}.$PDY/$cyc/atmos/$memchar
 if [ ! -d $memdir ]; then mkdir -p $memdir; fi
 
 GDATE=$($NDATE -$assim_freq $CDATE)
@@ -272,7 +272,12 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
     done
 
   # Link sfcanl_data restart files from $memdir
-    for file in $(ls $memdir/RESTART/${sPDY}.${scyc}0000.*.nc); do
+    if [[ ($CDUMP = "gfs" && $gfsanl = "NO") || $MODE = "replay" ]]; then
+      sfcanldir=$ROTDIR/gdas.$PDY/$cyc/atmos/$memchar
+    else
+      sfcanldir=$memdir
+    fi
+    for file in $(ls $sfcanldir/RESTART/${sPDY}.${scyc}0000.*.nc); do
       file2=$(echo $(basename $file))
       file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
       fsufanl=$(echo $file2 | cut -d. -f1)
@@ -293,13 +298,20 @@ EOF
     fi
 
   # Link increments
+    if [[ ($CDUMP = "gfs" && $gfsanl = "NO") || $MODE = "replay" ]]; then
+       INCDUMP="gdas"
+       incmemdir=$ROTDIR/${INCDUMP}.$PDY/$cyc/atmos/$memchar
+    else
+       INCDUMP=$CDUMP
+       incmemdir=$memdir
+    fi
     if [ $DOIAU = "YES" ]; then
       for i in $(echo $IAUFHRS | sed "s/,/ /g" | rev); do
         incfhr=$(printf %03i $i)
         if [ $incfhr = "006" ]; then
-          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
+          increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
         else
-          increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
+          increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_ATMINC}atmi${incfhr}.nc
         fi
         if [ ! -f $increment_file ]; then
           echo "ERROR: DOIAU = $DOIAU, but missing increment file for fhr $incfhr at $increment_file"
@@ -312,7 +324,7 @@ EOF
       read_increment=".false."
       res_latlon_dynamics=""
     else
-      increment_file=$memdir/${CDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
+      increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
       if [ -f $increment_file ]; then
         $NLN $increment_file $DATA/INPUT/fv_increment.nc
         read_increment=".true."
@@ -1143,6 +1155,12 @@ if [ $DOIAU = "YES" ]; then
 EOF
 fi
 
+if [[ $DOIAU = "YES" && $replay > 0 && $replay_4DIAU = "NO" ]]; then
+  cat >> input.nml << EOF
+  iau_filter_increments=.true.
+EOF
+fi
+
 cat >> input.nml <<EOF
   $gfs_physics_nml
 /
@@ -1354,6 +1372,7 @@ if [ $QUILTING = ".true." -a $OUTPUT_GRID = "gaussian_grid" ]; then
     fi
     fhr=$((fhr+FHINC))
   done
+  eval $NLN $memdir/tendency.dat  fort.555
 else
   for n in $(seq 1 $ntiles); do
     eval $NLN nggps2d.tile${n}.nc       $memdir/nggps2d.tile${n}.nc

@@ -41,6 +41,12 @@ export mm=$(echo $CDATE | cut -c5-6)
 export dd=$(echo $CDATE | cut -c7-8)
 export hh=${cyc:-$(echo $CDATE | cut -c9-10)}
 
+export IAUSDATE=$($NDATE -3 $CDATE)
+export iyy=$(echo $IAUSDATE | cut -c1-4)
+export imm=$(echo $IAUSDATE | cut -c5-6)
+export idd=$(echo $IAUSDATE | cut -c7-8)
+export ihh=$(echo $IAUSDATE | cut -c9-10)
+
 export DATA=${DATA:-${DATAROOT}/init}
 export EXTRACT_DIR=${EXTRACT_DIR:-$ROTDIR}
 export WORKDIR=${WORKDIR:-$DATA}
@@ -49,6 +55,7 @@ export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export RUNICSH=${RUNICSH:-${GDASINIT_DIR}/run_v16.chgres.sh}
+export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
 
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
@@ -56,10 +63,35 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
   exit 0
 else
   # Run chgres_cube
-  if [ ! -d $OUTDIR ]; then mkdir -p $OUTDIR ; fi
-  sh ${RUNICSH} ${CDUMP}
-  status=$?
-  [[ $status -ne 0 ]] && exit $status
+  if [[ $MODE = "free" || $replay == 1 || "$CDATE" = "$SDATE" ]]; then
+    if [ ! -d $OUTDIR ]; then mkdir -p $OUTDIR ; fi
+    sh ${RUNICSH} ${ICDUMP}
+    status=$?
+    [[ $status -ne 0 ]] && exit $status
+  fi
+
+  COMOUT=$COMOUTatmos
+
+  if [[ $replay > 0 && $rungcycle = "NO" && $gfs_ver = v16 && $CDATE != $SDATE ]]; then
+    sh ${RUNSFCANLSH} ${ICDUMP}
+    status=$?
+    [[ $status -ne 0 ]] && exit $status 
+
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc_gfs
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc_gfs
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc_gfs
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc_gfs
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc_gfs
+    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc_gfs
+
+    mv $COMOUT/RESTART/sfc_data.tile1.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc
+    mv $COMOUT/RESTART/sfc_data.tile2.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc
+    mv $COMOUT/RESTART/sfc_data.tile3.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc
+    mv $COMOUT/RESTART/sfc_data.tile4.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc
+    mv $COMOUT/RESTART/sfc_data.tile5.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc
+    mv $COMOUT/RESTART/sfc_data.tile6.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc
+  fi
+
 fi
 
 ##########################################

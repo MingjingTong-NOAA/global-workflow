@@ -58,7 +58,8 @@ export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
-export getpgbanl=${getpgbanl:-"YES"}
+export rungcycle=${rungcycle:-"YES"}
+export replay_4DIAU=${replay_4DIAU:-"NO"}
 
 # Create ROTDIR/EXTRACT_DIR
 if [ ! -d $ROTDIR ]; then mkdir -p $ROTDIR ; fi
@@ -88,6 +89,7 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
 
   else # Opertional input - warm starts
 
+    cd $ROTDIR
     # Pull CDATE gfs restart tarball
     htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/com_gfs_prod_gfs.${yy}${mm}${dd}_${hh}.gfs_restart.tar
     # Pull GDATE gdas restart tarball
@@ -116,28 +118,46 @@ else
 fi
 
 # Pull sfcanl restart file for replay
-if [[ $replay > 0 && $rungcycle = "NO" && $gfs_ver = v16 ]]; then
-   cd $EXTRACT_DIR
+if [ $gfs_ver = v16 ]; then
+  if [[ $MODE = "replay" && $rungcycle = "NO" ]]; then
+     cd $EXTRACT_DIR
 
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
-   echo  "${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
+     echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+  
+     if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
+        export tarball="${ICDUMP}_restarta.tar"
+        htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt 
+     else   
+        export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+        htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
+     fi     
+     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  fi
 
-   if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
-      export tarball="${ICDUMP}_restarta.tar"
-      htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./list.txt 
-   else   
-      export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
-      htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./list.txt
-   fi     
-   mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  if [[ $replay_4DIAU = "YES" ]]; then
+     cd $EXTRACT_DIR
+     echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >list.txt
+     echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>list.txt
+     echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>list.txt
+
+     if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
+        export tarball="${ICDUMP}.tar"
+        htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt
+     else
+        export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
+        htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
+     fi
+     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*ensres.nc ${ROTDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  fi
 fi
 
 # Pull pgbanl file for verification/archival - v14+
-if [ $getpgbanl = "YES" ]; then
+if [ $DO_METP = "YES" ]; then
 if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
   for grid in 0p25 0p50 1p00
   do
@@ -158,7 +178,7 @@ if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
 
     elif [ $gfs_ver = v16 ]; then # v16 - determine RETRO or production source next
 
-      if [ $RETRO = "YES" ]; then # Retrospective parallel source
+      if [[ $RETRO = "YES" && "$CDATE" -lt "2021032500" ]]; then # Retrospective parallel source
 
         cd $EXTRACT_DIR
         if [ $ICDUMP = "gdas" ]; then

@@ -31,7 +31,7 @@ from datetime import datetime, timedelta
 import rocoto
 import workflow_utils as wfu
 
-taskplan = ['getic', 'init', 'fcst', 'prep', 'gomg', 'replayinc', 'archomg', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
+taskplan = ['getic', 'init', 'fcst', 'prep', 'gomg', 'analinc', 'archomg', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
 
 def main():
     parser = ArgumentParser(description='Setup XML workflow and CRONTAB for a forecast only experiment.', formatter_class=ArgumentDefaultsHelpFormatter)
@@ -385,7 +385,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        task = wfu.create_wf_task('replayinc', cdump=cdump, envar=envars, dependency=dependencies)
+        task = wfu.create_wf_task('analinc', cdump=cdump, envar=envars, dependency=dependencies)
         tasks.append(task)
         tasks.append('\n')
 

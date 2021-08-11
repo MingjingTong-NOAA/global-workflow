@@ -1142,30 +1142,24 @@ EOF
 
 # Add namelist for IAU
 if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
-  if [[ $replay == 1 ]]; then
-    cat >> input.nml << EOF
-    iaufhrs      = ${IAUFHRS}
-    iau_delthrs  = ${IAU_DELTHRS}
-    iau_forcing_var = ${IAU_FORCING_VAR}
-    iau_drymassfixer = ${iau_drymassfixer:-".false."}
-    iau_filter_increments = ${iau_filter_increments:-".true."}
+  cat >> input.nml << EOF
+  iaufhrs      = ${IAUFHRS}
+  iau_delthrs  = ${IAU_DELTHRS}
+  iau_inc_files= ${IAU_INC_FILES}
+  iau_drymassfixer = .false.
 EOF
-  elif [[ $replay == 2 ]]; then
-    cat >> input.nml << EOF
-    iaufhrs      = ${IAUFHRS}
-    iau_delthrs  = ${IAU_DELTHRS}
-    iau_inc_files= ${IAU_INC_FILES}
-    iau_drymassfixer = ${iau_drymassfixer:-".false."}
-    iau_filter_increments = ${iau_filter_increments:-".true."}
+fi
+
+if [[ $replay == 1 ]]; then
+  cat >> input.nml << EOF
+  iau_forcing_var = ${IAU_FORCING_VAR}
 EOF
-  else
-    cat >> input.nml << EOF
-    iaufhrs      = ${IAUFHRS}
-    iau_delthrs  = ${IAU_DELTHRS}
-    iau_inc_files= ${IAU_INC_FILES}
-    iau_drymassfixer = ${iau_drymassfixer:-".false."}
+fi
+
+if [[ $DOIAU = "YES" && $replay > 0 && $replay_4DIAU = "NO"]]; then
+  cat >> input.nml << EOF
+  iau_filter_increments=.true.
 EOF
-  fi
 fi
 
 cat >> input.nml <<EOF

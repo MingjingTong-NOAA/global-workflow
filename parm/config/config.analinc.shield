@@ -1,12 +1,15 @@
 #!/bin/ksh -x
 
-########## config.replayinc ##########
+########## config.analinc ##########
 # GFS post-anal specific (non-diag)
 
-echo "BEGIN: config.replayinc"
+echo "BEGIN: config.analinc"
+
+# GFS IC version
+. $EXPDIR/config.getic
 
 # Get task specific resources
-. $EXPDIR/config.resources replayinc
+. $EXPDIR/config.resources analinc
 
 export CALCINCNCEXEC=$HOMEgfs/exec/calc_increment_replay_ncio.x
 
@@ -14,4 +17,4 @@ if [ $MODE = "free" ]; then
    export GDUMP="gfs"
 fi
 
-echo "END: config.replayinc"
+echo "END: config.analinc"

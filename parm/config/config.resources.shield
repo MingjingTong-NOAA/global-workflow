@@ -8,9 +8,10 @@ if [ $# -ne 1 ]; then
 
     echo "Must specify an input task argument to set resource variables!"
     echo "argument can be any one of the following:"
+    echo "getic init"
     echo "anal analcalc analdiag gldas fcst post vrfy metp arch echgres"
     echo "eobs ediag eomg eupd ecen esfc efcs epos earc"
-    echo "waveinit waveprep wavepostsbs wavepostbndpnt wavepostpnt"
+    echo "waveinit waveprep wavepostsbs wavepostbndpnt wavepostbndpntbll wavepostpnt"
     echo "wavegempak waveawipsbulls waveawipsgridded"
     echo "postsnd awips gempak"
     echo "wafs wafsgrib2 wafsblending wafsgrib20p25 wafsblending0p25 wafsgcip"
@@ -37,14 +38,12 @@ elif [[ "$machine" = "ORION" ]]; then
    export npe_node_max=40
 fi
 
-if [ $step = "prep" -o $step = "prepbufr" -o $step = "omgprep" ]; then
+if [ $step = "prep" -o $step = "prepbufr" ]; then
 
     eval "export wtime_$step='00:45:00'"
     eval "export npe_$step=4"
     eval "export npe_node_$step=2"
     eval "export nth_$step=1"
-
-    export npe_node_prep=2    
 
 elif [ $step = "waveinit" ]; then
 
@@ -112,13 +111,18 @@ elif [ $step = "waveawipsgridded" ]; then
 
 elif [ $step = "anal" ]; then
 
-    export wtime_anal="01:00:00"
-    export npe_anal=1000
-    export nth_anal=5
-    export npe_anal_gfs=1000
+    export wtime_anal="02:30:00"
+    export npe_anal=480
+    export npe_node_anal=2
+    export nth_anal=12
+    export nth_cycle=24
+    if [[ "$machine" = "WCOSS_DELL_P3" ]]; then
+        export nth_anal=14
+        export nth_cycle=28
+    fi
     if [ $CASE = "C384" ]; then
-      export npe_anal=400
-      export npe_anal_gfs=400
+      export npe_anal=160
+      export nth_anal=10
     fi
     if [ $CASE = "C192" -o $CASE = "C96" -o $CASE = "C48" ]; then
       export npe_anal=84
@@ -167,9 +171,6 @@ elif [ $step = "fcst" ]; then
     else
       export wtime_fcst_gfs="03:00:00"
     fi
-    if [[ $FHMAX == $FHMAX_GFS ]]; then
-      export wtime_fcst=$wtime_fcst_gfs
-    fi
     export npe_fcst=$(echo "$layout_x * $layout_y * 6" | bc)
     export npe_fcst_gfs=$(echo "$layout_x_gfs * $layout_y_gfs * 6" | bc)
     export nth_fcst=${nth_fv3:-2}
@@ -180,11 +181,11 @@ elif [ $step = "post" ]; then
 
     export wtime_post="02:00:00"
     export wtime_post_gfs="06:00:00"
-    export npe_post=96
+    export npe_post=112
     export nth_post=1
     export npe_node_post=12
     export npe_node_dwn=$npe_node_max
-    if [[ "$machine" = "WCOSS_DELL_P3" ]]; then export npe_node_post=14 ; fi
+    if [[ "$machine" = "WCOSS_DELL_P3" ]]; then export npe_node_post=28 ; fi
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_post="3072M"; fi
 
 elif [ $step = "wafs" ]; then
@@ -266,7 +267,21 @@ elif [ $step = "echgres" ]; then
     export nth_echgres=$npe_node_max
     export npe_node_echgres=1
 
-elif [ $step = "arch" -o $step = "archomg" -o $step = "archfcst" ]; then
+elif [ $step = "init" ]; then
+
+    export wtime_init="00:30:00"
+    export npe_init=24
+    export nth_init=1
+    export npe_node_init=6
+
+elif [ $step = "analinc" ]; then
+
+    export wtime_analinc="00:10:00"
+    export npe_analinc=1
+    export nth_analinc=$npe_node_max
+    export npe_node_analinc=1
+
+elif [ $step = "arch" -o $step = "earc" -o $step = "getic" -o $step = "archomg" ]; then
 
     eval "export wtime_$step='06:00:00'"
     eval "export npe_$step=1"
@@ -274,19 +289,12 @@ elif [ $step = "arch" -o $step = "archomg" -o $step = "archfcst" ]; then
     eval "export nth_$step=1"
     eval "export memory_$step=2048M"
 
-elif [ $step = "earc" -o $step = "getic" ]; then
-
-    eval "export wtime_$step='06:00:00'"
-    eval "export npe_$step=1"
-    eval "export npe_node_$step=1"
-    eval "export nth_$step=1"
-    eval "export memory_$step=2048M"
-
-elif [ $step = "eobs" -o $step = "eomg" ]; then
+elif [ $step = "eobs" -o $step = "eomg" -o $step = "gomg" ]; then
 
 
     export wtime_eobs="00:15:00"
     export wtime_eomg="01:00:00"
+    export wtime_gomg="00:15:00"
     if [ $CASE = "C768" ]; then
       export npe_eobs=200
     elif [ $CASE = "C384" ]; then
@@ -301,20 +309,9 @@ elif [ $step = "eobs" -o $step = "eomg" ]; then
     export npe_node_eobs=$(echo "$npe_node_max / $nth_eobs" | bc)
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_eobs="3072M"; fi
 
-elif [ $step = "gomg" ]; then
-
-    export wtime_gomg="00:15:00"
-    if [ $CASE = "C768" ]; then
-      export npe_gomg=300
-    elif [ $CASE = "C384" ]; then
-      export npe_gomg=200
-    elif [ $CASE = "C192" ]; then
-      export npe_gomg=80
-    elif [ $CASE = "C96" -o $CASE = "C48" ]; then
-      export npe_gomg=40
-    fi
-    export nth_gomg=2
-    export npe_node_gomg=$(echo "$npe_node_max / $nth_gomg" | bc)
+    export npe_gomg=$npe_eobs
+    export nth_gomg=$nth_eobs
+    export npe_node_gomg=$npe_node_eobs
 
 elif [ $step = "gcycle" ]; then
 

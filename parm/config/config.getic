@@ -63,10 +63,9 @@ elif [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
   fi
 fi
 
-if [ $DO_METP = "YES" ]; then
-  export getpgbanl="YES"
-else
-  export getpgbanl="NO"
+if [ $gfs_ver != "v16" ]; then
+   export rungcycle="YES"
+   export replay_4DIAU="NO"
 fi
 
 echo "END: config.getic"

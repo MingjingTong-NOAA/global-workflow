@@ -57,7 +57,9 @@ export APRUN_CHGRES=${APRUN_CHGRES:-${APRUN:-""}}
 export CHGRESNCEXEC=${CHGRESNCEXEC:-$HOMEgfs/exec/enkf_chgres_recenter_nc.x}
 export NTHREADS_CHGRES=${NTHREADS_CHGRES:-1}
 export APRUN_CALCINC=${APRUN_CALCINC:-${APRUN:-""}}
-export CALCINCNCEXEC=${CALCINCNCEXEC:-$HOMEgfs/exec/calc_increment_ncio.x}
+export CALCINCEXEC=${CALCINCEXEC:-$HOMEgfs/exec/calc_increment_ens.x}
+export CALCINCNCEXEC=${CALCINCNCEXEC:-$HOMEgfs/exec/calc_increment_ens_ncio.x}
+CALCINCPY=${CALCINCPY:-$HOMEgfs/ush/calcinc_gfs.py}
 APRUNCFP=${APRUNCFP:-""}
 
 # OPS flags
@@ -73,12 +75,20 @@ APREFIX=${APREFIX:-""}
 ASUFFIX=${ASUFFIX:-$SUFFIX}
 ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
 # external analysis
-#ATMANL=${ATMANL:-${COMOUT}/${APREFIX}atmanl${ASUFFIX}}
 ATMANL=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
+ATMANLENS03=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atma003.ensres${ASUFFIX}}
+ATMANLENS06=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atmanl.ensres${ASUFFIX}}
+ATMANLENS09=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atma009.ensres${ASUFFIX}}
+
 # chgres analysis
-ATMANL_CHGRES=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atmanl_fcstres${ASUFFIX}}
+ATMANLFRES03=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma03_fcstres${ASUFFIX}}
+ATMANLFRES06=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma06_fcstres${ASUFFIX}}
+ATMANLFRES09=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma09_fcstres${ASUFFIX}}
+
 # analysis increment
-ATMINC=${ATMINC:-${COMOUT}/${APREFIX}atminc${ASUFFIX}}
+ATMINC=${ATMINC:-${COMOUT}/${APREFIX}atminc.nc}
+ATMI03=${ATMI03:-${COMOUT}/${APREFIX}atmi003.nc}
+ATMI09=${ATMI09:-${COMOUT}/${APREFIX}atmi009.nc}
 
 ################################################################################
 ################################################################################
@@ -108,61 +118,74 @@ LEVS_CASE=${LEVS:-91}
 ##############################################################
 # Regrid external analysis  to forecast resolution
 $NLN $ATMF06 fcst.06
-$NLN $ATMANL anal
-$NLN $ATMANL_CHGRES anal.fcstres
+if [ $replay_4DIAU = "YES" ]; then
+  $NLN $ATMANLENS03 anal.03
+  $NLN $ATMANLFRES03 anal.fcstres.03
+  $NLN $ATMANLENS06 anal.06
+  $NLN $ATMANLFRES06 anal.fcstres.06
+  $NLN $ATMANLENS09 anal.09
+  $NLN $ATMANLFRES09 anal.fcstres.09
+else
+  $NLN $ATMANL anal.06
+  $NLN $ATMANLFRES06 anal.fcstres.06
+fi
 
-echo "Regridding analysis"
-rm -f chgres_nc_gausanal.nml
-cat > chgres_nc_gausanal.nml << EOF
+nfhrs=`echo $IAUFHRS | sed 's/,/ /g'`
+for FHR in $nfhrs; do
+    echo "Regridding deterministic forecast for forecast hour $FHR"
+    rm -f chgres_nc_gauss0$FHR.nml
+cat > chgres_nc_gauss0$FHR.nml << EOF
 &chgres_setup
 i_output=$LONB_CASE
 j_output=$LATB_CASE
-input_file="anal"
-output_file="anal.fcstres"
+input_file="anal.0$FHR"
+output_file="anal.fcstres.0$FHR"
 terrain_file="fcst.06"
 ref_file="fcst.06"
 /
 EOF
+    if [ $USE_CFP = "YES" ]; then
+         echo "$nm $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml" | tee -a $DATA/mp_chgres.sh
+         if [ ${CFP_MP:-"NO"} = "YES" ]; then
+             nm=$((nm+1))
+         fi
+    else
 
-export pgm=$CHGRESNCEXEC
-. prep_step
+        export pgm=$CHGRESNCEXEC
+        . prep_step
 
-$APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gausanal.nml
-export err=$?; err_chk
+        $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml
+        export err=$?; err_chk
+    fi
+done
+
+if [ $USE_CFP = "YES" ]; then
+   chmod 755 $DATA/mp_chgres.sh
+   ncmd=$(cat $DATA/mp_chgres.sh | wc -l)
+   if [ $ncmd -gt 0 ]; then
+      ncmd_max=$((ncmd < npe_node_max ? ncmd : npe_node_max))
+      APRUNCFP_CHGRES=$(eval echo $APRUNCFP)
+
+      export pgm=$CHGRESNCEXEC
+      . prep_step
+
+      $APRUNCFP_CHGRES $DATA/mp_chgres.sh
+      export err=$?; err_chk
+   fi
+fi
 
 ##############################################################
 # calculate increment
-export OMP_NUM_THREADS=$NTHREADS_CALCINC
-if [ ${SUFFIX} = ".nc" ]; then
-   CALCINCEXEC=$CALCINCNCEXEC
-else
-   CALCINCEXEC=$CALCINCNEMSEXEC
+$NLN $ATMANLFRES06 siganl
+$NLN $ATMINC siginc.nc
+if [ $replay_4DIAU = "YES" ]; then
+   $NLN $ATMANLFRES03   siga03
+   $NLN $ATMI03   sigi03.nc
+   $NLN $ATMANLFRES09   siga09
+   $NLN $ATMI09   sigi09.nc
 fi
 
-$NLN $ATMINC atminc
-
-export pgm=$CALCINCEXEC
-. prep_step
-
-$NCP $CALCINCEXEC $DATA
-
-rm calc_increment.nml
-cat > calc_increment.nml << EOF
-&setup
-  datapath = './'
-  analysis_filename = 'anal.fcstres'
-  firstguess_filename = 'fcst.06'
-  increment_filename = 'atminc'
-  debug = .false.
-  imp_physics = $imp_physics
-/
-&zeroinc
-  incvars_to_zero = $REPLAY_INCREMENTS_TO_ZERO
-/
-EOF
-cat calc_increment.nml
-
-$APRUN_CALCINC ${DATA}/$(basename $CALCINCEXEC)
+$CALCINCPY
 export err=$?; err_chk
 
 ################################################################################
