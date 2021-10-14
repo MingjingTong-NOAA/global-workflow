@@ -12,7 +12,7 @@ if [ $RUN_ENVIR = "emc" ]; then
 #############################
 # Source relevant config files
 #############################
-configs="base getic fcst"
+configs="base getic init fcst"
 export EXPDIR=${EXPDIR:-$HOMEgfs/parm/config}
 config_path=${EXPDIR:-$NWROOT/gfs.${gfs_ver}/parm/config}
 for config in $configs; do

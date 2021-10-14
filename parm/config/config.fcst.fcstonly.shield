@@ -7,6 +7,7 @@ echo "BEGIN: config.fcst"
 
 # Source model specific information that is resolution dependent
 . $EXPDIR/config.fv3 $CASE
+[[ "$CDUMP" == "gfs" ]] && export nth_fv3=$nth_fv3_gfs
 
 # Get task specific resources
 . $EXPDIR/config.resources fcst
@@ -35,16 +36,15 @@ if [ $QUILTING = ".true." ]; then
 fi
 
 # External IC configuration
-if [ $gfs_ver = v16 ]; then
-  export ncep_levs=128
+if [ $gfs_ver = "v16" ]; then
+  export ncep_levs=${ncep_levs:-128}
 else
-  export ncep_levs=65
+  export ncep_levs=${ncep_levs:-65}
 fi
 
 # Model configuration
 export TYPE="nh"
 export MONO="non-mono"
-export MODE="32bit"
 
 # Use stratosphere h2o physics (not for SHiELD)
 export h2o_phys=".true."
@@ -74,7 +74,7 @@ export isatmedmf=0
 tbf=""
 if [ $satmedmf = ".true." ]; then tbf="_satmedmf" ; fi
 
-# Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T)
+# Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T) (not for SHiELD)
 export lsm=1
 if [ $lsm -eq 2 ]; then
     export lheatstrg=".false."
@@ -84,8 +84,11 @@ else
     export landice=".true."
 fi
 
+# Mixing layer ocean
+export do_ocean=".true."
+
 # Radiation options 
-export IAER=111    ;#spectral band mapping method for aerosol optical properties
+export IAER=111     ;#spectral band mapping method for aerosol optical properties
 export iovr_lw=3    ;#de-correlation length cloud overlap method (Barker, 2008)
 export iovr_sw=3    ;#de-correlation length cloud overlap method (Barker, 2008)
 export icliq_sw=2   ;#cloud optical coeffs from AER's newer version v3.9-v4.0 for hu and stamnes

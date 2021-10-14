@@ -255,12 +255,12 @@ else
   tcyc=$cyc
 fi
 
-if [ $replay == 1 ]; then
-  if [ $nrestartbg = 1 ]; then
+if [ $replay -eq 1 ]; then
+  if [ $nrestartbg -eq 1 ]; then
     rst_hrs="6"
-  elif [ $nrestartbg = 3 ]; then
+  elif [ $nrestartbg -eq 3 ]; then
     rst_hrs="3 6 9"
-  elif [ $nrestartbg = 7 ]; then
+  elif [ $nrestartbg -eq 7 ]; then
     rst_hrs="3 4 5 6 7 8 9"
   else
     echo "Unknown background number, ABORT!"
@@ -313,7 +313,7 @@ fi
 
 restart_start_secs=$((FHMIN*3600))
 restart_secs=$((FHOUT*3600))
-if [[ "$CDUMP" == "gfs" && "$DO_CUBE2GAUS" == "NO" ]] ; then
+if [[ "$CDUMP" = "gfs" && "$DO_CUBE2GAUS" = "NO" ]] ; then
    restart_start_secs=0
    restart_secs=0
 fi
@@ -357,7 +357,14 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       fsufanl=$(echo $file2 | cut -d. -f1)
       if [ $fsufanl = "sfcanl_data" ]; then
         file2=$(echo $file2 | sed -e "s/sfcanl_data/sfc_data/g")
-        $NLN $file $DATA/INPUT/$file2
+        # when NSST is off, use tref
+        if [ $DONST = "YES" ]; then
+           $NLN $file $DATA/INPUT/$file2
+        else
+           $NLN $file $DATA/INPUT/sfc_org
+           ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
+           ncrename -O -v tref,tsea out.nc $DATA/INPUT/$file2
+        fi
       fi
     done
 
@@ -372,10 +379,11 @@ EOF
     fi
 
   # Link increments
-    if [ $replay == 1 ]; then 
+    if [ $replay -eq 1 ]; then 
       # compute increment inside model
       read_increment=".false."
       IAU_FORCING_VAR=${IAU_FORCING_VAR:-"'ua','va','temp','delp','delz','sphum','o3mr',"}
+      IAU_INC_FILES="''"
     else
       if [[ ($CDUMP = "gfs" && $gfsanl = "NO") || $MODE = "replay" ]]; then
          INCDUMP="gdas"
@@ -451,11 +459,25 @@ EOF
 
 else ## cold start                            
 
-  for file in $(ls $memdir/INPUT/*.nc); do
+  if [ $MODE = "cycled" ]; then
+    icsdir=$memdir
+  else
+    icsdir=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/atmos
+  fi
+  for file in $(ls $icsdir/INPUT/*.nc); do
     file2=$(echo $(basename $file))
     fsuf=$(echo $file2 | cut -c1-3)
-    if [ $fsuf = "gfs" -o $fsuf = "sfc" ]; then
+    if [ $fsuf = "gfs" ]; then
       $NLN $file $DATA/INPUT/$file2
+    fi
+    if [ $fsuf = "sfc" ]; then
+       if [ $DONST = "YES" ]; then
+          $NLN $file $DATA/INPUT/$file2
+       else
+          $NLN $file $DATA/INPUT/sfc_org
+          ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
+          ncrename -O -v tref,tsea out.nc $DATA/INPUT/$file2
+       fi 
     fi
   done
 
@@ -463,7 +485,7 @@ else ## cold start
 fi 
 
 # link analysis and restart files for replay
-if [ $replay == 1 ]; then
+if [ $replay -eq 1 ]; then
    # link external IC
    mkdir -p $DATA/EXTIC
    mkdir -p $DATA/ATMINC
@@ -471,7 +493,7 @@ if [ $replay == 1 ]; then
    for file in $(ls $ROTDIR/${rprefix}.$PDY/$cyc/atmos/$memchar/INPUT/*.nc); do
      file2=$(echo $(basename $file))
      fsuf=$(echo $file2 | cut -c1-3)
-     if [ $fsuf = "gfs" -o $fsuf = "sfc" ]; then
+     if [ $fsuf = "gfs" ]; then
        $NLN $file $DATA/EXTIC/$file2
      fi
    done
@@ -500,7 +522,6 @@ if [ $replay == 1 ]; then
           $NLN $gmemdir/RESTART/fv_tracer*.nc $DATA/INPUT${nbg}/
           $NLN $gmemdir/RESTART/fv_srf_wnd*.nc $DATA/INPUT${nbg}/
           $NLN $gmemdir/RESTART/phy_data*.nc $DATA/INPUT${nbg}/
-          $NLN $gmemdir/RESTART/sfc_data*.nc $DATA/INPUT${nbg}/
           $NLN $gmemdir/RESTART/coupler.res $DATA/INPUT${nbg}/
        else
           echo "missing restart file at $rst_int hour, ABORT!"
@@ -704,7 +725,12 @@ LATB_JMO=${LATB_JMO:-$LATB_CASE}
 FNGLAC=${FNGLAC:-"$FIX_AM/global_glacier.2x2.grb"}
 FNMXIC=${FNMXIC:-"$FIX_AM/global_maxice.2x2.grb"}
 FNTSFC=${FNTSFC:-"$FIX_AM/RTGSST.1982.2012.monthly.clim.grb"}
-FNMLDC=${FNMLDC:-"$FIX_SHiELD/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
+do_ocean=${do_ocean:-".true."}
+if [ $do_ocean = ".true." ]; then
+  FNMLDC=${FNMLDC:-"$FIX_SHiELD/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
+else
+  FNMLDC="        "
+fi
 FNSNOC=${FNSNOC:-"$FIX_AM/global_snoclim.1.875.grb"}
 FNZORC=${FNZORC:-"igbp"}
 FNALBC2=${FNALBC2:-"$FIX_AM/global_albedo4.1x1.grb"}
@@ -755,7 +781,7 @@ blocksize=${blocksize:-32}
 # =0 implies no pre-conditioning
 # >0 means new adiabatic pre-conditioning
 # <0 means older adiabatic pre-conditioning
-na_init=${na_init:-1}
+na_init=${na_init:-0}
 [[ $warm_start = ".true." ]] && na_init=0
 
 # variables for controlling initialization of NCEP/NGGPS ICs
@@ -777,16 +803,17 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
   if [ $warm_start = ".true." ]; then
     make_nh=".false."              # restarts contain non-hydrostatic state
   else
-    make_nh=".true."               # re-initialize non-hydrostatic state
+    # make_nh=".true."               # re-initialize non-hydrostatic state
+    make_nh=".false." 
   fi
-
+  consv_te = 1.
 else # hydrostatic options
 
   hydrostatic=".true."
   phys_hydrostatic=".false."     # ignored when hydrostatic = T
   use_hydro_pressure=".false."   # ignored when hydrostatic = T
   make_nh=".false."              # running in hydrostatic mode
-
+  consv_te = 0.
 fi
 
 # Conserve total energy as heat globally
@@ -798,7 +825,7 @@ n_split=${n_split:-6}
 
 if [ $(echo $MONO | cut -c-4) = "mono" ];  then # monotonic options
 
-  d_con=${d_con_mono:-"0."}
+  d_con=${d_con_mono:-"1."}
   do_vort_damp=".false."
   if [ ${TYPE} = "nh" ]; then # non-hydrostatic
     hord_mt=${hord_mt_nh_mono:-"10"}
@@ -832,7 +859,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
 
   external_ic=".false."
   mountain=".true."
-  if [ $replay == 1 ]; then
+  if [ $replay -eq 1 ]; then
     nggps_ic=${nggps_ic:-".true."}
     ncep_ic=${ncep_ic:-".false."}
   else
@@ -1108,7 +1135,6 @@ cat >> input.nml <<EOF
   redrag       = ${redrag:-".true."}
   dspheat      = ${dspheat:-".true."}
   hybedmf      = ${hybedmf:-".false."}
-  lheatstrg    = ${lheatstrg-".false."}
   random_clds  = ${random_clds:-".false."}
   trans_trac   = ${trans_trac:-".true."}
   cnvcld       = ${cnvcld:-".false."}
@@ -1120,7 +1146,7 @@ cat >> input.nml <<EOF
   isot         = ${isot:-"1"}
   ysupbl       = ${ysupbl:-".false."}
   satmedmf     = ${satmedmf:-".true."}
-  isatmedmf    = ${isatmedmf:-"0"}
+  isatmedmf    = ${isatmedmf:-"1"}
   do_dk_hb19   = .false.
   xkzminv      = 0.0
   xkzm_m       = 1.5
@@ -1132,7 +1158,7 @@ cat >> input.nml <<EOF
   cap_k0_land    = .false.
   cloud_gfdl   = .true.
   do_inline_mp = .true.
-  do_ocean     = .true.
+  do_ocean     = ${do_ocean:-".true."}
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
   do_sppt      = ${do_sppt:-".false."}
@@ -1150,13 +1176,13 @@ if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
 EOF
 fi
 
-if [[ $replay == 1 ]]; then
+if [ $replay -eq 1 ]; then
   cat >> input.nml << EOF
   iau_forcing_var = ${IAU_FORCING_VAR}
 EOF
 fi
 
-if [[ $DOIAU = "YES" && $replay > 0 && $replay_4DIAU = "NO"]]; then
+if [[ "$MODE" = "replay" && $DOIAU = "YES" && "$replay_4DIAU" = "NO" ]] ; then
   cat >> input.nml << EOF
   iau_filter_increments=.true.
 EOF
@@ -1189,75 +1215,30 @@ cat >> input.nml <<EOF
 /
 
 &gfdl_mp_nml
-  sedi_transport = .true.
-  do_sedi_w = .true.
   do_sedi_heat = .false.
-  disp_heat = .true.
-  rad_snow = .true.
-  rad_graupel = .true.
-  rad_rain = .true.
-  const_vi = .false.
-  const_vs = .false.
-  const_vg = .false.
-  const_vr = .false.
-  vi_fac = 1.
-  vs_fac = 1.
-  vg_fac = 1.
-  vr_fac = 1.
   vi_max = 1.
   vs_max = 2.
   vg_max = 12.
   vr_max = 12.
-  qi_lim = 1.
-  prog_ccn = .false.
-  do_qa = .true.
-  do_sat_adj = .false.
   tau_l2v = 225.
-  tau_v2l = 150.
-  tau_g2v = 900.
-  rthresh = 10.e-6  ! This is a key parameter for cloud water
-  dw_land  = 0.16
+  dw_land = 0.16
   dw_ocean = 0.10
-  ql_gen = 1.0e-3
   ql_mlt = 1.0e-3
   qi0_crt = 8.0e-5
-  qs0_crt = 1.0e-3
-  tau_i2s = 1000.
-  c_psaci = 0.05
-  c_pgacs = 0.01
   rh_inc = 0.30
   rh_inr = 0.30
   rh_ins = 0.30
   ccn_l = 300.
   ccn_o = 200.
   c_paut = 0.5
-  c_cracw = 0.8
-  use_ppm = .false.
-  mono_prof = .true.
-  z_slope_liq  = .true.
-  z_slope_ice  = .true.
-  fix_negative = .true.
-  icloud_f = 0
+  c_pracw = 0.8
+  c_psaci = 0.05
   do_cld_adj = .true.
+  use_rhc_revap = .true.
   f_dq_p = 3.0
-  $gfdl_mp_nml
-/
-
-&cld_eff_rad_nml
-  qmin = 1.0e-12
-  beta = 1.22
-  rewflag = 1
-  reiflag = 5
-  rewmin = 5.0
   rewmax = 10.0
-  reimin = 10.0
-  reimax = 150.0
   rermin = 10.0
-  rermax = 10000.0
-  resmin = 150.0
-  resmax = 10000.0
-  liq_ice_combine = .false.
-  $cloud_diagnosis_nml
+  $gfdl_mp_nml
 /
 
 &interpolator_nml
@@ -1292,7 +1273,6 @@ cat >> input.nml <<EOF
   FSMCL(2) = ${FSMCL2:-99999}
   FSMCL(3) = ${FSMCL3:-99999}
   FSMCL(4) = ${FSMCL4:-99999}
-  LANDICE  = ${landice:-".true."}
   FTSFS = ${FTSFS:-90}
   FAISL = ${FAISL:-99999}
   FAISS = ${FAISS:-99999}
@@ -1414,7 +1394,7 @@ if [ $QUILTING = ".true." -a $OUTPUT_GRID = "gaussian_grid" ]; then
   done
 else
   echo 'shield history files'
-  if [[ "$CDUMP" == "gfs" && "$DO_CUBE2GAUS" == "NO" ]] ; then
+  if [[ "$CDUMP" = "gfs" && "$DO_CUBE2GAUS" = "NO" ]] ; then
      for n in $(seq 1 $ntiles); do
        eval $NLN $memdir/grid_spec.tile${n}.nc        grid_spec.tile${n}.nc
        eval $NLN $memdir/atmos_4xdaily.tile${n}.nc    atmos_4xdaily.tile${n}.nc
@@ -1495,7 +1475,7 @@ $ERRSCRIPT || exit $err
 #------------------------------------------------------------------
 # cubesphere to gaussian
 #------------------------------------------------------------------
-if [[ "$CDUMP" == "gdas" || "$DO_CUBE2GAUS" == "YES" ]] ; then
+if [[ "$CDUMP" = "gdas" || "$DO_CUBE2GAUS" = "YES" ]] ; then
   cd $DATA
 
   cat > serial-tasks.config <<EOF
@@ -1537,13 +1517,13 @@ EOF
         found=0
         drhr=$((FHMIN+FHOUT))
         while [[ $drhr -le $FHMAX_aux ]]; do
-           if [[ $RHR_aux == $drhr ]]; then
+           if [[ $RHR_aux -eq $drhr ]]; then
               found=1
               break
            fi
            drhr=$((drhr+FHOUT))
         done
-        if [[ $found == 0 ]]; then
+        if [[ $found -eq 0 ]]; then
            echo "s/_RHR/$RHR_aux/"      > changedate
            echo "s/_auxfhr/"YES"/"     >> changedate
            echo "s/_atminc/".false."/" >> changedate
@@ -1559,7 +1539,7 @@ EOF
   fi
 
 # replay increment file
-  if [[ $replay == 1 && $warm_start = ".true." ]]; then
+  if [[ $replay -eq 1 && $warm_start = ".true." ]]; then
      echo "s/_RHR/0/"            > changedate
      echo "s/_auxfhr/"NO"/"     >> changedate
      echo "s/_atminc/".true."/" >> changedate

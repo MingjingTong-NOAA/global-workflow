@@ -1,14 +1,14 @@
 #!/bin/ksh -x
 
-########## config.getic ##########
+########## config.getic4omg ##########
 # Fetching GFS initial conditions specific
 
-echo "BEGIN: config.getic"
+echo "BEGIN: config.getic4omg"
 
 # Get task specific resources
-. $EXPDIR/config.resources getic
+. $EXPDIR/config.resources getic4omg
 
-export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
+export RETRO="YES" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export gfs_ver="v16" # Default = v16
 export ICDUMP="gdas"
 export START="cold"
@@ -72,4 +72,4 @@ if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then
    export IAUFHRS="6"
 fi
 
-echo "END: config.getic"
+echo "END: config.getic4omg"

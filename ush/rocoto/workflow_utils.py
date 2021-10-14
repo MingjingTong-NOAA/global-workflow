@@ -202,7 +202,7 @@ def create_wf_task(task, cdump='gdas', cycledef=None, envar=None, dependency=Non
     if get_scheduler(detectMachine()) in ['slurm'] and detectMachine() in ['ORION']:
         task_dict['partition'] = '&PARTITION_BATCH;'
     # Add PARTITION_SERVICE to all service jobs (SLURM)
-    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','arch','earc','archomg']:
+    if get_scheduler(detectMachine()) in ['slurm'] and task in ['getic','getic4omg','arch','earc','archomg']:
         task_dict['partition'] = '&PARTITION_%s_%s;' % (task.upper(),cdump.upper())
 
     if metatask is None:
@@ -312,7 +312,7 @@ def get_resources(machine, cfg, task, reservation, cdump='gdas'):
         else:
             resstr = '<nodes>%d:ppn=%d</nodes>' % (nodes, ppn)
 
-        if machine in ['WCOSS_C'] and task in ['arch', 'earc', 'getic']:
+        if machine in ['WCOSS_C'] and task in ['arch', 'earc', 'getic', 'getic4omg']:
             resstr += '<shared></shared>'
 
         if machine in ['WCOSS_DELL_P3']:
@@ -321,14 +321,14 @@ def get_resources(machine, cfg, task, reservation, cdump='gdas'):
             else:
                natstr = "-R 'affinity[core(%d)]'" % (threads)
 
-            if task in ['arch', 'earc', 'getic']:
+            if task in ['arch', 'earc', 'getic', 'getic4omg']:
                   natstr = "-R 'affinity[core(1)]'"
 
 
     elif machine in ['WCOSS']:
         resstr = '<cores>%d</cores>' % tasks
 
-    if task in ['arch', 'earc', 'getic']:
+    if task in ['arch', 'earc', 'getic', 'getic4omg']:
         queuestr = '&QUEUE;' if scheduler in ['slurm'] else '&QUEUE_SERVICE;'
     else:
         queuestr = '&QUEUE;'

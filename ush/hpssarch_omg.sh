@@ -21,7 +21,9 @@ dirname="./${dirpath}"
 head="${type}.t${cyc}z."
 SUFFIX=${SUFFIX:-".nc"}
 
-echo  "${dirname}${head}gsistat" >>${type}omg.txt
+if [ -s $ROTDIR/${dirname}${head}gsistat ]; then
+   echo  "${dirname}${head}gsistat" >>${type}omg.txt
+fi
 if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
    echo  "${dirname}${head}cnvstat" >>${type}omg.txt
 fi
@@ -34,9 +36,7 @@ fi
 
 # run replayinc for free mode for diagnostic purpose
 # atminc.nc is in standard archive for other mode
-if [[ $MODE = "free" && -s $ROTDIR/${dirpath}${head}atminc.nc ]]; then
-   echo  "${dirname}${head}atminc.nc" >>${type}omg.txt
-fi
+echo "${dirname}${head}atminc*" >>${type}omg.txt
 
 exit 0
 

@@ -52,13 +52,11 @@ if [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
 fi
 
 if [ $gfs_ver = "v16" ]; then
-   export LEVS=128
+   export LEVS_INIT=128
+   export ncep_levs=128
 else
-   export LEVS=65
+   export LEVS_INIT=65
+   export ncep_levs=65
 fi
-
-if [[ $MODE = "free" && $ICDUMP = "gdas" ]]; then
-  export outtype="gfs"
-fi  
 
 echo "END: config.init"

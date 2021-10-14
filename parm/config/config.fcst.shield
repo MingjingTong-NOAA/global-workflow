@@ -5,9 +5,6 @@
 
 echo "BEGIN: config.fcst"
 
-# GFS IC version
-. $EXPDIR/config.getic
-
 # Source model specific information that is resolution dependent
 . $EXPDIR/config.fv3 $CASE
 [[ "$CDUMP" == "gfs" ]] && export nth_fv3=$nth_fv3_gfs
@@ -40,9 +37,9 @@ fi
 
 # External IC configuration
 if [ $gfs_ver = "v16" ]; then
-  export ncep_levs=128
+  export ncep_levs=${ncep_levs:-128}
 else
-  export ncep_levs=65
+  export ncep_levs=${ncep_levs:-65}
 fi
 
 # Model configuration
@@ -73,11 +70,11 @@ fi
 export hybedmf=".false."
 export ysupbl=".false."
 export satmedmf=".true."
-export isatmedmf=0
+export isatmedmf=1
 tbf=""
 if [ $satmedmf = ".true." ]; then tbf="_satmedmf" ; fi
 
-# Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T)
+# Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T) (not for SHiELD)
 export lsm=1
 if [ $lsm -eq 2 ]; then
     export lheatstrg=".false."
@@ -86,6 +83,9 @@ else
     export lheatstrg=".true."
     export landice=".true."
 fi
+
+# Mixing layer ocean
+export do_ocean=".true."
 
 # Radiation options 
 export IAER=111     ;#spectral band mapping method for aerosol optical properties

@@ -48,14 +48,15 @@ export idd=$(echo $IAUSDATE | cut -c7-8)
 export ihh=$(echo $IAUSDATE | cut -c9-10)
 
 export DATA=${DATA:-${DATAROOT}/init}
-export EXTRACT_DIR=${EXTRACT_DIR:-$ROTDIR}
+export EXTRACT_DIR=${EXTRACT_DIR:-$ICSDIR}
 export WORKDIR=${WORKDIR:-$DATA}
-export OUTDIR=${OUTDIR:-$ROTDIR}
+export OUTDIR=${OUTDIR:-$ICSDIR}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export RUNICSH=${RUNICSH:-${GDASINIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
+COMOUT=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
 
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
@@ -64,32 +65,42 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
 else
   # Run chgres_cube
   if [[ $MODE = "free" || $replay == 1 || "$CDATE" = "$SDATE" ]]; then
-    if [ ! -d $OUTDIR ]; then mkdir -p $OUTDIR ; fi
-    sh ${RUNICSH} ${ICDUMP}
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
+    if [[ ! -d ${COMOUT}/INPUT ]]; then
+      if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
+      sh ${RUNICSH} ${ICDUMP}
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+    fi 
+    if [[ ! -d ${COMOUTatmos} ]]; then
+      mkdir -p ${COMOUTatmos}
+    fi
+    if [[ ! -d ${COMOUTatmos}/INPUT ]]; then
+      if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
+         mkdir -p ${COMOUTatmos}/INPUT
+         cd ${COMOUT}/INPUT
+         for file in $(ls gfs_data.tile*.nc); do
+            ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT $file -O ${COMOUTatmos}/INPUT/$file
+         done
+         ncks -d levsp,1,$LEVS_INIT gfs_ctrl.nc -O ${COMOUTatmos}/INPUT/gfs_ctrl.nc
+         $NLN ${COMOUT}/INPUT/sfc_data.tile*.nc ${COMOUTatmos}/INPUT/
+      else 
+         $NLN ${COMOUT}/INPUT ${COMOUTatmos}/INPUT
+      fi
+      $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
+      $NLN ${COMOUT}/*radstat ${COMOUTatmos}/
+    fi
   fi
 
-  COMOUT=$COMOUTatmos
-
-  if [[ $replay > 0 && $rungcycle = "NO" && $gfs_ver = v16 && $CDATE != $SDATE ]]; then
-    sh ${RUNSFCANLSH} ${ICDUMP}
-    status=$?
-    [[ $status -ne 0 ]] && exit $status 
-
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc_gfs
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc_gfs
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc_gfs
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc_gfs
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc_gfs
-    mv $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc_gfs
-
-    mv $COMOUT/RESTART/sfc_data.tile1.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc
-    mv $COMOUT/RESTART/sfc_data.tile2.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc
-    mv $COMOUT/RESTART/sfc_data.tile3.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc
-    mv $COMOUT/RESTART/sfc_data.tile4.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc
-    mv $COMOUT/RESTART/sfc_data.tile5.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc
-    mv $COMOUT/RESTART/sfc_data.tile6.nc $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc
+  if [[ $MODE = "replay" && $rungcycle = "NO" && $gfs_ver = v16 && $CDATE != $SDATE ]]; then
+    if [[ ! -s $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
+      sh ${RUNSFCANLSH} ${ICDUMP}
+      status=$?
+      [[ $status -ne 0 ]] && exit $status 
+    fi
+    if [[ ! -d ${COMOUTatmos}/RESTART ]]; then
+      mkdir -p ${COMOUTatmos}/RESTART
+    fi
+    $NCP $COMOUT/RESTART/* ${COMOUTatmos}/RESTART/
   fi
 
 fi

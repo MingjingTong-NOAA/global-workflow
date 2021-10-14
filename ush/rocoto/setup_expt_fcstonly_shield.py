@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, res, idate, edate, gfs_cyc
+global expdir, configdir, comrot, icsdir, pslot, res, idate, edate, gfs_cyc
 
 
 def makedirs_if_missing(d):
@@ -89,10 +89,10 @@ def edit_baseconfig():
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
                     line = line.replace('@ROTDIR@', os.path.dirname(comrot))
-                if exp_warm_start == ".true.":
-                    line = line.replace('@ICSDIR@', comrot)
+                if icsdir is not None:
+                    line = line.replace('@ICSDIR@', icsdir)
                 else:
-                    line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
+                    line = line.replace('@ICSDIR@', os.path.join(os.path.dirname(comrot), 'FV3ICS'))
                 fo.write(line)
     os.unlink(base_config)
     os.rename(base_config + '.new', base_config)
@@ -117,6 +117,7 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--res', help='resolution of the model forecast', type=int, required=False, default=192)
     parser.add_argument('--comrot', help='full path to COMROT', type=str, required=False, default=None)
     parser.add_argument('--expdir', help='full path to EXPDIR', type=str, required=False, default=None)
+    parser.add_argument('--icsdir', help='full path to ICSDIR', type=str, required=False, default=None)
     parser.add_argument('--idate', help='starting date of experiment, initial conditions must exist!', type=str, required=True)
     parser.add_argument('--edate', help='end date experiment', type=str, required=True)
     parser.add_argument('--configdir', help='full path to directory containing the config files', type=str, required=False, default=None)
@@ -139,6 +140,7 @@ Create COMROT experiment directory structure'''
     res = args.res
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)
+    icsdir = args.icsdir if args.icsdir is None else os.path.join(args.comrot, 'ICS')
     gfs_cyc = args.gfs_cyc
     partition = args.partition
     start = args.start

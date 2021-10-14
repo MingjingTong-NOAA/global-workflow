@@ -270,18 +270,22 @@ elif [ $step = "echgres" ]; then
 elif [ $step = "init" ]; then
 
     export wtime_init="00:30:00"
-    export npe_init=24
+    export npe_init=12
     export nth_init=1
     export npe_node_init=6
 
 elif [ $step = "analinc" ]; then
 
     export wtime_analinc="00:10:00"
-    export npe_analinc=1
+    if [ $replay_4DIAU = "YES" ]; then
+       export npe_analinc=3
+    else
+       export npe_analinc=1
+    fi
     export nth_analinc=$npe_node_max
     export npe_node_analinc=1
 
-elif [ $step = "arch" -o $step = "earc" -o $step = "getic" -o $step = "archomg" ]; then
+elif [ $step = "arch" -o $step = "earc" -o $step = "getic" -o $step = "getic4omg" -o $step = "archomg" ]; then
 
     eval "export wtime_$step='06:00:00'"
     eval "export npe_$step=1"

@@ -71,7 +71,14 @@ fi
 $NCP ${APREFIX}pgrb2.1p00.anl $ARCDIR/pgbanl.${CDUMP}.${CDATE}.grib2
 
 # Archive 1 degree forecast GRIB2 files for verification
-if [ $CDUMP = "gfs" ]; then
+if [[ $CDUMP = "gdas" || $FHMAX_GFS -le 9 ]]; then
+    flist="000 003 006 009"
+    for fhr in $flist; do
+        fname=${APREFIX}pgrb2.1p00.f${fhr}
+        fhr2=$(printf %02i $fhr)
+        $NCP $fname $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
+    done
+else
     fhmax=$FHMAX_GFS
     fhr=0
     while [ $fhr -le $fhmax ]; do
@@ -79,14 +86,6 @@ if [ $CDUMP = "gfs" ]; then
         fhr3=$(printf %03i $fhr)
         $NCP ${APREFIX}pgrb2.1p00.f$fhr3 $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
         (( fhr = $fhr + $FHOUT_GFS ))
-    done
-fi
-if [ $CDUMP = "gdas" ]; then
-    flist="000 003 006 009"
-    for fhr in $flist; do
-        fname=${APREFIX}pgrb2.1p00.f${fhr}
-        fhr2=$(printf %02i $fhr)
-        $NCP $fname $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
     done
 fi
 
@@ -369,7 +368,17 @@ while [ $GDATE -le $GDATEEND ]; do
                             rm -rf $COMIN/$file
                         done
 		    else
-			rm -rf $COMIN
+                        if [[ $MODE = "free" && $DO_OmF = "YES" ]]; then
+                           ADATE=$($NDATE +6 $GDATE)
+                           aPDY=$(echo $ADATE | cut -c1-8)
+                           acyc=$(echo $ADATE | cut -c9-10)
+                           COMIN_A="$ROTDIR/${CDUMP}.$aPDY/$acyc/atmos"
+                           if [ -s $COMIN_A/archlist/gfsomg.txt ]; then 
+			     rm -rf $COMIN
+                           fi
+                        else
+                           rm -rf $COMIN
+                        fi
 		    fi
                 else
 		    if [ $DO_GLDAS = "YES" ]; then

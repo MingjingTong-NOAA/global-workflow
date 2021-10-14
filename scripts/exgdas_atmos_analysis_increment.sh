@@ -68,27 +68,37 @@ SENDECF=${SENDECF:-"NO"}
 SENDDBN=${SENDDBN:-"NO"}
 
 # level info file (not need, ak, bk read from reference file)
-SIGLEVEL=${SIGLEVEL:-${FIXgsm}/global_hyblev.l${LEVS}.txt}
+SIGLEVEL=${SIGLEVEL:-${FIXshield}/global_hyblev.l${LEVS}.txt}
 
 # forecast analysis files
 APREFIX=${APREFIX:-""}
 ASUFFIX=${ASUFFIX:-$SUFFIX}
+ATMF03=${ATMF03:-$COMIN_GES/${GPREFIX}atmf003${GSUFFIX}}
 ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
+ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009${GSUFFIX}}
 # external analysis
-ATMANL=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
-ATMANLENS03=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atma003.ensres${ASUFFIX}}
-ATMANLENS06=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atmanl.ensres${ASUFFIX}}
-ATMANLENS09=${ATMANL:-${ROTDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${hh}z.atma009.ensres${ASUFFIX}}
+ATMANL=${ATMANL:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
+ATMANLENS03=${ATMANLENS03:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atma003.ensres${ASUFFIX}}
+ATMANLENS06=${ATMANLENS06:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl.ensres${ASUFFIX}}
+ATMANLENS09=${ATMANLENS09:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atma009.ensres${ASUFFIX}}
 
 # chgres analysis
-ATMANLFRES03=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma03_fcstres${ASUFFIX}}
-ATMANLFRES06=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma06_fcstres${ASUFFIX}}
-ATMANLFRES09=${ATMANL_CHGRES:-${COMOUT}/${APREFIX}atma09_fcstres${ASUFFIX}}
+ATMANLFRES03=${ATMANL03_CHGRES:-${COMOUT}/${APREFIX}atma03_fcstres${ASUFFIX}}
+ATMANLFRES06=${ATMANL06_CHGRES:-${COMOUT}/${APREFIX}atma06_fcstres${ASUFFIX}}
+ATMANLFRES09=${ATMANL09_CHGRES:-${COMOUT}/${APREFIX}atma09_fcstres${ASUFFIX}}
 
 # analysis increment
 ATMINC=${ATMINC:-${COMOUT}/${APREFIX}atminc.nc}
 ATMI03=${ATMI03:-${COMOUT}/${APREFIX}atmi003.nc}
 ATMI09=${ATMI09:-${COMOUT}/${APREFIX}atmi009.nc}
+
+# Set script / GSI control parameters
+USE_CFP=${USE_CFP:-"NO"}
+CFP_MP=${CFP_MP:-"NO"}
+nm=""
+if [ $CFP_MP = "YES" ]; then
+    nm=0
+fi
 
 ################################################################################
 ################################################################################
@@ -128,6 +138,7 @@ if [ $replay_4DIAU = "YES" ]; then
 else
   $NLN $ATMANL anal.06
   $NLN $ATMANLFRES06 anal.fcstres.06
+  export IAUFHRS="6"
 fi
 
 nfhrs=`echo $IAUFHRS | sed 's/,/ /g'`
@@ -176,11 +187,14 @@ fi
 
 ##############################################################
 # calculate increment
+$NLN $ATMF06 sigf06
 $NLN $ATMANLFRES06 siganl
 $NLN $ATMINC siginc.nc
 if [ $replay_4DIAU = "YES" ]; then
+   $NLN $ATMF03 sigf03
    $NLN $ATMANLFRES03   siga03
    $NLN $ATMI03   sigi03.nc
+   $NLN $ATMF09 sigf09
    $NLN $ATMANLFRES09   siga09
    $NLN $ATMI09   sigi09.nc
 fi

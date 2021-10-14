@@ -57,6 +57,7 @@ if [ $FHMAX_HF -gt 0 -a $FHOUT_HF -gt 0 ]; then FDIAG=$FHOUT_HF; fi
 WRITE_DOPOST=${WRITE_DOPOST:-".false."}
 restart_interval=${restart_interval:-0}
 rst_invt1=`echo $restart_interval |cut -d " " -f 1`
+gfsanl=${gfsanl:-"YES"}
 
 PDY=$(echo $CDATE | cut -c1-8)
 cyc=$(echo $CDATE | cut -c9-10)
@@ -283,7 +284,14 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       fsufanl=$(echo $file2 | cut -d. -f1)
       if [ $fsufanl = "sfcanl_data" ]; then
         file2=$(echo $file2 | sed -e "s/sfcanl_data/sfc_data/g")
-        $NLN $file $DATA/INPUT/$file2
+        # when NSST is off, use tref
+        if [ $DONST = "YES" ]; then
+           $NLN $file $DATA/INPUT/$file2
+        else
+           $NLN $file $DATA/INPUT/sfc_org
+           ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
+           ncrename -O -v tref,tsea out.nc $DATA/INPUT/$file2
+        fi
       fi
     done
 
@@ -368,8 +376,17 @@ else ## cold start
   for file in $(ls $memdir/INPUT/*.nc); do
     file2=$(echo $(basename $file))
     fsuf=$(echo $file2 | cut -c1-3)
-    if [ $fsuf = "gfs" -o $fsuf = "sfc" ]; then
+    if [ $fsuf = "gfs" ]; then
       $NLN $file $DATA/INPUT/$file2
+    fi
+    if [ $fsuf = "sfc" ]; then
+       if [ $DONST = "YES" ]; then
+          $NLN $file $DATA/INPUT/$file2
+       else
+          $NLN $file $DATA/INPUT/sfc_org
+          ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
+          ncrename -O -v tref,tsea out.nc $DATA/INPUT/$file2
+       fi 
     fi
   done
 
@@ -1153,12 +1170,12 @@ if [ $DOIAU = "YES" ]; then
   iau_inc_files= ${IAU_INC_FILES}
   iau_drymassfixer = .false.
 EOF
-fi
 
-if [[ $DOIAU = "YES" && $replay > 0 && $replay_4DIAU = "NO" ]]; then
+  if [ $MODE = "replay" -a $replay_4DIAU = "NO" ]; then
   cat >> input.nml << EOF
   iau_filter_increments=.true.
 EOF
+  fi
 fi
 
 cat >> input.nml <<EOF

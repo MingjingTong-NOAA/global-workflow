@@ -86,7 +86,7 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
     echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   fi
-  if [ $DO_POST = "YES" ]; then
+  if [[ $DO_POST = "YES" && $DO_METP = "YES" ]]; then
   echo  "${dirname}avno.t${cyc}z.cyclone.trackatcfunix     " >>gfsa.txt
   echo  "${dirname}avnop.t${cyc}z.cyclone.trackatcfunix    " >>gfsa.txt
   echo  "${dirname}trak.gfso.atcfunix.${PDY}${cyc}         " >>gfsa.txt
@@ -181,20 +181,24 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
   fi
 
+  if [[ $MODE = "replay" && $DOGAUSFCANL = "YES" ]]; then
+    echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
+  fi
+
   #..................
   if [ $OUTPUT_HISTORY = ".true." ]; then
-  if [ $FHMAX_GFS -le 36 ]; then
-     fhm=$FHMAX_GFS
-  else
-     fhm=36
-  fi
-  fh=0
-  while [ $fh -le $fhm ]; do
-    fhr=$(printf %03i $fh)
-    echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
-    echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
-    fh=$((fh+6))
-  done
+    if [ $FHMAX_GFS -le 48 ]; then
+       fhm=$FHMAX_GFS
+    else
+       fhm=48
+    fi
+    fh=0
+    while [ $fh -le $fhm ]; do
+      fhr=$(printf %03i $fh)
+      echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
+      echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
+      fh=$((fh+FHOUT_GFS))
+    done
   fi
 
   #..................

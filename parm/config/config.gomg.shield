@@ -1,36 +1,32 @@
 #!/bin/ksh -x
 
-########## config.anal ##########
-# Analysis specific
+########## config.eobs config.eomg ##########
+# Ensemble innovation specific, dependency config.anal
 
-echo "BEGIN: config.anal"
+echo "BEGIN: config.gomg"
 
 # Get task specific resources
-. $EXPDIR/config.resources anal
+. $EXPDIR/config.resources gomg
 
-if [ $DONST = "YES" ]; then
-    . $EXPDIR/config.nsst
-fi
+export npe_gsi=$npe_gomg
 
-if [[ "$CDATE" = "$FDATE" && $EXP_WARM_START = ".false." ]]; then # Cold starting
-    export USE_RADSTAT="NO"
-fi
+# GSI namelist options
+export DOHYBVAR="NO"
+export DO_CALC_INCREMENT="NO"
+export DO_CALC_ANALYSIS="NO"
+export USE_CORRELATED_OBERRS="NO"
+export write_fv3_increment=".false."
 
-if [[ "$CDUMP" = "gfs" ]] ; then
-    export USE_RADSTAT="NO" # This can be only used when bias correction is not-zero.
-    export GENDIAG="NO"
-    export SETUP='diag_rad=.false.,diag_pcp=.false.,diag_conv=.false.,diag_ozone=.false.,write_diag(3)=.false.,niter(2)=100,'
-    export DIAG_TARBALL="NO"
-fi
+export USE_RADSTAT="NO" # This can be only used when bias correction is non-zero.
+export GENDIAG="YES"    # Diagnostic files must be created for gsi omg
+export SETUP='diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.'
 
-export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
+# GSI Namelist options for observation operator only
+export SETUP="miter=0,niter=1,"
+export BKGVERR="bkgv_flowdep=.false."
+export STRONGOPTS="tlnmc_option=0,nstrong=0,nvmodes_keep=0,baldiag_full=.false.,baldiag_inc=.false.,"
 
-export npe_gsi=$npe_anal
-
-if [[ "$CDUMP" == "gfs" ]] ; then
-   export npe_gsi=$npe_anal_gfs
-   export nth_anal=$nth_anal_gfs
-fi
+export BERRORprefix=$FIXshield/global_berror.l${LEVS}
 
 # Set parameters specific to L127
 if [ $LEVS = "128" ]; then
@@ -38,17 +34,9 @@ if [ $LEVS = "128" ]; then
     export SETUP="gpstop=55,nsig_ext=56,$SETUP"
 fi
 
-# Set background error
-export BERRORprefix=$FIXshield/global_berror.l${LEVS}
-
 # Set namelist option for LETKF
 export lobsdiag_forenkf=".false."  # anal does not need to write out jacobians
                                    # set to .true. in config.eobs and config.eupd
-
-if [ $OUTPUT_FILE = "nemsio" ]; then
-    export DO_CALC_INCREMENT="YES"
-    export DO_CALC_ANALYSIS="NO"
-fi
 
 # Do not process the following datasets
 export GSNDBF=${GSNDBF:-/dev/null}
@@ -56,54 +44,52 @@ export AMSREBF=${AMSREBF:-/dev/null}
 export SSMITBF=${SSMITBF:-/dev/null}
 export AMSR2BF=${AMSR2BF:-/dev/null}
 
-
 # Set default values for info files and observation error
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo.txt
 export OZINFO=$FIXgsi/global_ozinfo.txt
-export SATINFO=$FIXshield/global_satinfo_shield.txt
+export SATINFO=${FIXshield}/global_satinfo_shield.txt
 export OBERROR=$FIXgsi/prepobs_errtable.global
-
 
 # Use experimental dumps in EMC GFS v16 parallels
 if [[ $RUN_ENVIR == "emc" ]]; then
     export ABIBF="/dev/null"
     if [[ "$CDATE" -ge "2019022800" ]] ; then
-	export ABIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
-	if [[ "$CDATE" -ge "2019111000" && "$CDATE" -le "2020052612" ]]; then
-	    export ABIBF="$DMPDIR/${CDUMP}y.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
-	fi
+        export ABIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
+        if [[ "$CDATE" -ge "2019111000" && "$CDATE" -le "2020052612" ]]; then
+            export ABIBF="$DMPDIR/${CDUMP}y.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
+        fi
     fi
 
     export AHIBF="/dev/null"
     if [[ "$CDATE" -ge "2019042300" ]]; then
-	export AHIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.ahicsr.tm00.bufr_d"
+        export AHIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.ahicsr.tm00.bufr_d"
     fi
 
     export HDOB=$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.hdob.tm00.bufr_d
 
 #   Use dumps from NCO GFS v16 parallel
     if [[ "$CDATE" -ge "2020103012" ]]; then
-	export ABIBF=""
-	export AHIBF=""
-	export HDOB=""
+        export ABIBF=""
+        export AHIBF=""
+        export HDOB=""
     fi
 
 #   Set info files and prepobs.errtable.global for GFS v16 retrospective parallels
     if [[ "$CDATE" -ge "2019021900" && "$CDATE" -lt "2019110706" ]]; then
-	export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2019021900
-	export OBERROR=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019021900
+        export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2019021900
+        export OBERROR=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019021900
     fi
 
 #   Place GOES-15 AMVs in monitor, assimilate GOES-17 AMVs, assimilate KOMPSAT-5 gps
     if [[ "$CDATE" -ge "2019110706" && "$CDATE" -lt "2020040718" ]]; then
-	export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2019110706
-	export OBERROR=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019110706
+        export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2019110706
+        export OBERROR=$FIXgsi/gfsv16_historical/prepobs_errtable.global.2019110706
     fi
 
 #   Assimilate 135 (T) & 235 (uv) Canadian AMDAR observations
     if [[ "$CDATE" -ge "2020040718" && "$CDATE" -lt "2020052612" ]]; then
-	export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2020040718
+        export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2020040718
     fi
 
 #   NOTE:
@@ -115,24 +101,23 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 #     export CONVINFO=$FIXgsi/gfsv16_historical/global_convinfo.txt.2020052612
 #   fi
 
-
 #   Turn off assmilation of OMPS during period of bad data
     if [[ "$CDATE" -ge "2020011600" && "$CDATE" -lt "2020011806" ]]; then
-	export OZINFO=$FIXgsi/gfsv16_historical/global_ozinfo.txt.2020011600
+        export OZINFO=$FIXgsi/gfsv16_historical/global_ozinfo.txt.2020011600
     fi
 
 
 #   Set satinfo for start of GFS v16 parallels
     if [[ "$CDATE" -ge "2019021900" && "$CDATE" -lt "2019110706" ]]; then
-	export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019021900
+        export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019021900
     fi
 
 #   Turn on assimilation of Metop-C AMSUA and MHS
     if [[ "$CDATE" -ge "2019110706" && "$CDATE" -lt "2020022012" ]]; then
-	export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019110706
+        export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019110706
     fi
 
-#   NOTE:  
+#   NOTE:
 #   As of 2020022012, gfsv16_historical/global_satinfo.txt.2020022012 is
 #   identical to ../global_satinfo.txt.  Thus, the logic below is not
 #   needed at this time
@@ -144,24 +129,12 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 
 fi
 
-# Set all-sky radiance assimilation options
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
 
-export GSIEXEC=$HOMEgfs/exec/global_gsi_gfdl.x
-if [ $full_hydro_anl = "YES" ]; then
-   export GSIEXEC=$HOMEgfs/exec/global_gsi_gfdl.x
-   export lcalc_gfdl_cfrac=".false."
-   if [ $lcalc_gfdl_cfrac = ".false." ]; then
-      export ANAVINFO=$FIXshield/global_anavinfo.l${LEVS}.allqcf.txt
-   else
-      export ANAVINFO=$FIXshield/global_anavinfo.l${LEVS}.allq.txt
-   fi
-   export crtm_overlap=4
-   export cnvw_option=".false."
-   export allsky_verbose=".false."
-   export cloud_mask_option=1
-   export mask_threshold=0.000001
-   export write_ens_sprd=".false."
-   export bkgv_write=".false."
-fi
+res=$(echo $CASE | cut -c2-)
+# help resolution
+export JCAP_A=$((res-2))
+export LATA=$res
+export LONA=$((res*2))
 
-echo "END: config.anal"
+echo "END: config.gomg"

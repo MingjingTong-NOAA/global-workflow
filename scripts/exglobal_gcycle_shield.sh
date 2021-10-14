@@ -113,8 +113,8 @@ OSUFFIX=${OSUFFIX:-""}
         snoprv=${snoprv:-$FNSNOG}
     fi
 
-    if [ $($WGRIB -4yr $FNSNOA 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') -le \
-         $($WGRIB -4yr $snoprv 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') ] ; then
+    if [[ $($WGRIB -4yr $FNSNOA 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') -le \
+         $($WGRIB -4yr $snoprv 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') ]] ; then
         export FNSNOA=" "
         export CYCLVARS="FSNOL=99999.,FSNOS=99999.,"
     else
@@ -123,6 +123,7 @@ OSUFFIX=${OSUFFIX:-""}
     fi
 
     if [ $DONST = "YES" ]; then
+        $NLN ${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT}/${APREFIX}dtfanl.nc $COMOUT/${APREFIX}dtfanl.nc
         export NST_ANL=".true."
         export GSI_FILE=${GSI_FILE:-$COMOUT/${APREFIX}dtfanl.nc}
     else
@@ -167,6 +168,15 @@ OSUFFIX=${OSUFFIX:-""}
     export ERR=$rc
     export err=$ERR
     $ERRSCRIPT || exit 11
+
+# Create gaussian grid surface analysis file at middle of window
+if [ $DOGAUSFCANL = "YES" ]; then
+    export APRUNSFC=$APRUN_GAUSFCANL
+    export OMP_NUM_THREADS_SFC=$NTHREADS_GAUSFCANL
+
+    $GAUSFCANLSH
+    export err=$?; err_chk
+fi
 
 ################################################################################
 # Postprocessing

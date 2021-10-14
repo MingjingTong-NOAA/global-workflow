@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 import workflow_utils as wfu
 
-global expdir, configdir, comrot, pslot, res, idate, edate, gfs_cyc, gfs_delay, sdate_gfs
+global expdir, configdir, comrot, icsdir, pslot, res, idate, edate, gfs_cyc, gfs_delay, sdate_gfs
 
 
 def makedirs_if_missing(d):
@@ -90,7 +90,10 @@ def edit_baseconfig():
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
                     line = line.replace('@ROTDIR@', os.path.dirname(comrot))
-                line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
+                if icsdir is not None: 
+                    line = line.replace('@ICSDIR@', icsdir)
+                else:
+                    line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
                 fo.write(line)
     os.unlink(base_config)
     os.rename(base_config + '.new', base_config)
@@ -141,9 +144,9 @@ Create COMROT experiment directory structure'''
     gfs_delay = args.gfs_delay
 
     res = args.res
+    icsdir = args.icsdir if args.icsdir is None else os.path.join(args.comrot, 'ICS')
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)
-    icsdir = args.icsdir
     icdump = args.icdump
     partition = args.partition
     start = args.start

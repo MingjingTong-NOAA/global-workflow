@@ -103,10 +103,10 @@ if [ ! -f $ATMGES ]; then
     exit 1
 fi
 
-export GBIAS="$ROTDIR/$ICDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias"
-export GBIASPC="$ROTDIR/$ICDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_pc"
-export GBIASAIR="$ROTDIR/$ICDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_air"
-export GRADSTAT="$$ROTDIR/$ICDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.radstat"
+export GBIAS="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias"
+export GBIASPC="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_pc"
+export GBIASAIR="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_air"
+export GRADSTAT="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.radstat"
 
 # Get LEVS
 if [ ${GSUFFIX} = ".nc" ]; then

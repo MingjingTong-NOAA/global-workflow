@@ -11,4 +11,6 @@ export npe_gsi=$npe_gcycle
 
 export GCYCLESH="$HOMEgfs/scripts/exglobal_gcycle_shield.sh"
 
+export DOGAUSFCANL="YES"
+
 echo "END: config.gcycle"

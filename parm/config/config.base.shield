@@ -147,14 +147,6 @@ export OPS_RES="C768"
 export RUN_CCPP="YES"
 export CCPP_SUITE="FV3_GFS_v16"
 
-# Surface cycle update frequency
-if [[ "$CDUMP" == "gdas" ]] ; then
-   export FHCYC=1
-   export FTSFS=10
-elif [[ "$CDUMP" == "gfs" ]] ; then
-   export FHCYC=24
-fi
-
 # Output frequency of the forecast model (for cycling)
 export FHMIN=0
 export FHMAX=9
@@ -232,11 +224,16 @@ fi
 export replay=0
 # number of forecasts used to compute mean background
 export nrestartbg=1
+export rungcycle="NO" # Only for replay with v16 analysis
+export replay_4DIAU="NO"
+export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
 if [ "$MODE" = "replay" ]; then
-   export IAUFHRS="6"
-   export REPLAY_INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
-   export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
-   export iau_filter_increments=".true."
+   if [ $replay -eq 1 ]; then
+      export replay_4DIAU="NO"
+   fi
+   if [ $replay_4DIAU = "NO" ]; then
+      export IAUFHRS="6"
+   fi
 else
    export replay=0
 fi
@@ -282,6 +279,14 @@ fi
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
 export DONST="NO"
 if [ $DONST = "YES" ]; then export FNTSFA="        "; fi
+
+# Surface cycle update frequency
+if [[ "$CDUMP" == "gdas" && $DONST = "YES" ]] ; then
+   export FHCYC=1
+   export FTSFS=10
+else
+   export FHCYC=24
+fi
 
 # The switch to apply SST elevation correction or not
 export nst_anl=.false.

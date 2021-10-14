@@ -31,7 +31,7 @@ from datetime import datetime, timedelta
 import rocoto
 import workflow_utils as wfu
 
-taskplan = ['getic', 'init', 'fcst', 'prep', 'gomg', 'analinc', 'archomg', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
+taskplan = ['getic', 'init', 'fcst', 'getic4omg', 'prep', 'gomg', 'analinc', 'archomg', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
 
 def main():
     parser = ArgumentParser(description='Setup XML workflow and CRONTAB for a forecast only experiment.', formatter_class=ArgumentDefaultsHelpFormatter)
@@ -177,14 +177,15 @@ def get_resources(dict_configs, cdump='gdas'):
     for task in taskplan:
 
         cfg = dict_configs[task]
+        print 'task ', task
         wtimestr, resstr, queuestr, memstr, natstr = wfu.get_resources(machine, cfg, task, reservation, cdump='gfs')
 
         taskstr = '%s_%s' % (task.upper(), cdump.upper())
 
         strings.append('\t<!ENTITY QUEUE_%s     "%s">\n' % (taskstr, queuestr))
-        if scheduler in ['slurm'] and machine in ['ORION'] and task not in ['getic', 'archomg', 'arch']:
+        if scheduler in ['slurm'] and machine in ['ORION'] and task not in ['getic', 'getic4omg', 'archomg', 'arch']:
             strings.append('\t<!ENTITY PARTITION_%s "&PARTITION_BATCH;">\n' % taskstr )
-        if scheduler in ['slurm'] and task in ['getic', 'archomg', 'arch']:
+        if scheduler in ['slurm'] and task in ['getic', 'getic4omg', 'archomg', 'arch']:
             strings.append('\t<!ENTITY PARTITION_%s "&PARTITION_SERVICE;">\n' % taskstr )
         strings.append('\t<!ENTITY WALLTIME_%s  "%s">\n' % (taskstr, wtimestr))
         strings.append('\t<!ENTITY RESOURCES_%s "%s">\n' % (taskstr, resstr))
@@ -292,35 +293,46 @@ def get_workflow(dict_configs, cdump='gdas'):
     print 'warm_start ', warm_start
     # getic
     if hpssarch in ['YES']:
-      deps = []
-      data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
-      dep_dict = {'type':'data', 'data':data}
-      deps.append(rocoto.add_dependency(dep_dict))
-      data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
-      dep_dict = {'type':'data', 'data':data}
-      deps.append(rocoto.add_dependency(dep_dict))
-      dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
+        deps = []
+        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+        dep_dict = {'type':'data', 'data':data}
+        deps.append(rocoto.add_dependency(dep_dict))
+        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+        dep_dict = {'type':'data', 'data':data}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
 
-      task = wfu.create_wf_task('getic', cdump=cdump, envar=envars, dependency=dependencies)
-      tasks.append(task)
-      tasks.append('\n')
+        task = wfu.create_wf_task('getic', cdump=cdump, envar=envars, dependency=dependencies)
+        tasks.append(task)
+        tasks.append('\n')
+
+    if do_gomg in ['Y', 'YES']:
+        deps = []
+        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump, 'offset': '-06:00:00'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        task = wfu.create_wf_task('getic4omg', cdump=cdump, envar=envars, dependency=dependencies,
+                                  cycledef='gomg')
+        tasks.append(task)
+        tasks.append('\n')
 
     # init
     if warm_start == ".false.":
         deps = []
-        data = '&ROTDIR;/%s.@Y@m@d/@H/%s.t@Hz.sanl'%(icdump, icdump)
+        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.sanl'%(icdump, icdump)
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nemsio'%(icdump, icdump)
+        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nemsio'%(icdump, icdump)
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nc'%(icdump, icdump)
+        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nc'%(icdump, icdump)
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.atmanl.nc'%(icdump, icdump)
+        data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.atmanl.nc'%(icdump, icdump)
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'%(icdump)
+        data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'%(icdump)
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
@@ -375,8 +387,10 @@ def get_workflow(dict_configs, cdump='gdas'):
 
     if do_gomg in ['Y', 'YES']:
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sgetic' % cdump}
+        data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.atmanl.nc'%(icdump, icdump)
+        dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
+
         data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.logf009.txt' % (cdump, cdump)
         dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -385,7 +399,8 @@ def get_workflow(dict_configs, cdump='gdas'):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        task = wfu.create_wf_task('analinc', cdump=cdump, envar=envars, dependency=dependencies)
+        task = wfu.create_wf_task('analinc', cdump=cdump, envar=envars, dependency=dependencies,
+                                  cycledef='gomg')
         tasks.append(task)
         tasks.append('\n')
 
@@ -440,7 +455,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
 
     # vrfy
-    if do_post in ['Y', 'YES']:
+    if do_metp in ['Y', 'YES'] and do_post in ['Y', 'YES']:
         deps = []
         dep_dict = {'type':'metatask', 'name':'%spost' % cdump}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -471,8 +486,9 @@ def get_workflow(dict_configs, cdump='gdas'):
         deps = []
         dep_dict = {'type':'metatask', 'name':'%spost' % cdump}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type':'task', 'name':'%svrfy' % cdump}
-        deps.append(rocoto.add_dependency(dep_dict))
+        if do_metp in ['Y', 'YES']:
+            dep_dict = {'type':'task', 'name':'%svrfy' % cdump}
+            deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type':'streq', 'left':'&ARCHIVE_TO_HPSS;', 'right':'YES'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -482,14 +498,10 @@ def get_workflow(dict_configs, cdump='gdas'):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
-        if do_gomg in ['Y', 'YES']:
-            task = wfu.create_wf_task('arch', cdump=cdump, envar=envars, dependency=dependencies,
-                                      cycledef=cdump)
-        else:
-            task = wfu.create_wf_task('arch', cdump=cdump, envar=envars, dependency=dependencies,
-                                      cycledef=cdump, final=True)
-        tasks.append(task)
-        tasks.append('\n')
+    task = wfu.create_wf_task('arch', cdump=cdump, envar=envars, dependency=dependencies,
+                              cycledef=cdump)
+    tasks.append(task)
+    tasks.append('\n')
 
     return ''.join(tasks)
 
