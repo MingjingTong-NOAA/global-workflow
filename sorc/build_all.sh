@@ -40,6 +40,12 @@ source ./machine-setup.sh > /dev/null 2>&1
 
 . ./partial_build.sh
 
+if [ $target = jet ]; then
+  Build_gldas=false
+  Build_gfs_util=false
+  Build_ww3_prepost=false
+fi
+
 #------------------------------------
 # Exception Handling Init
 #------------------------------------
@@ -70,7 +76,7 @@ rc=$?
 if [[ $rc -ne 0 ]] ; then
     echo "Fatal error in building cube2gaus."
     echo "The log file is in $logs_dir/build_cube2gaus.log"
-fi
+	fi
 ((err+=$rc))
 }
 
@@ -176,19 +182,16 @@ fi
 #------------------------------------
 # build gfs_util       
 #------------------------------------
-# Only build on WCOSS
-if [ $target = wcoss -o $target = wcoss_cray -o $target = wcoss_dell_p3 ]; then
- $Build_gfs_util && {
- echo " .... Building gfs_util .... "
- ./build_gfs_util.sh > $logs_dir/build_gfs_util.log 2>&1
- rc=$?
- if [[ $rc -ne 0 ]] ; then
-     echo "Fatal error in building gfs_util."
-     echo "The log file is in $logs_dir/build_gfs_util.log"
- fi
- ((err+=$rc))
- }
+$Build_gfs_util && {
+echo " .... Building gfs_util .... "
+./build_gfs_util.sh > $logs_dir/build_gfs_util.log 2>&1
+rc=$?
+if [[ $rc -ne 0 ]] ; then
+    echo "Fatal error in building gfs_util."
+    echo "The log file is in $logs_dir/build_gfs_util.log"
 fi
+((err+=$rc))
+}
 
 #------------------------------------
 # Exception Handling
