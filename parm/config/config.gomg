@@ -8,6 +8,10 @@ echo "BEGIN: config.gomg"
 # Get task specific resources
 . $EXPDIR/config.resources gomg
 
+if [ $DONST = "YES" ]; then
+    . $EXPDIR/config.nsst
+fi
+
 export npe_gsi=$npe_gomg
 
 # GSI namelist options
@@ -134,5 +138,7 @@ res=$(echo $CASE | cut -c2-)
 export JCAP_A=$((res-2))
 export LATA=$res
 export LONA=$((res*2))
+
+export DOGCYCLE="NO"
 
 echo "END: config.gomg"

@@ -64,7 +64,7 @@ elif [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
 fi
 
 if [ $gfs_ver != "v16" ]; then
-   export rungcycle="YES"
+   export DOGCYCLE="YES"
    export replay_4DIAU="NO"
 fi
 

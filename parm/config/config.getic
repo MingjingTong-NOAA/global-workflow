@@ -28,9 +28,9 @@ if [ ${RETRO:-"NO"} = "YES" ]; then # Retrospective parallel input
     export HPSSDIR=/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/v16retro1e
   elif [[ "$CDATE" -lt "2019101706" ]]; then
     export HPSSDIR=/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/v16retro2e
-  elif [[ "$CDATE" -lt "2020122206" ]]; then
+  elif [[ "$CDATE" -lt "2020122200" ]]; then
     export HPSSDIR=/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/v16rt2
-  elif [[ "$CDATE" -lt "2021032500" ]]; then
+  elif [[ "$CDATE" -le "2021032506" ]]; then
     export HPSSDIR=/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/v16rt2n
   else
     set +x
@@ -66,7 +66,6 @@ elif [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
 fi
 
 if [ $gfs_ver != "v16" ]; then
-   export rungcycle="YES"
    export replay_4DIAU="NO"
 fi
 

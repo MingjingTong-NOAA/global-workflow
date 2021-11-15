@@ -47,10 +47,11 @@ export NOSCRUB="@NOSCRUB@"
 export BASE_GIT="@BASE_GIT@"
 
 # Toggle to turn on/off GFS downstream processing.
-export DO_BUFRSND="NO"    # BUFR sounding products
+export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
+export DO_VRFY="YES"       # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -72,8 +73,8 @@ export FIXgsi="$HOMEgfs/fix/fix_gsi"
 export FIXshield="$HOMEgfs/fix/fix_shield"
 export HOMEfv3gfs="$HOMEgfs/sorc/fv3gfs.fd"
 export HOMEpost="$HOMEgfs"
-export HOMEobsproc_prep="$BASE_GIT/obsproc/gfsv16b/obsproc_prep_RB-5.4.0"
-export HOMEobsproc_network="$BASE_GIT/obsproc/gfsv16b/obsproc_global_RB-3.4.0"
+export HOMEobsproc_prep="$BASE_GIT/obsproc/obsproc_prep.v5.5.0_hpc-stack"
+export HOMEobsproc_network="$BASE_GIT/obsproc/obsproc_global.v3.4.2_hpc-stack"
 export HOMEobsproc_global=$HOMEobsproc_network
 export BASE_VERIF="$BASE_GIT/verif/global/tags/vsdb"
 
@@ -137,11 +138,13 @@ export SENDDBN_NTC=${SENDDBN_NTC:-"NO"}
 export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
+# Set operational resolution
+export OPS_RES="C768" # Do not change
+
 # Resolution specific parameters
 export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
-export OPS_RES="C768"
 
 # Run with CCPP physics
 export RUN_CCPP="YES"
@@ -224,7 +227,6 @@ fi
 export replay=0
 # number of forecasts used to compute mean background
 export nrestartbg=1
-export rungcycle="NO" # Only for replay with v16 analysis
 export replay_4DIAU="NO"
 export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
 if [ "$MODE" = "replay" ]; then
@@ -244,6 +246,18 @@ export lobsdiag_forenkf=".true."
 # run GLDAS to spin up land ICs
 export DO_GLDAS="YES"
 export gldas_cyc=00
+
+# run gcycle for DA or replay (only work with gfsv16 ICs)
+export DOGCYCLE="YES"
+export DO_RTGSST="NO"
+export DO_TREF_TILE=".true."
+if [[ $DOGCYCLE = "NO" ]]; then
+   export DO_GLDAS="NO"
+   export DO_TREF_TILE=".false."
+fi
+if [[ $DO_RTGSST = "YES" ]]; then
+   export DO_TREF_TILE=".false."
+fi
 
 # run wave component
 export DO_WAVE="NO"
@@ -278,7 +292,12 @@ fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
 export DONST="NO"
-if [ $DONST = "YES" ]; then export FNTSFA="        "; fi
+# Mixing layer ocean
+export do_ocean=".true."
+if [ $DONST = "YES" ]; then
+  export FNTSFA="        "
+  export do_ocean=".false."
+fi
 
 # Surface cycle update frequency
 if [[ "$CDUMP" == "gdas" && $DONST = "YES" ]] ; then
@@ -289,7 +308,7 @@ else
 fi
 
 # The switch to apply SST elevation correction or not
-export nst_anl=.false.
+export nst_anl=".true."
 
 # full hydrometeors assimilation
 export full_hydro_anl="NO"
@@ -329,6 +348,10 @@ export DO_OmF="NO"
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
 export gdaspost="YES"
+
+if [ $DO_POST = "NO" ]; then
+  export DO_GLDAS="NO"
+fi
 
 # Verification options
 export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp

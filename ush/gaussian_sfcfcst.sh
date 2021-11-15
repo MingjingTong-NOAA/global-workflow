@@ -124,6 +124,7 @@ LATB_CASE=$((res*2))
 LONB_SFC=${LONB_SFC:-$LONB_CASE}
 LATB_SFC=${LATB_SFC:-$LATB_CASE}
 DONST=${DONST:-"NO"}
+SFC4POST=${SFC4POST:-".true"}
 LEVS=${LEVS:-91}
 OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
 if [ $OUTPUT_FILE = "netcdf" ]; then
@@ -140,6 +141,7 @@ EXECgfs=${EXECgfs:-$HOMEgfs/exec}
 FIXfv3=${FIXfv3:-$HOMEgfs/fix/fix_fv3_gmted2010}
 FIXam=${FIXam:-$HOMEgfs/fix/fix_am}
 FIXshield=${FIXshield:-$HOMEgfs/fix/fix_shield}
+FIXGAUS=${FIXGAUS:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 FIXWGTS=${FIXWGTS:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-$FIXfv3/$CASE/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
 FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_weight_${CASE}.nc}
@@ -193,6 +195,7 @@ export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 # input interpolation weights
 $NLN $FIXWGTS ./weights.nc
 $NLN $FIXWGTS2 ./weightb.nc
+$NLN $FIXGAUS  ./gaus_N${res}.nc
 $NLN $FIXELONELAT ./c2g_weight_${CASE}.nc
 
 # input orography tiles
@@ -260,10 +263,13 @@ cat <<EOF > fort.41
      diag_fhr=$diag_fhr,
      igaus=$LONB_SFC,
      jgaus=$LATB_SFC,
+     gaus_file="gaus_N${res}"
      netcdf_out=$NETCDF_OUT
      fhzero=$FHZER
      imp_physics=11
      dtp=$DELTIM 
+     donst=$DONST
+     sfc4post=$SFC4POST
     /
 EOF
 

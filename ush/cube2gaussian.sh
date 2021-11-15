@@ -6,6 +6,8 @@ if [[ "$VERBOSE" = "YES" ]] ; then
    set -x
 fi
 
+export DONST=${DONST:-"NO"}
+
 export RHR=_RHR
 export REND=$FHMAX
 export rmhydro=${rmhydro:-".true."}

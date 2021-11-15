@@ -58,7 +58,7 @@ export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
-export rungcycle=${rungcycle:-"YES"}
+export DOGCYCLE=${DOGCYCLE:-"YES"}
 export replay_4DIAU=${replay_4DIAU:-"NO"}
 
 # Create ROTDIR/EXTRACT_DIR
@@ -96,7 +96,7 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
     htar -xvf ${PRODHPSSDIR}/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}/com_gfs_prod_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
   fi
 
-else # Pull chgres cube inputs for cold start IC generation
+elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
 
   # Run UFS_UTILS GETICSH
   atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
@@ -115,7 +115,7 @@ fi
 if [ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
   mkdir -p ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
 fi
-if [ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh} ]; then
+if [[ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh} && $MODE != "cycled" ]]; then
   if [ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
      mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
   else
@@ -125,7 +125,7 @@ fi
 
 # Pull dtfanl for GFS replay
 dtfanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
-if [[ $MODE = "replay" && $rungcycle = "YES" && $DONST = "YES" && ! -s $dtfanl ]]; then
+if [[ $MODE = "replay" && $DOGCYCLE = "YES" && $DONST = "YES" && ! -s $dtfanl ]]; then
    if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
       export tarball="${ICDUMP}_restarta.tar"
       htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
@@ -138,10 +138,10 @@ if [[ $MODE = "replay" && $rungcycle = "YES" && $DONST = "YES" && ! -s $dtfanl ]
    [ $rc != 0 ] && exit $rc
 fi
 
-# Pull sfcanl restart file for replay
-if [ $gfs_ver = v16 ]; then
-  if [[ $MODE = "replay" && $rungcycle = "NO" && "$CDATE" != "$SDATE" ]]; then
-     if [ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]; then
+# Pull sfcanl restart file for replay and DA cycle if DOGCYCLE is off
+if [[ $gfs_ver = "v16" ]]; then
+  if [[  $MODE != "free" && $DO_TREF_TILE = ".true." && "$CDATE" != "$SDATE" ]]; then
+     if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        for n in $(seq 1 6); do
           file=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc
@@ -161,6 +161,8 @@ if [ $gfs_ver = v16 ]; then
             break
           fi
        done 
+     else
+       getdata="YES"
      fi    
      if [[ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS || $getdata = "YES" ]]; then
        cd $EXTRACT_DIR
@@ -189,7 +191,7 @@ if [ $gfs_ver = v16 ]; then
      fi
   fi
 
-  if [[ $replay_4DIAU = "YES" ]]; then
+  if [[ $MODE = "replay" && $replay_4DIAU = "YES" ]]; then
      if [ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
        cd $EXTRACT_DIR
        echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >list.txt
@@ -211,7 +213,7 @@ if [ $gfs_ver = v16 ]; then
 fi
 
 # Pull pgbanl file for verification/archival - v14+
-if [ $DO_METP = "YES" ]; then
+if [[ $MODE != "cycled" && $DO_METP = "YES" ]]; then
 if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
   if [ ! -s $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.pgrb2.1p00.anl ]; then
     for grid in 0p25 0p50 1p00
@@ -256,7 +258,7 @@ if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
   
       fi # Version check
        
-      if [[ $MODE != "cycle" && $grid = "1p00" ]]; then
+      if [[ $MODE != "cycled" && $grid = "1p00" ]]; then
          if [ ! -d $ARCDIR ]; then
             mkdir -p $ARCDIR
          fi

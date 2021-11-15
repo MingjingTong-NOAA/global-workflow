@@ -31,7 +31,7 @@ WORKDIR=${WORKDIR:-$OUTDIR/work.${MEMBER}}
 MODE=${MODE:-"cycled"}
 
   CINP=${OPS_RES}
-  CTAR=${CRES_HIRES}
+  CTAR=${CTAR:-$CRES_HIRES}
 #---------------------------------------------------------------------------
 # Some gfs tarballs from the v16 retro parallels dont have 'atmos'
 # in their path.  Account for this.
@@ -89,7 +89,11 @@ if [ $rc != 0 ]; then
 fi
 
 outtype=${outtype:-$MEMBER}
-SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART
+if [[ $CTAR = $CRES_HIRES ]]; then
+  SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART
+else
+  SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART_ENKF
+fi
 copy_data
 touch $SAVEDIR/../${MEMBER}.t${hh}z.loginc.txt
 

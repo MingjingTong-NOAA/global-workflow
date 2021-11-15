@@ -2,12 +2,12 @@
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
-# Script name:         exglobal_atmos_analysis.sh
-# Script description:  Makes a global model upper air analysis with GSI
+# Script name:         exglobal_gcycle_shield.sh
+# Script description:  generate surface analyses on tiles for replay
 #
-# Author: Rahul Mahajan      Org: NCEP/EMC     Date: 2017-03-02
+# Author:        Mingjing Tong      Org: GFDL     Date: 2021-06-21
 #
-# Abstract: This script makes a global model analysis using the GSI
+# Abstract: This script generates surface analyses on tiles
 #
 # $Id$
 #
@@ -17,14 +17,14 @@
 #
 ################################################################################
 
-#  Set environment.
+# Set environment.
 export VERBOSE=${VERBOSE:-"YES"}
 if [ $VERBOSE = "YES" ]; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
 fi
 
-#  Directories.
+# Directories.
 pwd=$(pwd)
 
 # Base variables
@@ -45,14 +45,6 @@ export NCP=${NCP:-"/bin/cp"}
 export NMV=${NMV:-"/bin/mv"}
 export NLN=${NLN:-"/bin/ln -sf"}
 export CHGRP_CMD=${CHGRP_CMD:-"chgrp ${group_name:-rstprod}"}
-export NEMSIOGET=${NEMSIOGET:-${NWPROD}/exec/nemsio_get}
-export NCLEN=${NCLEN:-$HOMEgfs/ush/getncdimlen}
-export ERRSCRIPT=${ERRSCRIPT:-'eval [[ $err = 0 ]]'}
-COMPRESS=${COMPRESS:-gzip}
-UNCOMPRESS=${UNCOMPRESS:-gunzip}
-APRUNCFP=${APRUNCFP:-""}
-APRUN_GSI=${APRUN_GSI:-${APRUN:-""}}
-NTHREADS_GSI=${NTHREADS_GSI:-${NTHREADS:-1}}
 
 # Surface cycle related parameters
 DOGCYCLE=${DOGCYCLE:-"NO"}
@@ -145,6 +137,12 @@ OSUFFIX=${OSUFFIX:-""}
         export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE
         export MAX_TASKS_CY=$ntiles
 
+        if [ $DO_TREF_TILE = ".true." ]; then
+           for n in $(seq 1 $ntiles); do
+              $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+           done
+        fi
+
         $CYCLESH
         rc=$?
         export ERR=$rc
@@ -158,6 +156,12 @@ OSUFFIX=${OSUFFIX:-""}
         $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                  $DATA/fngrid.00$n
         $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc              $DATA/fnorog.00$n
     done
+
+    if [ $DO_TREF_TILE = ".true." ]; then
+       for n in $(seq 1 $ntiles); do
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+       done
+    fi
 
     export APRUNCY=$APRUN_CYCLE
     export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE

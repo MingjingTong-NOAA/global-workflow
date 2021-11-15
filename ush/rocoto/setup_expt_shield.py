@@ -115,8 +115,10 @@ def edit_baseconfig():
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
                     line = line.replace('@ROTDIR@', os.path.dirname(comrot))
-                if 'ICSDIR' in line:
-                    continue
+                if icsdir is not None:
+                    line = line.replace('@ICSDIR@', icsdir)
+                else:
+                    line = line.replace('@ICSDIR@', os.path.join(comrot, 'ICS'))
                 fo.write(line)
     os.unlink(base_config)
     os.rename(base_config + '.new', base_config)

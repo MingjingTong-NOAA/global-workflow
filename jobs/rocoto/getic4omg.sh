@@ -58,7 +58,7 @@ export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
-export rungcycle=${rungcycle:-"YES"}
+export DOGCYCLE=${DOGCYCLE:-"YES"}
 export replay_4DIAU=${replay_4DIAU:-"NO"}
 
 # Run UFS_UTILS GETICSH

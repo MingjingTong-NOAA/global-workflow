@@ -36,7 +36,7 @@ if [ $QUILTING = ".true." ]; then
 fi
 
 # External IC configuration
-if [ $gfs_ver = "v16" ]; then
+if [ ${gfs_ver:-"v16"} = "v16" ]; then
   export ncep_levs=${ncep_levs:-128}
 else
   export ncep_levs=${ncep_levs:-65}
@@ -83,9 +83,6 @@ else
     export lheatstrg=".true."
     export landice=".true."
 fi
-
-# Mixing layer ocean
-export do_ocean=".true."
 
 # Radiation options 
 export IAER=111     ;#spectral band mapping method for aerosol optical properties

@@ -25,6 +25,9 @@
 ! -------------------
 ! yy/mm/dd/hh             year/month/day/hour of data.
 ! i/jgaus                 i/j dimension of gaussian grid.
+! donst                   When 'no' do not process nst data.
+!                         When 'yes' process nst data.
+! sfc4post                When '.true.' process surface variables for post
 ! netcdf_out              When 'true', output gaussian file in
 !                         netcdf.  Otherwise output nemsio format.
 !
@@ -41,11 +44,16 @@
 
  implicit none
 
+ character(len=3)   :: donst
+
+ logical :: sfc4post
+
  integer, parameter :: num_tiles = 6
 
  integer :: itile, jtile, igaus, jgaus, itime, ntile
  integer :: fhzero, imp_physics, iu10, iv10, iuh1, ivh1
  real :: fhr, dtp, diag_fhr
+ character(len=128) :: gaus_file
 
  integer(nemsio_intkind) :: idate(8)
 
@@ -54,6 +62,9 @@
 
  integer, parameter      :: num_noah_2=3
  character(len=30)       :: name_noah_2(num_noah_2)
+
+ integer, parameter      :: num_nst=16
+ character(len=30)       :: name_nst(num_nst)
 
 ! post variables
  integer, parameter      :: num_post=88
@@ -74,6 +85,7 @@
 ! surface variables
    real, allocatable :: sfc_noah_1(:,:)
    real, allocatable :: sfc_noah_2(:,:,:)
+   real, allocatable :: sfc_nst(:,:)
    real, allocatable :: sfc_post(:,:)
  end type sfc_data
 
@@ -113,6 +125,23 @@
  data name_noah_2 / "slc", &
                     "smc", &
                     "stc" /
+
+ data name_nst / "c_0", &
+                 "c_d", &
+                 "d_conv", &
+                 "dt_cool", &
+                 "qrain", &
+                 "tref", &
+                 "w_0", &
+                 "w_d", &
+                 "xs", &
+                 "xt", &
+                 "xtts", &
+                 "xu", &
+                 "xv", &
+                 "xz", &
+                 "xzts", &
+                 "z_c" /
 
  data name_post / "acond", &
                   "cprat_ave", &
@@ -233,8 +262,8 @@
  real, allocatable :: xyz_latlon(:,:,:)
  real, allocatable :: ua_latlon(:,:), va_latlon(:,:)
 
- namelist /setup/ yy, mm, dd, hh, fhr, diag_fhr, igaus, jgaus, netcdf_out, &
-                  fhzero, imp_physics, dtp 
+ namelist /setup/ yy, mm, dd, hh, fhr, diag_fhr, igaus, jgaus, gaus_file, &
+                  netcdf_out, fhzero, imp_physics, dtp, donst, sfc4post
 
  call w3tagb('GAUSSIAN_SFCFCST',2018,0179,0055,'NP20')
 
@@ -243,6 +272,10 @@
  fhr = 0.
 
  netcdf_out = .true.
+
+ donst = 'no'
+
+ sfc4post = .true.
 
  print*
  print*,"- READ SETUP NAMELIST"
@@ -350,12 +383,22 @@
 
  allocate(gaussian_data%sfc_noah_1(igaus*jgaus,num_noah_1))    ! sfc
  allocate(gaussian_data%sfc_noah_2(igaus*jgaus,4,num_noah_2))
- allocate(gaussian_data%sfc_post(igaus*jgaus,num_post))
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   allocate(gaussian_data%sfc_nst(igaus*jgaus,num_nst))
+ end if
+ if (sfc4post) then
+   allocate(gaussian_data%sfc_post(igaus*jgaus,num_post))
+ end if
  allocate(var_gaus(igaus*jgaus,3))
 
  gaussian_data%sfc_noah_1=0.0 
  gaussian_data%sfc_noah_2=0.0
- gaussian_data%sfc_post=0.0
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   gaussian_data%sfc_nst=0.0
+ end if
+ if (sfc4post) then
+   gaussian_data%sfc_post=0.0
+ end if
  var_gaus=0.0
 
 !------------------------------------------------------------------------------
@@ -384,84 +427,101 @@
    enddo
  enddo
 
- do j = 1, num_post
-   if (intpl_method_post(j) == 'bilinear') then
-     do i = 1, n_s2
-       gaussian_data%sfc_post(row2(i),j) = gaussian_data%sfc_post(row2(i),j) &
-                                           + s2(i)*tile_data%sfc_post(col2(i),j)
-     enddo
-   else if (intpl_method_post(j) == 'nearest_stod') then
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   do j = 1, num_nst
      do i = 1, n_s
-       gaussian_data%sfc_post(row(i),j) = gaussian_data%sfc_post(row(i),j) &
-                                          + s(i)*tile_data%sfc_post(col(i),j)
+       gaussian_data%sfc_nst(row(i),j) = gaussian_data%sfc_nst(row(i),j) &
+                                       + s(i)*tile_data%sfc_nst(col(i),j)
      enddo
-   endif
- enddo
-
- allocate(xyz_latlon(igaus,jgaus,3))
- do icoor=1,3
-   do i = 1, n_s2
-     var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*var_tile(col2(i),icoor)
    enddo
-   xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
- enddo
+ end if
+
+ if (sfc4post) then
+   do j = 1, num_post
+     if (intpl_method_post(j) == 'bilinear') then
+       do i = 1, n_s2
+         gaussian_data%sfc_post(row2(i),j) = gaussian_data%sfc_post(row2(i),j) &
+                                             + s2(i)*tile_data%sfc_post(col2(i),j)
+       enddo
+     else if (intpl_method_post(j) == 'nearest_stod') then
+       do i = 1, n_s
+         gaussian_data%sfc_post(row(i),j) = gaussian_data%sfc_post(row(i),j) &
+                                            + s(i)*tile_data%sfc_post(col(i),j)
+       enddo
+     endif
+   enddo
+
+   allocate(xyz_latlon(igaus,jgaus,3))
+   do icoor=1,3
+     do i = 1, n_s2
+       var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*var_tile(col2(i),icoor)
+     enddo
+     xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
+   enddo
 
 ! need to flip elon_latlon and elat_latlon, because here lat(1) > 0 
- allocate(ua_latlon(igaus,jgaus),va_latlon(igaus,jgaus))
- do j=1,jgaus
-   do i=1,igaus
-     ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
+   allocate(ua_latlon(igaus,jgaus),va_latlon(igaus,jgaus))
+   do j=1,jgaus
+     do i=1,igaus
+       ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
+     enddo
    enddo
- enddo
- do j=1,jgaus
-   do i=1,igaus
-     va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
+   do j=1,jgaus
+     do i=1,igaus
+       va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
+     enddo
    enddo
- enddo
+  
+   gaussian_data%sfc_post(:,iu10)=reshape (ua_latlon, (/igaus*jgaus/) )
+   gaussian_data%sfc_post(:,iv10)=reshape (va_latlon, (/igaus*jgaus/) )
+  
+   var_gaus=0.0
+   do icoor=1,3
+     do i = 1, n_s2
+       var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*varh1_tile(col2(i),icoor)
+     enddo
+     xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
+   enddo
+  
+   do j=1,jgaus
+     do i=1,igaus
+       ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
+     enddo
+   enddo
+   do j=1,jgaus
+     do i=1,igaus
+       va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
+                     +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
+     enddo
+   enddo
+  
+   gaussian_data%sfc_post(:,iuh1)=reshape (ua_latlon, (/igaus*jgaus/) )
+   gaussian_data%sfc_post(:,ivh1)=reshape (va_latlon, (/igaus*jgaus/) )
 
- gaussian_data%sfc_post(:,iu10)=reshape (ua_latlon, (/igaus*jgaus/) )
- gaussian_data%sfc_post(:,iv10)=reshape (va_latlon, (/igaus*jgaus/) )
-
- var_gaus=0.0
- do icoor=1,3
-   do i = 1, n_s2
-     var_gaus(row2(i),icoor) = var_gaus(row2(i),icoor) + s2(i)*varh1_tile(col2(i),icoor)
-   enddo
-   xyz_latlon(:,:,icoor) = reshape(var_gaus(:,icoor), (/igaus,jgaus/))
- enddo
-
- do j=1,jgaus
-   do i=1,igaus
-     ua_latlon(i,j)=xyz_latlon(i,j,1)*elon_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elon_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elon_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
- do j=1,jgaus
-   do i=1,igaus
-     va_latlon(i,j)=xyz_latlon(i,j,1)*elat_latlon(1,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,2)*elat_latlon(2,i,jgaus-j+1) &
-                   +xyz_latlon(i,j,3)*elat_latlon(3,i,jgaus-j+1)
-   enddo
- enddo
-
- gaussian_data%sfc_post(:,iuh1)=reshape (ua_latlon, (/igaus*jgaus/) )
- gaussian_data%sfc_post(:,ivh1)=reshape (va_latlon, (/igaus*jgaus/) )
+ end if
 
  deallocate(col, row, s)
  deallocate(col2, row2, s2)
 
  deallocate(tile_data%sfc_noah_1)
  deallocate(tile_data%sfc_noah_2)
- deallocate(tile_data%sfc_post)
- deallocate(var_tile, varh1_tile)
- deallocate(xyz_latlon, var_gaus)
- deallocate(ua_latlon, va_latlon)
- deallocate(elon_latlon, elat_latlon) 
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   deallocate(tile_data%sfc_nst)
+ end if
+ if (sfc4post) then
+   deallocate(tile_data%sfc_post)
+   deallocate(var_tile, varh1_tile)
+   deallocate(xyz_latlon, var_gaus)
+   deallocate(ua_latlon, va_latlon)
+   deallocate(elon_latlon, elat_latlon) 
+ end if
 
 !------------------------------------------------------------------------------
 ! Write gaussian data to either netcdf or nemsio file.
@@ -475,7 +535,12 @@
 
  deallocate(gaussian_data%sfc_noah_1)
  deallocate(gaussian_data%sfc_noah_2)
- deallocate(gaussian_data%sfc_post)
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   deallocate(gaussian_data%sfc_nst)
+ end if
+ if (sfc4post) then
+   deallocate(gaussian_data%sfc_post)
+ end if
 
  print*
  print*,'- NORMAL TERMINATION'
@@ -511,6 +576,11 @@
  character(len=70)       :: noah_name(num_noah)
  character(len=30)       :: noah_units(num_noah)
 
+! nst variables
+ character(len=30)       :: nst_var(num_nst)
+ character(len=70)       :: nst_name(num_nst)
+ character(len=30)       :: nst_units(num_nst)
+
 ! variables to be output
  integer                              :: num_vars
  character(len=30), allocatable       :: var(:)
@@ -518,6 +588,7 @@
  character(len=30), allocatable       :: units(:)
  integer, allocatable                 :: id_var(:)
 
+ integer                 :: num_rst
  real, parameter         :: missing = 9.99e20
  real(kind=4), parameter :: fillvalue = 9.99e20
 
@@ -661,6 +732,60 @@
                   "fraction", &
                   "fraction" /
 
+! define nst fields
+
+ data nst_var /"c0", &
+               "cd", &
+               "dconv", &
+               "dtcool", &
+               "qrain", &
+               "tref", &
+               "w0", &
+               "wd", &
+               "xs", &
+               "xt", &
+               "xtts", &
+               "xu", &
+               "xv", &
+               "xz", &
+               "xzts", &
+               "zc" /
+
+ data nst_name /"nsst coefficient1 to calculate d(tz)/d(ts)", &
+                "nsst coefficient2 to calculate d(tz)/d(ts)", &
+                "nsst thickness of free convection layer", &
+                "nsst sub-layer cooling amount", &
+                "nsst sensible heat flux due to rainfall", &
+                "nsst reference or foundation temperature", &
+                "nsst coefficient3 to calculate d(tz)/d(ts)", &
+                "nsst coefficient4 to calculate d(tz)/d(ts)", &
+                "nsst salinity content in diurnal thermocline layer", &
+                "nsst heat content in diurnal thermocline layer", &
+                "nsst d(xt)/d(ts)", &
+                "nsst u-current content in diurnal thermocline layer", &
+                "nsst v-current content in diurnal thermocline layer", &
+                "nsst diurnal thermocline layer thickness", &
+                "nsst d(xt)/d(ts)", &
+                "nsst sub-layer cooling thickness"/
+
+ data nst_units /"numerical", &
+                 "n/a", &
+                 "m", &
+                 "k", &
+                 "w/m2", &
+                 "K", &
+                 "n/a", &
+                 "n/a", &
+                 "n/a", &
+                 "k*m", &
+                 "m", &
+                 "m2/s", &
+                 "m2/s", &
+                 "m", &
+                 "m/k", &
+                 "m"/
+
+
  outfile = "./sfc.gaussian.nc"
 
  print*,"- WRITE SURFACE DATA TO NETCDF FILE: ", trim(outfile)
@@ -794,7 +919,15 @@
 ! Determine what variables to output (noah, or noah plus nst).
 !-------------------------------------------------------------------------------------------
  
- num_vars = num_noah + num_post
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   num_vars = num_noah + num_nst
+ else
+   num_vars = num_noah
+ endif
+
+ if (sfc4post) then
+   num_vars = num_vars + num_post
+ end if
    
  allocate(var(num_vars))
  allocate(name(num_vars))
@@ -805,11 +938,29 @@
  name(1:num_noah) = noah_name
  units(1:num_noah) = noah_units
 
- do n = 1, num_post
-   var(n+num_noah) = name_post(n)
-   name(n+num_noah) = desc_post(n)
-   units(n+num_noah) = units_post(n)
- enddo
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   do n = 1, num_nst
+     var(n+num_noah) = nst_var(n)
+     name(n+num_noah) = nst_name(n)
+     units(n+num_noah) = nst_units(n)
+   enddo
+
+   if (sfc4post) then
+     do n = 1, num_post
+       var(n+num_noah+num_nst) = name_post(n)
+       name(n+num_noah+num_nst) = desc_post(n)
+       units(n+num_noah+num_nst) = units_post(n)
+     enddo
+   end if
+ else
+   if (sfc4post) then
+     do n = 1, num_post
+       var(n+num_noah) = name_post(n)
+       name(n+num_noah) = desc_post(n)
+       units(n+num_noah) = units_post(n)
+     enddo
+   end if
+ end if
 
 !-------------------------------------------------------------------------------------------
 ! Define variables in netcdf file.
@@ -855,9 +1006,15 @@
  allocate(dummy(igaus,jgaus))
  allocate(lon2d(igaus,jgaus),lat2d(igaus,jgaus))
 
- do j=1,jgaus
-   lon2d(:,j)=todeg*xlon(:)
- end do
+ if (sfc4post) then
+   do j=1,jgaus
+     lon2d(:,j)=todeg*xlon(:)
+   end do
+ else
+   do j=1,jgaus
+     lon2d(:,j)=xlon(:)
+   end do
+ end if
 
  error = nf90_put_var(ncid, id_xt, lon2d(:,1))
  call netcdf_err(error, 'WRITING GRID_XT')
@@ -865,9 +1022,17 @@
  error = nf90_put_var(ncid, id_lon, lon2d)
  call netcdf_err(error, 'WRITING LON')
 
- do i=1, igaus
-   lat2d(i,:)=todeg*ylat(:)
- end do
+ if (sfc4post) then
+   do i=1, igaus
+     lat2d(i,:)=todeg*ylat(:)
+   end do
+ else
+   do i=1, igaus
+     do j=1,jgaus
+       lat2d(i,j)=ylat(jgaus-j+1)
+     end do
+   end do
+ end if
 
  error = nf90_put_var(ncid, id_yt, lat2d(1,:))
  call netcdf_err(error, 'WRITING GRID_YT')
@@ -880,13 +1045,19 @@
 
  deallocate(lon2d,lat2d)
 
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   num_rst = num_noah + num_nst
+ else
+   num_rst = num_noah
+ end if
+
  do n = 1, num_vars
    print*,'- WRITE VARIABLE ',trim(var(n))
-   if (n <= num_noah) then
+   if (n <= num_rst) then
      call get_netcdf_var(n, var(n), dummy)
      error = nf90_put_var(ncid, id_var(n), dummy, start=(/1,1,1/), count=(/igaus,jgaus,1/))
-   else
-     j=n-num_noah
+   else if (sfc4post) then
+     j=n-num_rst
      dummy = reshape(gaussian_data%sfc_post(:,j), (/igaus,jgaus/))
      error = nf90_put_var(ncid, id_var(n), dummy, start=(/1,1,1/), count=(/igaus,jgaus,1/))
    end if
@@ -898,6 +1069,51 @@
  error = nf90_close(ncid)
 
  end subroutine write_sfc_data_netcdf
+
+ subroutine read_gaus_grid(gaus_file, xlon, ylat, nlon, nlat)
+
+ use netcdf
+
+ implicit none
+
+ character(len=128), intent(in) :: gaus_file
+ integer, intent(in)  :: nlon, nlat
+ real,    intent(out) :: xlon(nlon), ylat(nlat)
+ !------------------------------------------------------------------!
+ ! local variables                                                  !
+ !------------------------------------------------------------------!
+ integer :: ncid, lon_id, lat_id, ndims, dimids(1), error
+ character(len=120) :: filename
+ logical :: exists
+
+ ! form file name and check existance
+ write(filename,100) trim(gaus_file)
+100 format(a,'.nc')
+ inquire(file=filename, exist=exists)
+ if (.not. exists) then
+   print 110, trim(filename)
+110    format(/,"Gaussian grid file ",a," doesn't exist",/)
+   stop
+ endif
+
+ ! open nc file
+ error=nf90_open(trim(filename), 0, ncid)
+ call netcdf_err(error, 'OPENING gaus_file' )
+
+ ! get nlon
+ error=nf90_inq_varid(ncid, "lon", lon_id)
+ error=nf90_get_var(ncid, lon_id, xlon)
+ call netcdf_err(error, 'READING lon' )
+
+ ! get nlat
+ error=nf90_inq_varid(ncid, "lat", lat_id)
+ error=nf90_get_var(ncid, lat_id, ylat)
+ call netcdf_err(error, 'READING lat' )
+
+ ! close nc file
+ error=nf90_close(ncid)
+
+ end subroutine read_gaus_grid
 
 !-------------------------------------------------------------------------------------------
 ! Retrieve variable based on its netcdf identifier.
@@ -924,7 +1140,7 @@
    else
      dummy = reshape(gaussian_data%sfc_noah_1(:,n), (/igaus,jgaus/))
    endif 
- else
+ else if (n <= 44) then
    select case (var)
      case ('soill1')
        dummy = reshape(gaussian_data%sfc_noah_2(:,1,1), (/igaus,jgaus/))
@@ -966,6 +1182,8 @@
        print*,'- FATAL ERROR: UNKNOWN VAR IN GET_VAR: ', var
        call errexit(67)
    end select
+ else
+   dummy = reshape(gaussian_data%sfc_nst(:,n-44), (/igaus,jgaus/))
  end if
 
  end subroutine get_netcdf_var
@@ -981,7 +1199,7 @@
 
  implicit none
 
- integer(nemsio_intkind), parameter :: nrec_all=126
+ integer(nemsio_intkind), parameter :: nrec_all=142
  integer(nemsio_intkind), parameter :: nmetaaryi=1
  integer(nemsio_intkind), parameter :: nmetavari=4
  integer(nemsio_intkind), parameter :: nmetavarr=1
@@ -994,6 +1212,8 @@
  character(nemsio_charkind)         :: varrname(nmetavarr)
  character(nemsio_charkind)         :: varcname(nmetavarc)
  character(nemsio_charkind)         :: varcval(nmetavarc)
+ character(nemsio_charkind), allocatable :: recname(:)
+ character(nemsio_charkind), allocatable :: reclevtyp(:)
 
  integer(nemsio_intkind)            :: iret, version, nrec
  integer(nemsio_intkind)            :: reclev_all(nrec_all)
@@ -1001,6 +1221,7 @@
  integer(nemsio_intkind)            :: aryilen(nmetaaryi)
  integer(nemsio_intkind)            :: varival(nmetavari)
  integer                            :: i, j, k, n, nvcoord, levs_vcoord
+ integer(nemsio_intkind), allocatable  :: reclev(:)
  
  real(nemsio_realkind), allocatable :: the_data(:)
  real(nemsio_realkind)              :: varrval(nmetavarr)
@@ -1041,7 +1262,12 @@
                'tcdc_avelcl', 'tcdc_avemcl', 'tcdccnvcl', 'tcdc_avebndcl', &
                'tmp_avelct', 'tmp_avemct', 'tmp_avehct', 'trans_ave', &
                'u-gwd_ave', 'v-gwd_ave', 'watr_acc', 'wilt', &
-               'ugrd10m', 'vgrd10m' /
+               'ugrd10m', 'vgrd10m', &
+               'c0', 'cd', 'dconv', 'dtcool', &
+               'qrain',  'tref', &
+               'w0', 'wd',  'xs',  'xt', &
+               'xtts',  'xu', 'xv',  'xz', &
+               'xzts', 'zc'/
 
  data reclevtyp_all /'sfc',   'sfc',   'sfc',   'sfc', &
                  'sfc',   'sfc', '10 m above gnd',   'sfc', &
@@ -1074,7 +1300,12 @@
                  'low cld lay', 'mid cld lay', 'convect-cld laye', 'bndary-layer cld', &
                  'low cld top', 'mid cld top', 'high cld top', 'sfc', &
                  'sfc',   'sfc',   'sfc',   'sfc', &
-                 '10 m above gnd', '10 m above gnd'/
+                 '10 m above gnd', '10 m above gnd', &
+                 'sfc',   'sfc',   'sfc',   'sfc', &
+                 'sfc',   'sfc',   'sfc', &
+                 'sfc',   'sfc',   'sfc',   'sfc', &
+                 'sfc',   'sfc',   'sfc',   'sfc', &
+                 'sfc'/
 
  data reclev_all /1, 1, 1, 1, &
                   1, 1, 1, 1, &
@@ -1107,7 +1338,11 @@
                   1, 1, 1, 1, & 
                   1, 1, 1, 1, & 
                   1, 1, 1, 1, &
-                  1, 1/
+                  1, 1, &
+                  1, 1, 1, 1, &
+                  1, 1, 1, 1, &
+                  1, 1, 1, 1, &
+                  1, 1, 1, 1/
         
  data aryiname /'lpl'/
 
@@ -1164,6 +1399,20 @@
 
  close (14)
 
+ nrec = 44
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   nrec = nrec + num_nst
+ endif
+ if (sfc4post) then
+   nrec = nrec + num_post
+ endif
+ allocate(recname(nrec))
+ recname = recname_all(1:nrec)
+ allocate(reclevtyp(nrec))
+ reclevtyp = reclevtyp_all(1:nrec)
+ allocate(reclev(nrec))
+ reclev = reclev_all(1:nrec)
+
  call nemsio_init(iret=iret)
 
  print*
@@ -1171,15 +1420,15 @@
 
  call nemsio_open(gfileo, "sfc.gaussian.file", 'write',   &
                   modelname="FV3GFS", gdatatype="bin4", version=version,  &
-                  nmeta=8, nrec=nrec_all, dimx=igaus, dimy=jgaus, &
+                  nmeta=8, nrec=nrec, dimx=igaus, dimy=jgaus, &
                   dimz=(levs_vcoord-1),     &
                   nframe=0, nsoil=4, ntrac=8, jcap=-9999,  &
                   ncldt=5, idvc=-9999, idsl=-9999, idvm=-9999, &
                   idrt=4, lat=lat, lon=lon, vcoord=vcoord, &
                   nfhour=int(fhr), nfminute=0, nfsecondn=0,  &
                   nfsecondd=1, nfday=0, idate=idate, &
-                  recname=recname_all, reclevtyp=reclevtyp_all, &
-                  reclev=reclev_all, extrameta=.true., &
+                  recname=recname, reclevtyp=reclevtyp, &
+                  reclev=reclev, extrameta=.true., &
                   nmetavari=nmetavari, variname=variname, varival=varival, &
                   nmetavarr=nmetavarr, varrname=varrname, varrval=varrval, &
                   nmetavarc=nmetavarc, varcname=varcname, varcval=varcval, &
@@ -1194,50 +1443,52 @@
  print*,"- WRITE GAUSSIAN NEMSIO SURFACE FILE"
 
  print*,"- WRITE ALNSF"
- do j=1, nrec_all
+ do j=1, nrec
    if (j <= num_noah_1) then
-     if (recname_all(j) == "zorl") then
+     if (recname(j) == "zorl") then
        the_data = gaussian_data%sfc_noah_1(:,j) * 0.01 ! meters
-     else if (recname_all(j) == "snwdph") then 
+     else if (recname(j) == "snwdph") then 
        the_data = gaussian_data%sfc_noah_1(:,j) * 0.001 ! meters
-     else if (recname_all(j) == "vfrac") then
+     else if (recname(j) == "vfrac") then
        the_data = gaussian_data%sfc_noah_1(:,j) * 100.0
      else
        the_data = gaussian_data%sfc_noah_1(:,j)
      end if
    else if (j <= num_noah_2) then
-      if (recname_all(j) == "soill") then
-        if(reclevtyp_all(j) == '0-10 cm down') then
+      if (recname(j) == "soill") then
+        if(reclevtyp(j) == '0-10 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,1,1)
-        else if (reclevtyp_all(j) == '10-40 cm down') then
+        else if (reclevtyp(j) == '10-40 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,2,1)
-        else if (reclevtyp_all(j) == '40-100 cm down') then
+        else if (reclevtyp(j) == '40-100 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,3,1)
         else
           the_data = gaussian_data%sfc_noah_2(:,4,1)
         end if
-      else if (recname_all(j) == "tmp") then
-        if(reclevtyp_all(j) == '0-10 cm down') then
+      else if (recname(j) == "tmp") then
+        if(reclevtyp(j) == '0-10 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,1,2)
-        else if (reclevtyp_all(j) == '10-40 cm down') then
+        else if (reclevtyp(j) == '10-40 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,2,2)
-        else if (reclevtyp_all(j) == '40-100 cm down') then
+        else if (reclevtyp(j) == '40-100 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,3,2)
         else
           the_data = gaussian_data%sfc_noah_2(:,4,2)
         end if
-      else if (recname_all(j) == "soilw") then
-        if(reclevtyp_all(j) == '0-10 cm down') then
+      else if (recname(j) == "soilw") then
+        if(reclevtyp(j) == '0-10 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,1,3)
-        else if (reclevtyp_all(j) == '10-40 cm down') then
+        else if (reclevtyp(j) == '10-40 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,2,3)
-        else if (reclevtyp_all(j) == '40-100 cm down') then
+        else if (reclevtyp(j) == '40-100 cm down') then
           the_data = gaussian_data%sfc_noah_2(:,3,3)
         else
           the_data = gaussian_data%sfc_noah_2(:,4,3)
         end if
       end if
-   else 
+   else if ((trim(donst) == "yes" .or. trim(donst) == "YES") .and. j <= 44 + num_nst) then
+      the_data = gaussian_data%sfc_nst(:,j)
+   else
       the_data = gaussian_data%sfc_post(:,j)
    endif
    call nemsio_writerec(gfileo, j, the_data, iret=iret)
@@ -1311,43 +1562,48 @@
 
  allocate(tile_data%sfc_noah_1(ijtile*num_tiles,num_noah_1))
  allocate(tile_data%sfc_noah_2(ijtile*num_tiles,4,num_noah_2))
- allocate(tile_data%sfc_post(ijtile*num_tiles,num_post))
- allocate(u10m(itile,jtile,num_tiles))
- allocate(v10m(itile,jtile,num_tiles))
- allocate(uh1(itile,jtile,num_tiles))
- allocate(vh1(itile,jtile,num_tiles))
- allocate(var_cubsph(itile,jtile,num_tiles))
- allocate(var_tile(ijtile*num_tiles,3))
- allocate(varh1_tile(ijtile*num_tiles,3))
+ if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+   allocate(tile_data%sfc_nst(ijtile*num_tiles,num_nst))
+ end if
+ if (sfc4post) then
+   allocate(tile_data%sfc_post(ijtile*num_tiles,num_post))
+   allocate(u10m(itile,jtile,num_tiles))
+   allocate(v10m(itile,jtile,num_tiles))
+   allocate(uh1(itile,jtile,num_tiles))
+   allocate(vh1(itile,jtile,num_tiles))
+   allocate(var_cubsph(itile,jtile,num_tiles))
+   allocate(var_tile(ijtile*num_tiles,3))
+   allocate(varh1_tile(ijtile*num_tiles,3))
 
- error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
- error=nf90_inq_dimid(ncid, 'time', id_dim)
- call netcdf_err(error, 'READING time')
- error=nf90_inquire_dimension(ncid,id_dim,len=itime)
- call netcdf_err(error, 'READING time' )
- allocate(timeh(itime))
- allocate(dummy3t(itile,jtile,itime))
- error=nf90_get_var(ncid, id_dim, timeh) 
- call netcdf_err(error, 'READING time')
- error = nf90_close(ncid)
-
- if (itime == 1 .and. int(diag_fhr) == 0) then
-    ith=1
- else
-    ith=0
-    do i=1,itime
-       if (timeh(i) == diag_fhr) then
-          ith=i
-          EXIT
-       endif
-    end do
-    if (ith == 0) then 
-       print*,'** FATAL ERROR: diag hour', diag_fhr, 'not found'
-       print*,'STOP.'
-       call errexit(23)
-    endif
- endif
- print *,'diag_fhr, ith ', diag_fhr, ith
+   error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
+   error=nf90_inq_dimid(ncid, 'time', id_dim)
+   call netcdf_err(error, 'READING time')
+   error=nf90_inquire_dimension(ncid,id_dim,len=itime)
+   call netcdf_err(error, 'READING time' )
+   allocate(timeh(itime))
+   allocate(dummy3t(itile,jtile,itime))
+   error=nf90_get_var(ncid, id_dim, timeh) 
+   call netcdf_err(error, 'READING time')
+   error = nf90_close(ncid)
+  
+   if (itime == 1 .and. int(diag_fhr) == 0) then
+      ith=1
+   else
+      ith=0
+      do i=1,itime
+         if (timeh(i) == diag_fhr) then
+            ith=i
+            EXIT
+         endif
+      end do
+      if (ith == 0) then 
+         print*,'** FATAL ERROR: diag hour', diag_fhr, 'not found'
+         print*,'STOP.'
+         call errexit(23)
+      endif
+   endif
+   print *,'diag_fhr, ith ', diag_fhr, ith
+ end if
 
  do tile = 1, num_tiles
 
@@ -1388,6 +1644,17 @@
       tile_data%sfc_noah_2(istart:iend,1:4,i) = reshape(dummy3d, (/ijtile,4/))
    end do
 
+   if (trim(donst) == "yes" .or. trim(donst) == "YES") then
+     do i=1,num_nst
+         error=nf90_inq_varid(ncid, trim(name_nst(i)), id_var)
+         call netcdf_err(error, 'READING '//trim(name_nst(i))//' ID' )
+         error=nf90_get_var(ncid, id_var, dummy)
+         call netcdf_err(error, 'READING '//trim(name_nst(i)))
+         print*,'- '//trim(name_nst(i))//': ',maxval(dummy),minval(dummy)
+         tile_data%sfc_nst(istart:iend,i) = reshape(dummy, (/ijtile/))
+     end do
+   end if
+
    error = nf90_close(ncid)
 
    print*
@@ -1419,50 +1686,52 @@
 
    error = nf90_close(ncid)
 
-   print*
-   print*, "- READ INPUT GFS_SURFACE DATA FOR TILE: ",tile
+   if (sfc4post) then
+     print*
+     print*, "- READ INPUT GFS_SURFACE DATA FOR TILE: ",tile
 
-   if (tile==1) error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
-   if (tile==2) error=nf90_open("./gfs_surface.tile2.nc",nf90_nowrite,ncid)
-   if (tile==3) error=nf90_open("./gfs_surface.tile3.nc",nf90_nowrite,ncid)
-   if (tile==4) error=nf90_open("./gfs_surface.tile4.nc",nf90_nowrite,ncid)
-   if (tile==5) error=nf90_open("./gfs_surface.tile5.nc",nf90_nowrite,ncid)
-   if (tile==6) error=nf90_open("./gfs_surface.tile6.nc",nf90_nowrite,ncid)
+     if (tile==1) error=nf90_open("./gfs_surface.tile1.nc",nf90_nowrite,ncid)
+     if (tile==2) error=nf90_open("./gfs_surface.tile2.nc",nf90_nowrite,ncid)
+     if (tile==3) error=nf90_open("./gfs_surface.tile3.nc",nf90_nowrite,ncid)
+     if (tile==4) error=nf90_open("./gfs_surface.tile4.nc",nf90_nowrite,ncid)
+     if (tile==5) error=nf90_open("./gfs_surface.tile5.nc",nf90_nowrite,ncid)
+     if (tile==6) error=nf90_open("./gfs_surface.tile6.nc",nf90_nowrite,ncid)
+  
+     call netcdf_err(error, 'OPENING FILE' )
 
-   call netcdf_err(error, 'OPENING FILE' )
+     do i=1,num_post
+        error=nf90_inq_varid(ncid, trim(name_post(i)), id_var)
+        call netcdf_err(error, 'READING '//trim(name_post(i))//' ID' )
+        error=nf90_get_var(ncid, id_var, dummy3t)
+        dummy=dummy3t(:,:,ith)
+        if (name_post(i) == 'ugrd10m') then
+          iu10=i
+          u10m(:,:,tile)=dummy
+        endif
+        if (name_post(i) == 'vgrd10m') then
+          iv10=i
+          v10m(:,:,tile)=dummy
+        endif
+        if (name_post(i) == 'ugrd_hyblev1') then
+          iuh1=i
+          uh1(:,:,tile)=dummy
+        endif
+        if (name_post(i) == 'vgrd_hyblev1') then
+          ivh1=i
+          vh1(:,:,tile)=dummy
+        endif
+        call netcdf_err(error, 'READING '//trim(name_post(i)))
+        print*,'- '//trim(name_post(i))//': ',maxval(dummy),minval(dummy)
+        tile_data%sfc_post(istart:iend,i) = reshape(dummy, (/ijtile/))
+        if (tile == 1) then
+           error=nf90_get_att(ncid, id_var, 'units', units_post(i))
+           error=nf90_get_att(ncid, id_var, 'long_name', desc_post(i))
+           !error=nf90_get_att(ncid, id_var, 'interp_method', intpl_method_post(i))
+        endif
+     end do
 
-   do i=1,num_post
-      error=nf90_inq_varid(ncid, trim(name_post(i)), id_var)
-      call netcdf_err(error, 'READING '//trim(name_post(i))//' ID' )
-      error=nf90_get_var(ncid, id_var, dummy3t)
-      dummy=dummy3t(:,:,ith)
-      if (name_post(i) == 'ugrd10m') then
-        iu10=i
-        u10m(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'vgrd10m') then
-        iv10=i
-        v10m(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'ugrd_hyblev1') then
-        iuh1=i
-        uh1(:,:,tile)=dummy
-      endif
-      if (name_post(i) == 'vgrd_hyblev1') then
-        ivh1=i
-        vh1(:,:,tile)=dummy
-      endif
-      call netcdf_err(error, 'READING '//trim(name_post(i)))
-      print*,'- '//trim(name_post(i))//': ',maxval(dummy),minval(dummy)
-      tile_data%sfc_post(istart:iend,i) = reshape(dummy, (/ijtile/))
-      if (tile == 1) then
-         error=nf90_get_att(ncid, id_var, 'units', units_post(i))
-         error=nf90_get_att(ncid, id_var, 'long_name', desc_post(i))
-         !error=nf90_get_att(ncid, id_var, 'interp_method', intpl_method_post(i))
-      endif
-   end do
-
-   error = nf90_close(ncid)
+     error = nf90_close(ncid)
+   end if
 
  enddo
 
@@ -1470,51 +1739,58 @@
 ! Read elon, elat.
 !------------------------------------------------------------------------------
 
- print *,'itile, jtile, igaus, jgaus=', itile, jtile, igaus, jgaus
- allocate(elon_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
-          elat_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
-          elon_latlon(3,igaus,jgaus), &
-          elat_latlon(3,igaus,jgaus))
+ if (sfc4post) then
+   print *,'itile, jtile, igaus, jgaus=', itile, jtile, igaus, jgaus
+   allocate(elon_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
+            elat_cubsph(3,0:itile+1,0:jtile+1,num_tiles), &
+            elon_latlon(3,igaus,jgaus), &
+            elat_latlon(3,igaus,jgaus))
+  
+   call read_c2g_weight
 
- call read_c2g_weight
-
- do icoor=1,3
-   do tile=1,num_tiles
-     do j=1,jtile
-       do i=1,itile
-         var_cubsph(i,j,tile)=u10m(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
-                             +v10m(i,j,tile) * elat_cubsph(icoor,i,j,tile)
+   do icoor=1,3
+     do tile=1,num_tiles
+       do j=1,jtile
+         do i=1,itile
+           var_cubsph(i,j,tile)=u10m(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
+                               +v10m(i,j,tile) * elat_cubsph(icoor,i,j,tile)
+         enddo
        enddo
      enddo
-   enddo
-
-   do tile = 1, num_tiles
-     istart = (ijtile) * (tile-1) + 1
-     iend   = istart + ijtile - 1
-     var_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
-   enddo
- enddo
-
- do icoor=1,3
-   do tile=1,num_tiles
-     do j=1,jtile
-       do i=1,itile
-         var_cubsph(i,j,tile)=uh1(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
-                             +vh1(i,j,tile) * elat_cubsph(icoor,i,j,tile)
-       enddo
+  
+     do tile = 1, num_tiles
+       istart = (ijtile) * (tile-1) + 1
+       iend   = istart + ijtile - 1
+       var_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
      enddo
    enddo
-
-   do tile = 1, num_tiles
-     istart = (ijtile) * (tile-1) + 1
-     iend   = istart + ijtile - 1
-     varh1_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
+  
+   do icoor=1,3
+     do tile=1,num_tiles
+       do j=1,jtile
+         do i=1,itile
+           var_cubsph(i,j,tile)=uh1(i,j,tile) * elon_cubsph(icoor,i,j,tile) &
+                               +vh1(i,j,tile) * elat_cubsph(icoor,i,j,tile)
+         enddo
+       enddo
+     enddo
+  
+     do tile = 1, num_tiles
+       istart = (ijtile) * (tile-1) + 1
+       iend   = istart + ijtile - 1
+       varh1_tile(istart:iend,icoor)=reshape(var_cubsph(:,:,tile), (/ijtile/))
+     enddo
    enddo
- enddo
+  
+   deallocate (dummy3t, timeh, u10m, v10m, var_cubsph)
+   deallocate (uh1, vh1)
+   deallocate (elon_cubsph, elat_cubsph)
+ else
+   allocate(xlon(igaus), ylat(jgaus))
+   call read_gaus_grid(gaus_file, xlon, ylat, igaus, jgaus)
+ end if
 
- deallocate (dummy, dummy3d, dummy3t, timeh, u10m, v10m, var_cubsph)
- deallocate (uh1, vh1)
- deallocate (elon_cubsph, elat_cubsph)
+ deallocate (dummy, dummy3d)
 
  end subroutine read_data_nc
 

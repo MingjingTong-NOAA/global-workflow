@@ -358,7 +358,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       if [ $fsufanl = "sfcanl_data" ]; then
         file2=$(echo $file2 | sed -e "s/sfcanl_data/sfc_data/g")
         # when NSST is off, use tref
-        if [ $DONST = "YES" ]; then
+        if [[ $DONST = "YES" || $DOGCYCLE = "YES" ]]; then
            $NLN $file $DATA/INPUT/$file2
         else
            $NLN $file $DATA/INPUT/sfc_org
@@ -471,7 +471,7 @@ else ## cold start
       $NLN $file $DATA/INPUT/$file2
     fi
     if [ $fsuf = "sfc" ]; then
-       if [ $DONST = "YES" ]; then
+       if [[ $DONST = "YES" || ( $DOGCYCLE = "YES" && "$CDATE" != "$SDATE" ) ]]; then
           $NLN $file $DATA/INPUT/$file2
        else
           $NLN $file $DATA/INPUT/sfc_org
@@ -726,6 +726,9 @@ FNGLAC=${FNGLAC:-"$FIX_AM/global_glacier.2x2.grb"}
 FNMXIC=${FNMXIC:-"$FIX_AM/global_maxice.2x2.grb"}
 FNTSFC=${FNTSFC:-"$FIX_AM/RTGSST.1982.2012.monthly.clim.grb"}
 do_ocean=${do_ocean:-".true."}
+if [ $DONST = "YES" ]; then
+  do_ocean=".false."
+fi
 if [ $do_ocean = ".true." ]; then
   FNMLDC=${FNMLDC:-"$FIX_SHiELD/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
 else
@@ -806,14 +809,14 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
     # make_nh=".true."               # re-initialize non-hydrostatic state
     make_nh=".false." 
   fi
-  consv_te = 1.
+  consv_te=1.
 else # hydrostatic options
 
   hydrostatic=".true."
   phys_hydrostatic=".false."     # ignored when hydrostatic = T
   use_hydro_pressure=".false."   # ignored when hydrostatic = T
   make_nh=".false."              # running in hydrostatic mode
-  consv_te = 0.
+  consv_te=0.
 fi
 
 # Conserve total energy as heat globally
@@ -1111,7 +1114,6 @@ cat >> input.nml <<EOF
   h2o_phys     = ${h2o_phys:-".false."}
   ldiag3d      = ${ldiag3d:-".false."}
   fhcyc        = $FHCYC
-  nst_anl      = ${nst_anl:-".true."}
   use_ufo      = ${use_ufo:-".true."}
   pre_rad      = ${pre_rad:-".false."}
   ncld         = ${ncld:-5}
@@ -1161,6 +1163,8 @@ cat >> input.nml <<EOF
   do_ocean     = ${do_ocean:-".true."}
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
+  nstf_name    = $nstf_name
+  nst_anl      = $nst_anl
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}

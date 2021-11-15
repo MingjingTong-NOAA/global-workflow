@@ -56,6 +56,7 @@ export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export RUNICSH=${RUNICSH:-${GDASINIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
+export DOGCYCLE=${DOGCYCLE:-"YES"}
 COMOUT=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
 
 # Check if init is needed and run if so
@@ -63,8 +64,8 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
   echo "Detected v16 $OPS_RES warm starts, will not run init. Exiting..."
   exit 0
 else
-  # Run chgres_cube
-  if [[ $MODE = "free" || $replay == 1 || "$CDATE" = "$SDATE" ]]; then
+  # Run chgres_cube for atmanl and sfcanl on gaussian grid
+  if [[ $MODE = "free" || $replay == 1 || ( $MODE != "cycled" && "$CDATE" = "$SDATE" ) ]]; then
     if [[ ! -d ${COMOUT}/INPUT ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}
@@ -91,7 +92,7 @@ else
     fi
   fi
 
-  if [[ $MODE = "replay" && $rungcycle = "NO" && $gfs_ver = v16 && $CDATE != $SDATE ]]; then
+  if [[ $MODE != "free" && $DO_TREF_TILE = ".true." && $gfs_ver = v16 && $CDATE != $SDATE ]]; then
     if [[ ! -s $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP}
       status=$?

@@ -328,7 +328,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     icdump = base.get('ICDUMP', 'gdas')
     gfs_cyc = base.get('gfs_cyc', 0)
     replay = base.get('replay', 1)
-    rungcycle = base.get('rungcycle','YES')
+    do_gcycle = base.get('DOGCYCLE','YES')
     gdaspost = base.get('gdaspost', 'NO').upper()
 
     dict_tasks = OrderedDict()
@@ -383,7 +383,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
           deps.append(dependencies2)
           dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        if replay == 1 or not rungcycle in ['Y', 'YES']:    
+        if replay == 1 or not do_gcycle in ['Y', 'YES']:
             task = wfu.create_wf_task('init', cdump=cdump, envar=envars, dependency=dependencies)
         else:
             task = wfu.create_wf_task('init', cdump=cdump, envar=envars, dependency=dependencies,
@@ -428,7 +428,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         dict_tasks['%sprep' % cdump] = task
     
     # gcycle
-        if rungcycle in ['Y', 'YES']:
+        if do_gcycle in ['Y', 'YES']:
             deps = []
             dep_dict = {'type': 'task', 'name': '%sprep' % cdump}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -444,7 +444,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
             dict_tasks['%sgcycle' % cdump] = task
 
    # gldas
-    if cdump in ['gdas'] and do_gldas in ['Y', 'YES'] and rungcycle in ['Y', 'YES']:
+    if cdump in ['gdas'] and do_gldas in ['Y', 'YES'] and do_gcycle in ['Y', 'YES']:
         deps1 = []
         data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.loginc.txt' % (cdump, cdump)
         dep_dict = {'type': 'data', 'data': data}
@@ -464,7 +464,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
 
     # fcst
     deps1 = []
-    if cdump in ['gdas'] and rungcycle in ['Y', 'YES']:
+    if cdump in ['gdas'] and do_gcycle in ['Y', 'YES']:
         if do_gldas in ['Y', 'YES']:
             dep_dict = {'type': 'task', 'name': 'gdasgldas'}
         else:
