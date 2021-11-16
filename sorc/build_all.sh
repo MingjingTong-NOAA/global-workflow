@@ -67,16 +67,16 @@ fi
 }
 
 #------------------------------------
-# build cube2gaus
+# build WW3 pre & post execs 
 #------------------------------------
-$Build_cube2gaus && {
-echo " .... Building cube2gaus .... "
-./build_cube2gaus.sh > $logs_dir/build_cube2gaus.log 2>&1
+$Build_ww3_prepost && {
+echo " .... Building WW3 pre and post execs .... "
+./build_ww3prepost.sh > $logs_dir/build_ww3_prepost.log 2>&1
 rc=$?
 if [[ $rc -ne 0 ]] ; then
-    echo "Fatal error in building cube2gaus."
-    echo "The log file is in $logs_dir/build_cube2gaus.log"
-	fi
+    echo "Fatal error in building WW3 pre/post processing."
+    echo "The log file is in $logs_dir/build_ww3_prepost.log"
+fi
 ((err+=$rc))
 }
 
@@ -153,19 +153,6 @@ if [ -d gfs_wafs.fd ]; then
 fi
 
 #------------------------------------
-# build gaussian_sfcfcst
-#------------------------------------
-$Build_gaussian_sfcfcst && {
-echo " .... Building gaussian_sfcfcst .... "
-./build_gaussian_sfcfcst.sh > $logs_dir/build_gaussian_sfcfcst.log 2>&1
-rc=$?
-if [[ $rc -ne 0 ]] ; then
-    echo "Fatal error in building gaussian_sfcfcst."
-    echo "The log file is in $logs_dir/build_gaussian_sfcfcst.log"
-fi
-((err+=$rc))
-}
-
 # build workflow_utils
 #------------------------------------
 $Build_workflow_utils && {

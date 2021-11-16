@@ -1,1 +1,0 @@
-../sorc/gsi_gfdl-mtong.fd/scripts/exgdas_enkf_sfc_shield.sh

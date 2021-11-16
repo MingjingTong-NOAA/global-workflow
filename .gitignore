@@ -122,7 +122,9 @@ scripts/exgdas_enkf_fcst.sh
 scripts/exgdas_enkf_post.sh
 scripts/exgdas_enkf_select_obs.sh
 scripts/exgdas_enkf_sfc.sh
+scripts/exgdas_enkf_sfc_shield.sh
 scripts/exgdas_enkf_update.sh
+scripts/exgdas_enkf_update_shield.sh
 scripts/exgfs_atmos_nceppost.sh
 scripts/exgfs_atmos_vminmon.sh
 scripts/exgfs_atmos_wafs_blending.sh

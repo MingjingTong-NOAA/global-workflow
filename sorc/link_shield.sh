@@ -142,8 +142,10 @@ cd ${pwd}/../scripts            ||exit 8
     $LINK ../sorc/gsi.fd/scripts/exglobal_diag.sh                 .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_select_obs.sh        .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_update.sh            .
+    $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_update_shield.sh     .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_ecen.sh              .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_sfc.sh               .
+    $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_sfc_shield.sh        .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_fcst.sh              .
     $LINK ../sorc/gsi.fd/scripts/exgdas_enkf_post.sh              .
     $LINK ../sorc/gsi.fd/scripts/exgdas_atmos_chgres_forenkf.sh   .
