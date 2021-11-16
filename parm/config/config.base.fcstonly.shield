@@ -346,6 +346,7 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="NO"
+export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"

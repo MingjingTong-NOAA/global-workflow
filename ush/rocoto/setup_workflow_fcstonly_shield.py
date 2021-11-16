@@ -284,6 +284,7 @@ def get_workflow(dict_configs, cdump='gdas'):
     do_metp = base.get('DO_METP', 'NO').upper()
     warm_start = base.get('EXP_WARM_START', ".false.")
     do_gomg = base.get('DO_OmF', 'NO').upper()
+    do_analinc = base.get('do_analinc', 'NO').upper()
     do_post = base.get('DO_POST', 'YES').upper()
     hpssarch = base.get('HPSSARCH', 'YES').upper()
     icdump = base.get('ICDUMP', 'gdas')
@@ -306,7 +307,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append(task)
         tasks.append('\n')
 
-    if do_gomg in ['Y', 'YES']:
+    if do_analinc in ['Y', 'YES']:
         deps = []
         dep_dict = {'type': 'task', 'name': '%sfcst' % cdump, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -385,7 +386,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append(task)
         tasks.append('\n')
 
-    if do_gomg in ['Y', 'YES']:
+    if do_analinc in ['Y', 'YES']:
         deps = []
         data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.atmanl.nc'%(icdump, icdump)
         dep_dict = {'type':'data', 'data':data}
