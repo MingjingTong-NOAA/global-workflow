@@ -18,7 +18,7 @@ export QUEUE_SERVICE="@QUEUE_SERVICE@"
 export PARTITION_BATCH="@PARTITION_BATCH@"
 
 # Project to use in mass store:
-HPSS_PROJECT=emc-global
+HPSS_PROJECT=emc-da
 
 # Directories relative to installation areas:
 export HOMEgfs=@HOMEgfs@
@@ -167,6 +167,8 @@ export EUPD_CYC="gdas"
 
 # GFS cycle info
 export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
+export gfs_delay=@gfs_delay@ # number of days to delay GFS forecast (spin up)
+export gfsanl="NO"
 
 # GFS output and frequency
 export FHMIN_GFS=0

@@ -227,7 +227,7 @@ export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
 
 export GAUATMSEXE=$HOMEgfs/exec/gaussian_c2g_atms.x
 
-export SIGLEVEL="$FIXshield/global_hyblev.l${LEVS}.txt"
+export SIGLEVEL="$FIXgsi/global_hyblev.l${LEVS}.txt"
 
 # cubed-sphere to gaussian regriding
 export rmhydro=".true."

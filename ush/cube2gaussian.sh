@@ -4,6 +4,7 @@ VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
    set -x
+   exec >> $DATA/log_c2g_RHR 2>&1
 fi
 
 export DONST=${DONST:-"NO"}

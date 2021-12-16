@@ -295,6 +295,8 @@ export DONST="NO"
 # Mixing layer ocean
 export do_ocean=".true."
 if [ $DONST = "YES" ]; then
+  export DO_RTGSST="NO"
+  export DO_TREF_TILE=".false."
   export FNTSFA="        "
   export do_ocean=".false."
 fi

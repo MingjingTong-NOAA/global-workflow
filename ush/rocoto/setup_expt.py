@@ -109,7 +109,8 @@ def edit_baseconfig():
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
                     .replace('@HPSSARCH@', hpssarch) \
-                    .replace('@gfs_cyc@', f'{gfs_cyc}')
+                    .replace('@gfs_cyc@', f'{gfs_cyc}') \
+                    .replace('@gfs_delay@', f'{gfs_delay}')
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -147,6 +148,7 @@ link initial condition files from $ICSDIR to $COMROT'''
     parser.add_argument('--nens', help='number of ensemble members', type=int, required=False, default=20)
     parser.add_argument('--cdump', help='CDUMP to start the experiment', type=str, required=False, default='gdas')
     parser.add_argument('--gfs_cyc', help='GFS cycles to run', type=int, choices=[0, 1, 2, 4], default=1, required=False)
+    parser.add_argument('--gfs_delay', help='number of days to delay GFS cycle', type=int, default=0, required=False)
     parser.add_argument('--partition', help='partition on machine', type=str, required=False, default=None)
     parser.add_argument('--start', help='restart mode: warm or cold', type=str, choices=['warm', 'cold'], required=False, default='cold')
 
@@ -169,6 +171,7 @@ link initial condition files from $ICSDIR to $COMROT'''
     nens = args.nens
     cdump = args.cdump
     gfs_cyc = args.gfs_cyc
+    gfs_delay = args.gfs_delay
     partition = args.partition
     start = args.start
 
@@ -225,11 +228,11 @@ link initial condition files from $ICSDIR to $COMROT'''
       dmpdir = '/scratch1/NCEPDEV/global/glopara/dump'
       nwprod = '/scratch1/NCEPDEV/global/glopara/nwpara'
       comroot = '/scratch1/NCEPDEV/rstprod/com'
-      homedir = '/scratch1/NCEPDEV/global/$USER'
+      homedir = '/scratch2/GFDL/gfdlscr/$USER'
       stmp = '/scratch1/NCEPDEV/stmp2/$USER'
       ptmp = '/scratch1/NCEPDEV/stmp4/$USER'
       noscrub = '$HOMEDIR'
-      account = 'fv3-cpu'
+      account = 'gfdlhires'
       queue = 'batch'
       queue_service = 'service'
       partition_batch = ''

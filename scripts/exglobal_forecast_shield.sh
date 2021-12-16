@@ -79,6 +79,8 @@ FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/fix_shield}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
+ICSTYP=${ICSTYP:-"gfs"}        # Initial condition type (gfs, ifs)
+ECICSDIR=${ECICSDIR:-"/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"} 
 DMPDIR=${DMPDIR:-$pwd}         # global dumps for seaice, snow and sst analysis
 
 # Model resolution specific parameters
@@ -275,7 +277,7 @@ fi
 warm_start=${warm_start:-".false."}
 fcst_wo_da=${fcst_wo_da:-"NO"}
 read_increment=${read_increment:-".false."}
-res_latlon_dynamics="''"
+res_latlon_dynamics='""'
 
 # Determine if this is a warm start or cold start
 if [ -f $gmemdir/RESTART/${sPDY}.${scyc}0000.coupler.res ]; then
@@ -409,7 +411,7 @@ EOF
           IAU_INC_FILES="'fv_increment$i.nc',$IAU_INC_FILES"
         done
         read_increment=".false."
-        res_latlon_dynamics=""
+        res_latlon_dynamics='""'
       else
         if [ $fcst_wo_da = "NO" ]; then 
           increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
@@ -470,7 +472,7 @@ else ## cold start
     if [ $fsuf = "gfs" ]; then
       $NLN $file $DATA/INPUT/$file2
     fi
-    if [ $fsuf = "sfc" ]; then
+    if [[ $fsuf = "sfc" ]]; then
        if [[ $DONST = "YES" || ( $DOGCYCLE = "YES" && "$CDATE" != "$SDATE" ) ]]; then
           $NLN $file $DATA/INPUT/$file2
        else
@@ -480,16 +482,19 @@ else ## cold start
        fi 
     fi
   done
+  if [ $ICSTYP = "ifs" ]; then
+    $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/INPUT/gk03_CF0.nc
+  fi
 
 #-------------------------------------------------------
 fi 
 
 # link analysis and restart files for replay
 if [ $replay -eq 1 ]; then
-   # link external IC
    mkdir -p $DATA/EXTIC
    mkdir -p $DATA/ATMINC
    mkdir -p $DATA/ATMANL
+   # link external IC
    for file in $(ls $ROTDIR/${rprefix}.$PDY/$cyc/atmos/$memchar/INPUT/*.nc); do
      file2=$(echo $(basename $file))
      fsuf=$(echo $file2 | cut -c1-3)
@@ -497,6 +502,9 @@ if [ $replay -eq 1 ]; then
        $NLN $file $DATA/EXTIC/$file2
      fi
    done
+   if [ $ICSTYP = "ifs" ]; then
+     $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/EXTIC/gk03_CF0.nc
+   fi
 
    # Link restart background files
    gCDATE=$($NDATE -6 $CDATE) 
@@ -806,8 +814,11 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
   if [ $warm_start = ".true." ]; then
     make_nh=".false."              # restarts contain non-hydrostatic state
   else
-    # make_nh=".true."               # re-initialize non-hydrostatic state
-    make_nh=".false." 
+    if [ $ICSTYP = "gfs" ]; then
+      make_nh=".false." 
+    else
+      make_nh=".true."
+    fi
   fi
   consv_te=1.
 else # hydrostatic options
@@ -863,28 +874,46 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
   external_ic=".false."
   mountain=".true."
   if [ $replay -eq 1 ]; then
-    nggps_ic=${nggps_ic:-".true."}
-    ncep_ic=${ncep_ic:-".false."}
+    if [ $ICSTYP = "gfs" ]; then
+      nudge_qv=${nudge_qv:-"true"}
+      nggps_ic=${nggps_ic:-".true."}
+      ncep_ic=${ncep_ic:-".false."}
+      ecmwf_ic=".false."
+      res_latlon_dynamics='""'
+    else
+      nudge_qv=".false."
+      nggps_ic=".false."
+      ncep_ic=".false."
+      ecmwf_ic=".true."
+      res_latlon_dynamics='"EXTIC/gk03_CF0.nc"'
+    fi
   else
+    nudge_qv=${nudge_qv:-"true"}
     nggps_ic=".false."
     ncep_ic=".false."
+    ecmwf_ic=".false."
   fi
 
   if [ $read_increment = ".true." ]; then # add increment on the fly to the restarts
     res_latlon_dynamics="fv_increment.nc"
-  else
-    res_latlon_dynamics='""'
   fi
 
 else # CHGRES'd GFS analyses
-
-  nggps_ic=${nggps_ic:-".true."}
+  if [ $ICSTYP = "gfs" ]; then
+    nudge_qv=${nudge_qv:-"true"}
+    nggps_ic=".true."
+    ecmwf_ic=".false."
+    res_latlon_dynamics='""'
+  else
+    nudge_qv=".false."
+    nggps_ic=".false."
+    ecmwf_ic=".true."
+    res_latlon_dynamics='"INPUT/gk03_CF0.nc"'
+  fi
   ncep_ic=${ncep_ic:-".false."}
   external_ic=".true."
   mountain=".false."
   read_increment=".false."
-  res_latlon_dynamics='""'
-
 fi
 
 # Stochastic Physics Options
@@ -934,6 +963,7 @@ EOF
   cat $DIAG_TABLE >> diag_table
   sed -i "s/YYYY MM DD HH/${PDY:0:4} ${PDY:4:2} ${PDY:6:2} ${cyc}/g" diag_table
   sed -i "s/IH/$FHOUT/g" diag_table
+  sed -i "s/DELTIM/$DELTIM/g" diag_table
 fi
 
 $NCP $DATA_TABLE  data_table
@@ -995,7 +1025,7 @@ cat > input.nml <<EOF
   range_warn = ${range_warn:-".true."}
   reset_eta = .false.
   n_sponge = ${n_sponge:-"30"}
-  nudge_qv = ${nudge_qv:-".true."}
+  nudge_qv = ${nudge_qv}
   nudge_dz = ${nudge_dz:-".false."}
   rf_fast = .false.
   tau = ${tau:-5.}
@@ -1030,6 +1060,7 @@ cat > input.nml <<EOF
   external_ic = $external_ic
   gfs_phil = ${gfs_phil:-".false."}
   nggps_ic = $nggps_ic
+  ecmwf_ic = ${ecmwf_ic:-".false."}
   mountain = $mountain
   ncep_ic = $ncep_ic
   d_con = $d_con

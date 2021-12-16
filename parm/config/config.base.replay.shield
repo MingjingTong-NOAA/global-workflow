@@ -47,7 +47,7 @@ export NOSCRUB="@NOSCRUB@"
 export BASE_GIT="@BASE_GIT@"
 
 # Toggle to turn on/off GFS downstream processing.
-export DO_BUFRSND="NO"    # BUFR sounding products
+export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
@@ -100,7 +100,7 @@ export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
 export assim_freq=6
-export export ICDUMP="@ICDUMP@"
+export ICDUMP="@ICDUMP@"
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
 export ROTDIR="@ROTDIR@/$PSLOT"
@@ -113,6 +113,8 @@ export RUNDIR="$STMP/RUNDIRS/$PSLOT"
 export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
+export ICSTYP="@ICSTYP@"
+export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
 
 # Commonly defined parameters in JJOBS
@@ -296,6 +298,8 @@ export DONST="NO"
 # Mixing layer ocean
 export do_ocean=".true."
 if [ $DONST = "YES" ]; then
+  export DO_RTGSST="NO"
+  export DO_TREF_TILE=".false."
   export FNTSFA="        "
   export do_ocean=".false."
 fi
@@ -347,7 +351,7 @@ export binary_diag=".false."
 export DO_OmF="YES"
 
 # Run post (for forecast only or replay workflow)
-export DO_POST="NO"
+export DO_POST="YES"
 export gdaspost="NO"
 
 if [ $DO_POST = "NO" ]; then
@@ -355,7 +359,7 @@ if [ $DO_POST = "NO" ]; then
 fi
 
 # Verification options
-export DO_METP="NO"        # Run METPLUS jobs - set METPLUS settings in config.metp
+export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options

@@ -100,7 +100,7 @@ export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
 export assim_freq=6
-export export ICDUMP="@ICDUMP@"
+export ICDUMP="@ICDUMP@"
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
 export ROTDIR="@ROTDIR@/$PSLOT"
@@ -113,6 +113,8 @@ export RUNDIR="$STMP/RUNDIRS/$PSLOT"
 export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
+export ICSTYP="@ICSTYP@"
+export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
 
 # Commonly defined parameters in JJOBS
@@ -168,10 +170,10 @@ export interval_days=0
 # GFS output and frequency
 export FHMIN_GFS=0
 
-export FHMAX_GFS_00=48
-export FHMAX_GFS_06=48
-export FHMAX_GFS_12=48
-export FHMAX_GFS_18=48
+export FHMAX_GFS_00=240
+export FHMAX_GFS_06=240
+export FHMAX_GFS_12=240
+export FHMAX_GFS_18=240
 export FHMAX_GFS=$(eval echo \${FHMAX_GFS_$cyc})
 
 export FHOUT_GFS=6
@@ -181,7 +183,7 @@ export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
 export FHOUT_aux=1
-export FHDUR_aux=6
+export FHDUR_aux=9
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
@@ -297,6 +299,8 @@ export DONST="NO"
 # Mixing layer ocean
 export do_ocean=".true."
 if [ $DONST = "YES" ]; then
+  export DO_RTGSST="NO"
+  export DO_TREF_TILE=".false."
   export FNTSFA="        "
   export do_ocean=".false."
 fi
@@ -345,12 +349,12 @@ export netcdf_diag=".true."
 export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
-export DO_OmF="NO"
+export DO_OmF="YES"
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="YES"
+export gdaspost="NO"
 
 if [ $DO_POST = "NO" ]; then
   export DO_GLDAS="NO"

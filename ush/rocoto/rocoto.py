@@ -239,7 +239,7 @@ def add_data_tag(dep_dict):
         else:
             offset_string_b = '<cyclestr offset="%s">' % dep_offset2
             offset_string_e = '</cyclestr>'
-        string2 += f'{offset_string_b}{dep_data2}{offset_string_e}'
+        string2 = f'{offset_string_b}{dep_data2}{offset_string_e}'
 
     string += string2
     string += '</datadep>'

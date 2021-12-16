@@ -28,9 +28,9 @@ def makedirs_if_missing(d):
 def create_EXPDIR():
 
     makedirs_if_missing(expdir)
-    configs = glob.glob('%s/config.*' % configdir)
+    configs = glob.glob(f'{configdir}/config.*')
     if len(configs) == 0:
-        msg = 'no config files found in %s' % configdir
+        msg = f'no config files found in {configdir}'
         raise IOError(msg)
     for config in configs:
         shutil.copy(config, expdir)
@@ -47,24 +47,25 @@ def create_COMROT():
 
 def edit_baseconfig():
 
-    base_config = '%s/config.base' % expdir
+    base_config = f'{expdir}/config.base'
 
     here = os.path.dirname(__file__)
-    top = os.path.abspath(os.path.join(os.path.abspath(here), '../..'))
+    top = os.path.abspath(os.path.join(
+        os.path.abspath(here), '../..'))
 
-    # make a copy of the default before editing
-    shutil.copy(base_config, base_config + '.default')
+    if os.path.exists(base_config):
+        os.unlink(base_config)
 
-    print '\nSDATE = %s\nEDATE = %s' % (idate, edate)
-    with open(base_config + '.default', 'rt') as fi:
-        with open(base_config + '.new', 'wt') as fo:
+    print(f'\nSDATE = {idate}\nEDATE = {edate}')
+    with open(base_config + '.gfdl', 'rt') as fi:
+        with open(base_config, 'wt') as fo:
             for line in fi:
                 line = line.replace('@MACHINE@', machine.upper()) \
                     .replace('@PSLOT@', pslot) \
                     .replace('@SDATE@', idate.strftime('%Y%m%d%H')) \
                     .replace('@FDATE@', fdate.strftime('%Y%m%d%H')) \
                     .replace('@EDATE@', edate.strftime('%Y%m%d%H')) \
-                    .replace('@CASECTL@', 'C%d' % res) \
+                    .replace('@CASECTL@', f'C{res}') \
                     .replace('@HOMEgfs@', top) \
                     .replace('@BASE_GIT@', base_git) \
                     .replace('@DMPDIR@', dmpdir) \
@@ -80,11 +81,12 @@ def edit_baseconfig():
                     .replace('@PARTITION_BATCH@', partition_batch) \
                     .replace('@EXP_WARM_START@', exp_warm_start) \
                     .replace('@ICDUMP@', icdump) \
+                    .replace('@ICSTYP@', icstyp) \
                     .replace('@MODE@', 'free') \
                     .replace('@CHGRP_RSTPROD@', chgrp_rstprod) \
                     .replace('@CHGRP_CMD@', chgrp_cmd) \
                     .replace('@HPSSARCH@', hpssarch) \
-                    .replace('@gfs_cyc@', '%d' % gfs_cyc)
+                    .replace('@gfs_cyc@', f'{gfs_cyc}')
                 if expdir is not None:
                     line = line.replace('@EXPDIR@', os.path.dirname(expdir))
                 if comrot is not None:
@@ -94,14 +96,12 @@ def edit_baseconfig():
                 else:
                     line = line.replace('@ICSDIR@', os.path.join(os.path.dirname(comrot), 'FV3ICS'))
                 fo.write(line)
-    os.unlink(base_config)
-    os.rename(base_config + '.new', base_config)
 
-    print ''
-    print 'EDITED:  %s/config.base as per user input.' % expdir
-    print 'DEFAULT: %s/config.base.default is for reference only.' % expdir
-    print 'Please verify and delete the default file before proceeding.'
-    print ''
+    print('')
+    print(f'EDITED:  {expdir}/config.base as per user input.')
+    print(f'DEFAULT: {expdir}/config.base.gfdl is for reference only.')
+    print('Please verify and delete the default file before proceeding.')
+    print('')
 
     return
 
@@ -110,7 +110,8 @@ if __name__ == '__main__':
 
     description = '''Setup files and directories to start a GFS parallel.
 Create EXPDIR, copy config files
-Create COMROT experiment directory structure'''
+Create COMROT experiment directory structure,
+link initial condition files from $ICSDIR to $COMROT'''
 
     parser = ArgumentParser(description=description, formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--pslot', help='parallel experiment name', type=str, required=False, default='test')
@@ -118,6 +119,7 @@ Create COMROT experiment directory structure'''
     parser.add_argument('--comrot', help='full path to COMROT', type=str, required=False, default=None)
     parser.add_argument('--expdir', help='full path to EXPDIR', type=str, required=False, default=None)
     parser.add_argument('--icsdir', help='full path to ICSDIR', type=str, required=False, default=None)
+    parser.add_argument('--icstyp', help='external IC type', type=str, required=False, default='gfs')
     parser.add_argument('--idate', help='starting date of experiment, initial conditions must exist!', type=str, required=True)
     parser.add_argument('--edate', help='end date experiment', type=str, required=True)
     parser.add_argument('--configdir', help='full path to directory containing the config files', type=str, required=False, default=None)
@@ -140,7 +142,8 @@ Create COMROT experiment directory structure'''
     res = args.res
     comrot = args.comrot if args.comrot is None else os.path.join(args.comrot, pslot)
     expdir = args.expdir if args.expdir is None else os.path.join(args.expdir, pslot)
-    icsdir = args.icsdir if args.icsdir is None else os.path.join(args.comrot, 'ICS')
+    icsdir = args.icsdir if args.icsdir is not None else os.path.join(args.comrot, 'ICS')
+    icstyp = args.icstyp
     gfs_cyc = args.gfs_cyc
     partition = args.partition
     start = args.start
@@ -199,7 +202,7 @@ Create COMROT experiment directory structure'''
       base_svn = '/scratch1/NCEPDEV/global/glopara/svn'
       dmpdir = '/scratch1/NCEPDEV/global/glopara/dump'
       nwprod = '/scratch1/NCEPDEV/global/glopara/nwpara'
-      comroot = '/scratch1/NCEPDEV/global/glopara/com'
+      comroot = '/scratch1/NCEPDEV/rstprod/com'
       homedir = '/scratch2/GFDL/gfdlscr/$USER'
       stmp = '/scratch1/NCEPDEV/stmp2/$USER'
       ptmp = '/scratch1/NCEPDEV/stmp4/$USER'
@@ -211,10 +214,27 @@ Create COMROT experiment directory structure'''
       chgrp_rstprod = 'YES'
       chgrp_cmd = 'chgrp rstprod'
       hpssarch = 'YES'
+    elif machine == 'JET':
+      base_git = '/lfs4/HFIP/hfv3gfs/glopara/git'
+      base_svn = '/dev/null/global/save/glopara/svn/'
+      dmpdir = '/lfs4/HFIP/hfv3gfs/glopara/dump'
+      nwprod = '/lfs4/HFIP/hfv3gfs/glopara/nwpara'
+      comroot = '/lfs4/HFIP/hfv3gfs/glopara/com'
+      homedir = '/lfs4/HFIP/hfv3gfs/$USER'
+      stmp = '/lfs4/HFIP/hfv3gfs/${USER}/stmp'
+      ptmp = '/lfs4/HFIP/hfv3gfs/${USER}/ptmp'
+      noscrub = '$HOMEDIR'
+      account = 'hfv3gfs'
+      queue = 'batch'
+      queue_service = 'service'
+      partition_batch = 'xjet'
+      chgrp_rstprod = 'YES'
+      chgrp_cmd = 'chgrp rstprod'
+      hpssarch = 'YES'
     elif machine == 'ORION':
       base_git = '/work/noaa/global/glopara/git'
       base_svn = '/work/noaa/global/glopara/svn'
-      dmpdir = '/work/noaa/global/glopara/dump'
+      dmpdir = '/work/noaa/rstprod/dump'
       nwprod = '/work/noaa/global/glopara/nwpara'
       comroot = '/work/noaa/global/glopara/com'
       homedir = '/work/noaa/global/$USER'
@@ -225,17 +245,17 @@ Create COMROT experiment directory structure'''
       queue = 'batch'
       queue_service = 'service'
       partition_batch = 'orion'
-      chgrp_rstprod = 'NO'          # No rstprod on Orion
-      chgrp_cmd = 'ls'
+      chgrp_rstprod = 'YES'
+      chgrp_cmd = 'chgrp rstprod'
       hpssarch = 'NO'
 
     # COMROT directory
     create_comrot = True
     if os.path.exists(comrot):
-        print
-        print 'COMROT already exists in %s' % comrot
-        print
-        overwrite_comrot = raw_input('Do you wish to over-write COMROT [y/N]: ')
+        print()
+        print(f'COMROT already exists in {comrot}')
+        print()
+        overwrite_comrot = input('Do you wish to over-write COMROT [y/N]: ')
         create_comrot = True if overwrite_comrot in ['y', 'yes', 'Y', 'YES'] else False
         if create_comrot:
             shutil.rmtree(comrot)
@@ -246,10 +266,10 @@ Create COMROT experiment directory structure'''
     # EXP directory
     create_expdir = True
     if os.path.exists(expdir):
-        print
-        print 'EXPDIR already exists in %s' % expdir
-        print
-        overwrite_expdir = raw_input('Do you wish to over-write EXPDIR [y/N]: ')
+        print()
+        print(f'EXPDIR already exists in {expdir}')
+        print()
+        overwrite_expdir = input('Do you wish to over-write EXPDIR [y/N]: ')
         create_expdir = True if overwrite_expdir in ['y', 'yes', 'Y', 'YES'] else False
         if create_expdir:
             shutil.rmtree(expdir)

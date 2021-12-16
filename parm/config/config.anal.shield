@@ -39,7 +39,7 @@ if [ $LEVS = "128" ]; then
 fi
 
 # Set background error
-export BERRORprefix=$FIXshield/global_berror.l${LEVS}
+export BERRORprefix="$FIXgsi/global_berror.l${LEVS}"
 
 # Set namelist option for LETKF
 export lobsdiag_forenkf=".false."  # anal does not need to write out jacobians
@@ -61,7 +61,7 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo.txt
 export OZINFO=$FIXgsi/global_ozinfo.txt
-export SATINFO=$FIXshield/global_satinfo_shield.txt
+export SATINFO=$FIXgsi/global_satinfo_shield.txt
 export OBERROR=$FIXgsi/prepobs_errtable.global
 
 
@@ -80,7 +80,7 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 	export AHIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.ahicsr.tm00.bufr_d"
     fi
 
-    export HDOB=$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.hdob.tm00.bufr_d
+    export HDOB="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.hdob.tm00.bufr_d"
 
 #   Use dumps from NCO GFS v16 parallel
     if [[ "$CDATE" -ge "2020103012" ]]; then
@@ -145,15 +145,13 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 fi
 
 # Set all-sky radiance assimilation options
-
-export GSIEXEC=$HOMEgfs/exec/global_gsi_gfdl.x
-if [ $full_hydro_anl = "YES" ]; then
+if [[ $full_hydro_anl = "YES" ]]; then
    export GSIEXEC=$HOMEgfs/exec/global_gsi_gfdl.x
    export lcalc_gfdl_cfrac=".false."
    if [ $lcalc_gfdl_cfrac = ".false." ]; then
-      export ANAVINFO=$FIXshield/global_anavinfo.l${LEVS}.allqcf.txt
+      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt
    else
-      export ANAVINFO=$FIXshield/global_anavinfo.l${LEVS}.allq.txt
+      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
    fi
    export crtm_overlap=4
    export cnvw_option=".false."
@@ -167,7 +165,7 @@ fi
 if [[ $DO_RTGSST = "NO" ]]; then
    export FNTSFA="        "
    if [[ $DO_TREF_TILE = ".false." ]]; then
-     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc
+     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
    fi
 fi
 

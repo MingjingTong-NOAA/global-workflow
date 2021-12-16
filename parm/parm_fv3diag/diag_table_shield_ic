@@ -2,7 +2,7 @@
 "grid_spec",   -1,  "hours",    1, "hours", "time"
 #"gfs_physics", IH,  "hours",    1, "hours", "time"
 "gfs_surface", IH,  "hours",    1, "hours", "time"
-"gfs_surface_ic%4yr%2mo%2dy%2hr", 240,  "seconds", 1, "hours", "time", 20, "days", "YYYY MM DD HH 0 0", 240, "seconds"
+"gfs_surface_ic%4yr%2mo%2dy%2hr", DELTIM,  "seconds", 1, "hours", "time", 20, "days", "YYYY MM DD HH 0 0", 240, "seconds"
 
 #
 #output variables
@@ -22,7 +22,7 @@
 ###
 # GFS surface variabls needed for ncep post
 ###
-"gfs_phys",    "ALBDO_ave",     "albdo_ave",     "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "ALBDOsfc",      "albdo_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "cnvprcp_ave",   "cprat_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "cnvprcpb_ave",  "cpratb_ave",    "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "totprcp_ave",   "prate_ave",     "gfs_surface",  "all",  .false.,  "none",  2
@@ -31,9 +31,9 @@
 "gfs_phys",    "DLWRFI",        "dlwrf",         "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "ULWRF",         "ulwrf_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "ULWRFI",        "ulwrf",         "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "DSWRF",         "dswrf_ave",     "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "DSWRFsfc",      "dswrf_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "DSWRFI",        "dswrf",         "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "USWRF",         "uswrf_ave",     "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "USWRFsfc",      "uswrf_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "USWRFI",        "uswrf",         "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "DSWRFtoa",      "dswrf_avetoa",  "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "USWRFtoa",      "uswrf_avetoa",  "gfs_surface",  "all",  .false.,  "none",  2
@@ -44,11 +44,11 @@
 "gfs_phys",    "shtfl_ave",     "shtfl_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "pwat",          "pwatclm",       "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "soilm",         "soilm",         "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_aveclm",   "tcdc_aveclm",   "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avebndcl", "tcdc_avebndcl", "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avelcl",   "tcdc_avelcl",   "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avemcl",   "tcdc_avemcl",   "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avehcl",   "tcdc_avehcl",   "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCclm",       "tcdc_aveclm",   "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCbndcl",     "tcdc_avebndcl", "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDClcl",       "tcdc_avelcl",   "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCmcl",       "tcdc_avemcl",   "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDChcl",       "tcdc_avehcl",   "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "TCDCcnvcl",     "tcdccnvcl",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "PRES_avelct",   "pres_avelct",   "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "PRES_avelcb",   "pres_avelcb",   "gfs_surface",  "all",  .false.,  "none",  2
@@ -92,7 +92,7 @@
 "gfs_phys",    "pevpr_ave",     "pevpr_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "sbsno_ave",     "sbsno_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "sfexc",         "sfexc",         "gfs_surface",  "all",  .false.,  "none",  2
-"gfs_phys",    "snohf",         "snohf",         "gfs_surface",  "all",  .false.,  "none",  2
+"gfs_phys",    "snohf_ave",     "snohf",         "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "snowc_ave",     "snowc_ave",     "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "spfhmax2m",     "spfhmax_max2m", "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "spfhmin2m",     "spfhmin_min2m", "gfs_surface",  "all",  .false.,  "none",  2
@@ -112,7 +112,7 @@
 "gfs_phys",    "v10m",          "vgrd10m",       "gfs_surface",  "all",  .false.,  "none",  2
 "gfs_phys",    "rainc",         "cnvprcp",       "gfs_surface",  "all",  .false.,  "none",  2
 ###
-"gfs_phys",    "ALBDO_ave",     "albdo_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "ALBDOsfc",      "albdo_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "cnvprcp_ave",   "cprat_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "cnvprcpb_ave",  "cpratb_ave",    "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "totprcp_ave",   "prate_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
@@ -121,9 +121,9 @@
 "gfs_phys",    "DLWRFI",        "dlwrf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "ULWRF",         "ulwrf_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "ULWRFI",        "ulwrf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "DSWRF",         "dswrf_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "DSWRFsfc",      "dswrf_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "DSWRFI",        "dswrf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "USWRF",         "uswrf_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "USWRFsfc",      "uswrf_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "USWRFI",        "uswrf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "DSWRFtoa",      "dswrf_avetoa",  "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "USWRFtoa",      "uswrf_avetoa",  "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
@@ -134,11 +134,11 @@
 "gfs_phys",    "shtfl_ave",     "shtfl_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "pwat",          "pwatclm",       "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "soilm",         "soilm",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_aveclm",   "tcdc_aveclm",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avebndcl", "tcdc_avebndcl", "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avelcl",   "tcdc_avelcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avemcl",   "tcdc_avemcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "TCDC_avehcl",   "tcdc_avehcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCclm",   "tcdc_aveclm",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCbndcl", "tcdc_avebndcl", "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDClcl",   "tcdc_avelcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDCmcl",   "tcdc_avemcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "TCDChcl",   "tcdc_avehcl",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "TCDCcnvcl",     "tcdccnvcl",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "PRES_avelct",   "pres_avelct",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "PRES_avelcb",   "pres_avelcb",   "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
@@ -182,7 +182,7 @@
 "gfs_phys",    "pevpr_ave",     "pevpr_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "sbsno_ave",     "sbsno_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "sfexc",         "sfexc",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
-"gfs_phys",    "snohf",         "snohf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
+"gfs_phys",    "snohf_ave",     "snohf",         "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "snowc_ave",     "snowc_ave",     "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "spfhmax2m",     "spfhmax_max2m", "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2
 "gfs_phys",    "spfhmin2m",     "spfhmin_min2m", "gfs_surface_ic%4yr%2mo%2dy%2hr",  "all",  .false.,  "none",  2

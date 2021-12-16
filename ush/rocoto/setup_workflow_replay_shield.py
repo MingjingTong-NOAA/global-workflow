@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
     PROGRAM:
@@ -22,10 +22,9 @@ import os
 import sys
 import re
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from collections import OrderedDict
-from datetime import datetime, timedelta
 import rocoto
 import workflow_utils as wfu
 
@@ -44,9 +43,9 @@ def main():
    
 
     if not os.path.samefile(args.expdir,_base['EXPDIR']):
-        print 'MISMATCH in experiment directories!'
-        print 'config.base: EXPDIR = %s' % repr(_base['EXPDIR'])
-        print 'input arg:     --expdir = %s' % repr(args.expdir)
+        print('MISMATCH in experiment directories!')
+        print(f'config.base: EXPDIR = {repr(_base["EXPDIR"])}')
+        print(f'input arg:     --expdir = {repr(args.expdir)}')
         sys.exit(1)
 
     taskplan = ['getic', 'init', 'analinc', 'fcst', 'prep', 'gomg', 'gcycle', 'gldas', 'analdiag', 'post', 'vrfy', 'metp', 'arch']
@@ -55,6 +54,7 @@ def main():
 
     dict_configs['base']['CDUMP'] = args.cdump
 
+    # Check and set gfs_cyc specific variables
     if dict_configs['base']['gfs_cyc'] != 0:
         dict_configs['base'] = get_gfs_cyc_dates(dict_configs['base'])
 
@@ -97,10 +97,10 @@ def get_gfs_cyc_dates(base):
     sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
     edate_gfs = edate - timedelta(hours=hrdet)
     if sdate_gfs > edate:
-        print 'W A R N I N G!'
-        print 'Starting date for GFS cycles is after Ending date of experiment'
-        print 'SDATE = %s,     EDATE = %s' % (sdate.strftime('%Y%m%d%H'), edate.strftime('%Y%m%d%H'))
-        print 'SDATE_GFS = %s, EDATE_GFS = %s' % (sdate_gfs.strftime('%Y%m%d%H'), edate_gfs.strftime('%Y%m%d%H'))
+        print('W A R N I N G!')
+        print('Starting date for GFS cycles is after Ending date of experiment')
+        print(f'SDATE = {sdate.strftime("%Y%m%d%H")},     EDATE = {edate.strftime("%Y%m%d%H")}')
+        print(f'SDATE_GFS = {sdate_gfs.strftime("%Y%m%d%H")}, EDATE_GFS = {edate_gfs.strftime("%Y%m%d%H")}')
         gfs_cyc = 0
 
     base_out['gfs_cyc'] = gfs_cyc
@@ -110,7 +110,7 @@ def get_gfs_cyc_dates(base):
 
     fhmax_gfs = {}
     for hh in ['00', '06', '12', '18']:
-        fhmax_gfs[hh] = base.get('FHMAX_GFS_%s' % hh, 'FHMAX_GFS_00')
+        fhmax_gfs[hh] = base.get(f'FHMAX_GFS_{hh}', 'FHMAX_GFS_00')
     base_out['FHMAX_GFS'] = fhmax_gfs
 
     return base_out
@@ -134,7 +134,7 @@ def get_preamble():
     strings.append('\t\tmingjing.tong@noaa.gov\n')
     strings.append('\n')
     strings.append('\tNOTES:\n')
-    strings.append('\t\tThis workflow was automatically generated at %s\n' % datetime.now())
+    strings.append(f'\t\tThis workflow was automatically generated at {datetime.now()}\n')
     strings.append('\t-->\n')
 
     return ''.join(strings)
@@ -152,13 +152,13 @@ def get_definitions(base):
 
     strings.append('\n')
     strings.append('\t<!-- Experiment parameters such as name, cycle, resolution -->\n')
-    strings.append('\t<!ENTITY PSLOT    "%s">\n' % base['PSLOT'])
-    strings.append('\t<!ENTITY CDUMP    "%s">\n' % base['CDUMP'])
-    strings.append('\t<!ENTITY CASE     "%s">\n' % base['CASE'])
+    strings.append(f'''\t<!ENTITY PSLOT    "{base['PSLOT']}">\n''')
+    strings.append(f'''\t<!ENTITY CDUMP    "{base['CDUMP']}">\n''')
+    strings.append(f'''\t<!ENTITY CASE     "{base['CASE']}">\n''')
     strings.append('\n')
     strings.append('\t<!-- Experiment parameters such as starting, ending dates -->\n')
-    strings.append('\t<!ENTITY SDATE    "%s">\n' % base['SDATE'].strftime('%Y%m%d%H%M'))
-    strings.append('\t<!ENTITY EDATE    "%s">\n' % base['EDATE'].strftime('%Y%m%d%H%M'))
+    strings.append(f'''\t<!ENTITY SDATE    "{base['SDATE'].strftime('%Y%m%d%H%M')}">\n''')
+    strings.append(f'''\t<!ENTITY EDATE    "{base['EDATE'].strftime('%Y%m%d%H%M')}">\n''')
 
     if base['gfs_cyc'] != 0:
         strings.append(get_gfs_dates(base))
@@ -166,30 +166,31 @@ def get_definitions(base):
 
     strings.append('\n')
     strings.append('\t<!-- Run Envrionment -->\n')
-    strings.append('\t<!ENTITY RUN_ENVIR "%s">\n' % base['RUN_ENVIR'])
+    strings.append(f'''\t<!ENTITY RUN_ENVIR "{base['RUN_ENVIR']}">\n''')
     strings.append('\n')
-    strings.append('\t<!-- Experiment related directories -->\n')
-    strings.append('\t<!ENTITY EXPDIR "%s">\n' % base['EXPDIR'])
-    strings.append('\t<!ENTITY ROTDIR "%s">\n' % base['ROTDIR'])
-    strings.append('\t<!ENTITY ICSDIR "%s">\n' % base['ICSDIR'])
+    strings.append('\t<!-- Experiment and Rotation directory -->\n')
+    strings.append(f'''\t<!ENTITY EXPDIR "{base['EXPDIR']}">\n''')
+    strings.append(f'''\t<!ENTITY ROTDIR "{base['ROTDIR']}">\n''')
+    strings.append(f'''\t<!ENTITY ICSDIR "{base['ICSDIR']}">\n''')
+    strings.append(f'''\t<!ENTITY ECICSDIR "{base['ECICSDIR']}">\n''')
     strings.append('\n')
     strings.append('\t<!-- Directories for driving the workflow -->\n')
-    strings.append('\t<!ENTITY HOMEgfs  "%s">\n' % base['HOMEgfs'])
-    strings.append('\t<!ENTITY JOBS_DIR "%s">\n' % base['BASE_JOB'])
-    strings.append('\t<!ENTITY DMPDIR   "%s">\n' % base['DMPDIR'])
+    strings.append(f'''\t<!ENTITY HOMEgfs  "{base['HOMEgfs']}">\n''')
+    strings.append(f'''\t<!ENTITY JOBS_DIR "{base['BASE_JOB']}">\n''')
+    strings.append(f'''\t<!ENTITY DMPDIR   "{base['DMPDIR']}">\n''')
     strings.append('\n')
     strings.append('\t<!-- Machine related entities -->\n')
-    strings.append('\t<!ENTITY ACCOUNT    "%s">\n' % base['ACCOUNT'])
-    strings.append('\t<!ENTITY QUEUE      "%s">\n' % base['QUEUE'])
-    strings.append('\t<!ENTITY QUEUE_SERVICE "%s">\n' % base['QUEUE_SERVICE'])
+    strings.append(f'''\t<!ENTITY ACCOUNT    "{base['ACCOUNT']}">\n''')
+    strings.append(f'''\t<!ENTITY QUEUE      "{base['QUEUE']}">\n''')
+    strings.append(f'''\t<!ENTITY QUEUE_SERVICE "{base['QUEUE_SERVICE']}">\n''')
     if scheduler in ['slurm'] and machine in ['ORION']:
-        strings.append('\t<!ENTITY PARTITION_BATCH "%s">\n' % base['PARTITION_BATCH'])
+        strings.append(f'''\t<!ENTITY PARTITION_BATCH "{base['PARTITION_BATCH']}">\n''')
     if scheduler in ['slurm']:
-        strings.append('\t<!ENTITY PARTITION_SERVICE "%s">\n' % base['QUEUE_SERVICE'])
-    strings.append('\t<!ENTITY SCHEDULER  "%s">\n' % scheduler)
+        strings.append(f'''\t<!ENTITY PARTITION_SERVICE "{base['QUEUE_SERVICE']}">\n''')
+    strings.append(f'\t<!ENTITY SCHEDULER  "{scheduler}">\n')
     strings.append('\n')
     strings.append('\t<!-- Toggle HPSS archiving -->\n')
-    strings.append('\t<!ENTITY ARCHIVE_TO_HPSS "YES">\n')
+    strings.append(f'''\t<!ENTITY ARCHIVE_TO_HPSS "{base['HPSSARCH']}">\n''')
     strings.append('\n')
     strings.append('\t<!-- ROCOTO parameters that control workflow -->\n')
     strings.append('\t<!ENTITY CYCLETHROTTLE "6">\n')
@@ -208,9 +209,9 @@ def get_gfs_dates(base):
 
     strings.append('\n')
     strings.append('\t<!-- Starting and ending dates for GFS cycle -->\n')
-    strings.append('\t<!ENTITY SDATE_GFS    "%s">\n' % base['SDATE_GFS'].strftime('%Y%m%d%H%M'))
-    strings.append('\t<!ENTITY EDATE_GFS    "%s">\n' % base['EDATE_GFS'].strftime('%Y%m%d%H%M'))
-    strings.append('\t<!ENTITY INTERVAL_GFS "%s">\n' % base['INTERVAL_GFS'])
+    strings.append(f'''\t<!ENTITY SDATE_GFS    "{base['SDATE_GFS'].strftime('%Y%m%d%H%M')}">\n''')
+    strings.append(f'''\t<!ENTITY EDATE_GFS    "{base['EDATE_GFS'].strftime('%Y%m%d%H%M')}">\n''')
+    strings.append(f'''\t<!ENTITY INTERVAL_GFS "{base['INTERVAL_GFS']}">\n''')
 
     return ''.join(strings)
 
@@ -250,21 +251,21 @@ def get_gdasgfs_resources(dict_configs, cdump='gdas'):
         cfg = dict_configs[task]
 
         wtimestr, resstr, queuestr, memstr, natstr = wfu.get_resources(machine, cfg, task, reservation, cdump=cdump)
-        taskstr = '%s_%s' % (task.upper(), cdump.upper())
+        taskstr = f'{task.upper()}_{cdump.upper()}'
 
         strings = []
-        strings.append('\t<!ENTITY QUEUE_%s     "%s">\n' % (taskstr, queuestr))
+        strings.append(f'\t<!ENTITY QUEUE_{taskstr}     "{queuestr}">\n')
         if scheduler in ['slurm'] and machine in ['ORION'] and task not in ['getic','arch']:
-            strings.append('\t<!ENTITY PARTITION_%s "&PARTITION_BATCH;">\n' % taskstr )
+            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
         if scheduler in ['slurm'] and task in ['getic','arch']:
-            strings.append('\t<!ENTITY PARTITION_%s "&PARTITION_SERVICE;">\n' % taskstr )
-        strings.append('\t<!ENTITY WALLTIME_%s  "%s">\n' % (taskstr, wtimestr))
-        strings.append('\t<!ENTITY RESOURCES_%s "%s">\n' % (taskstr, resstr))
+            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
+        strings.append(f'\t<!ENTITY WALLTIME_{taskstr}  "{wtimestr}">\n')
+        strings.append(f'\t<!ENTITY RESOURCES_{taskstr} "{resstr}">\n')
         if len(memstr) != 0:
-            strings.append('\t<!ENTITY MEMORY_%s    "%s">\n' % (taskstr, memstr))
-        strings.append('\t<!ENTITY NATIVE_%s    "%s">\n' % (taskstr, natstr))
+            strings.append(f'\t<!ENTITY MEMORY_{taskstr}    "{memstr}">\n')
+        strings.append(f'\t<!ENTITY NATIVE_{taskstr}    "{natstr}">\n')
 
-        dict_resources['%s%s' % (cdump, task)] = ''.join(strings)
+        dict_resources[f'{cdump}{task}'] = ''.join(strings)
 
     return dict_resources
 
@@ -283,21 +284,20 @@ def get_postgroups(post, cdump='gdas'):
         fhmax_hf = post['FHMAX_HF_GFS']
         fhout_hf = post['FHOUT_HF_GFS']
         fhrs_hf = range(fhmin, fhmax_hf+fhout_hf, fhout_hf)
-        fhrs = fhrs_hf + range(fhrs_hf[-1]+fhout, fhmax+fhout, fhout)
+        fhrs = list(fhrs_hf) + list(range(fhrs_hf[-1]+fhout, fhmax+fhout, fhout))
 
     npostgrp = post['NPOSTGRP']
     ngrps = npostgrp if len(fhrs) > npostgrp else len(fhrs)
 
-    fhrs = ['f%03d' % f for f in fhrs]
+    fhrs = [f'f{f:03d}' for f in fhrs]
     fhrs = np.array_split(fhrs, ngrps)
     fhrs = [f.tolist() for f in fhrs]
 
-    fhrgrp = ' '.join(['%03d' % x for x in range(1, ngrps+1)])
-    fhrdep = ' '.join([f[-1] for f in fhrs])
-    fhrlst = ' '.join(['_'.join(f) for f in fhrs])
+    fhrgrp = ' '.join([f'{x:03d}' for x in range(0, ngrps+1)])
+    fhrdep = ' '.join(['anl'] + [f[-1] for f in fhrs])
+    fhrlst = ' '.join(['anl'] + ['_'.join(f) for f in fhrs])
 
     return fhrgrp, fhrdep, fhrlst
-
 
 def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     '''
@@ -305,11 +305,13 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     '''
 
     envars = []
+    if wfu.get_scheduler(wfu.detectMachine()) in ['slurm']:
+        envars.append(rocoto.create_envar(name='SLURM_SET', value='YES'))
     envars.append(rocoto.create_envar(name='RUN_ENVIR', value='&RUN_ENVIR;'))
     envars.append(rocoto.create_envar(name='HOMEgfs', value='&HOMEgfs;'))
     envars.append(rocoto.create_envar(name='EXPDIR', value='&EXPDIR;'))
     envars.append(rocoto.create_envar(name='CDATE', value='<cyclestr>@Y@m@d@H</cyclestr>'))
-    envars.append(rocoto.create_envar(name='CDUMP', value='%s' % cdump))
+    envars.append(rocoto.create_envar(name='CDUMP', value=f'{cdump}'))
     envars.append(rocoto.create_envar(name='PDY', value='<cyclestr>@Y@m@d</cyclestr>'))
     envars.append(rocoto.create_envar(name='cyc', value='<cyclestr>@H</cyclestr>'))
 
@@ -326,6 +328,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     dumpsuffix = base.get('DUMP_SUFFIX', '')
     gridsuffix = base.get('SUFFIX', '')
     icdump = base.get('ICDUMP', 'gdas')
+    icstyp = base.get('ICSTYP', 'gfs')
     gfs_cyc = base.get('gfs_cyc', 0)
     replay = base.get('replay', 1)
     do_gcycle = base.get('DOGCYCLE','YES')
@@ -336,11 +339,11 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     # getics
     if cdump in ['gdas']:
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump, 'offset': '-06:00:00'}
+        dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/RESTART/' % (cdump )
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/RESTART/'
         data2 = '@Y@m@d.@H0000.coupler.res'
-        dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00', 
+        dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00',
                     'data2': data2}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
@@ -349,31 +352,31 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         
         task = wfu.create_wf_task('getic', cdump=cdump, envar=envars, dependency=dependencies)
 
-        dict_tasks['%sgetic' % cdump] = task
+        dict_tasks[f'{cdump}getic'] = task
     
     # chgres init
     if cdump in ['gdas']:
         deps = []
-        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.sanl'%(icdump,icdump)
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.sanl'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nemsio'%(icdump,icdump)
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.atmanl.nemsio'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ICSDIR;/%s.@Y@m@d/@H/%s.t@Hz.atmanl.nc'%(icdump,icdump)
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.atmanl.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.atmanl.nc'%(icdump,icdump)
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/atmos/{icdump}.t@Hz.atmanl.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ICSDIR;/%s.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'%(icdump)
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
 
         if hpssarch in ['YES']:
           deps = []
-          dep_dict = {'type': 'task', 'name': '%sgetic' % cdump}
+          dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
           deps.append(rocoto.add_dependency(dep_dict))
           dependencies2 = rocoto.create_dependency(dep=deps)
 
@@ -389,50 +392,50 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
             task = wfu.create_wf_task('init', cdump=cdump, envar=envars, dependency=dependencies,
                                       cycledef='first')
 
-        dict_tasks['%sinit' % cdump] = task
+        dict_tasks[f'{cdump}init'] = task
 
     # analinc
     if cdump in ['gdas'] and replay == 2:
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sgetic' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.logf009.txt' % (cdump, cdump)
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/{cdump}.t@Hz.logf009.txt'
         dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
 
-        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump, 'offset': '-06:00:00'}
+        dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         task = wfu.create_wf_task('analinc', cdump=cdump, envar=envars, dependency=dependencies)
 
-        dict_tasks['%sanalinc' % cdump] = task
+        dict_tasks[f'{cdump}analinc'] = task
 
     if cdump in ['gdas']:
     # prep
         deps = []
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/RESTART/' % (cdump )
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/RESTART/'
         data2 = '@Y@m@d.@H0000.coupler.res'
         dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00',
                     'data2': data2}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&DMPDIR;/%s%s.@Y@m@d/@H/%s.t@Hz.updated.status.tm00.bufr_d' % (cdump, dumpsuffix, cdump)
+        data = f'&DMPDIR;/{cdump}{dumpsuffix}.@Y@m@d/@H/{cdump}.t@Hz.updated.status.tm00.bufr_d'
         dep_dict = {'type': 'data', 'data': data}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': '%sgetic' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
     
         task = wfu.create_wf_task('prep', cdump=cdump, envar=envars, dependency=dependencies)
 
-        dict_tasks['%sprep' % cdump] = task
+        dict_tasks[f'{cdump}prep'] = task
     
     # gcycle
         if do_gcycle in ['Y', 'YES']:
             deps = []
-            dep_dict = {'type': 'task', 'name': '%sprep' % cdump}
+            dep_dict = {'type': 'task', 'name': f'{cdump}prep'}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/RESTART/' % (cdump )
+            data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/RESTART/'
             data2 = '@Y@m@d.@H0000.coupler.res'
             dep_dict = {'type': 'data', 'data': data, 'age': 120, 'offset': '-06:00:00',
                         'data2': data2}
@@ -441,15 +444,15 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     
             task = wfu.create_wf_task('gcycle', cdump=cdump, envar=envars, dependency=dependencies)
     
-            dict_tasks['%sgcycle' % cdump] = task
+            dict_tasks[f'{cdump}gcycle'] = task
 
    # gldas
     if cdump in ['gdas'] and do_gldas in ['Y', 'YES'] and do_gcycle in ['Y', 'YES']:
         deps1 = []
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.loginc.txt' % (cdump, cdump)
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/{cdump}.t@Hz.loginc.txt'
         dep_dict = {'type': 'data', 'data': data}
         deps1.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': '%sgcycle' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}gcycle'}
         deps1.append(rocoto.add_dependency(dep_dict))
         dependencies1 = rocoto.create_dependency(dep_condition='or', dep=deps1)
 
@@ -460,7 +463,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         dependencies2 = rocoto.create_dependency(dep_condition='and', dep=deps2)
 
         task = wfu.create_wf_task('gldas', cdump=cdump, envar=envars, dependency=dependencies2)
-        dict_tasks['%sgldas' % cdump] = task
+        dict_tasks[f'{cdump}gldas'] = task
 
     # fcst
     deps1 = []
@@ -470,14 +473,19 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         else:
             dep_dict = {'type': 'task', 'name': 'gdasgcycle'}
     else:
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/RESTART/' % (icdump )
+        data = f'&ROTDIR;/{icdump}.@Y@m@d/@H/atmos/RESTART/'
         data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
         dep_dict = {'type': 'data', 'data': data, 'data2': data2, 'offset2': '-03:00:00',}
     deps1.append(rocoto.add_dependency(dep_dict))
     if replay == 1:
-        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
-        dep_dict = {'type':'data', 'data':data}
-        deps1.append(rocoto.add_dependency(dep_dict))
+        if icstyp == 'gfs':
+            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+            dep_dict = {'type':'data', 'data':data}
+            deps1.append(rocoto.add_dependency(dep_dict))
+        else:
+            data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
+            dep_dict = {'type':'data', 'data':data}
+            deps1.append(rocoto.add_dependency(dep_dict))
     elif replay == 2:
         data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
         dep_dict = {'type':'data', 'data':data}
@@ -499,37 +507,37 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
 
     task = wfu.create_wf_task('fcst', cdump=cdump, envar=envars, dependency=dependencies)
 
-    dict_tasks['%sfcst' % cdump] = task
+    dict_tasks[f'{cdump}fcst'] = task
 
     # gomg
     if do_gomg in ['Y', 'YES'] and cdump in ['gdas']:
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sprep' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}prep'}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.sfcf006%s' % (cdump, cdump, gridsuffix)
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/{cdump}.t@Hz.sfcf006{gridsuffix}'
         dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         task = wfu.create_wf_task('gomg', cdump=cdump, envar=envars, dependency=dependencies,
                                   cycledef='gdas')
-        dict_tasks['%sgomg' % cdump] = task
+        dict_tasks[f'{cdump}gomg'] = task
 
         # analdiag
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sgomg' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}gomg'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
         task = wfu.create_wf_task('analdiag', cdump=cdump, envar=envars, dependency=dependencies)
-        dict_tasks['%sanaldiag' % cdump] = task
+        dict_tasks[f'{cdump}analdiag'] = task
 
     # post
     if do_post in ['Y', 'YES'] and (cdump in ['gfs'] or gdaspost in ['Y', 'YES']):
         deps = []
-        data = '&ROTDIR;/%s.@Y@m@d/@H/atmos/%s.t@Hz.log#dep#.txt' % (cdump, cdump)
+        data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/{cdump}.t@Hz.log#dep#.txt'
         dep_dict = {'type': 'data', 'data': data}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
         fhrgrp = rocoto.create_envar(name='FHRGRP', value='#grp#')
@@ -542,23 +550,23 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         task = wfu.create_wf_task('post', cdump=cdump, envar=postenvars, dependency=dependencies,
                                   metatask='post', varname=varname1, varval=varval1, 
                                   vardict=vardict)
-        dict_tasks['%spost' % cdump] = task
+        dict_tasks[f'{cdump}post'] = task
 
     # vrfy
     if do_post in ['Y', 'YES'] and (cdump in ['gfs'] or gdaspost in ['Y', 'YES']):
         deps = []
-        dep_dict = {'type':'metatask', 'name':'%spost' % cdump}
+        dep_dict = {'type':'metatask', 'name':f'{cdump}post'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
         task = wfu.create_wf_task('vrfy', cdump=cdump, envar=envars, dependency=dependencies)
-        dict_tasks['%svrfy' % cdump] = task
+        dict_tasks[f'{cdump}vrfy'] = task
     
     # metp
     if cdump in ['gfs'] and do_metp in ['Y', 'YES'] and do_post in ['Y', 'YES']:
         deps = []
-        dep_dict = {'type':'metatask', 'name':'%spost' % cdump}
+        dep_dict = {'type':'metatask', 'name':f'{cdump}post'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type':'task', 'name':'%sarch' % cdump, 'offset':'-&INTERVAL_GFS;'}
+        dep_dict = {'type':'task', 'name':f'{cdump}arch', 'offset':'-&INTERVAL_GFS;'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         sdate_gfs = rocoto.create_envar(name='SDATE_GFS', value='&SDATE_GFS;')
@@ -568,26 +576,26 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         varval1 = 'g2g1 g2o1 pcp1'
         task = wfu.create_wf_task('metp', cdump=cdump, envar=metpenvars, dependency=dependencies,
                                    metatask='metp', varname=varname1, varval=varval1)
-        dict_tasks['%smetp' % cdump] = task
+        dict_tasks[f'{cdump}metp'] = task
 
     # arch
     if cdump in ['gfs'] or gdaspost in ['Y', 'YES']:
         deps = []
-        dep_dict = {'type':'task', 'name':'%svrfy' % cdump}
+        dep_dict = {'type':'task', 'name':f'{cdump}vrfy'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type':'streq', 'left':'&ARCHIVE_TO_HPSS;', 'right':'YES'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
     else:
         deps = []
-        dep_dict = {'type': 'task', 'name': '%sanaldiag' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}analdiag'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': '%sfcst' % cdump}
+        dep_dict = {'type': 'task', 'name': f'{cdump}fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         
     task= wfu.create_wf_task('arch', cdump=cdump, envar=envars, dependency=dependencies) 
-    dict_tasks['%sarch' % cdump] = task
+    dict_tasks[f'{cdump}arch'] = task
 
     return dict_tasks
 
@@ -659,9 +667,9 @@ def create_xml(dict_configs):
     dict_gfs_tasks = get_gdasgfs_tasks(dict_configs, cdump='gfs')
 
     # Removes <memory>&MEMORY_JOB_DUMP</memory> post mortem from gdas tasks
-    for each_task, each_resource_string in dict_gdas_resources.iteritems():
+    for each_task, each_resource_string in dict_gdas_resources.items():
         if each_task not in dict_gdas_tasks:
-	    continue
+            continue
         if 'MEMORY' not in each_resource_string:
             temp_task_string = []
             for each_line in re.split(r'(\s+)', dict_gdas_tasks[each_task]):
@@ -670,7 +678,7 @@ def create_xml(dict_configs):
             dict_gdas_tasks[each_task] = ''.join(temp_task_string)
 
     # Removes <memory>&MEMORY_JOB_DUMP</memory> post mortem from gfs tasks
-    for each_task, each_resource_string in dict_gfs_resources.iteritems():
+    for each_task, each_resource_string in dict_gfs_resources.items():
         if each_task not in dict_gfs_tasks:
             continue
         if 'MEMORY' not in each_resource_string:
@@ -699,12 +707,10 @@ def create_xml(dict_configs):
     if gfs_cyc != 0:
         xmlfile.append(dict_to_strings(dict_gfs_tasks))
 
-    xmlfile.append(wfu.create_firstcyc_task())
-
     xmlfile.append(workflow_footer)
 
     # Write the XML file
-    fh = open('%s/%s.xml' % (base['EXPDIR'], base['PSLOT']), 'w')
+    fh = open(f'{base["EXPDIR"]}/{base["PSLOT"]}.xml', 'w')
     fh.write(''.join(xmlfile))
     fh.close()
 
