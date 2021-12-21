@@ -101,7 +101,8 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
   # Run UFS_UTILS GETICSH
   atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
   sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
-  if [[ ! -s $atmanl || ! -s $sfcanl ]]; then
+  abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
+  if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
     sh ${GETICSH} ${ICDUMP}
     status=$?
     [[ $status -ne 0 ]] && exit $status
@@ -257,16 +258,18 @@ if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
         fi # RETRO vs production
   
       fi # Version check
-       
-      if [[ $MODE != "cycled" && $grid = "1p00" ]]; then
-         if [ ! -d $ARCDIR ]; then
-            mkdir -p $ARCDIR
-         fi
-         $NLN $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} $ARCDIR/pgbanl.${ICDUMP}.${CDATE}.grib2
-      fi
     done # grid loop
   else
     echo "${ICDUMP}.t${hh}z.pgrb2.1p00.anl exist, skip pulling data"
+  fi
+  
+  if [[ $MODE != "cycled" ]]; then
+     grid = "1p00"
+     file=${ICDUMP}.t${hh}z.pgrb2.${grid}.anl
+     if [ ! -d $ARCDIR ]; then
+        mkdir -p $ARCDIR
+     fi
+     $NLN $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} $ARCDIR/pgbanl.${ICDUMP}.${CDATE}.grib2
   fi
 fi # v14-v16 pgrb anl file pull
 fi

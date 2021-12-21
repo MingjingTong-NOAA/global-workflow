@@ -310,7 +310,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append(task)
         tasks.append('\n')
 
-    if do_gomg in ['Y', 'YES']:
+    if do_analinc in ['Y', 'YES']:
         deps = []
         dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))

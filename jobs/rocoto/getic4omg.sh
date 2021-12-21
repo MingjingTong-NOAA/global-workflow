@@ -27,6 +27,8 @@ for config in $configs; do
     [[ $status -ne 0 ]] && exit $status
 done
 
+[[ $do_analinc != "YES" ]] && exit 0
+
 ###############################################################
 # Source machine runtime environment
 . $BASE_ENV/${machine}.env getic
@@ -72,6 +74,18 @@ if [ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.at
 
 else
   echo "IC atmanl exists, skip pulling data"
+fi
+
+# Move extracted data to ICSDIR
+if [ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
+  mkdir -p ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
+fi
+if [[ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh} && $MODE != "cycled" ]]; then
+  if [ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
+     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  else
+     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  fi
 fi
 
 ##########################################

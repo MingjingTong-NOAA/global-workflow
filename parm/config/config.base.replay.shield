@@ -321,11 +321,7 @@ export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
 if [ $update_hydro != "YES" ]; then
-   if [ $full_hydro_anl = "YES" ]; then
-      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
-   else
-      export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc'"
-   fi
+   export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
 fi
 
 if [ $OUTPUT_FILE = "nemsio" ]; then
@@ -334,11 +330,7 @@ if [ $OUTPUT_FILE = "nemsio" ]; then
 fi
 
 # Stratospheric increments to zero
-if [ $full_hydro_anl = "YES" ]; then
-   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
-else
-   export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc'"
-fi
+export INCVARS_ZERO_STRAT="'sphum_inc','liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
 export INCVARS_EFOLD="5"
 
 # Swith to generate netcdf or binary diagnostic files.  If not specified,
