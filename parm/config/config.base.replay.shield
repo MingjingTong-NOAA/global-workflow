@@ -187,16 +187,7 @@ export FHDUR_aux=6
 # GFS restart interval in hours
 export restart_interval_gfs=0
 
-
-# I/O QUILTING, true--use Write Component; false--use GFDL FMS
-# if quilting=true, choose OUTPUT_GRID as cubed_sphere_grid in netcdf or gaussian_grid
-# if gaussian_grid, set OUTPUT_FILE for nemsio or netcdf
-# WRITE_DOPOST=true, use inline POST (not for SHiELD)
-export QUILTING=".false."
-export OUTPUT_GRID="gaussian_grid"
 export OUTPUT_FILE="netcdf"
-export WRITE_DOPOST=".false."
-
 # suffix options depending on file format
 if [ $OUTPUT_FILE = "netcdf" ]; then
     export SUFFIX=".nc"
@@ -231,7 +222,11 @@ export replay=1
 # number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="NO"
-export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
+if [ $ICSTYP = "ifs" ]; then
+  export IAU_FORCING_VAR="'ua','va','temp','delp','sphum','o3mr'"
+else
+  export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
+fi
 if [ "$MODE" = "replay" ]; then
    if [ $replay -eq 1 ]; then
       export replay_4DIAU="NO"
@@ -261,11 +256,6 @@ fi
 if [[ $DO_RTGSST = "YES" ]]; then
    export DO_TREF_TILE=".false."
 fi
-
-# run wave component
-export DO_WAVE="NO"
-if [[ "$SDATE" -lt "2019020100" ]]; then DO_WAVE="NO" ; fi # no rtofs in GDA
-export WAVE_CDUMP="both"
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
 export imp_physics=11
@@ -344,9 +334,9 @@ export DO_OmF="YES"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="NO"
+export gdaspost="YES"
 
-if [ $DO_POST = "NO" ]; then
+if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"
 fi
 

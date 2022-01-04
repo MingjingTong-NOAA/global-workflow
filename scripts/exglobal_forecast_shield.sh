@@ -135,7 +135,7 @@ TYPE=${TYPE:-"nh"}                  # choices:  nh, hydro
 MONO=${MONO:-"non-mono"}            # choices:  mono, non-mono
 RUN_CCPP=${RUN_CCPP:-"NO"}
 
-QUILTING=${QUILTING:-".true."}
+QUILTING=${QUILTING:-".false."}
 OUTPUT_GRID=${OUTPUT_GRID:-"gaussian_grid"}
 OUTPUT_FILE=${OUTPUT_FILE:-"nemsio"}
 WRITE_NEMSIOFLIP=${WRITE_NEMSIOFLIP:-".true."}

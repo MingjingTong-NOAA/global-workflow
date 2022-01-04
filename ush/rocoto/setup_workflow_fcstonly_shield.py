@@ -106,6 +106,7 @@ def get_definitions(base):
     strings.append('\t<!-- Experiment parameters such as name, cycle, resolution -->\n')
     strings.append(f'''\t<!ENTITY PSLOT    "{base['PSLOT']}">\n''')
     strings.append(f'''\t<!ENTITY CDUMP    "{base['CDUMP']}">\n''')
+    strings.append(f'''\t<!ENTITY ICDUMP   "{base['ICDUMP']}">\n''')
     strings.append(f'''\t<!ENTITY CASE     "{base['CASE']}">\n''')
     strings.append('\n')
     strings.append('\t<!-- Experiment parameters such as starting, ending dates -->\n')
@@ -137,10 +138,9 @@ def get_definitions(base):
     strings.append(f'''\t<!ENTITY ACCOUNT    "{base['ACCOUNT']}">\n''')
     strings.append(f'''\t<!ENTITY QUEUE      "{base['QUEUE']}">\n''')
     strings.append(f'''\t<!ENTITY QUEUE_SERVICE "{base['QUEUE_SERVICE']}">\n''')
-    if scheduler in ['slurm'] and machine in ['ORION','JET']:
-       strings.append(f'''\t<!ENTITY PARTITION_BATCH "{base['PARTITION_BATCH']}">\n''')
     if scheduler in ['slurm']:
-       strings.append(f'''\t<!ENTITY PARTITION_SERVICE "{base['QUEUE_SERVICE']}">\n''')
+        strings.append(f'''\t<!ENTITY PARTITION_BATCH "{base['PARTITION_BATCH']}">\n''')
+        strings.append(f'''\t<!ENTITY PARTITION_SERVICE "{base['QUEUE_SERVICE']}">\n''')
     strings.append(f'\t<!ENTITY SCHEDULER  "{scheduler}">\n')
     strings.append('\n')
     strings.append('\t<!-- Toggle HPSS archiving -->\n')
@@ -183,10 +183,12 @@ def get_resources(dict_configs, cdump='gdas'):
         taskstr = f'{task.upper()}_{cdump.upper()}'
 
         strings.append(f'\t<!ENTITY QUEUE_{taskstr}     "{queuestr}">\n')
-        if scheduler in ['slurm'] and machine in ['ORION', 'JET'] and task not in ['getic', 'arch', 'getic4omg', 'archomg']:
-            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
-        if scheduler in ['slurm'] and task in ['getic', 'arch', 'getic4omg', 'archomg']:
-            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
+        if scheduler in ['slurm']:
+            if task in ['getic', 'arch', 'getic4omg', 'archomg']:
+                strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
+            else:
+                strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
+
         strings.append(f'\t<!ENTITY WALLTIME_{taskstr}  "{wtimestr}">\n')
         strings.append(f'\t<!ENTITY RESOURCES_{taskstr} "{resstr}">\n')
         if len(memstr) != 0:
@@ -276,6 +278,7 @@ def get_workflow(dict_configs, cdump='gdas'):
     envars.append(rocoto.create_envar(name='CDUMP', value='&CDUMP;'))
     envars.append(rocoto.create_envar(name='PDY', value='<cyclestr>@Y@m@d</cyclestr>'))
     envars.append(rocoto.create_envar(name='cyc', value='<cyclestr>@H</cyclestr>'))
+    envars.append(rocoto.create_envar(name='ICDUMP', value='&ICDUMP;'))
 
     base = dict_configs['base']
     machine = base.get('machine', wfu.detectMachine())
@@ -292,16 +295,20 @@ def get_workflow(dict_configs, cdump='gdas'):
     do_post = base.get('DO_POST', 'YES').upper()
     icdump = base.get('ICDUMP', 'gdas')
     icstyp = base.get('ICSTYP', 'gfs')
+    mode = base.get('MODE', 'free')
 
     tasks = []
 
     # getic
     if hpssarch in ['YES']:
         deps = []
-        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+        data = '&ROTDIR;/&ICDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+        if warm_start == ".true.":
+            data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+        else:
+            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
@@ -322,7 +329,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
 
     # init
-    if warm_start == ".false.":
+    if warm_start == ".false." or mode == "replay":
         deps = []
         data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.sanl'
         dep_dict = {'type':'data', 'data':data}
@@ -358,13 +365,19 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
 
     # fcst
-    if warm_start == ".false.":
+    if warm_start == ".false." or mode == "replay":
         if icstyp == 'gfs':
             deps = []
-            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+            if mode == "replay":
+                data = '&ROTDIR;/&ICDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+            else:
+                data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
             dep_dict = {'type':'data', 'data':data}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+            if warm_start == ".true.":
+                data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+            else:
+                data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
             dep_dict = {'type':'data', 'data':data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
@@ -373,7 +386,10 @@ def get_workflow(dict_configs, cdump='gdas'):
             data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
             dep_dict = {'type':'data', 'data':data}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/gfs_data.tile6.nc'
+            if warm_start == ".true.":
+                data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/INPUT/gfs_data.tile6.nc'
+            else:
+                data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/gfs_data.tile6.nc'
             dep_dict = {'type':'data', 'data':data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)

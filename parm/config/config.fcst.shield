@@ -29,12 +29,6 @@ if [[ "$CDUMP" == "gfs" ]] ; then
    export WRTTASK_PER_GROUP=$WRTTASK_PER_GROUP_GFS
 fi
 
-if [ $QUILTING = ".true." ]; then
-    export npe_fv3=$(echo " $npe_fv3 + $WRITE_GROUP * $WRTTASK_PER_GROUP" | bc)
-    export npe_fcst=$npe_fv3
-    export npe_fcst_gfs=$(echo " $npe_fcst_gfs  + $WRITE_GROUP_GFS * $WRTTASK_PER_GROUP_GFS" | bc)
-fi
-
 # External IC configuration
 if [ ${gfs_ver:-"v16"} = "v16" ]; then
   export ncep_levs=${ncep_levs:-128}

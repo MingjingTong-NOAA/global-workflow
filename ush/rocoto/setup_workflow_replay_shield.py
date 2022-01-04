@@ -183,9 +183,8 @@ def get_definitions(base):
     strings.append(f'''\t<!ENTITY ACCOUNT    "{base['ACCOUNT']}">\n''')
     strings.append(f'''\t<!ENTITY QUEUE      "{base['QUEUE']}">\n''')
     strings.append(f'''\t<!ENTITY QUEUE_SERVICE "{base['QUEUE_SERVICE']}">\n''')
-    if scheduler in ['slurm'] and machine in ['ORION']:
-        strings.append(f'''\t<!ENTITY PARTITION_BATCH "{base['PARTITION_BATCH']}">\n''')
     if scheduler in ['slurm']:
+        strings.append(f'''\t<!ENTITY PARTITION_BATCH "{base['PARTITION_BATCH']}">\n''')
         strings.append(f'''\t<!ENTITY PARTITION_SERVICE "{base['QUEUE_SERVICE']}">\n''')
     strings.append(f'\t<!ENTITY SCHEDULER  "{scheduler}">\n')
     strings.append('\n')
@@ -255,10 +254,12 @@ def get_gdasgfs_resources(dict_configs, cdump='gdas'):
 
         strings = []
         strings.append(f'\t<!ENTITY QUEUE_{taskstr}     "{queuestr}">\n')
-        if scheduler in ['slurm'] and machine in ['ORION'] and task not in ['getic','arch']:
-            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
-        if scheduler in ['slurm'] and task in ['getic','arch']:
-            strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
+        if scheduler in ['slurm']:
+            if task in ['getic','arch']:
+                strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
+            else:
+                strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
+
         strings.append(f'\t<!ENTITY WALLTIME_{taskstr}  "{wtimestr}">\n')
         strings.append(f'\t<!ENTITY RESOURCES_{taskstr} "{resstr}">\n')
         if len(memstr) != 0:
@@ -435,6 +436,8 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
             deps = []
             dep_dict = {'type': 'task', 'name': f'{cdump}prep'}
             deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{cdump}init'}
+            deps.append(rocoto.add_dependency(dep_dict))
             data = f'&ROTDIR;/{cdump}.@Y@m@d/@H/atmos/RESTART/'
             data2 = '@Y@m@d.@H0000.coupler.res'
             dep_dict = {'type': 'data', 'data': data, 'age': 120, 'offset': '-06:00:00',
@@ -454,56 +457,54 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         deps1.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{cdump}gcycle'}
         deps1.append(rocoto.add_dependency(dep_dict))
-        dependencies1 = rocoto.create_dependency(dep_condition='or', dep=deps1)
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps1)
 
-        deps2 = []
-        deps2 = dependencies1
-        dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
-        deps2.append(rocoto.add_dependency(dep_dict))
-        dependencies2 = rocoto.create_dependency(dep_condition='and', dep=deps2)
+        if warm_start == ".false.":
+            deps2 = []
+            deps2 = dependencies
+            dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
+            deps2.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps2)
 
-        task = wfu.create_wf_task('gldas', cdump=cdump, envar=envars, dependency=dependencies2)
+        task = wfu.create_wf_task('gldas', cdump=cdump, envar=envars, dependency=dependencies)
         dict_tasks[f'{cdump}gldas'] = task
 
     # fcst
-    deps1 = []
-    if cdump in ['gdas'] and do_gcycle in ['Y', 'YES']:
-        if do_gldas in ['Y', 'YES']:
-            dep_dict = {'type': 'task', 'name': 'gdasgldas'}
-        else:
+    if warm_start == ".true.":
+        deps1 = []
+        if do_gcycle in ['Y', 'YES']:
             dep_dict = {'type': 'task', 'name': 'gdasgcycle'}
-    else:
-        data = f'&ROTDIR;/{icdump}.@Y@m@d/@H/atmos/RESTART/'
-        data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
-        dep_dict = {'type': 'data', 'data': data, 'data2': data2, 'offset2': '-03:00:00',}
-    deps1.append(rocoto.add_dependency(dep_dict))
-    if replay == 1:
-        if icstyp == 'gfs':
-            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
-            dep_dict = {'type':'data', 'data':data}
             deps1.append(rocoto.add_dependency(dep_dict))
+            if do_gldas in ['Y', 'YES']:
+                dep_dict = {'type': 'task', 'name': 'gdasgldas'}
+                deps1.append(rocoto.add_dependency(dep_dict))
         else:
-            data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
+            data = f'&ROTDIR;/{icdump}.@Y@m@d/@H/atmos/RESTART/'
+            data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+            dep_dict = {'type': 'data', 'data': data, 'data2': data2, 'offset2': '-03:00:00',}
+            deps1.append(rocoto.add_dependency(dep_dict))
+        if replay == 1:
+            if icstyp == 'gfs':
+                data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps1.append(rocoto.add_dependency(dep_dict))
+            else:
+                data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps1.append(rocoto.add_dependency(dep_dict))
+        elif replay == 2:
+            data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
             dep_dict = {'type':'data', 'data':data}
             deps1.append(rocoto.add_dependency(dep_dict))
-    elif replay == 2:
-        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps1)
+    else:
+        deps2 = []
+        dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+        deps2.append(rocoto.add_dependency(dep_dict))
+        data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
         dep_dict = {'type':'data', 'data':data}
-        deps1.append(rocoto.add_dependency(dep_dict))
-    deps1 = rocoto.create_dependency(dep_condition='and', dep=deps1)
-
-    deps2 = []
-    dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
-    deps2.append(rocoto.add_dependency(dep_dict))
-    data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
-    dep_dict = {'type':'data', 'data':data}
-    deps2.append(rocoto.add_dependency(dep_dict))
-    deps2 = rocoto.create_dependency(dep_condition='and', dep=deps2)
-
-    deps = []
-    deps.append(deps1)
-    deps.append(deps2)
-    dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+        deps2.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps2)
 
     task = wfu.create_wf_task('fcst', cdump=cdump, envar=envars, dependency=dependencies)
 

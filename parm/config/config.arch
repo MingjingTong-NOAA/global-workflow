@@ -9,6 +9,10 @@ echo "BEGIN: config.arch"
 . $EXPDIR/config.resources arch
 
 export gdaspost=${gdaspost:-"NO"}
+export ARCH_GAUSSIAN=${ARCH_GAUSSIAN:-"YES"}
+export ARCH_GAUSSIAN_FHMAX=${ARCH_GAUSSIAN_FHMAX:-48}
+export ARCH_GAUSSIAN_FHINC=${ARCH_GAUSSIAN_FHINC:-6}
+export arch4omg=${arch4omg:-"YES"}
 
 #--online archive of nemsio files for fit2obs verification
 export FITSARC="YES"

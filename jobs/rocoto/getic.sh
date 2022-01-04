@@ -139,7 +139,7 @@ if [[ $MODE = "replay" && $DOGCYCLE = "YES" && $DONST = "YES" && ! -s $dtfanl ]]
    [ $rc != 0 ] && exit $rc
 fi
 
-# Pull sfcanl restart file for replay and DA cycle if DOGCYCLE is off
+# Pull sfcanl restart file to get tref for replay and DA cycle
 if [[ $gfs_ver = "v16" ]]; then
   if [[  $MODE != "free" && $DO_TREF_TILE = ".true." && "$CDATE" != "$SDATE" ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
@@ -149,13 +149,13 @@ if [[ $gfs_ver = "v16" ]]; then
           if [ -s $file ]; then
             fsize=`wc -c $file | awk '{print $1}'`
             if [ $n -eq 1 ]; then
-               fsize1=fsize
+               fsize1=$fsize
             else
                if [ $fsize -ne $fsize1 ]; then
                   getdata="YES"
                   break
                fi
-               fsize1=fsize
+               fsize1=$fsize
             fi
           else
             getdata="YES"
@@ -166,7 +166,7 @@ if [[ $gfs_ver = "v16" ]]; then
        getdata="YES"
      fi    
      if [[ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS || $getdata = "YES" ]]; then
-       cd $EXTRACT_DIR
+       cd $ICSDIR
 
        echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
        echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
@@ -183,10 +183,9 @@ if [[ $gfs_ver = "v16" ]]; then
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
        fi     
        if [ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]; then
-         mv -f ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/*  ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/
-       else
-         mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS
+         rm -rf ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS
        fi
+       mv ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS
      else
        echo "sfcanl exist, skip pulling data"
      fi
@@ -212,6 +211,28 @@ if [[ $gfs_ver = "v16" ]]; then
      fi
   fi
 fi
+
+# Pull surface analysis file for warm-start run
+if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
+  if [[ ( $CDUMP = "gfs" && $gfsanl = "NO" ) || "$CDATE" = "$SDATE" ]]; then
+    if [ ! -d $ROTDIR/gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ]; then
+      cd $ROTDIR
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
+      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+      tarball="gdas_restartb.tar"
+      htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
+    fi
+    if [ ! -d $ROTDIR/gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/RESTART ]; then
+      cd $ROTDIR
+      tarball="gdas_restartb.tar"
+      htar -xvf ${HPSSEXPDIR}/${GDATE}/${tarball}
+    fi
+  fi
+fi          
 
 # Pull pgbanl file for verification/archival - v14+
 if [[ $MODE != "cycled" && $DO_METP = "YES" ]]; then
@@ -264,7 +285,7 @@ if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
   fi
   
   if [[ $MODE != "cycled" ]]; then
-     grid = "1p00"
+     grid="1p00"
      file=${ICDUMP}.t${hh}z.pgrb2.${grid}.anl
      if [ ! -d $ARCDIR ]; then
         mkdir -p $ARCDIR

@@ -22,13 +22,14 @@ if [ ! -s $TARGET_DIR ]; then mkdir -p $TARGET_DIR ;fi
 
 
 # Set file prefix
-cyc=`echo $CDATE |cut -c 9-10`
+cyc=$(echo $CDATE |cut -c 9-10)
 prefix="$SDUMP.t${cyc}z."
+
 
 # Link dump files from SOURCE_DIR to TARGET_DIR
 cd $SOURCE_DIR
 if [ -s ${prefix}updated.status.tm00.bufr_d ]; then
-    for file in `ls ${prefix}*`; do
+    for file in $(ls ${prefix}*); do
 	ln -fs $SOURCE_DIR/$file $TARGET_DIR/$CDUMP.t${cyc}z.${file#${prefix}}
     done
 else

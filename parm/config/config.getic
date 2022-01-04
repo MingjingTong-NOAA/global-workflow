@@ -74,4 +74,6 @@ if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then
    export IAUFHRS="6"
 fi
 
+export HPSSEXPDIR=/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch/${PSLOT}
+
 echo "END: config.getic"

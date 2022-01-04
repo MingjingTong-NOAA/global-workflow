@@ -15,7 +15,7 @@ export USE_PREINST_LIBS="true"
 # END USER DEFINED STUFF
 #------------------------------------
 
-build_dir=`pwd`
+build_dir=$(pwd)
 logs_dir=$build_dir/logs
 if [ ! -d $logs_dir  ]; then
   echo "Creating logs folder"
@@ -37,35 +37,18 @@ source ./machine-setup.sh > /dev/null 2>&1
 #------------------------------------
 # INCLUDE PARTIAL BUILD 
 #------------------------------------
-
-. ./partial_build.sh
+. ./partial_build.sh $@
 
 if [ $target = jet ]; then
   Build_gldas=false
   Build_gfs_util=false
-  Build_ww3_prepost=false
 fi
-Build_fv3gfs=false
 
 #------------------------------------
 # Exception Handling Init
 #------------------------------------
 ERRSCRIPT=${ERRSCRIPT:-'eval [[ $err = 0 ]]'}
 err=0
-
-#------------------------------------
-# build fv3
-#------------------------------------
-$Build_fv3gfs && {
-echo " .... Building fv3 .... "
-./build_fv3.sh > $logs_dir/build_fv3.log 2>&1
-rc=$?
-if [[ $rc -ne 0 ]] ; then
-    echo "Fatal error in building fv3."
-    echo "The log file is in $logs_dir/build_fv3.log"
-fi
-((err+=$rc))
-}
 
 #------------------------------------
 # build cube2gaus
