@@ -191,7 +191,7 @@ if [[ $gfs_ver = "v16" ]]; then
      fi
   fi
 
-  if [[ $MODE = "replay" && $replay_4DIAU = "YES" ]]; then
+  if [[ $MODE = "replay" && $replay_4DIAU = "YES" && ( $EXP_WARM_START = ".true." || "$CDATE" != "$SDATE" ) ]]; then
      if [ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
        cd $EXTRACT_DIR
        echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >list.txt
@@ -205,6 +205,8 @@ if [[ $gfs_ver = "v16" ]]; then
           export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
        fi
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
        mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*ensres.nc ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
      else
        echo "atmanl.ensres for 4DIAU replay exist, skip pulling data"
@@ -225,74 +227,68 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
       tarball="gdas_restartb.tar"
       htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
     fi
     if [ ! -d $ROTDIR/gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/RESTART ]; then
       cd $ROTDIR
       tarball="gdas_restartb.tar"
       htar -xvf ${HPSSEXPDIR}/${GDATE}/${tarball}
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
     fi
   fi
 fi          
 
 # Pull pgbanl file for verification/archival - v14+
-if [[ $MODE != "cycled" && $DO_METP = "YES" ]]; then
-if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
-  if [ ! -s $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.pgrb2.1p00.anl ]; then
-    for grid in 0p25 0p50 1p00
-    do
-      file=${ICDUMP}.t${hh}z.pgrb2.${grid}.anl
-  
-      if [ $gfs_ver = v14 ]; then # v14 production source
-  
-        cd $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
-        export tarball="gpfs_hps_nco_ops_com_gfs_prod_gfs.${yy}${mm}${dd}${hh}.pgrb2_${grid}.tar"
-        htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
-  
-      elif [ $gfs_ver = v15 ]; then # v15 production source
-  
-        cd $EXTRACT_DIR
-        export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
-        htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${file}
-        mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${file} ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
-  
-      elif [ $gfs_ver = v16 ]; then # v16 - determine RETRO or production source next
-  
-        if [[ $RETRO = "YES" && "$CDATE" -lt "2021032500" ]]; then # Retrospective parallel source
-  
-          cd $EXTRACT_DIR
-          if [ $ICDUMP = "gdas" ]; then
-            export tarball="gdas.tar"
-          elif [ $grid = "0p25" ]; then # anl file spread across multiple tarballs
-            export tarball="gfsa.tar"
-          elif [ $grid = "0p50" -o $grid = "1p00" ]; then
-            export tarball="gfsb.tar"
-          fi
-          htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
-          mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}
-  
-        else # Production source
-  
-          cd $ICSDIR
+# disable it for now
+if [ "YES" = "NO" ]; then
+if [[ $MODE != "cycled" && $DO_METP = "YES" && $ICSTYP = "gfs" && $ICDUMP = "gdas" ]]; then
+  if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
+    if [ ! -s ${ARCDIR}/../${ICDUMP}/pgbanl.${ICDUMP}.${CDATE}.grib2 ]; then
+      cd $EXTRACT_DIR
+      #for grid in 0p25 0p50 1p00
+      for grid in 1p00
+      do
+        if [ $gfs_ver = v14 ]; then # v14 production source
+          file="${ICDUMP}.t${hh}z.pgrb2.${grid}.anl"
+          export tarball="gpfs_hps_nco_ops_com_gfs_prod_gfs.${yy}${mm}${dd}${hh}.pgrb2_${grid}.tar"
+          htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
+    
+        elif [ $gfs_ver = v15 ]; then # v15 production source
+          file="${ICDUMP}.${yy}${mm}${dd}/${hh}/${file}" 
           export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
-          htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}
+          htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
+    
+        elif [ $gfs_ver = v16 ]; then # v16 - determine RETRO or production source next
+    
+          if [[ $RETRO = "YES" && "$CDATE" -lt "2021032500" ]]; then # Retrospective parallel source
+    
+            if [ $ICDUMP = "gdas" ]; then
+              export tarball="gdas.tar"
+            elif [ $grid = "0p25" ]; then # anl file spread across multiple tarballs
+              export tarball="gfsa.tar"
+            elif [ $grid = "0p50" -o $grid = "1p00" ]; then
+              export tarball="gfsb.tar"
+            fi
+            file="${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}"
+            htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${file}
+    
+          else # Production source
+            file="${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}"
+            export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+            htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
+    
+          fi # RETRO vs production
   
-        fi # RETRO vs production
-  
-      fi # Version check
-    done # grid loop
-  else
-    echo "${ICDUMP}.t${hh}z.pgrb2.1p00.anl exist, skip pulling data"
-  fi
-  
-  if [[ $MODE != "cycled" ]]; then
-     grid="1p00"
-     file=${ICDUMP}.t${hh}z.pgrb2.${grid}.anl
-     if [ ! -d $ARCDIR ]; then
-        mkdir -p $ARCDIR
-     fi
-     $NLN $ICSDIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file} $ARCDIR/pgbanl.${ICDUMP}.${CDATE}.grib2
-  fi
-fi # v14-v16 pgrb anl file pull
+        fi # Version check
+        mv ${EXTRACT_DIR}/${file} $ARCDIR/../${ICDUMP}/pgbanl.${ICDUMP}.${CDATE}.grib2
+      done # grid loop
+    else
+      echo "${ICDUMP}.t${hh}z.pgrb2.1p00.anl exist, skip pulling data"
+    fi
+  fi # v14-v16 pgrb anl file pull
+fi
 fi
 
 ##########################################

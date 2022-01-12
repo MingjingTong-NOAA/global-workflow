@@ -75,40 +75,30 @@ else
     if [[ ! -d ${COMOUTatmos} ]]; then
       mkdir -p ${COMOUTatmos}
     fi
-    if [[ $replay == 1 && $EXP_WARM_START = ".true." ]]; then
-      if [[ ! -d ${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos/INPUT ]]; then
-        $NLN ${COMOUT}/INPUT ${ROTDIR}/gdas.${PDY}/${cyc}/atmos/INPUT
+    if [[ ! -d ${COMOUTatmos}/INPUT ]]; then
+      if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
+         mkdir -p ${COMOUTatmos}/INPUT
+         cd ${COMOUT}/INPUT
+         for file in $(ls gfs_data.tile*.nc); do
+            ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT $file -O ${COMOUTatmos}/INPUT/$file
+         done
+         ncks -d levsp,1,$LEVS_INIT gfs_ctrl.nc -O ${COMOUTatmos}/INPUT/gfs_ctrl.nc
+         $NLN ${COMOUT}/INPUT/sfc_data.tile*.nc ${COMOUTatmos}/INPUT/
+      else
+         $NLN ${COMOUT}/INPUT ${COMOUTatmos}/INPUT
       fi
-    else
-      if [[ ! -d ${COMOUTatmos}/INPUT ]]; then
-        if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
-           mkdir -p ${COMOUTatmos}/INPUT
-           cd ${COMOUT}/INPUT
-           for file in $(ls gfs_data.tile*.nc); do
-              ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT $file -O ${COMOUTatmos}/INPUT/$file
-           done
-           ncks -d levsp,1,$LEVS_INIT gfs_ctrl.nc -O ${COMOUTatmos}/INPUT/gfs_ctrl.nc
-           $NLN ${COMOUT}/INPUT/sfc_data.tile*.nc ${COMOUTatmos}/INPUT/
-        else 
-           $NLN ${COMOUT}/INPUT ${COMOUTatmos}/INPUT
-        fi
-        $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
-        $NLN ${COMOUT}/*radstat ${COMOUTatmos}/
-      fi
+      $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
+      $NLN ${COMOUT}/*radstat ${COMOUTatmos}/
     fi
   fi
     
-  # Do not run for gfs warm start forecast 
-  if [[ $MODE != "free" && $DO_TREF_TILE = ".true." && $gfs_ver = v16 && "$CDATE" != "$SDATE" && $CDUMP = "gdas" ]]; then
+  # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
+  if [[ $CASE != $OPS_RES && $MODE != "free" && $DO_TREF_TILE = ".true." && $gfs_ver = v16 && "$CDATE" != "$SDATE" && $CDUMP = "gdas" ]]; then
     if [[ ! -s $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP}
       status=$?
       [[ $status -ne 0 ]] && exit $status 
     fi
-    if [[ ! -d ${COMOUTatmos}/RESTART ]]; then
-      mkdir -p ${COMOUTatmos}/RESTART
-    fi
-    $NCP $COMOUT/RESTART/* ${COMOUTatmos}/RESTART/
   fi
 
 fi

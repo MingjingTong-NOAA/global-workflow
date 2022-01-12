@@ -93,7 +93,7 @@ if [ $type = "gfs" ]; then
   fi
 
   if [ $ARCH_GAUSSIAN = "YES" ]; then
-    if [ $arch4omg = "YES" ]; then
+    if [[ $arch4omg = "YES" && $FHOUT_aux -gt 0 ]]; then
       fh=3
       while [ $fh -le 9 ]; do
         fhr=$(printf %03i $fh)
