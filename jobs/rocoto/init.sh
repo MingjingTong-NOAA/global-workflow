@@ -65,13 +65,18 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
   exit 0
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
-  if [[ $MODE = "free" || $replay == 1 || ( $MODE != "cycled" && "$CDATE" = "$SDATE" ) ]]; then
+  if [[ $MODE = "free" || $replay == 1 || ( $MODE = "cycled" && "$CDATE" = "$SDATE" ) ]]; then
     if [[ ! -d ${COMOUT}/INPUT ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi 
+    if [[ $replay == 1 && $CDUMP = "gfs" ]]; then
+      COMOUTatmos=${ROTDIR}/gdas.${yy}${mm}${dd}/${hh}/atmos
+    else
+      COMOUTatmos=${COMOUTatmos}
+    fi
     if [[ ! -d ${COMOUTatmos} ]]; then
       mkdir -p ${COMOUTatmos}
     fi
@@ -100,7 +105,17 @@ else
       [[ $status -ne 0 ]] && exit $status 
     fi
   fi
-
+  if [[ $MODE = "replay" && $DOGCYCLE != "YES" ]]; then
+    RESTARTDIR=${ROTDIR}/gdas.${yy}${mm}${dd}/${hh}/atmos/RESTART
+    if [[ ! -d ${RESTARTDIR} ]]; then
+      mkdir -p $RESTARTDIR
+    fi
+    if [ $CASE = $OPS_RES ]; then
+      $NLN $COMOUT/RESTART_GFS/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile*.nc ${RESTARTDIR}/
+    else
+      $NLN $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile*.nc ${RESTARTDIR}/
+    fi
+  fi
 fi
 
 ##########################################

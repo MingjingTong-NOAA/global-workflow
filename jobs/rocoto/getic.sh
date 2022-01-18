@@ -141,7 +141,7 @@ fi
 
 # Pull sfcanl restart file to get tref for replay and DA cycle
 if [[ $gfs_ver = "v16" ]]; then
-  if [[  $MODE != "free" && $DO_TREF_TILE = ".true." && "$CDATE" != "$SDATE" ]]; then
+  if [[  $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && "$CDATE" != "$SDATE" ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        for n in $(seq 1 6); do
@@ -217,7 +217,7 @@ fi
 # Pull surface analysis file for warm-start run
 if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
   if [[ ( $CDUMP = "gfs" && $gfsanl = "NO" ) || "$CDATE" = "$SDATE" ]]; then
-    if [ ! -d $ROTDIR/gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ]; then
+    if [[ ! -d $ROTDIR/gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART && $DOGCYCLE = "YES" ]]; then
       cd $ROTDIR
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
@@ -225,7 +225,7 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
-      tarball="gdas_restartb.tar"
+      tarball="gdas_restarta.tar"
       htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
       status=$?
       [[ $status -ne 0 ]] && exit $status
@@ -237,6 +237,16 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi
+  fi
+  if [[ $MODE = "replay" && $replay_4DIAU = "YES" ]]; then
+     cd $ROTDIR
+     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atmi003.nc " >list.txt
+     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atminc.nc "  >>list.txt
+     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atmi009.nc " >>list.txt
+     tarball="gdas.tar"
+     htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
+     status=$?
+     [[ $status -ne 0 ]] && exit $status
   fi
 fi          
 

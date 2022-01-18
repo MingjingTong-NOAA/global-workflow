@@ -237,9 +237,11 @@ elif [ $CDUMP = "gdas" ]; then
         targrp_list="$targrp_list gdaswave"
     fi
 
-    if [ $MODE = "cycled" ]; then
+    if [ $MODE != "free" ]; then
       if [ $SAVEWARMICA = "YES" -o $SAVEFCSTIC = "YES" ]; then
-        targrp_list="$targrp_list gdas_restarta"
+        if [[ $MODE = "cycled" || $DOGCYCLE = "YES" ]]; then
+          targrp_list="$targrp_list gdas_restarta"
+        fi
 
         if [ $DO_WAVE = "YES" ]; then
             targrp_list="$targrp_list gdaswave_restart"

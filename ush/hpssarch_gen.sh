@@ -385,13 +385,15 @@ if [ $type = "gdas" ]; then
     fh=0
     while [ $fh -le 9 ]; do
       fhr=$(printf %03i $fh)
-      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
-      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
-      echo  "${dirname}${head}pgrb2.0p25.f${fhr}         " >>gdas.txt
-      echo  "${dirname}${head}pgrb2.0p25.f${fhr}.idx     " >>gdas.txt
-      echo  "${dirname}${head}pgrb2.1p00.f${fhr}         " >>gdas.txt
-      echo  "${dirname}${head}pgrb2.1p00.f${fhr}.idx     " >>gdas.txt
-      echo  "${dirname}${head}logf${fhr}.txt             " >>gdas.txt
+      if [ $gdaspost = "YES" ]; then
+        echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
+        echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
+        echo  "${dirname}${head}pgrb2.0p25.f${fhr}         " >>gdas.txt
+        echo  "${dirname}${head}pgrb2.0p25.f${fhr}.idx     " >>gdas.txt
+        echo  "${dirname}${head}pgrb2.1p00.f${fhr}         " >>gdas.txt
+        echo  "${dirname}${head}pgrb2.1p00.f${fhr}.idx     " >>gdas.txt
+        echo  "${dirname}${head}logf${fhr}.txt             " >>gdas.txt
+      fi
       echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
       echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
       fh=$((fh+3))
@@ -400,8 +402,10 @@ if [ $type = "gdas" ]; then
     for fhr in $flist; do
       echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
       echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
-      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
-      echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
+      if [ $gdaspost = "YES" ]; then
+        echo  "${dirname}${head}sfluxgrbf${fhr}.grib2      " >>gdas.txt
+        echo  "${dirname}${head}sfluxgrbf${fhr}.grib2.idx  " >>gdas.txt
+      fi
     done
   else
     echo  "./logs/${CDATE}/gdasfcst.log                  " >>gdas.txt
@@ -416,6 +420,10 @@ if [ $type = "gdas" ]; then
 
   if [ $MODE = "replay" ]; then
     echo  "${dirname}${head}atminc${SUFFIX}" >> gdas.txt
+    if [ $replay_4DIAU = "YES" ]; then
+      echo "${dirname}${head}atmi003${SUFFIX}" >> gdas.txt
+      echo "${dirname}${head}atmi009${SUFFIX}" >> gdas.txt
+    fi
   fi
 
   if [ -s $ROTDIR/${dirpath}tendency.dat ]; then
@@ -453,10 +461,12 @@ if [ $type = "gdas" ]; then
     echo  "${dirname}${head}abias_pc                 " >>gdas_restarta.txt
     echo  "${dirname}${head}atmi*nc                  " >>gdas_restarta.txt
     if [ $DONST = "YES" ]; then
-      echo  "${dirname}${head}dtfanl.nc                " >>gdas_restarta.txt
+      echo  "${dirname}${head}dtfanl.nc              " >>gdas_restarta.txt
     fi
     echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
+  fi
   
+  if [[ $MODE != "free" && $DOGCYCLE = "YES" ]]; then
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gdas_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gdas_restarta.txt
@@ -466,7 +476,11 @@ if [ $type = "gdas" ]; then
   fi 
 
   #..................
-  echo  "${dirname}RESTART " >>gdas_restartb.txt
+ 
+  for file in $(ls ${COMOUTatmos}/RESTART/* |grep -v sfcanl_data); do
+     filename=`basename $file`
+     echo "${dirname}RESTART/${filename}                 " >>gdas_restartb.txt
+  done
 
   #..................
   if [ $DO_WAVE = "YES" ]; then

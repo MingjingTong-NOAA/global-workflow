@@ -16,10 +16,10 @@ export CDFNL="gdas"               # Scores verification against GDAS/GFS analysi
 
 export MKPGB4PRCP="YES"           # Make 0.25-deg pgb files in ARCDIR for precip verification
 export VRFYFITS="YES"             # Fit to observations
-export VSDB_STEP1="YES"           # Populate VSDB database
+export VSDB_STEP1="NO"            # Populate VSDB database
 export VSDB_STEP2="NO"
-export VRFYG2OBS="YES"            # Grid to observations, see note below if turning ON
-export VRFYPRCP="YES"             # Precip threat scores
+export VRFYG2OBS="NO"             # Grid to observations, see note below if turning ON
+export VRFYPRCP="NO"              # Precip threat scores
 if [ $MODE = "cycled" ]; then
   export VRFYRAD="YES"              # Radiance data assimilation monitoring
   export VRFYOZN="YES"              # Ozone data assimilation monitoring
