@@ -222,11 +222,7 @@ export replay=1
 # number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="NO"
-if [ $ICSTYP = "ifs" ]; then
-  export IAU_FORCING_VAR="'ua','va','temp','delp','sphum','o3mr'"
-else
-  export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
-fi
+export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
 if [ "$MODE" = "replay" ]; then
    if [ $replay -eq 1 ]; then
       export replay_4DIAU="NO"

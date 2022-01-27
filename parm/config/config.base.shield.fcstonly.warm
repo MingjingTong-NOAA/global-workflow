@@ -334,7 +334,7 @@ export do_analinc="NO"
 export DO_POST="YES"
 export gdaspost="NO"
 
-if [ $DO_POST = "NO" ]; then
+if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"
 fi
 

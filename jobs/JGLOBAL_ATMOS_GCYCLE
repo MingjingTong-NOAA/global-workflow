@@ -18,6 +18,7 @@ for config in $configs; do
     [[ $status -ne 0 ]] && exit $status
 done
 
+[[ $EXP_WARM_START = ".true." && $CDATE = $SDATE ]] && exit 0
 
 ##########################################
 # Source machine runtime environment

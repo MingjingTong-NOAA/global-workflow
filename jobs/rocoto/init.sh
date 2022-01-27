@@ -65,7 +65,7 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
   exit 0
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
-  if [[ $MODE = "free" || $replay == 1 || ( $MODE = "cycled" && "$CDATE" = "$SDATE" ) ]]; then
+  if [[ $MODE = "free" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
     if [[ ! -d ${COMOUT}/INPUT ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}

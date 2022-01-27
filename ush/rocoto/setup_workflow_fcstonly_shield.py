@@ -301,6 +301,7 @@ def get_workflow(dict_configs, cdump='gdas'):
     tasks = []
 
     # getic
+    print ('hpssarch', hpssarch)
     if hpssarch in ['YES']:
         deps = []
         data = '&ROTDIR;/&ICDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
@@ -370,7 +371,7 @@ def get_workflow(dict_configs, cdump='gdas'):
     dep_dict = {'type': 'task', 'name': f'{cdump}init'}
     deps.append(rocoto.add_dependency(dep_dict))  
 
-    if warm_start == ".false." or replay == 1:
+    if warm_start == ".false.":
         if icstyp == 'gfs':
             data = '&ROTDIR;/&CDUMP;.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
             dep_dict = {'type':'data', 'data':data}
@@ -391,6 +392,21 @@ def get_workflow(dict_configs, cdump='gdas'):
         data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
         dep_dict = {'type': 'data', 'data': data, 'data2': data2, 'offset2': '-03:00:00',}
         deps.append(rocoto.add_dependency(dep_dict))
+        if replay == 1:
+            if icstyp == 'gfs':
+                data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps.append(rocoto.add_dependency(dep_dict))
+                data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/INPUT/gfs_data.tile6.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps.append(rocoto.add_dependency(dep_dict))
+                data = '&ROTDIR;/gdas.@Y@m@d/@H/atmos/INPUT/gfs_data.tile6.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps.append(rocoto.add_dependency(dep_dict))
 
     dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 

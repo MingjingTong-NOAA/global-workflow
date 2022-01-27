@@ -13,11 +13,6 @@ echo "BEGIN: config.efcs"
 
 export npe_fv3=$npe_efcs
 
-if [ $QUILTING = ".true." ]; then
-    export npe_fv3=$(echo " $npe_fv3 + $WRITE_GROUP * $WRTTASK_PER_GROUP" | bc)
-    export npe_efcs=$npe_fv3
-fi
-
 # Number of enkf members per fcst job
 export NMEM_EFCSGRP=8
 export RERUN_EFCSGRP="NO"
