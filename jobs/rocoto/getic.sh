@@ -141,7 +141,7 @@ fi
 
 # Pull sfcanl restart file to get tref for replay and DA cycle
 if [[ $gfs_ver = "v16" ]]; then
-  if [[  $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && "$CDATE" != "$SDATE" ]]; then
+  if [[  $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        for n in $(seq 1 6); do
@@ -225,6 +225,9 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
       echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+      # old run
+      #tarball="gdas_restartb.tar"
+      # new run
       tarball="gdas_restarta.tar"
       htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
       status=$?

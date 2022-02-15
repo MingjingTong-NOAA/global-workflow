@@ -98,7 +98,7 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ $CASE != $OPS_RES && $MODE != "free" && $DO_TREF_TILE = ".true." && $gfs_ver = v16 && "$CDATE" != "$SDATE" && $CDUMP = "gdas" ]]; then
+  if [[ $CASE != $OPS_RES && $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
     if [[ ! -s $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP}
       status=$?
