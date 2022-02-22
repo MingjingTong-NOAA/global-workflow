@@ -275,7 +275,7 @@ for gsiexe in  calc_analysis.x calc_increment_ens_ncio.x calc_increment_ens.x \
     $LINK ../sorc/gsi.fd/exec/$gsiexe .
 done
 
-if [[ ! -s ../sorc/gsi.fd/util/zero_biascoeff/build/zero_biascoeff.x .
+if [[ ! -s ../sorc/gsi.fd/util/zero_biascoeff/build/zero_biascoeff.x ]]; then
   echo 'build zero_biascoeff.x '
   exit 1
 else

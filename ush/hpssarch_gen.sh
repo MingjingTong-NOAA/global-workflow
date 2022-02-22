@@ -125,43 +125,31 @@ if [ $type = "gfs" ]; then
   fi
 
   #..................
+  # Exclude the gfsarch.log file, which will change during the tar operation
+  #  This uses the bash extended globbing option
   if [ $omgrun = "NO" ]; then
-    for file in $(ls ${ROTDIR}/logs/${CDATE}/gfs*.log |grep -v gfsarch); do
-       filename=`basename $file`
-       echo "./logs/${CDATE}/${filename}                       " >>gfsa.txt
-    done
-    #echo  "./logs/${CDATE}/gfs*.log                          " >>gfsa.txt
-    if [ -s ${dirname}input.nml ]; then
-      echo  "${dirname}input.nml                               " >>gfsa.txt
-    fi
-    if [[ $MODE = "cycled" && $gfsanl = "YES" ]]; then
-      echo  "${dirname}${head}gsistat                          " >>gfsa.txt
-      echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
-      echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
-      echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
-      echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
-    fi
-    if [[ $DO_POST = "YES" && $DO_METP = "YES" ]]; then
-      if [ -s $ROTDIR/${dirpath}avno.t${cyc}z.cyclone.trackatcfunix ]; then
-      echo  "${dirname}avno.t${cyc}z.cyclone.trackatcfunix   " >>gfsa.txt
-      echo  "${dirname}avnop.t${cyc}z.cyclone.trackatcfunix  " >>gfsa.txt
-      fi
-      echo  "${dirname}trak.gfso.atcfunix.${PDY}${cyc}         " >>gfsa.txt
-      echo  "${dirname}trak.gfso.atcfunix.altg.${PDY}${cyc}    " >>gfsa.txt
-      echo  "${dirname}storms.gfso.atcf_gen.${PDY}${cyc}       " >>gfsa.txt
-      echo  "${dirname}storms.gfso.atcf_gen.altg.${PDY}${cyc}  " >>gfsa.txt
-    fi
-    if [ -s $ROTDIR/${dirpath}tendency.dat ]; then
-      echo  "${dirname}tendency.dat                          " >>gfsa.txt
-    fi
-    if [ -s $ROTDIR/${dirpath}gfs_physics.tile6.nc ]; then
-      echo  "${dirname}gfs_physics.tile1.nc                  " >>gfsa.txt
-      echo  "${dirname}gfs_physics.tile2.nc                  " >>gfsa.txt
-      echo  "${dirname}gfs_physics.tile3.nc                  " >>gfsa.txt
-      echo  "${dirname}gfs_physics.tile4.nc                  " >>gfsa.txt
-      echo  "${dirname}gfs_physics.tile5.nc                  " >>gfsa.txt
-      echo  "${dirname}gfs_physics.tile6.nc                  " >>gfsa.txt
-    fi
+  echo  "./logs/${CDATE}/gfs!(arch).log                    " >>gfsa.txt
+  echo  "${dirname}input.nml                               " >>gfsa.txt
+  if [ $MODE = "cycled" ]; then
+    echo  "${dirname}${head}gsistat                          " >>gfsa.txt
+    echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
+    echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
+    echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
+    echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
+  fi
+  echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
+  echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
+  #Only generated if there are cyclones to track
+  cyclone_files=(avno.t${cyc}z.cyclone.trackatcfunix
+                 avnop.t${cyc}z.cyclone.trackatcfunix
+                 trak.gfso.atcfunix.${PDY}${cyc}
+                 trak.gfso.atcfunix.altg.${PDY}${cyc}
+                 storms.gfso.atcf_gen.${PDY}${cyc}
+                 storms.gfso.atcf_gen.altg.${PDY}${cyc})
+
+  for file in ${cyclone_files[@]}; do
+    [[ -s $ROTDIR/${dirname}${file} ]] && echo "${dirname}${file}" >>gfsa.txt
+  done
   fi
 
   if [ $DO_DOWN = "YES" ]; then
@@ -560,8 +548,16 @@ if [ $type = "enkfgdas" -o $type = "enkfgfs" ]; then
         fi
      fi 
   done # loop over FHR
-  for fstep in eobs eomg ecen esfc eupd efcs epos ; do
+  for fstep in eobs ecen esfc eupd efcs epos ; do
    echo  "logs/${CDATE}/${CDUMP}${fstep}*.log        " >>enkf${CDUMP}.txt
+  done
+
+# eomg* are optional jobs
+  for log in $ROTDIR/logs/${CDATE}/${CDUMP}eomg*.log; do
+     if [ -s "$log" ]; then
+        echo  "logs/${CDATE}/${CDUMP}eomg*.log        " >>enkf${CDUMP}.txt
+     fi
+     break
   done
 
 

@@ -86,16 +86,8 @@ cat > input.nml <<EOF
   npy = $npy
   ntiles = $ntiles
   npz = $npz
-EOF
-
-if [ $cpl = .true. ]; then
-  cat >> input.nml << EOF
-  dz_min =  ${dz_min:-"6"}    ! no longer in develop branch
-  psm_bc = ${psm_bc:-"0"}    ! no longer in develop branch
-EOF
-fi
-
-cat >> input.nml << EOF
+  dz_min =  ${dz_min:-"6"} 
+  psm_bc = ${psm_bc:-"0"} 
   grid_type = -1
   make_nh = $make_nh
   fv_debug = ${fv_debug:-".false."}
@@ -207,6 +199,7 @@ EOF
   bl_mynn_edmf_mom=${bl_mynn_edmf_mom:-"1"}
   min_lakeice  = ${min_lakeice:-"0.15"}
   min_seaice   = ${min_seaice:-"0.15"}
+  use_cice_alb = ${use_cice_alb:-".false."}
 EOF
   ;;
   FV3_GFS_v16_coupled*)
@@ -322,16 +315,12 @@ cat >> input.nml <<EOF
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}
-EOF
-
-if [ $cpl = .true. ]; then
-  cat >> input.nml << EOF
   frac_grid    = ${FRAC_GRID:-".true."}
-  cplchm = ${cplchem:-".false."}
-  cplflx       = $cplflx
-  cplwav2atm   = ${cplwav2atm}
+  cplchm       = ${cplchem:-".false."}
+  cplflx       = ${cplflx:-".false."}
+  cplice       = ${cplice-".false."} 
+  cplwav2atm   = ${cplwav2atm-".false."}
 EOF
-fi
 
 # Add namelist for IAU
 if [ $DOIAU = "YES" ]; then
@@ -345,16 +334,16 @@ fi
 
 if [ ${DO_CA:-"NO"} = "YES" ]; then
   cat >> input.nml << EOF
-  do_ca      = .True.
-  ca_global  = ${ca_global:-".False."}
-  ca_sgs     = ${ca_sgs:-".True."}
+  do_ca      = .true.
+  ca_global  = ${ca_global:-".false."}
+  ca_sgs     = ${ca_sgs:-".true."}
   nca        = ${nca:-"1"}
-  scells     = ${scells:-"2600"}
-  tlives     = ${tlives:-"1800"}
+  ncells     = ${ncells:-"5"}
+  nlives     = ${nlives:-"12"}
   nseed      = ${nseed:-"1"}
   nfracseed  = ${nfracseed:-"0.5"}
-  rcell      = ${rcell:-"0.72"}
-  ca_trigger = ${ca_trigger:-".True."}
+  nthresh    = ${nthresh:-"18"}
+  ca_trigger = ${ca_trigger:-".true."}
   nspinup    = ${nspinup:-"1"}
   iseed_ca   = ${ISEED_CA:-"12345"}
 EOF

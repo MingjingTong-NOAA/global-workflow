@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#!/bin/bash -x
 
 ###############################################################
 ## Abstract:
@@ -89,7 +89,7 @@ else
         fhr2=$(printf %02i $fhr)
         fhr3=$(printf %03i $fhr)
         $NCP ${APREFIX}pgrb2.1p00.f$fhr3 $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
-        (( fhr = $fhr + $FHOUT_GFS ))
+        (( fhr = 10#$fhr + 10#$FHOUT_GFS ))
     done
 fi
 
@@ -137,14 +137,22 @@ if [ $CDUMP = "gfs" -a $FITSARC = "YES" ]; then
 	sigfile=${prefix}.atmf${fhr3}${ASUFFIX}
 	$NCP $sfcfile $VFYARC/${CDUMP}.$PDY/$cyc/
 	$NCP $sigfile $VFYARC/${CDUMP}.$PDY/$cyc/
-	(( fhr = $fhr + $dt ))
+	(( fhr = 10#$fhr + 6 ))
     done
 fi
 
 ###############################################################
-# Archive data to HPSS
-if [ $HPSSARCH = "YES" ]; then
+# Archive data either to HPSS or locally
+if [[ $HPSSARCH = "YES" || $LOCALARCH = "YES" ]]; then
 ###############################################################
+
+# --set the archiving command and create local directories, if necessary
+TARCMD="htar"
+if [[ $LOCALARCH = "YES" ]]; then
+   TARCMD="tar"
+   [ ! -d $ATARDIR/$CDATE ] && mkdir -p $ATARDIR/$CDATE
+   [ ! -d $ATARDIR/$CDATE_MOS -a -d $ROTDIR/gfsmos.$PDY_MOS -a $cyc -eq 18 ] && mkdir -p $ATARDIR/$CDATE_MOS
+fi
 
 #--determine when to save ICs for warm start and forecast-only runs 
 SAVEWARMICA="NO"
@@ -153,7 +161,7 @@ SAVEFCSTIC="NO"
 firstday=$($NDATE +24 $SDATE)
 mm=$(echo $CDATE|cut -c 5-6)
 dd=$(echo $CDATE|cut -c 7-8)
-nday=$(( (mm-1)*30+dd ))
+nday=$(( (10#$mm-1)*30+10#$dd ))
 mod=$(($nday % $ARCH_WARMICFREQ))
 if [ $CDATE -eq $firstday -a $cyc -eq $ARCHINC_CYC ]; then SAVEWARMICA="YES" ; fi
 if [ $CDATE -eq $firstday -a $cyc -eq $ARCHICS_CYC ]; then SAVEWARMICB="YES" ; fi
@@ -221,10 +229,10 @@ if [ $CDUMP = "gfs" ]; then
 
     #--save mdl gfsmos output from all cycles in the 18Z archive directory
     if [ -d gfsmos.$PDY_MOS -a $cyc -eq 18 ]; then
-        htar -P -cvf $ATARDIR/$CDATE_MOS/gfsmos.tar ./gfsmos.$PDY_MOS
+        $TARCMD -P -cvf $ATARDIR/$CDATE_MOS/gfsmos.tar ./gfsmos.$PDY_MOS
         status=$?
         if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
-            echo "HTAR $CDATE gfsmos.tar failed"
+            echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE gfsmos.tar failed"
             exit $status
         fi
     fi
@@ -254,7 +262,10 @@ elif [ $CDUMP = "gdas" ]; then
     fi
 fi
 
+# Turn on extended globbing options
+shopt -s extglob
 for targrp in $targrp_list; do
+<<<<<<< HEAD
     fsize=`wc -c $ARCH_LIST/${targrp}.txt | awk '{print $1}'`
     if [ $fsize -gt 0 ]; then
       htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
@@ -263,8 +274,17 @@ for targrp in $targrp_list; do
           echo "HTAR $CDATE ${targrp}.tar failed"
           exit $status
       fi
+=======
+    $TARCMD -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
+    status=$?
+    if [ $status -ne 0 -a $CDATE -ge $firstday ]; then
+        echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE ${targrp}.tar failed"
+        exit $status
+>>>>>>> develop
     fi
 done
+# Turn extended globbing back off
+shopt -u extglob
 
 ###############################################################
 fi  ##end of HPSS archive

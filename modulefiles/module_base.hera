@@ -25,7 +25,6 @@ module load zlib/1.2.11
 module load png/1.6.35
 
 module load hdf5/1.10.6
-module load hdf5parallel/1.10.6
 module load netcdf/4.7.4
 module load pio/2.5.2
 module load esmf/8_2_0_beta_snapshot_14
@@ -49,8 +48,5 @@ module use -a /contrib/anaconda/modulefiles
 module load anaconda/2.3.0
 
 # waveprep
-module load cdo/1.9.5
-
-# init
-module load nco
+module load cdo/1.9.5 
 
