@@ -1587,7 +1587,7 @@ EOF
   fi
 
   npe_c2g=$mc
-  APRUN_C2G="$launcher -n $npe_c2g -l --multi-prog"
+  APRUN_C2G="$launcher -n $npe_c2g --tasks-per-node=1 --cpus-per-task=$npe_node_max -l --multi-prog"
 
   $APRUN_C2G serial-tasks.config 1>&1 2>&2
   rc=$?
