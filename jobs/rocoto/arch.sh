@@ -265,22 +265,14 @@ fi
 # Turn on extended globbing options
 shopt -s extglob
 for targrp in $targrp_list; do
-<<<<<<< HEAD
     fsize=`wc -c $ARCH_LIST/${targrp}.txt | awk '{print $1}'`
     if [ $fsize -gt 0 ]; then
-      htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
+      $TARCMD -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
       status=$?
       if [ $status -ne 0 -a $CDATE -ge $firstday ]; then
-          echo "HTAR $CDATE ${targrp}.tar failed"
+          echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE ${targrp}.tar failed"
           exit $status
       fi
-=======
-    $TARCMD -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
-    status=$?
-    if [ $status -ne 0 -a $CDATE -ge $firstday ]; then
-        echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE ${targrp}.tar failed"
-        exit $status
->>>>>>> develop
     fi
 done
 # Turn extended globbing back off

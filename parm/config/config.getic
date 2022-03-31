@@ -8,7 +8,7 @@ echo "BEGIN: config.getic"
 # Get task specific resources
 . $EXPDIR/config.resources getic
 
-export RETRO="YES" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
+export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export gfs_ver="v16" # Default = v16
 export ICDUMP="gdas"
 export START="cold"

@@ -22,6 +22,8 @@ done
 set -x
 
 MEMBER=$1
+date10=$2
+CTAR=$3
 
 FIX_FV3=$UFS_DIR/fix
 FIX_ORO=${FIX_FV3}/fix_fv3_gmted2010
@@ -29,9 +31,8 @@ FIX_AM=${FIX_FV3}/fix_am
 
 WORKDIR=${WORKDIR:-$OUTDIR/work.${MEMBER}}
 MODE=${MODE:-"cycled"}
+CINP=${OPS_RES}
 
-  CINP=${OPS_RES}
-  CTAR=${CTAR:-$CRES_HIRES}
 #---------------------------------------------------------------------------
 # Some gfs tarballs from the v16 retro parallels dont have 'atmos'
 # in their path.  Account for this.
@@ -41,7 +42,7 @@ MODE=${MODE:-"cycled"}
     INPUT_DATA_DIR="${EXTRACT_DIR}/${MEMBER}.${yy}${mm}${dd}/${hh}/RESTART_GFS"
   fi
   #date10=`$NDATE -3 $yy$mm$dd$hh`
-  date10=$IAUSDATE
+  #date10=$IAUSDATE
   yy_d=$(echo $date10 | cut -c1-4)
   mm_d=$(echo $date10 | cut -c5-6)
   dd_d=$(echo $date10 | cut -c7-8)
@@ -89,11 +90,7 @@ if [ $rc != 0 ]; then
 fi
 
 outtype=${outtype:-$MEMBER}
-if [[ $CTAR = $CRES_HIRES ]]; then
-  SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART
-else
-  SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART_ENKF
-fi
+SAVEDIR=$OUTDIR/${outtype}.${yy}${mm}${dd}/${hh}/atmos/RESTART_${CTAR}
 copy_data
 touch $SAVEDIR/../${MEMBER}.t${hh}z.loginc.txt
 

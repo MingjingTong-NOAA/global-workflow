@@ -16,6 +16,7 @@ OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
 ARCH_GAUSSIAN=${ARCH_GAUSSIAN:-"YES"}
 ARCH_GAUSSIAN_FHMAX=${ARCH_GAUSSIAN_FHMAX:-36}
 ARCH_GAUSSIAN_FHINC=${ARCH_GAUSSIAN_FHINC:-6}
+ARCH4ENSREPLAY=${ARCH4ENSREPLAY:-"NO"}
 SUFFIX=${SUFFIX:-".nc"}
 if [ $SUFFIX = ".nc" ]; then
   format="netcdf"
@@ -624,11 +625,23 @@ if [ $type = "enkfgdas" -o $type = "enkfgfs" ]; then
          fi
 
       fi 
-      echo "${dirname}${head}atmf00${FHR}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
-      if [ $FHR -eq 6 ]; then
-	  echo "${dirname}${head}sfcf00${FHR}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+      if [ $ARCH4ENSREPLAY != "YES" ]; then
+        echo "${dirname}${head}atmf00${FHR}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+        if [ $FHR -eq 6 ]; then
+	    echo "${dirname}${head}sfcf00${FHR}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+        fi
       fi
     done # loop over FHR
+
+    if [ $ARCH4ENSREPLAY = "YES" ]; then
+      fh=3
+      while [ $fh -le 9 ]; do
+          fhr=$(printf %03i $fh)
+          echo "${dirname}${head}atmf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+          echo "${dirname}${head}sfcf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+          fh=$((fh+1))
+      done
+    fi
 
     if [[ lobsdiag_forenkf = ".false." ]] ; then
        echo "${dirname}${head}gsistat              " >>enkf${CDUMP}_grp${n}.txt

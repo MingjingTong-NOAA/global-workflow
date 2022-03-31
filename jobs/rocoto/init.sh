@@ -33,6 +33,8 @@ done
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
+module list
+
 ###############################################################
 # Set script and dependency variables
 
@@ -99,10 +101,22 @@ else
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
   if [[ $CASE != $OPS_RES && $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
-    if [[ ! -s $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
-      sh ${RUNSFCANLSH} ${ICDUMP}
+    if [[ ! -s $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
+      sh ${RUNSFCANLSH} ${ICDUMP} $IAUSDATE $CASE
       status=$?
       [[ $status -ne 0 ]] && exit $status 
+    fi
+    if [[ $MODE = "cycled" ]]; then
+      if [[ ! -s $COMOUT/RESTART_${CASE_ENKF}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc && $DOHYBVAR = "YES" ]]; then
+        sh ${RUNSFCANLSH} ${ICDUMP} $IAUSDATE $CASE_ENKF
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+      fi
+      if [[ ! -s $COMOUT/RESTART_${CASE}/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc ]]; then
+        sh ${RUNSFCANLSH} ${ICDUMP} $CDATE $CASE
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+      fi
     fi
   fi
   if [[ $MODE = "replay" && $DOGCYCLE != "YES" ]]; then

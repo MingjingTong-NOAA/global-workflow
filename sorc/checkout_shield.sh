@@ -2,12 +2,16 @@
 #set -xue
 set -x
 
-while getopts "o" option;
-do
+while getopts "om:" option; do
  case $option in
   o)
    echo "Received -o flag for optional checkout of operational-only codes"
    checkout_gtg="YES"
+   checkout_wafs="YES"
+   ;;
+  m)
+   echo "Received -m flag with argument, will check out ufs-weather-model hash $OPTARG instead of default"
+   ufs_model_hash=$OPTARG
    ;;
   :)
    echo "option -$OPTARG needs an argument"
@@ -49,7 +53,7 @@ if [[ ! -d gldas.fd ]] ; then
     rm -f ${topdir}/checkout-gldas.log
     git clone https://github.com/NOAA-EMC/GLDAS.git gldas.fd >> ${logdir}/checkout-gldas.fd.log 2>&1
     cd gldas.fd
-    git checkout gldas_gfsv16_release.v1.15.0
+    git checkout gldas_gfsv16_release.v.1.28.0
     cd ${topdir}
 else
     echo 'Skip.  Directory gldas.fd already exists.'
@@ -69,9 +73,9 @@ fi
 echo UPP checkout ...
 if [[ ! -d gfs_post.fd ]] ; then
     rm -f ${topdir}/checkout-gfs_post.log
-    git clone https://github.com/NOAA-EMC/UPP.git gfs_post.fd >> ${logdir}/checkout-gfs_post.log 2>&1
+    git clone https://github.com/MingjingTong-NOAA/UPP.git gfs_post.fd >> ${logdir}/checkout-gfs_post.log 2>&1
     cd gfs_post.fd
-    git checkout upp_v10.0.8
+    git checkout gfdl_mtong
     git submodule update --init CMakeModules
     ################################################################################
     # checkout_gtg

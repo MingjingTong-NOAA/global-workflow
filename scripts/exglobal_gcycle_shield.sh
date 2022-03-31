@@ -159,7 +159,7 @@ OSUFFIX=${OSUFFIX:-""}
 
     if [ $DO_TREF_TILE = ".true." ]; then
        for n in $(seq 1 $ntiles); do
-          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
        done
     fi
 

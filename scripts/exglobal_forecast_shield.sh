@@ -821,21 +821,20 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
     fi
   fi
   consv_te=1.
+  k_split=${k_split:-1}
+  n_split=${n_split:-8}
 else # hydrostatic options
-
   hydrostatic=".true."
   phys_hydrostatic=".false."     # ignored when hydrostatic = T
   use_hydro_pressure=".false."   # ignored when hydrostatic = T
   make_nh=".false."              # running in hydrostatic mode
   consv_te=0.
+  k_split=${k_split:-2}
+  n_split=${n_split:-6}
 fi
 
 # Conserve total energy as heat globally
 consv_te=${consv_te:-1.} # range 0.-1., 1. will restore energy to orig. val. before physics
-
-# time step parameters in FV3
-k_split=${k_split:-2}
-n_split=${n_split:-6}
 
 if [ $(echo $MONO | cut -c-4) = "mono" ];  then # monotonic options
 
@@ -1142,9 +1141,9 @@ cat >> input.nml <<EOF
 
 &gfs_physics_nml
   fhzero       = $FHZER
-  h2o_phys     = ${h2o_phys:-".false."}
   ldiag3d      = ${ldiag3d:-".false."}
   fhcyc        = $FHCYC
+  nst_anl      = $nst_anl
   use_ufo      = ${use_ufo:-".true."}
   pre_rad      = ${pre_rad:-".false."}
   ncld         = ${ncld:-5}
@@ -1179,7 +1178,7 @@ cat >> input.nml <<EOF
   isot         = ${isot:-"1"}
   ysupbl       = ${ysupbl:-".false."}
   satmedmf     = ${satmedmf:-".true."}
-  isatmedmf    = ${isatmedmf:-"1"}
+  isatmedmf    = ${isatmedmf:-"0"}
   do_dk_hb19   = .false.
   xkzminv      = 0.0
   xkzm_m       = 1.5
@@ -1195,7 +1194,6 @@ cat >> input.nml <<EOF
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
   nstf_name    = $nstf_name
-  nst_anl      = $nst_anl
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}

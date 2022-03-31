@@ -40,9 +40,6 @@ fi
 export TYPE="nh"
 export MONO="non-mono"
 
-# Use stratosphere h2o physics (not for SHiELD)
-export h2o_phys=".true."
-
 # Options of stratosphere O3 physics reaction coefficients (not for SHiELD)
 export new_o3forc="YES"
 
@@ -64,7 +61,7 @@ fi
 export hybedmf=".false."
 export ysupbl=".false."
 export satmedmf=".true."
-export isatmedmf=1
+export isatmedmf=0
 tbf=""
 if [ $satmedmf = ".true." ]; then tbf="_satmedmf" ; fi
 

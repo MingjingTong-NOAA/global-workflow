@@ -73,6 +73,8 @@ case $case_in in
         ;;
     "C192")
         export DELTIM=450
+        export n_split=8
+        export k_split=1
         export layout_x=5
         export layout_y=6
         export layout_x_gfs=5
@@ -80,6 +82,7 @@ case $case_in in
         export nth_fv3=2
         export nth_fv3_gfs=2
         export cdmbgwd="0.2,2.5"  # mountain blocking, ogwd, cgwd, cgwd src scaling
+        export fv_sg_adj=1800
         export WRITE_GROUP=1
         export WRTTASK_PER_GROUP=$npe_node_max
         export WRITE_GROUP_GFS=2
@@ -88,6 +91,8 @@ case $case_in in
         ;;
     "C384")
         export DELTIM=240
+        export n_split=8
+        export k_split=1
         export layout_x=6
         export layout_y=10
         export layout_x_gfs=6
@@ -95,6 +100,7 @@ case $case_in in
         export nth_fv3=2
         export nth_fv3_gfs=2
         export cdmbgwd="1.0,1.2"  # mountain blocking, ogwd, cgwd, cgwd src scaling
+        export fv_sg_adj=1200
         export WRITE_GROUP=1
         export WRTTASK_PER_GROUP=$npe_node_max
         export WRITE_GROUP_GFS=2
@@ -103,6 +109,8 @@ case $case_in in
         ;;
     "C768")
         export DELTIM=150
+        export n_split=8
+        export k_split=1
         export layout_x=6
         export layout_y=15
         export layout_x_gfs=6
@@ -110,6 +118,7 @@ case $case_in in
         export nth_fv3=4
         export nth_fv3_gfs=7
         export cdmbgwd="3.5,0.25"  # mountain blocking, ogwd, cgwd, cgwd src scaling
+        export fv_sg_adj=600
         export WRITE_GROUP=2
         export WRTTASK_PER_GROUP=$(echo "2*$npe_node_max" |bc)
         export WRITE_GROUP_GFS=8
@@ -124,7 +133,7 @@ case $case_in in
         export layout_y_gfs=16
         export nth_fv3=4
         export nth_fv3_gfs=4
-        export cdmbgwd="4.0,0.10,1.0,1.0"  # mountain blocking, ogwd, cgwd, cgwd src scaling
+        export cdmbgwd="5.0, 0.25"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=4
         export WRTTASK_PER_GROUP=$(echo "2*$npe_node_max" |bc)
         export WRITE_GROUP_GFS=4
@@ -139,7 +148,7 @@ case $case_in in
         export layout_y_gfs=32
         export nth_fv3=4
         export nth_fv3_gfs=4
-        export cdmbgwd="4.0,0.05,1.0,1.0"  # mountain blocking, ogwd, cgwd, cgwd src scaling
+        export cdmbgwd="5.0, 0.25"  # mountain blocking, ogwd, cgwd, cgwd src scaling
         export WRITE_GROUP=4
         export WRTTASK_PER_GROUP=$(echo "3*$npe_node_max" |bc)
         export WRITE_GROUP_GFS=4

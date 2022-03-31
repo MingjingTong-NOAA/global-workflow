@@ -218,6 +218,7 @@ def input_args():
                           choices=[0, 1, 2, 4], default=1, required=False)
         subp.add_argument('--start', help='restart mode: warm or cold', type=str,
                           choices=['warm', 'cold'], required=False, default='cold')
+        subp.add_argument('--gfs_delay', help='number of days to delay GFS cycle', type=int, default=0, required=False)
 
     # cycled mode additional arguments
     cycled.add_argument('--resens', help='resolution of the ensemble model forecast',

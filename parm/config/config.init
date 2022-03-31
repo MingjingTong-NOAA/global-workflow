@@ -18,10 +18,6 @@ export CRES_HIRES=$CASE
 export CRES_ENKF=$CASE_ENKF
 
 export RUNICSH=${GDASINIT_DIR}/run_v16.chgres.sh
-#if [ "${RETRO:-"NO"}" = "YES" ] || [ "$CDUMP" = "gdas" ]; then
-if [ "${RETRO:-"NO"}" = "YES" ]; then
-  export RUNICSH=${GDASINIT_DIR}/run_v16retro.chgres.sh
-fi
 
 if [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
   # No ENKF data prior to 2012/05/21/00z

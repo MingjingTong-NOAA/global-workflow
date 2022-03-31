@@ -14,8 +14,12 @@ echo "BEGIN: config.efcs"
 export npe_fv3=$npe_efcs
 
 # Number of enkf members per fcst job
-export NMEM_EFCSGRP=8
+export NMEM_EFCSGRP=4
 export RERUN_EFCSGRP="NO"
+
+# time step parameters in FV3
+k_split=2
+n_split=6
 
 # Stochastic physics parameters (only for ensemble forecasts)
 export DO_SKEB="YES"
@@ -38,16 +42,8 @@ export SPPT_SFCLIMIT=".true."
 
 export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
 
-# FV3 model namelist parameters to over-ride
-export restart_interval=${restart_interval:-6}
-
 export npe_c2g=$(((FHMAX_ENKF-FHMIN_ENKF)/FHOUT_ENKF+1))
 
-# For IAU, write restarts at beginning of window also
-if [ $DOIAU_ENKF = "YES" ]; then
-    export restart_interval="6 -1"
-    if [[ "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]; then export restart_interval="3 -1"; fi # Cold starting
-fi
 
 
 export replay=0

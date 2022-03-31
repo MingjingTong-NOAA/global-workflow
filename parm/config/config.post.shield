@@ -13,7 +13,7 @@ echo "BEGIN: config.post"
 
 # No. of concurrent post jobs [0 implies sequential]
 #export NPOSTGRP=42
-export NPOSTGRP=10
+export NPOSTGRP=6
 export OUTTYP=4
 export MODEL_OUT_FORM=binarynemsiompiio
 if [ $OUTPUT_FILE = "netcdf" ]; then 

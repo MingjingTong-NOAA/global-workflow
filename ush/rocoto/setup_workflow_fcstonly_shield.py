@@ -339,6 +339,9 @@ def get_workflow(dict_configs, cdump='gdas'):
         data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.atmanl.nemsio'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
+        data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/atmos/{icdump}.t@Hz.atmanl.nemsio'
+        dep_dict = {'type':'data', 'data':data}
+        deps.append(rocoto.add_dependency(dep_dict))
         data = f'&ICSDIR;/{icdump}.@Y@m@d/@H/{icdump}.t@Hz.atmanl.nc'
         dep_dict = {'type':'data', 'data':data}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -496,7 +499,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
 
     # vrfy
-    if do_vrfy in ['Y', 'YES']:
+    if do_post in ['Y', 'YES'] and do_vrfy in ['Y', 'YES']:
         deps = []
         dep_dict = {'type':'metatask', 'name':f'{cdump}post'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -506,7 +509,7 @@ def get_workflow(dict_configs, cdump='gdas'):
         tasks.append('\n')
 
     # metp
-    if do_metp in ['Y', 'YES']:
+    if do_post in ['Y', 'YES'] and do_metp in ['Y', 'YES']:
         deps = []
         dep_dict = {'type':'metatask', 'name':f'{cdump}post'}
         deps.append(rocoto.add_dependency(dep_dict))
