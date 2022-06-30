@@ -174,4 +174,11 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 	#   fi
 fi
 
+# iasi-metop-a discontinued since 2021102612
+# set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
+LEVA=$((LEVS - 1))
+if [[ "$CDATE" -lt "2021102612" ]]; then
+   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVA}.txt_2021102612
+fi
+
 echo "END: config.anal"

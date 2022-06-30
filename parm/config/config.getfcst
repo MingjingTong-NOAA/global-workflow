@@ -1,0 +1,15 @@
+#!/bin/ksh -x
+
+########## config.getfcst ##########
+# Ensemble pull specific
+
+echo "BEGIN: config.getfcst"
+
+# Get task specific resources
+. $EXPDIR/config.resources getfcst
+
+export FTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch"
+
+export FCSTEXP="sfree_Jan"
+
+echo "END: config.getfcst"

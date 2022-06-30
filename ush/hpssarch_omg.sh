@@ -36,7 +36,9 @@ fi
 
 # run replayinc for free mode for diagnostic purpose
 # atminc.nc is in standard archive for other mode
-echo "${dirname}${head}atminc*" >>${type}omg.txt
+if [[ $MODE == "replay" ]]; then
+  echo "${dirname}${head}atminc*" >>${type}omg.txt
+fi
 
 exit 0
 

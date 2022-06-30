@@ -281,7 +281,7 @@ if __name__ == '__main__':
 
     if create_comrot:
         makedirs_if_missing(comrot)
-        fill_COMROT(host, user_inputs)
+        """fill_COMROT(host, user_inputs)"""
 
     if create_expdir:
         makedirs_if_missing(expdir)

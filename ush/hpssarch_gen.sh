@@ -34,7 +34,7 @@ DO_WAVE=${DO_WAVE:-"NO"}
 DO_OCN=${DO_OCN:-"NO"}
 DO_ICE=${DO_ICE:-"NO"}
 arch4omg=${arch4omg:-"YES"}
-omgrun=${omgrun:"-NO"}
+omgrun=${omgrun:-"NO"}
 
 #-----------------------------------------------------
 if [ $type = "gfs" ]; then
@@ -94,7 +94,7 @@ if [ $type = "gfs" ]; then
   fi
 
   if [ $ARCH_GAUSSIAN = "YES" ]; then
-    if [[ $arch4omg = "YES" && $FHOUT_aux -gt 0 ]]; then
+    if [[ $arch4omg == "YES" || $FHOUT_aux -gt 0 ]]; then
       fh=3
       while [ $fh -le 9 ]; do
         fhr=$(printf %03i $fh)
@@ -112,10 +112,13 @@ if [ $type = "gfs" ]; then
         fh=$((fh+ARCH_GAUSSIAN_FHINC))
       done
     else
-      fhi=0
+      fhi=6
     fi
     if [ $omgrun = "NO" ]; then
       fh=$fhi
+      if [ $ARCH_GAUSSIAN_FHMAX -gt $FHMAX_GFS ]; then
+        ARCH_GAUSSIAN_FHMAX=$FHMAX_GFS
+      fi
       while [ $fh -le $ARCH_GAUSSIAN_FHMAX ]; do
         fhr=$(printf %03i $fh)
         echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
@@ -128,18 +131,17 @@ if [ $type = "gfs" ]; then
   #..................
   # Exclude the gfsarch.log file, which will change during the tar operation
   #  This uses the bash extended globbing option
-  if [ $omgrun = "NO" ]; then
   echo  "./logs/${CDATE}/gfs!(arch).log                    " >>gfsa.txt
-  echo  "${dirname}input.nml                               " >>gfsa.txt
-  if [ $MODE = "cycled" ]; then
+  #echo  "${dirname}input.nml                               " >>gfsa.txt
+  if [[ $MODE = "cycled" && $gfsanl = "YES" ]]; then
     echo  "${dirname}${head}gsistat                          " >>gfsa.txt
     echo  "${dirname}${head}nsstbufr                         " >>gfsa.txt
     echo  "${dirname}${head}prepbufr                         " >>gfsa.txt
     echo  "${dirname}${head}prepbufr_pre-qc                  " >>gfsa.txt
     echo  "${dirname}${head}prepbufr.acft_profiles           " >>gfsa.txt
+    echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
+    echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   fi
-  echo  "${dirname}${head}pgrb2.0p25.anl                   " >>gfsa.txt
-  echo  "${dirname}${head}pgrb2.0p25.anl.idx               " >>gfsa.txt
   #Only generated if there are cyclones to track
   cyclone_files=(avno.t${cyc}z.cyclone.trackatcfunix
                  avnop.t${cyc}z.cyclone.trackatcfunix
@@ -151,7 +153,6 @@ if [ $type = "gfs" ]; then
   for file in ${cyclone_files[@]}; do
     [[ -s $ROTDIR/${dirname}${file} ]] && echo "${dirname}${file}" >>gfsa.txt
   done
-  fi
 
   if [ $DO_DOWN = "YES" ]; then
    if [ $DO_BUFRSND = "YES" ]; then
@@ -346,6 +347,7 @@ if [ $type = "gdas" ]; then
     echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gdas.txt
     if [ -s $ROTDIR/${dirpath}${head}atmanl.ensres${SUFFIX} ]; then
        echo  "${dirname}${head}atmanl.ensres${SUFFIX}  " >>gdas.txt
+       echo  "${dirname}${head}atmf006.ensres${SUFFIX}  " >>gdas.txt
     fi
     if [ -s $ROTDIR/${dirpath}${head}atma003.ensres${SUFFIX} ]; then
        echo  "${dirname}${head}atma003.ensres${SUFFIX}  " >>gdas.txt

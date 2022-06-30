@@ -60,6 +60,7 @@ def main():
     hyb_steps = ['eobs', 'ediag', 'eomg', 'eupd', 'ecen', 'esfc', 'efcs', 'echgres', 'epos', 'earc']
 
     steps = gfs_steps + hyb_steps if _base.get('DOHYBVAR', 'NO') == 'YES' else gfs_steps
+    steps = steps + ['eget'] if _base.get('ENSREPLAY', 'NO') == 'YES' else steps
     steps = steps + metp_steps if _base.get('DO_METP', 'NO') == 'YES' else steps
     steps = steps + gfs_steps_gempak if _base.get('DO_GEMPAK', 'NO') == 'YES' else steps
     steps = steps + gfs_steps_awips if _base.get('DO_AWIPS', 'NO') == 'YES' else steps
@@ -247,14 +248,18 @@ def get_gdasgfs_resources(dict_configs, cdump='gdas'):
     do_wave_cdump = base.get('WAVE_CDUMP', 'BOTH').upper()
     do_gfsanl = base.get('gfsanl', 'YES').upper()
     do_tref = base.get('DO_TREF_TILE', ".true.")
+    ensreplay = base.get('ENSREPLAY', 'NO').upper()
     reservation = base.get('RESERVATION', 'NONE').upper()
 
     #tasks = ['prep', 'anal', 'fcst', 'post', 'vrfy', 'arch']
     if cdump in ['gdas'] or do_gfsanl in ['Y', 'YES']:
         if do_tref == ".true.": 
-            tasks = ['getic', 'init', 'prep', 'anal', 'analcalc']
+            tasks = ['getic', 'init', 'prep']
         else:
-            tasks = ['prep', 'anal', 'analcalc']
+            tasks = ['prep']
+        if ensreplay in ['Y', 'YES']:
+            tasks += ['eget']
+        tasks += ['anal', 'analcalc']
     else:
         tasks = []
 
@@ -298,7 +303,7 @@ def get_gdasgfs_resources(dict_configs, cdump='gdas'):
         strings = []
         strings.append(f'\t<!ENTITY QUEUE_{taskstr}     "{queuestr}">\n')
         if scheduler in ['slurm']:
-            if task in ['getic','arch']:
+            if task in ['getic','eget','arch']:
                 strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_SERVICE;">\n')
             else:
                 strings.append(f'\t<!ENTITY PARTITION_{taskstr} "&PARTITION_BATCH;">\n')
@@ -430,6 +435,14 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     do_tref = base.get('DO_TREF_TILE',".true.")
     dumpsuffix = base.get('DUMP_SUFFIX', '')
     gridsuffix = base.get('SUFFIX', '')
+    warm_start = base.get('EXP_WARM_START', ".false.")
+    ensreplay = base.get('ENSREPLAY', 'NO').upper()
+
+    if cdump in ['gdas'] and ensreplay in ['Y', 'YES']:
+        ensgrp = rocoto.create_envar(name='ENSGRP', value='#grp#')
+        envar_cdump = rocoto.create_envar(name='CDUMP', value=f'{cdump}')
+        envars1 = envars + [envar_cdump]
+
 
     dict_tasks = OrderedDict()
 
@@ -460,7 +473,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         dict_tasks[f'{cdump}prep'] = task
 
     # getic
-    if do_tref == ".true." and cdump in ['gdas']:
+    if cdump in ['gdas'] and (do_tref == ".true." or warm_start == ".true."):
         deps = []
         dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -469,6 +482,10 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00',
                     'data2': data2}
         deps.append(rocoto.add_dependency(dep_dict))
+        if warm_start == ".true.":
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
 
         task = wfu.create_wf_task('getic', cdump=cdump, envar=envars, dependency=dependencies)
@@ -477,7 +494,7 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
 
 
     # init
-    if do_tref == ".true." and cdump in ['gdas']:
+    if cdump in ['gdas'] and do_tref == ".true.":
         deps = []
         dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -487,6 +504,25 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
 
         dict_tasks[f'{cdump}init'] = task
 
+    # egmn, eget
+    if cdump in ['gdas'] and ensreplay in ['Y', 'YES']:
+        
+        nens = base['NMEM_ENKF']
+        eget = dict_configs['eget']
+        nens_eget = eget['NMEM_EARCGRP']
+        neget_grps = nens / nens_eget
+        EGETGROUPS = ' '.join([f'{x:02d}' for x in range(0, int(neget_grps) + 1)])
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        egetenvars = envars1 + [ensgrp]
+        task = wfu.create_wf_task('eget', cdump=cdump, envar=egetenvars, dependency=dependencies,
+                                  metatask='egmn',varname='grp', varval=EGETGROUPS)
+
+        dict_tasks[f'{cdump}egmn'] = task
 
     # wave tasks in gdas or gfs or both
     if do_wave_cdump in ['BOTH']:
@@ -527,6 +563,10 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
         if dohybvar in ['y', 'Y', 'yes', 'YES']:
             dep_dict = {'type': 'metatask', 'name': f'{"gdas"}epmn', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
+        if ensreplay in ['Y', 'YES']:
+            dep_dict = {'type': 'metatask', 'name': f'{"gdas"}egmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         task = wfu.create_wf_task('anal', cdump=cdump, envar=envars, dependency=dependencies)
@@ -598,6 +638,10 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     if cdump in ['gdas']:
         dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
         deps1.append(rocoto.add_dependency(dep_dict))
+        if warm_start == ".true.":
+            dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
+            deps1.append(rocoto.add_dependency(dep_dict))
+            deps1 = rocoto.create_dependency(dep_condition='and', dep=deps1)
         if do_gldas in ['Y', 'YES']:
             dep_dict = {'type': 'task', 'name': f'{cdump}gldas'}
             deps1.append(rocoto.add_dependency(dep_dict))
@@ -970,6 +1014,9 @@ def get_gdasgfs_tasks(dict_configs, cdump='gdas'):
     if cdump in ['gfs'] and do_metp in ['Y', 'YES'] and do_post in ['Y', 'YES']:
         dep_dict = {'type':'metatask', 'name':f'{cdump}metp'}
         deps.append(rocoto.add_dependency(dep_dict))
+    if dohybvar in ['y', 'Y', 'yes', 'YES'] and cdump == 'gdas':
+        dep_dict = {'type': 'task', 'name': f'{"gdas"}echgres'}
+        deps.append(rocoto.add_dependency(dep_dict))
     if do_wave in ['Y', 'YES']:
       dep_dict = {'type': 'task', 'name': f'{cdump}wavepostsbs'}
       deps.append(rocoto.add_dependency(dep_dict))
@@ -996,6 +1043,7 @@ def get_hyb_tasks(dict_configs, cycledef='enkf'):
     nens = base['NMEM_ENKF']
     lobsdiag_forenkf = base.get('lobsdiag_forenkf', '.false.').upper()
     eupd_cyc = base.get('EUPD_CYC', 'gdas').upper()
+    warm_start = base.get('EXP_WARM_START', ".false.")
 
     eobs = dict_configs['eobs']
     nens_eomg = eobs['NMEM_EOMGGRP']
@@ -1143,9 +1191,13 @@ def get_hyb_tasks(dict_configs, cycledef='enkf'):
     dependencies1 = rocoto.create_dependency(dep_condition='and', dep=deps1)
 
     deps2 = []
-    deps2 = dependencies1
     dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
     deps2.append(rocoto.add_dependency(dep_dict))
+    if warm_start == ".true.":
+        dep_dict = {'type': 'task', 'name': f'{cdump}getic'}
+        deps2.append(rocoto.add_dependency(dep_dict))
+        deps2 = rocoto.create_dependency(dep_condition='and', dep=deps2)
+    deps2.append(dependencies1)
     dependencies2 = rocoto.create_dependency(dep_condition='or', dep=deps2)
 
     efcsenvars = envars1 + [ensgrp]

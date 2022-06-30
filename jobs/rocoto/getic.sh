@@ -67,33 +67,37 @@ if [ ! -d $EXTRACT_DIR ]; then mkdir -p $EXTRACT_DIR ; fi
 cd $EXTRACT_DIR
 
 # Check version, cold/warm start, and resolution
-if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then # Pull warm start ICs - no chgres
+if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; then # Pull warm start ICs - no chgres
 
+  # there is problem pulling all warm start data at once, so pull data before running DA cycle 
+  if [ -d $ROTDIR/gdas.${PDY} ]; then 
+     echo "IC exists, skip pulling data"
+     exit 0
+  else
+     echo "Prepare IC before running warm-start DA cycling"
+     exit 99
+  fi
+ 
   # Pull RESTART files off HPSS
-  if [ ${RETRO:-"NO"} = "YES" ]; then # Retrospective parallel input
+  cd $ROTDIR
+  RESTARTEXP=${RESTARTEXP:-${PSLOT}}
+  htar -xvf ${HPSSEXPDIR}/$RESTARTEXP/$GDATE/gdas_restartb.tar
+  status=$?
+  [[ $status -ne 0 ]] && exit $status
+  htar -xvf ${HPSSEXPDIR}/$RESTARTEXP/$CDATE/gdas_restarta.tar
+  status=$?
+  [[ $status -ne 0 ]] && exit $status
 
-    # Pull prior cycle restart files
-    htar -xvf ${HPSSDIR}/${GDATE}/gdas_restartb.tar
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-
-    # Pull current cycle restart files
-    htar -xvf ${HPSSDIR}/${CDATE}/gfs_restarta.tar
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-
-    # Pull IAU increment files
-    htar -xvf ${HPSSDIR}/${CDATE}/gfs_netcdfa.tar
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-
-  else # Opertional input - warm starts
-
-    cd $ROTDIR
-    # Pull CDATE gfs restart tarball
-    htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/com_gfs_prod_gfs.${yy}${mm}${dd}_${hh}.gfs_restart.tar
-    # Pull GDATE gdas restart tarball
-    htar -xvf ${PRODHPSSDIR}/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}/com_gfs_prod_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
+  if [ $DOHYBVAR = "YES" ]; then
+    for igp in $(seq 1 8); do
+       gpn=$(printf %02i $igp)
+       htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/enkfgdas_restartb_grp${gpn}.tar
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
+       htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/enkfgdas_restarta_grp${gpn}.tar
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
+    done
   fi
 
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
@@ -112,6 +116,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
   fi
 fi
 
+cd $EXTRACT_DIR
 # Move extracted data to ICSDIR
 if [ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
   mkdir -p ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
@@ -204,7 +209,7 @@ if [[ $gfs_ver = "v16" ]]; then
          echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc  " >>list.txt
        fi
     
-       if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
+       if [[ (${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500") || ${REDUCEDRES:-"NO"} = "YES" ]]; then
           export tarball="${ICDUMP}_restarta.tar"
           htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt 
           status=$?
@@ -253,7 +258,7 @@ if [[ $gfs_ver = "v16" ]]; then
 fi
 
 # Pull surface analysis file for warm-start run
-if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
+if [[ $MODE = "replay" && $EXP_WARM_START = ".true." ]]; then
   if [[ ( $CDUMP = "gfs" && $gfsanl = "NO" ) || "$CDATE" = "$SDATE" ]]; then
     if [[ ! -d $ROTDIR/gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART && $DOGCYCLE = "YES" ]]; then
       cd $ROTDIR
@@ -267,14 +272,14 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
       #tarball="gdas_restartb.tar"
       # new run
       tarball="gdas_restarta.tar"
-      htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/${tarball} -L ./list.txt
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi
     if [ ! -d $ROTDIR/gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/RESTART ]; then
       cd $ROTDIR
       tarball="gdas_restartb.tar"
-      htar -xvf ${HPSSEXPDIR}/${GDATE}/${tarball}
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/${tarball}
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi
@@ -285,7 +290,7 @@ if [[ $MODE != "free" && $EXP_WARM_START = ".true." ]]; then
      echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atminc.nc "  >>list.txt
      echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atmi009.nc " >>list.txt
      tarball="gdas.tar"
-     htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} -L ./list.txt
+     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/${tarball} -L ./list.txt
      status=$?
      [[ $status -ne 0 ]] && exit $status
   fi

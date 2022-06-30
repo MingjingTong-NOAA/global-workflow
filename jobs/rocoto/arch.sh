@@ -75,12 +75,12 @@ fi
 $NCP ${APREFIX}pgrb2.1p00.anl $ARCDIR/pgbanl.${CDUMP}.${CDATE}.grib2
 
 # Archive 1 degree forecast GRIB2 files for verification
-if [[ $CDUMP = "gdas" || $FHMAX_GFS -le 9 ]]; then
-    flist="000 003 006 009"
+if [ $CDUMP = "gdas" -o $FHMAX_GFS -le 9 ]; then
+    flist="0 3 6 9"
     for fhr in $flist; do
-        fname=${APREFIX}pgrb2.1p00.f${fhr}
         fhr2=$(printf %02i $fhr)
-        $NCP $fname $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
+        fhr3=$(printf %03i $fhr)
+        $NCP ${APREFIX}pgrb2.1p00.f${fhr3} $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
     done
 else
     fhmax=$FHMAX_GFS
@@ -126,11 +126,6 @@ if [ $CDUMP = "gfs" -a $FITSARC = "YES" ]; then
     prefix=${CDUMP}.t${cyc}z
     fhmax=${FHMAX_FITS:-$FHMAX_GFS}
     fhr=0
-    if [ $fhmax -le 9 ]; then
-      dt=3
-    else
-      dt=6
-    fi
     while [[ $fhr -le $fhmax ]]; do
 	fhr3=$(printf %03i $fhr)
 	sfcfile=${prefix}.sfcf${fhr3}${ASUFFIX}
@@ -313,6 +308,10 @@ GDATEEND=$($NDATE -${RMOLDEND:-24}  $CDATE)
 GDATE=$($NDATE -${RMOLDSTD:-120} $CDATE)
 GLDAS_DATE=$($NDATE -96 $CDATE)
 RTOFS_DATE=$($NDATE -48 $CDATE)
+if [[ $EXP_WARM_START == ".true." && $GDATE -lt $SDATE ]]; then
+   exit 0
+fi
+   
 while [ $GDATE -le $GDATEEND ]; do
     gPDY=$(echo $GDATE | cut -c1-8)
     gcyc=$(echo $GDATE | cut -c9-10)
@@ -413,6 +412,21 @@ fi
 rPDY=$(echo $RDATE | cut -c1-8)
 COMIN="$ROTDIR/$CDUMP.$rPDY"
 [[ -d $COMIN ]] && rm -rf $COMIN
+
+exit 0
+
+if [ $ENSREPLAY = "YES" ]; then
+# Remove enkf*.$rPDY for the older of GDATE or RDATE
+GDATE=$($NDATE -${RMOLDSTD_ENKF:-48} $CDATE)
+fhmax=$FHMAX_GFS
+RDATE=$($NDATE -$fhmax $CDATE)
+if [ $GDATE -lt $RDATE ]; then
+    RDATE=$GDATE
+fi
+rPDY=$(echo $RDATE | cut -c1-8)
+COMIN="$ROTDIR/enkfgdas.$rPDY"
+[[ -d $COMIN ]] && rm -rf $COMIN
+fi
 
 
 ###############################################################

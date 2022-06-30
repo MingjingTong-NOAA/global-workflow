@@ -9,6 +9,7 @@ echo "BEGIN: config.getic"
 . $EXPDIR/config.resources getic
 
 export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
+export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
 export gfs_ver="v16" # Default = v16
 export ICDUMP="gdas"
 export START="cold"
@@ -37,8 +38,10 @@ if [[ "$CDATE" -lt "2021032106" && ${RETRO:-"NO"} = "YES" ]]; then # Retrospecti
     echo NO DATA FOR $CDATE
     exit 3
   fi
-#elif [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
-else
+elif [ ${REDUCEDRES:-"NO"} = "YES" ]; then # gfs reduced resolution experiment input
+  export GETICSH=${GDASINIT_DIR}/get_v16reducedres.data.sh
+  export HPSSDIR=/NCEPDEV/emc-da/2year/Catherine.Thomas/HERA/scratch/v16x_june_ctl
+else # Operational input
   # No ENKF data prior to 2012/05/21/00z
   if [[ "$CDATE" -lt "2012052100" ]]; then
     set +x
@@ -74,6 +77,6 @@ if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then
    export IAUFHRS="6"
 fi
 
-export HPSSEXPDIR=/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch/${PSLOT}
+export HPSSEXPDIR=/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch
 
 echo "END: config.getic"

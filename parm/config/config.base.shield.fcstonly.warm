@@ -212,6 +212,7 @@ export IAU_OFFSET=6
 export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
 export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
+export IAU_FILTER_INCREMENTS=".false."
 # Check if cycle is cold starting, DOIAU off, or free-forecast mode
 if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "free" && $EXP_WARM_START = ".false." ]] ; then
   export IAU_OFFSET=0
@@ -219,7 +220,7 @@ if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=1
+export replay=0
 # number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="NO"
@@ -230,6 +231,7 @@ if [ "$MODE" = "replay" ]; then
    fi
    if [ $replay_4DIAU = "NO" ]; then
       export IAUFHRS="6"
+      export IAU_FILTER_INCREMENTS=".true."
    fi
 else
    export replay=0
@@ -243,7 +245,7 @@ export DO_GLDAS="NO"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
-export DOGCYCLE="YES"
+export DOGCYCLE="NO"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -260,6 +262,7 @@ export imp_physics=11
 # Shared parameters
 # Hybrid related
 export DOHYBVAR="NO"
+export ENSREPLAY="NO"
 export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
@@ -278,6 +281,11 @@ if [ $DOHYBVAR = "YES" ]; then
     else
         export FHOUT_ENKF=3
     fi
+fi
+
+if [ $ENSREPLAY = "YES" ]; then
+   export ENSFROM="sda_cntl"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst

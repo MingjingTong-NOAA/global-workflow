@@ -27,7 +27,7 @@ for config in $configs; do
     [[ $status -ne 0 ]] && exit $status
 done
 
-[[ $do_analinc != "YES" ]] && exit 0
+[[ ${do_analinc:-"NO"} != "YES" ]] && exit 0
 
 ###############################################################
 # Source machine runtime environment

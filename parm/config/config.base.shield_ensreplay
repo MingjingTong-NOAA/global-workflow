@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"        # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -99,8 +99,8 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
+export RESTARTEXP="sda_cntl"
 export assim_freq=6
-export ICDUMP="@ICDUMP@"
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
 export ROTDIR="@ROTDIR@/$PSLOT"
@@ -113,8 +113,6 @@ export RUNDIR="$STMP/RUNDIRS/$PSLOT"
 export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
-export ICSTYP="@ICSTYP@"
-export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
 
 # Commonly defined parameters in JJOBS
@@ -165,7 +163,6 @@ export EUPD_CYC="gdas"
 export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
 export gfs_delay=@gfs_delay@
 export gfsanl="NO"
-export interval_days=0
 
 # GFS output and frequency
 export FHMIN_GFS=0
@@ -182,8 +179,8 @@ export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
-export FHOUT_aux=1
-export FHDUR_aux=9
+export FHOUT_aux=0
+export FHDUR_aux=6
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
@@ -204,7 +201,7 @@ fi
 export DO_CUBE2GAUS="YES"
 
 # IAU related parameters
-export DOIAU="NO"        # Enable 4DIAU for control with 3 increments
+export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
 export IAUFHRS="3,6,9"
 export IAU_FHROT=`echo $IAUFHRS | cut -c1`
 export IAU_DELTHRS=6
@@ -241,11 +238,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="NO"
+export DO_GLDAS="YES"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
-export DOGCYCLE="NO"
+export DOGCYCLE="YES"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -262,7 +259,7 @@ export imp_physics=11
 # Shared parameters
 # Hybrid related
 export DOHYBVAR="NO"
-export ENSREPLAY="NO"
+export ENSREPLAY="YES"
 export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
@@ -335,12 +332,11 @@ export netcdf_diag=".true."
 export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
-export DO_OmF="YES"
-export do_analinc="NO"
+export DO_OmF="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="NO"
+export gdaspost="YES"
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"

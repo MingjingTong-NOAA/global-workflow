@@ -60,6 +60,7 @@ export RUNICSH=${RUNICSH:-${GDASINIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
 COMOUT=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
+export SAVEDIR=$COMOUT/${CASE}/INPUT
 
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
@@ -68,7 +69,7 @@ if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; the
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
   if [[ $MODE = "free" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
-    if [[ ! -d ${COMOUT}/INPUT ]]; then
+    if [[ ! -d $SAVEDIR ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}
       status=$?
@@ -85,14 +86,14 @@ else
     if [[ ! -d ${COMOUTatmos}/INPUT ]]; then
       if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
          mkdir -p ${COMOUTatmos}/INPUT
-         cd ${COMOUT}/INPUT
+         cd ${SAVEDIR}
          for file in $(ls gfs_data.tile*.nc); do
             ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT $file -O ${COMOUTatmos}/INPUT/$file
          done
          ncks -d levsp,1,$LEVS_INIT gfs_ctrl.nc -O ${COMOUTatmos}/INPUT/gfs_ctrl.nc
-         $NLN ${COMOUT}/INPUT/sfc_data.tile*.nc ${COMOUTatmos}/INPUT/
+         $NLN ${SAVEDIR}/sfc_data.tile*.nc ${COMOUTatmos}/INPUT/
       else
-         $NLN ${COMOUT}/INPUT ${COMOUTatmos}/INPUT
+         $NLN ${SAVEDIR} ${COMOUTatmos}/INPUT
       fi
       $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
       $NLN ${COMOUT}/*radstat ${COMOUTatmos}/

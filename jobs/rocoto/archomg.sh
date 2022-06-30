@@ -77,13 +77,19 @@ fi
 cd $ROTDIR
 
 htar -P -cvf $ATARDIR/$CDATE/${CDUMP}omg.tar `cat $ARCH_LIST/${CDUMP}omg.txt`
+status=$?
+if [ $status -ne 0  ]; then
+    echo "htar -P -cvf failed, ABORT!"
+    exit $status
+fi
+
 
 ###############################################################
 # Remove IC data directory
 ###############################################################
 RMCDUMP=${RMCDUMP:-"NO"}
-GDATEEND=$($NDATE -48 $CDATE)
-GDATE=$($NDATE -96 $CDATE)
+GDATEEND=$($NDATE -${RMOLDEND:-24} $CDATE)
+GDATE=$($NDATE -${RMOLDSTD:-96} $CDATE)
 while [ $GDATE -le $GDATEEND ]; do
     gPDY=$(echo $GDATE | cut -c1-8)
     gcyc=$(echo $GDATE | cut -c9-10)

@@ -16,5 +16,6 @@ export FHMAX_FITS=132
 #--starting and ending hours of previous cycles to be removed from rotating directory
 export RMOLDSTD=144
 export RMOLDEND=24
+export RMCDUMP="YES"
 
 echo "END: config.archomg"

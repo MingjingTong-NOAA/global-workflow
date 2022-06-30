@@ -464,7 +464,7 @@ else ## cold start
   if [ $MODE = "cycled" ]; then
     icsdir=$memdir
   else
-    icsdir=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/atmos
+    icsdir=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/atmos/${CASE}
   fi
   for file in $(ls $icsdir/INPUT/*.nc); do
     file2=$(echo $(basename $file))
@@ -1047,7 +1047,7 @@ cat > input.nml <<EOF
   na_init = $na_init
   d_ext = 0.
   dnats = ${dnats:-1}
-  fv_sg_adj = ${fv_sg_adj:-"600"}
+  fv_sg_adj = ${fv_sg_adj:-"450"}
   d2_bg = 0.
   nord = ${nord:-3}
   dddmp = ${dddmp:-0.2}
@@ -1206,18 +1206,13 @@ if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
   iau_delthrs  = ${IAU_DELTHRS}
   iau_inc_files= ${IAU_INC_FILES}
   iau_drymassfixer = .false.
+  iau_filter_increments=${IAU_FILTER_INCREMENTS:-".false."}
 EOF
 fi
 
 if [ $replay -eq 1 ]; then
   cat >> input.nml << EOF
   iau_forcing_var = ${IAU_FORCING_VAR}
-EOF
-fi
-
-if [[ "$MODE" = "replay" && $DOIAU = "YES" && "$replay_4DIAU" = "NO" ]] ; then
-  cat >> input.nml << EOF
-  iau_filter_increments=.true.
 EOF
 fi
 

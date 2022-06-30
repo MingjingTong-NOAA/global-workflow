@@ -14,6 +14,6 @@ export NMEM_EARCGRP=10
 export RMOLDSTD_ENKF=144
 export RMOLDEND_ENKF=24
 
-export ARCH4ENSREPLAY="NO"
+export ARCH4ENSREPLAY="YES"
 
 echo "END: config.earc"

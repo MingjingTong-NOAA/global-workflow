@@ -222,6 +222,14 @@ elif [ $step = "init" ]; then
         export memory_init="70G"
     fi
 
+elif [ $step = "getic" -o $step = "getic4omg" -o $step = "getfcst" -o $step = "eget" ]; then
+
+    eval "export wtime_$step='06:00:00'"
+    eval "export npe_$step=1"
+    eval "export npe_node_$step=1"
+    eval "export nth_$step=1"
+    eval "export memory_$step=2048M"
+
 elif [ $step = "analinc" ]; then
 
     export wtime_analinc="00:10:00"
@@ -233,7 +241,7 @@ elif [ $step = "analinc" ]; then
     export nth_analinc=$npe_node_max
     export npe_node_analinc=1
 
-elif [ $step = "arch" -o $step = "earc" -o $step = "getic" -o $step = "getic4omg" -o $step = "archomg" ]; then
+elif [ $step = "arch" -o $step = "earc" -o $step = "archomg" ]; then
 
     eval "export wtime_$step='06:00:00'"
     eval "export npe_$step=1"
