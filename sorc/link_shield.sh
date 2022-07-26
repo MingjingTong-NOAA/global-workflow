@@ -37,6 +37,7 @@ elif [ $machine = "dell" ]; then
 elif [ $machine = "hera" ]; then
     FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix_NEW"
     fix_shield="/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/fix_shield"
+    fix_gsi_shield="/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/fix_gsi_shield"
 elif [ $machine = "orion" ]; then
     FIX_DIR="/work/noaa/global/glopara/fix_NEW"
 elif [ $machine = "jet" ]; then
@@ -171,7 +172,7 @@ cd ${pwd}/../scripts            ||exit 8
     $LINK ../sorc/gsi.fd/scripts/exgdas_atmos_chgres_forenkf.sh   .
 cd ${pwd}/../fix                ||exit 8
     [[ -d fix_gsi ]] && rm -rf fix_gsi
-    $LINK ../sorc/gsi.fd/fix  fix_gsi
+    $LINK $fix_gsi_shield fix_gsi
 cd ${pwd}/../ush                ||exit 8
     $LINK ../sorc/gsi.fd/ush/gsi_utils.py        .
     $LINK ../sorc/gsi.fd/ush/calcanl_gfs.py      .
