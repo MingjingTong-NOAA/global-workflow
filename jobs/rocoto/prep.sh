@@ -24,7 +24,11 @@ status=$?
 ###############################################################
 # Set script and dependency variables
 export COMPONENT=${COMPONENT:-atmos}
-export OPREFIX="${CDUMP}.t${cyc}z."
+if [ $MODE = "cycled" ]; then
+  export OPREFIX="${CDUMP}.t${cyc}z."
+else
+  export OPREFIX="${ICDUMP}.t${cyc}z."
+fi
 export COMOUT="$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
 [[ ! -d $COMOUT ]] && mkdir -p $COMOUT
 
@@ -98,7 +102,11 @@ if [ $DO_MAKEPREPBUFR = "YES" ]; then
         rm $COMOUT/${OPREFIX}nsstbufr
     fi
 
-    export job="j${CDUMP}_prep_${cyc}"
+    if [ $MODE = "cycled" ]; then
+       export job="j${CDUMP}_prep_${cyc}"
+    else
+       export job="j${ICDUMP}_prep_${cyc}"
+    fi
     export DATAROOT="$RUNDIR/$CDATE/$CDUMP/prepbufr"
     #export COMIN=${COMIN:-$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT}
     export COMIN=${COMIN:-$ROTDIR}
@@ -108,7 +116,11 @@ if [ $DO_MAKEPREPBUFR = "YES" ]; then
         COMIN_OBS=${COMIN_OBS:-$DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}}
         export COMSP=${COMSP:-$COMIN_OBS/$CDUMP.t${cyc}z.}
     else
-        export COMSP=${COMSP:-$ROTDIR/${CDUMP}.${PDY}/${cyc}/$COMPONENT/$CDUMP.t${cyc}z.}
+        if [ $MODE = "cycled" ]; then
+           export COMSP=${COMSP:-$ROTDIR/${CDUMP}.${PDY}/${cyc}/$COMPONENT/$CDUMP.t${cyc}z.}
+        else
+           export COMSP=${COMSP:-$ROTDIR/${CDUMP}.${PDY}/${cyc}/$COMPONENT/$ICDUMP.t${cyc}z.}
+        fi
     fi
 
     # Disable creating NSSTBUFR if desired, copy from DMPDIR instead
@@ -127,10 +139,18 @@ if [ $DO_MAKEPREPBUFR = "YES" ]; then
 
 else
     if [ $ROTDIR_DUMP = "NO" ]; then
-        $NCP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${OPREFIX}prepbufr               $COMOUT/${OPREFIX}prepbufr
-        $NCP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${OPREFIX}prepbufr.acft_profiles $COMOUT/${OPREFIX}prepbufr.acft_profiles
+        if [ -s $DMPDIR_S/${ICDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr ]; then
+           $NCP $DMPDIR_S/${ICDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr  $COMOUT/${OPREFIX}prepbufr
+        else
+           exit 99
+        fi
+        $NCP $DMPDIR_S/${ICDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr.acft_profiles $COMOUT/${OPREFIX}prepbufr.acft_profiles
         [[ $DONST = "YES" ]] && $NCP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${OPREFIX}nsstbufr $COMOUT/${OPREFIX}nsstbufr
     fi
+fi
+
+if [ ! -s $COMOUT/${OPREFIX}prepbufr ]; then
+   exit 99
 fi
 
 ################################################################################

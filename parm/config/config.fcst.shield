@@ -212,6 +212,9 @@ export npe_remap=$((npe_fcst < 240 ? npe_fcst : 240))
 
 if [[ "$CDUMP" == "gdas" ]] ; then
    export npe_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
+   if [ $CASE == "C192" ]; then
+      npe_c2g = $((npe_c2g/2))
+   fi
 else
    export npe_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
 fi

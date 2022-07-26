@@ -19,6 +19,7 @@ touch ${type}omg.txt
 dirpath="${type}.${PDY}/${cyc}/atmos/"
 dirname="./${dirpath}"
 head="${type}.t${cyc}z."
+head2="${ICDUMP}.t${cyc}z."
 SUFFIX=${SUFFIX:-".nc"}
 
 if [ -s $ROTDIR/${dirname}${head}gsistat ]; then
@@ -33,6 +34,12 @@ fi
 if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
    echo  "${dirname}${head}radstat" >>${type}omg.txt
 fi
+
+if [ $DO_MAKEPREPBUFR = "YES" ]; then
+   echo  "${dirname}${head2}prepbufr        " >>${type}omg.txt
+   echo  "${dirname}${head2}prepbufr_pre-qc " >>${type}omg.txt
+fi
+
 
 # run replayinc for free mode for diagnostic purpose
 # atminc.nc is in standard archive for other mode

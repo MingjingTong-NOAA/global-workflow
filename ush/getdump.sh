@@ -30,7 +30,11 @@ prefix="$SDUMP.t${cyc}z."
 cd $SOURCE_DIR
 if [ -s ${prefix}updated.status.tm00.bufr_d ]; then
     for file in $(ls ${prefix}*); do
-	ln -fs $SOURCE_DIR/$file $TARGET_DIR/$CDUMP.t${cyc}z.${file#${prefix}}
+        if [ $MODE == "cycled" ]; then
+	  ln -fs $SOURCE_DIR/$file $TARGET_DIR/$CDUMP.t${cyc}z.${file#${prefix}}
+        else
+          ln -fs $SOURCE_DIR/$file $TARGET_DIR/$ICDUMP.t${cyc}z.${file#${prefix}}
+        fi
     done
 else
     echo "***ERROR*** ${prefix}updated.status.tm00.bufr_d NOT FOUND in $SOURCE_DIR"

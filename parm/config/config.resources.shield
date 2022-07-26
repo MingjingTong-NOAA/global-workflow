@@ -120,6 +120,11 @@ elif [ $step = "fcst" ]; then
 
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_fcst="1024M"; fi
 
+    if [ $CASE = "C192" ]; then
+      export tasks_per_node_c2g=2
+      export cpus_per_task_c2g=20
+    fi
+
 elif [ $step = "post" ]; then
 
     export wtime_post="00:10:00"
@@ -355,6 +360,11 @@ elif [ $step = "efcs" ]; then
     export nth_efcs=${nth_fv3:-2}
     export npe_node_efcs=$(echo "$npe_node_max / $nth_efcs" | bc)
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_efcs="254M"; fi
+
+    if [ $CASE = "C192" ]; then
+      export tasks_per_node_c2g=4
+      export cpus_per_task_c2g=10
+    fi
 
 elif [ $step = "epos" ]; then
 

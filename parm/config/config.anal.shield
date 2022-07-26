@@ -59,10 +59,10 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 
 # Set default values for info files and observation error
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
-export CONVINFO=$FIXgsi/global_convinfo.txt
-export OZINFO=$FIXgsi/global_ozinfo.txt
+export CONVINFO=$FIXgsi/global_convinfo_shield.txt
+export OZINFO=$FIXgsi/global_ozinfo_shield.txt
 export SATINFO=$FIXgsi/global_satinfo_shield.txt
-export OBERROR=$FIXgsi/prepobs_errtable.global
+export OBERROR=$FIXgsi/prepobs_errtable.global.shield
 
 
 # Use experimental dumps in EMC GFS v16 parallels

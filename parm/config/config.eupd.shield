@@ -10,6 +10,8 @@ echo "BEGIN: config.eupd"
 
 export npe_enkf=$npe_eupd
 
+export ENKFUPDSH=$HOMEgfs/scripts/exgdas_enkf_update_shield.sh
+
 # Use NAM_ENKF below for serial EnKF
 ##export NAM_ENKF="analpertwtnh=0.9,analpertwtsh=0.9,analpertwttr=0.9"
 

@@ -100,6 +100,9 @@ if [ $type = "gfs" ]; then
         fhr=$(printf %03i $fh)
         echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
         echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gfs_${format}b.txt
+        if [ $DO_POST != "YES" ]; then
+           echo  "${dirname}${head}logf${fhr}.txt          " >>gfs_${format}b.txt
+        fi
         fh=$((fh+1))
       done
 

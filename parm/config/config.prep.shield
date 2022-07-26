@@ -1,0 +1,75 @@
+#!/bin/ksh -x
+
+########## config.prep ##########
+# Prep step specific
+
+echo "BEGIN: config.prep"
+
+# Get task specific resources
+. $EXPDIR/config.resources prep
+
+export DO_MAKEPREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
+if [ $DO_MAKEPREPBUFR != "YES" ]; then
+  export ROTDIR_DUMP="NO"
+  export DMPDIR_S="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/dump"
+fi
+if [ $MODE != "cycled" ]; then
+   export RUN="gdas"
+fi
+
+# Relocation and syndata QC
+export PROCESS_TROPCY=${PROCESS_TROPCY:-NO}
+[[ $RUN_ENVIR == "nco" && $envir == "prod" ]] && export PROCESS_TROPCY="YES"
+export DO_RELOCATE="NO"
+export TROPCYQCRELOSH="$HOMEgfs/scripts/exglobal_atmos_tropcy_qc_reloc.sh"
+export SENDCOM=YES
+
+export COMINsyn=${COMINsyn:-${COMROOT}/gfs/prod/syndat}
+
+export HOMERELO=$HOMEgfs
+export EXECRELO=${HOMERELO}/exec
+export FIXRELO=${HOMERELO}/fix/fix_am
+export USHRELO=${HOMERELO}/ush
+
+# Adjust observation error for GFS v16 parallels
+#
+#   NOTE:  Remember to set OBERROR in config.anal as PRVT is set below
+#
+# Set default prepobs_errtable.global
+export PRVT=$FIXgsi/prepobs_errtable.global.shield
+
+
+# Set prepobs.errtable.global for GFS v16 retrospective parallels
+if [[ $RUN_ENVIR == "emc" ]]; then
+  if [[ "$CDATE" -ge "2019021900" && "$CDATE" -lt "2019110706" ]]; then
+    export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.shield.2019021900
+  fi
+
+#   Place GOES-15 AMVs in monitor, assimilate GOES-17 AMVs, assimilate KOMPSAT-5 gps
+  if [[ "$CDATE" -ge "2019110706" && "$CDATE" -lt "2020040718" ]]; then
+    export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.shield.2019110706
+  fi
+
+#   NOTE:
+#   As of 2020040718, gfsv16_historical/prepobs_errtable.global.shield.2020040718 is
+#   identical to ../prepobs_errtable.global.shield  Thus, the logic below is not
+#   needed at this time
+
+#   Set observation errors for type 135 (T) & 235 (uv) Canadian AMDAR observations
+#   if [[ "$CDATE" -ge "2020040718" && "$CDATE" -lt "YYYMMDDHH" ]]; then
+#     export PRVT=$EXPDIR/prepobs_errtable.global.shield
+#   fi
+
+fi
+
+# NSST bufr was created with a different set of files prior to 2020102200
+# See comments at the end of
+# https://github.com/NOAA-EMC/global-workflow/issues/313
+if [[ "$CDATE" -ge "2020102200" ]]; then
+  export DTYPS_nsst='sfcshp tesac bathy trkob'
+else
+  export DTYPS_nsst='sfcshp dbuoyb mbuoyb tesac bathy trkob'
+fi
+export DO_MAKE_NSSTBUFR="NO"   # if NO, will copy nsstbufr from globaldump
+
+echo "END: config.prep"

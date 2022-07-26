@@ -20,7 +20,7 @@ status=$?
 
 ###############################################################
 # Source relevant configs
-configs="base archomg"
+configs="base prep archomg"
 for config in $configs; do
     . $EXPDIR/config.${config}
     status=$?
@@ -83,13 +83,12 @@ if [ $status -ne 0  ]; then
     exit $status
 fi
 
-
 ###############################################################
 # Remove IC data directory
 ###############################################################
 RMCDUMP=${RMCDUMP:-"NO"}
-GDATEEND=$($NDATE -${RMOLDEND:-24} $CDATE)
-GDATE=$($NDATE -${RMOLDSTD:-96} $CDATE)
+GDATEEND=$($NDATE -${RMOLDEND:-72} $CDATE)
+GDATE=$($NDATE -${RMOLDSTD:-120} $CDATE)
 while [ $GDATE -le $GDATEEND ]; do
     gPDY=$(echo $GDATE | cut -c1-8)
     gcyc=$(echo $GDATE | cut -c9-10)

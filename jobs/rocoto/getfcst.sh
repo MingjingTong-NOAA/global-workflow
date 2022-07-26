@@ -20,7 +20,7 @@ status=$?
 
 ###############################################################
 # Source relevant configs
-configs="base getfcst"
+configs="base getfcst prep" 
 for config in $configs; do
     . $EXPDIR/config.${config}
     status=$?
@@ -56,6 +56,24 @@ if [ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.a
     exit $status
   fi
 fi
+
+if [[ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt && $DO_MAKEPREPBUFR == "YES" ]]; then
+  #htar -tvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}a.tar > ./list1
+  #>./list2
+  #grep "logf" ./list1 | awk '{ print $7 }' >> ./list2
+  #htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}a.tar -L ./list2
+  #rm -f ./list1 ./list2
+
+  # create fake log files
+  if [[ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt ]]; then
+     for fhr in 3 6 9; do
+        cat > ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf00${fhr}.txt << EOF
+ completed fv3gfs fhour=${fhr}.000 $GDATE
+EOF
+     done
+  fi
+fi
+
 
 if [[ $MODE == "free" ]]; then
   COMOUT=${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos

@@ -264,6 +264,7 @@ export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
+export RECENTER=1
 
 # forecast w/o DA increment for restart
 export fcst_wo_da="NO"

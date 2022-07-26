@@ -74,7 +74,11 @@ gPDY=$(echo $GDATE | cut -c1-8)
 gcyc=$(echo $GDATE | cut -c9-10)
 GDUMP=${GDUMP:-${CDUMP}}
 
-export OPREFIX="${CDUMP}.t${cyc}z."
+if [ $MODE == "cycled" ]; then
+  export OPREFIX="${CDUMP}.t${cyc}z."
+else
+  export OPREFIX="${ICDUMP}.t${cyc}z."
+fi
 export GPREFIX="${GDUMP}.t${gcyc}z."
 export APREFIX="${CDUMP}.t${cyc}z."
 export GSUFFIX=${GSUFFIX:-$SUFFIX}
