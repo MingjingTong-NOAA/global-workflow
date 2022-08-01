@@ -1,0 +1,13 @@
+#!/bin/ksh -x
+
+########## config.echgres ##########
+# regrid full-res forecast for use in ensemble-res analysis generation
+
+echo "BEGIN: config.echgres"
+
+# Get task specific resources
+. $EXPDIR/config.resources echgres
+
+export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_forenkf_shield.sh"
+
+echo "END: config.echgres"

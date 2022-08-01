@@ -9,10 +9,8 @@ echo "BEGIN: config.prep"
 . $EXPDIR/config.resources prep
 
 export DO_MAKEPREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
-if [ $DO_MAKEPREPBUFR != "YES" ]; then
-  export ROTDIR_DUMP="NO"
-  export DMPDIR_S="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/dump"
-fi
+export DMPDIR_S="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/dump"
+
 if [ $MODE != "cycled" ]; then
    export RUN="gdas"
 fi

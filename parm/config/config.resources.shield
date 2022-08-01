@@ -62,8 +62,8 @@ elif [ $step = "anal" ]; then
       export npe_anal_gfs=400
     fi
     if [ $CASE = "C192" -o $CASE = "C96" -o $CASE = "C48" ]; then
-      export npe_anal=84
-      export npe_anal_gfs=84
+      export npe_anal=88
+      export npe_anal_gfs=88
     fi
     if [[ "$machine" = "WCOSS_DELL_P3" ]]; then
         export nth_anal=4
@@ -72,6 +72,12 @@ elif [ $step = "anal" ]; then
     export npe_node_anal=$(echo "$npe_node_max / $nth_anal" | bc)
     export nth_cycle=$nth_anal
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_anal="3072M"; fi
+
+    nodes=$(((npe_anal+npe_node_anal-1)/npe_node_anal))
+    tasks=$((nodes * npe_node_anal))
+    if [ $tasks -gt $npe_anal ]; then
+       export npe_anal=$tasks
+    fi
 
 elif [ $step = "analcalc" ]; then
 
@@ -254,8 +260,7 @@ elif [ $step = "arch" -o $step = "earc" -o $step = "archomg" ]; then
     eval "export nth_$step=1"
     eval "export memory_$step=2048M"
 
-elif [ $step = "eobs" -o $step = "eomg" -o $step = "gomg" ]; then
-
+elif [ $step = "eobs" -o $step = "eomg" ]; then
 
     export wtime_eobs="00:15:00"
     export wtime_eomg="01:00:00"
@@ -274,9 +279,36 @@ elif [ $step = "eobs" -o $step = "eomg" -o $step = "gomg" ]; then
     export npe_node_eobs=$(echo "$npe_node_max / $nth_eobs" | bc)
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_eobs="3072M"; fi
 
-    export npe_gomg=$npe_eobs
-    export nth_gomg=$nth_eobs
-    export npe_node_gomg=$npe_node_eobs
+    nodes=$(((npe_eobs+npe_node_eobs-1)/npe_node_eobs))
+    tasks=$((nodes * npe_node_eobs))
+    if [ $tasks -gt $npe_eobs ]; then
+       export npe_eobs=$tasks
+    fi
+
+elif [ $step = "gomg" ]; then
+
+    export wtime_gomg="00:15:00"
+    export wtime_eomg="01:00:00"
+    export wtime_gomg="00:15:00"
+    if [ $CASE = "C768" ]; then
+      export npe_gomg=200
+    elif [ $CASE = "C384" ]; then
+      export npe_gomg=100
+    elif [ $CASE = "C192" ]; then
+      export npe_gomg=40
+    elif [ $CASE = "C96" -o $CASE = "C48" ]; then
+      export npe_gomg=20
+    fi
+    export nth_gomg=2
+    if [[ "$machine" = "WCOSS_DELL_P3" ]]; then export nth_gomg=7; fi
+    export npe_node_gomg=$(echo "$npe_node_max / $nth_gomg" | bc)
+    if [[ "$machine" == "WCOSS_C" ]]; then export memory_gomg="3072M"; fi
+
+    nodes=$(((npe_gomg+npe_node_gomg-1)/npe_node_gomg))
+    tasks=$((nodes * npe_node_gomg))
+    if [ $tasks -gt $npe_gomg ]; then
+       export npe_gomg=$tasks
+    fi
 
 elif [ $step = "gcycle" ]; then
 

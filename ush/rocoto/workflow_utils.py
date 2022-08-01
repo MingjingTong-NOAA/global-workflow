@@ -145,7 +145,7 @@ class HostInfo:
             'nwprod': '/scratch1/NCEPDEV/global/glopara/nwpara',
             'comroot': '/scratch1/NCEPDEV/global/glopara/com',
             'homedir': '/scratch2/GFDL/gfdlscr/$USER',
-            'stmp': '/scratch2/NCEPDEV/stmp3/$USER',
+            'stmp': '/scratch1/NCEPDEV/stmp2/$USER',
             'ptmp': '/scratch1/NCEPDEV/stmp4/$USER',
             'noscrub': '$HOMEDIR',
             'account': 'gfdlhires',

@@ -1,0 +1,31 @@
+#!/bin/ksh -x
+
+########## config.ecen ##########
+# Ensemble recentering specific
+
+echo "BEGIN: config.ecen"
+
+# Get task specific resources
+. $EXPDIR/config.resources ecen
+
+# Number of concurrent ecen jobs [1 implies sequential]
+# Usually IAUFHRS_ENKF=3,6,9, so NECENGRP=3.  Scripting
+# below queries IAUFHRS_ENKF to determine NECENGRP
+export NECENGRP=1
+if [ $DOIAU_ENKF = "YES" ]; then
+   if [ $RECENTER -le 1 ]; then
+      ngrps=$(grep -o ',' <<<"$IAUFHRS_ENKF" | grep -c .)
+      ((ngrps++))
+      export NECENGRP=$ngrps
+   else
+      export NECENGRP=7
+   fi
+fi
+
+if [ $RECENTER -eq 2 ]; then
+  ENKFRECENSH=$SCRgfs/exgdas_enkf_ecen_fcst.sh
+fi
+
+export CLIP_TRACERS="'spfh','clwmr','rwmr','icmr','snmr','grle','o3mr','cld_amt'"
+
+echo "END: config.ecen"
