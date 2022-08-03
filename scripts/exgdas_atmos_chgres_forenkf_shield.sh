@@ -1,0 +1,1 @@
+../sorc/gsi.fd/scripts/exgdas_atmos_chgres_forenkf_shield.sh
