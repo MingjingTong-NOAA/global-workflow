@@ -145,11 +145,13 @@ if [[ $MODE = "replay" && $DOGCYCLE = "YES" && $DONST = "YES" && ! -s $dtfanl ]]
 fi
 
 # Pull sfcanl restart file to get tref for replay and DA cycle
+cd ${ICSDIR}
 if [[ $gfs_ver = "v16" ]]; then
   if [[  $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        getdata2="NO"
+       >list.txt
        for n in $(seq 1 6); do
           file=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc
           file2=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc
@@ -158,57 +160,57 @@ if [[ $gfs_ver = "v16" ]]; then
             if [ $n -eq 1 ]; then
                fsize1=$fsize
             else
-               if [ $fsize -ne $fsize1 ]; then
+               if [ $fsize -lt $fsize1 ]; then
                   getdata="YES"
-                  break
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+               elif [ $fsize -gt $fsize1 ]; then
+                  getdata="YES"
+                  m = $((n - 1))
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${m}.nc" >>list.txt
+                  fsize1=$fsize
                fi
-               fsize1=$fsize
             fi
           else
             getdata="YES"
-            break
+            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>list.txt
           fi
           if [ -s $file2 ]; then
             fsize=`wc -c $file2 | awk '{print $1}'`
             if [ $n -eq 1 ]; then
                fsize1=$fsize
             else
-               if [ $fsize -ne $fsize1 ]; then
+               if [ $fsize -lt $fsize1 ]; then
                   getdata2="YES"
-                  break
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+               elif [ $fsize -gt $fsize1 ]; then
+                  getdata="YES" 
+                  m = $((n - 1))
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${m}.nc" >>list.txt
+                  fsize1=$fsize
                fi
-               fsize1=$fsize
             fi
           else
             getdata2="YES"
-            break
+            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>list.txt
           fi
        done 
      else
        getdata="YES"
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
        getdata2="YES"
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile1.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile2.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile3.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile4.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile5.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc  " >>list.txt
      fi    
      if [[ $getdata = "YES" || $getdata2 = "YES" ]]; then
-       rm -f list.txt
-       touch list.txt
-       if [ $getdata = "YES" ]; then
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
-       fi
-
-       if [ $getdata2 = "YES" ]; then
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile1.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile2.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile3.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile4.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile5.nc  " >>list.txt
-         echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc  " >>list.txt
-       fi
-    
        if [[ (${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500") || ${REDUCEDRES:-"NO"} = "YES" ]]; then
           export tarball="${ICDUMP}_restarta.tar"
           htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt 
@@ -222,12 +224,14 @@ if [[ $gfs_ver = "v16" ]]; then
        fi     
        if [ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]; then
          mv -f ${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/
+         rm -rf ${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART
        else
          mv ${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS
        fi
      else
        echo "sfcanl exist, skip pulling data"
      fi
+     rm -f list.txt
   fi
 
   if [[ $MODE = "replay" && $replay_4DIAU = "YES" && ( $EXP_WARM_START = ".true." || "$CDATE" != "$SDATE" ) ]]; then
