@@ -537,6 +537,17 @@ if [ $type = "enkfgdas" -o $type = "enkfgfs" ]; then
   if [ -s $ROTDIR/${dirpath}${head}radstat.ensmean ]; then
        echo  "${dirname}${head}radstat.ensmean       " >>enkf${CDUMP}.txt
   fi
+
+  if [ -s $ROTDIR/${dirpath}${head}cnvsprd ]; then
+       echo  "${dirname}${head}cnvsprd       " >>enkf${CDUMP}.txt
+  fi
+  if [ -s $ROTDIR/${dirpath}${head}oznsprd ]; then
+       echo  "${dirname}${head}oznsprd       " >>enkf${CDUMP}.txt
+  fi
+  if [ -s $ROTDIR/${dirpath}${head}radsprd ]; then
+       echo  "${dirname}${head}radsprd       " >>enkf${CDUMP}.txt
+  fi
+
   for FHR in $nfhrs; do  # loop over analysis times in window
      if [ $FHR -eq 6 ]; then
         if [ -s $ROTDIR/${dirpath}${head}atmanl.ensmean${SUFFIX} ]; then

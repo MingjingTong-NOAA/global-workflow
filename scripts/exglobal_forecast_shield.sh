@@ -133,7 +133,6 @@ NNODES=$((NTASKS_FV3/npe_node_fcst))
 
 TYPE=${TYPE:-"nh"}                  # choices:  nh, hydro
 MONO=${MONO:-"non-mono"}            # choices:  mono, non-mono
-RUN_CCPP=${RUN_CCPP:-"NO"}
 
 QUILTING=${QUILTING:-".false."}
 OUTPUT_GRID=${OUTPUT_GRID:-"gaussian_grid"}
@@ -821,8 +820,13 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
     fi
   fi
   consv_te=1.
-  k_split=${k_split:-1}
-  n_split=${n_split:-8}
+  if [ $CDUMP = "gdas" ]; then
+    k_split=${k_split:-2}
+    n_split=${n_split:-6}
+  else
+    k_split=${k_split:-1}
+    n_split=${n_split:-8}
+  fi
 else # hydrostatic options
   hydrostatic=".true."
   phys_hydrostatic=".false."     # ignored when hydrostatic = T

@@ -39,4 +39,6 @@ if [ $full_hydro_anl = "YES" ]; then
   export export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.allqcf.txt
 fi
 
+export write_spread_diag=".true."
+
 echo "END: config.eupd"

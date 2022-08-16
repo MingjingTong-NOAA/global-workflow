@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"        # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -123,6 +123,9 @@ export COMINatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMOUTatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMINwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
 export COMOUTwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
+export COMIN_OBS=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
+export COMIN_GES_OBS=${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/atmos
+export COMINtcvital=${COMIN_OBS:-${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos}
 
 export jlogfile="${EXPDIR}/logs/jlogfile"
 export ERRSCRIPT=${ERRSCRIPT:-'eval [[ $err = 0 ]]'}
@@ -147,9 +150,6 @@ export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
 
-# Run with CCPP physics
-export RUN_CCPP="YES"
-export CCPP_SUITE="FV3_GFS_v16"
 
 # Output frequency of the forecast model (for cycling)
 export FHMIN=0

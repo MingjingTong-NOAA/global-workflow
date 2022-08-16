@@ -365,7 +365,7 @@ def get_hyb_resources(dict_configs):
             strings.append(f'\t<!ENTITY WALLTIME_{taskstr}  "{wtimestr}">\n')
             strings.append(f'\t<!ENTITY RESOURCES_{taskstr} "{resstr}">\n')
             if len(memstr) != 0:
-                strings.appendf(f'\t<!ENTITY MEMORY_{taskstr}    "{memstr}">\n')
+                strings.append(f'\t<!ENTITY MEMORY_{taskstr}    "{memstr}">\n')
             strings.append(f'\t<!ENTITY NATIVE_{taskstr}    "{natstr}">\n')
 
             dict_resources[f'{cdump}{task}'] = ''.join(strings)
