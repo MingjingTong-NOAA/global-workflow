@@ -1,4 +1,6 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 ###############################################################
 ## Abstract:
@@ -65,7 +67,7 @@ export SAVEDIR=$COMOUT/${CASE}/INPUT
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
   echo "Detected v16 $OPS_RES warm starts, will not run init. Exiting..."
-  exit 0
+  
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
   if [[ $MODE = "free" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
@@ -141,4 +143,6 @@ cd $DATAROOT
 
 ###############################################################
 # Exit out cleanly
+
+
 exit 0

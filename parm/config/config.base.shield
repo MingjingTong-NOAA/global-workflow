@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="NO"        # VRFY step
+export DO_VRFY="YES"       # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -59,7 +59,7 @@ export DO_VRFY="NO"        # VRFY step
 #  use RUNMOS flag (currently in config.vrfy)
 export REALTIME="YES"
 
-# Experiment mode (cycled or free-forecast)
+# Experiment mode (cycled or free-forecast or relay)
 export MODE="@MODE@" # cycled/free/replay
 
 ####################################################
@@ -76,7 +76,6 @@ export HOMEpost="$HOMEgfs"
 export HOMEobsproc_prep="$BASE_GIT/obsproc/obsproc_prep.v5.5.0_hpc-stack"
 export HOMEobsproc_network="$BASE_GIT/obsproc/obsproc_global.v3.4.2_hpc-stack"
 export HOMEobsproc_global=$HOMEobsproc_network
-export BASE_VERIF="$BASE_GIT/verif/global/tags/vsdb"
 
 # CONVENIENT utility scripts and other environment parameters
 export NCP="/bin/cp -p"
@@ -113,19 +112,26 @@ export RUNDIR="$STMP/RUNDIRS/$PSLOT"
 export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
-export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
+export ATARDIR="@ATARDIR@"
+
+# forecast-only and replay environment parameters
+export ICDUMP="gdas"
+export ICSTYP="gfs"
+export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
+
+# forecast-only environment parameters
+export interval_days=0
 
 # Commonly defined parameters in JJOBS
 export envir=${envir:-"prod"}
 export NET="gfs"
 export RUN=${RUN:-${CDUMP:-"gfs"}}
+export COMIN_OBS=${DMPDIR}/${CDUMP}.${PDY}/$cyc/atmos
+export COMIN_GES_OBS=${DMPDIR}/${CDUMP}.${PDY}/$cyc/atmos
 export COMINatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMOUTatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMINwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
 export COMOUTwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
-export COMIN_OBS=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
-export COMIN_GES_OBS=${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/atmos
-export COMINtcvital=${COMIN_OBS:-${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos}
 
 export jlogfile="${EXPDIR}/logs/jlogfile"
 export ERRSCRIPT=${ERRSCRIPT:-'eval [[ $err = 0 ]]'}
@@ -203,7 +209,7 @@ export DO_CUBE2GAUS="YES"
 # IAU related parameters
 export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
 export IAUFHRS="3,6,9"
-export IAU_FHROT=`echo $IAUFHRS | cut -c1`
+export IAU_FHROT=$(echo $IAUFHRS | cut -c1)
 export IAU_DELTHRS=6
 export IAU_OFFSET=6
 export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
@@ -217,7 +223,10 @@ if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]]
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=0
+export replay=1
+if [ $replay -eq 2 ]; then
+  export ICSTYP="gfs"
+fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="NO"
@@ -348,7 +357,12 @@ export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.
 export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
-export HPSSARCH="@HPSSARCH@" # save data to HPSS archive
+export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive
+export LOCALARCH="@LOCALARCH@"        # save data to local archive
+if [[ $HPSSARCH = "YES" ]] && [[ $LOCALARCH = "YES" ]]; then
+   echo "Both HPSS and local archiving selected.  Please choose one or the other."
+   exit 2
+fi
 export ARCH_CYC=00           # Archive data at this cycle for warm_start capability
 export ARCH_WARMICFREQ=4     # Archive frequency in days for warm_start capability
 export ARCH_FCSTICFREQ=1     # Archive frequency in days for gdas and gfs forecast-only capability

@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.fcst ##########
 # Forecast specific
@@ -18,7 +18,7 @@ fi
 
 export FORECASTSH="$HOMEgfs/scripts/exglobal_forecast_shield.sh"
 export FCSTEXECDIR="$HOMEgfs/exec"
-export FCSTEXEC="global_shield_32bit.x"
+export FCSTEXEC="shield.x"
 export npe_fv3=$npe_fcst # This is model resolution dependent, see note above
 
 if [[ "$CDUMP" == "gfs" ]] ; then
@@ -212,9 +212,6 @@ export npe_remap=$((npe_fcst < 240 ? npe_fcst : 240))
 
 if [[ "$CDUMP" == "gdas" ]] ; then
    export npe_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
-   if [ $CASE == "C192" ]; then
-      npe_c2g = $((npe_c2g/2))
-   fi
 else
    export npe_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
 fi

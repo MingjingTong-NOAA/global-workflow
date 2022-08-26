@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.eobs config.eomg ##########
 # Ensemble innovation specific, dependency config.anal
@@ -14,7 +14,7 @@ export RERUN_EOMGGRP="YES"
 export npe_gsi=$npe_eobs
 
 # GSI namelist options related to observer for EnKF
-export OBSINPUT_INVOBS="dmesh(1)=225.0,dmesh(2)=225.0"
+export OBSINPUT_INVOBS="dmesh(1)=225.0,dmesh(2)=225.0,dmesh(3)=225.0,dmesh(4)=100.0"
 export OBSQC_INVOBS="tcp_width=60.0,tcp_ermin=2.0,tcp_ermax=12.0"
 if [ $LEVS = "128" ]; then
    export GRIDOPTS_INVOBS="nlayers(63)=1,nlayers(64)=1,"
@@ -27,7 +27,5 @@ export GENDIAG="YES"    # Diagnostic files must be created for EnKF
 
 export lobsdiag_forenkf=".true."  # write out jacobians from eobs
                                   # need to specify .true. setting since config.anal sets to .false.
-
-export DOGCYCLE="NO"  # no surface analysis for this job
 
 echo "END: config.eobs"

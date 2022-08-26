@@ -1,4 +1,5 @@
-#!/bin/ksh
+#! /usr/bin/env bash
+
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
@@ -106,15 +107,11 @@
 #
 ################################################################################
 
-# Source FV3GFS workflow modules
-. $HOMEgfs/ush/load_fv3gfs_modules.sh
-status=$?
-[[ $status -ne 0 ]] && exit $status
+source "$HOMEgfs/ush/preamble.sh"
 
-#  Set environment.
 VERBOSE=${VERBOSE:-"NO"}
 if [[ $atminc = ".true." ]]; then
-   AFHR=inc 
+   AFHR=inc
 else
    AFHR=f$( printf "%03d" $fhour)
 fi
@@ -138,7 +135,7 @@ FIXC2G=${FIXC2G:-$HOMEgfs/fix/fix_shield/gaus_N${res}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
-XC=${XC}
+XC=${XC:-''}
 GAUATMSEXE=${GAUATMSEXE:-$EXECgfs/gaussian_c2g_atms.x}
 
 CDATE=${CDATE:?}
@@ -153,7 +150,6 @@ export REDERR=${REDERR:-'2>'}
 # Set defaults
 ################################################################################
 #  Preprocessing
-$INISCRIPT
 pwd=$(pwd)
 if [[ -d $DATA ]]
 then
@@ -265,6 +261,7 @@ cat > fv3_da.nml <<EOF
 EOF
 
 eval $GAUATMSEXE >> $DATA/log$AFHR
+
 export ERR=$?
 export err=$ERR
 $ERRSCRIPT||exit 2
@@ -273,10 +270,5 @@ $ERRSCRIPT||exit 2
 #  Postprocessing
 cd $pwd
 [[ $mkdata = YES ]]&&rmdir $DATA
-$ENDSCRIPT
-set +x
-if [[ "$VERBOSE" = "YES" ]]
-then
-   echo $(date) EXITING $0 with return code $err >&2
-fi
-exit $err
+
+exit ${err}

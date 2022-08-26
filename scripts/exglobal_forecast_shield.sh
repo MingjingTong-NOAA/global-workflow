@@ -1,41 +1,13 @@
-#!/bin/ksh
-################################################################################
-# UNIX Script Documentation Block
-# Script name:         exglobal_forecast_shield.sh
-# Script description:  Runs a global FV3GFS model forecast
-#
-# Author:   Fanglin Yang       Org: NCEP/EMC       Date: 2016-11-15
-# Abstract: This script runs a single GFS forecast with FV3 dynamical core.
-#           This script is created based on a C-shell script that GFDL wrote
-#           for the NGGPS Phase-II Dycore Comparison Project.
-#
-# Script history log:
-# 2016-11-15  Fanglin Yang   First Version.
-# 2017-02-09  Rahul Mahajan  Added warm start and restructured the code.
-# 2017-03-10  Fanglin Yang   Updated for running forecast on Cray.
-# 2017-03-24  Fanglin Yang   Updated to use NEMS FV3GFS with IPD4
-# 2017-05-24  Rahul Mahajan  Updated for cycling with NEMS FV3GFS
-# 2017-09-13  Fanglin Yang   Updated for using GFDL MP and Write Component
-# 2019-03-05  Rahul Mahajan  Implemented IAU
-# 2019-03-21  Fanglin Yang   Add restart capability for running gfs fcst from a break point.
-# 2019-12-12  Henrique Alves Added wave model blocks for coupled run
-# 2020-01-31  Henrique Alves Added IAU capability for wave component
-# 2020-06-02  Fanglin Yang   restore restart capability when IAU is turned on.                     
-# 2021-05-01  Mingjing Tong  remodifed for replay option
-#
-# $Id$
-#
-# Attributes:
-#   Language: Portable Operating System Interface (POSIX) Shell
-#   Machine: WCOSS-CRAY, Theia
+#! /usr/bin/env bash
+
 ################################################################################
 
-#  Set environment.
-VERBOSE=${VERBOSE:-"YES"}
-if [ $VERBOSE = "YES" ] ; then
-  echo $(date) EXECUTING $0 $* >&2
-  set -x
-fi
+source "$HOMEgfs/ush/preamble.sh"
+
+SCRIPTDIR=$(dirname $(readlink -f "$0") )/../ush
+
+# include all subroutines. Executions later.
+source $SCRIPTDIR/parsing_namelists_shield.sh
 
 machine=${machine:-"WCOSS_C"}
 machine=$(echo $machine | tr '[a-z]' '[A-Z]')
@@ -110,8 +82,8 @@ IAU_OFFSET=${IAU_OFFSET:-0}
 replay=${replay:-0}
 
 # Model specific stuff
-FCSTEXECDIR=${FCSTEXECDIR:-$HOMEgfs/sorc/fv3gfs.fd/NEMS/exe}
-FCSTEXEC=${FCSTEXEC:-fv3_gfs.x}
+FCSTEXECDIR=${FCSTEXECDIR:-$HOMEgfs/exec}
+FCSTEXEC=${FCSTEXEC:-shield.x}
 PARM_FV3DIAG=${PARM_FV3DIAG:-$HOMEgfs/parm/parm_fv3diag}
 PARM_POST=${PARM_POST:-$HOMEgfs/parm/post}
 
@@ -338,7 +310,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
 
   # Link all (except sfc_data) restart files from $gmemdir
     for file in $(ls $gmemdir/RESTART/${sPDY}.${scyc}0000.*.nc); do
-      file2=$(echo $(basename $file))
+      file2=$(echo $(basename -- $file))
       file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
       fsuf=$(echo $file2 | cut -d. -f1)
       if [ $fsuf != "sfc_data" ]; then
@@ -353,7 +325,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       sfcanldir=$memdir
     fi
     for file in $(ls $sfcanldir/RESTART/${sPDY}.${scyc}0000.*.nc); do
-      file2=$(echo $(basename $file))
+      file2=$(echo $(basename -- $file))
       file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
       fsufanl=$(echo $file2 | cut -d. -f1)
       if [ $fsufanl = "sfcanl_data" ]; then
@@ -407,7 +379,7 @@ EOF
             exit 1
           fi
           $NLN $increment_file $DATA/INPUT/fv_increment$i.nc
-          IAU_INC_FILES="'fv_increment$i.nc',$IAU_INC_FILES"
+          IAU_INC_FILES="'fv_increment$i.nc',${IAU_INC_FILES:-}"
         done
         read_increment=".false."
         res_latlon_dynamics='""'
@@ -432,7 +404,7 @@ EOF
     PDYT=$(echo $CDATE_RST | cut -c1-8)
     cyct=$(echo $CDATE_RST | cut -c9-10)
     for file in $(ls $RSTDIR_ATM/${PDYT}.${cyct}0000.*); do
-      file2=$(echo $(basename $file))
+      file2=$(echo $(basename -- $file))
       file2=$(echo $file2 | cut -d. -f3-) 
       $NLN $file $DATA/INPUT/$file2
     done
@@ -466,7 +438,7 @@ else ## cold start
     icsdir=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/atmos/${CASE}
   fi
   for file in $(ls $icsdir/INPUT/*.nc); do
-    file2=$(echo $(basename $file))
+    file2=$(echo $(basename -- $file))
     fsuf=$(echo $file2 | cut -c1-3)
     if [ $fsuf = "gfs" ]; then
       $NLN $file $DATA/INPUT/$file2
@@ -495,7 +467,7 @@ if [ $replay -eq 1 ]; then
    mkdir -p $DATA/ATMANL
    # link external IC
    for file in $(ls $ROTDIR/${rprefix}.$PDY/$cyc/atmos/$memchar/INPUT/*.nc); do
-     file2=$(echo $(basename $file))
+     file2=$(echo $(basename -- $file))
      fsuf=$(echo $file2 | cut -c1-3)
      if [ $fsuf = "gfs" ]; then
        $NLN $file $DATA/EXTIC/$file2
@@ -517,7 +489,7 @@ if [ $replay -eq 1 ]; then
        rcyc=$(echo $RDATE | cut -c9-10)
        if [[ -s $gmemdir/RESTART/${rPDY}.${rcyc}0000.coupler.res ]]; then
           for file in $(ls $gmemdir/RESTART/${rPDY}.${rcyc}0000.*.nc); do
-             file2=$(echo $(basename $file))
+             file2=$(echo $(basename -- $file))
              file2=$(echo $file2 | cut -d. -f3-) # remove the date from file
              fsuf=$(echo $file2 | cut -d. -f1)
              if [ $fsuf != "sfc_data" ]; then
@@ -594,14 +566,14 @@ $NLN $FIX_AM/global_co2historicaldata_glob.txt $DATA/INPUT/co2historicaldata_glo
 $NLN $FIX_AM/co2monthlycyc.txt                 $DATA/INPUT/co2monthlycyc.txt
 if [ $ICO2 -gt 0 ]; then
   for file in $(ls $FIX_AM/fix_co2_proj/global_co2historicaldata*) ; do
-    $NLN $file $DATA/INPUT/$(echo $(basename $file) | sed -e "s/global_//g")
+    $NLN $file $DATA/INPUT/$(echo $(basename -- $file) | sed -e "s/global_//g")
   done
 fi
 
 $NLN $FIX_AM/global_climaeropac_global.txt     $DATA/INPUT/aerosol.dat
 if [ $IAER -gt 0 ] ; then
   for file in $(ls $FIX_AM/global_volcanic_aerosols*) ; do
-    $NLN $file $DATA/INPUT/$(echo $(basename $file) | sed -e "s/global_//g")
+    $NLN $file $DATA/INPUT/$(echo $(basename -- $file) | sed -e "s/global_//g")
   done
 fi
 
@@ -930,6 +902,7 @@ fi
 DO_SKEB=${DO_SKEB:-"NO"}
 DO_SPPT=${DO_SPPT:-"NO"}
 DO_SHUM=${DO_SHUM:-"NO"}
+DO_LAND_PERT=${DO_LAND_PERT:-"NO"}
 
 if [ $DO_SKEB = "YES" ]; then
     do_skeb=".true."
@@ -940,458 +913,10 @@ fi
 if [ $DO_SPPT = "YES" ]; then
     do_sppt=".true."
 fi
+curr_date="${sPDY:0:4},${sPDY:4:2},${sPDY:6:2},${scyc},0,0"
 
-# copy over the tables
-DIAG_TABLE=${DIAG_TABLE:-$PARM_FV3DIAG/diag_table_shield}
-DATA_TABLE=${DATA_TABLE:-$PARM_FV3DIAG/data_table}
-FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
-
-# build the diag_table with the experiment name and date stamp
-if [ $DOIAU = "YES" ]; then
-  cat > diag_table << EOF
-  FV3 Forecast
-  ${gPDY:0:4} ${gPDY:4:2} ${gPDY:6:2} ${gcyc} 0 0
-EOF
-  cat $DIAG_TABLE >> diag_table
-  if [ $FHOUT -gt 1 ]; then
-    sed -i "s/IH/3/g" diag_table
-  else
-    sed -i "s/IH/1/g" diag_table
-  fi
-else
-  cat > diag_table << EOF
-  FV3 Forecast
-  ${sPDY:0:4} ${sPDY:4:2} ${sPDY:6:2} ${scyc} 0 0
-EOF
-  cat $DIAG_TABLE >> diag_table
-  sed -i "s/YYYY MM DD HH/${PDY:0:4} ${PDY:4:2} ${PDY:6:2} ${cyc}/g" diag_table
-  sed -i "s/IH/$FHOUT/g" diag_table
-  sed -i "s/DELTIM/$DELTIM/g" diag_table
-fi
-
-$NCP $DATA_TABLE  data_table
-$NCP $FIELD_TABLE field_table
-
-export curr_date="${sPDY:0:4},${sPDY:4:2},${sPDY:6:2},${scyc},0,0"
-
-
-cat > input.nml <<EOF
-&amip_interp_nml
-  interp_oi_sst = .true.
-  use_ncep_sst = .true.
-  use_ncep_ice = .false.
-  no_anom_sst = .false.
-  data_set = 'reynolds_oi'
-  date_out_of_range = 'climo'
-  $amip_interp_nml
-/
-
-&atmos_model_nml
-  blocksize = $blocksize
-  chksum_debug = $chksum_debug
-  dycore_only = $dycore_only
-  fdiag = $FDIAG
-  first_time_step = $first_time_step
-  fprint = .false.
-  $atmos_model_nml
-/
-
-&diag_manager_nml
-  prepend_date = .false.
-  $diag_manager_nml
-/
-
-&fms_io_nml
-  checksum_required = .false.
-  max_files_r = 100
-  max_files_w = 100
-  $fms_io_nml
-/
-
-&fms_nml
-  clock_grain = 'ROUTINE'
-  domains_stack_size = ${domains_stack_size:-3000000}
-  print_memory_usage = ${print_memory_usage:-".false."}
-  $fms_nml
-/
-
-&fv_core_nml
-  layout = $layout_x,$layout_y
-  io_layout = $io_layout
-  npx = $npx
-  npy = $npy
-  ntiles = $ntiles
-  npz = $npz
-  grid_type = -1
-  make_nh = $make_nh
-  fv_debug = ${fv_debug:-".false."}
-  range_warn = ${range_warn:-".true."}
-  reset_eta = .false.
-  n_sponge = ${n_sponge:-"30"}
-  nudge_qv = ${nudge_qv}
-  nudge_dz = ${nudge_dz:-".false."}
-  rf_fast = .false.
-  tau = ${tau:-5.}
-  rf_cutoff = ${rf_cutoff:-"7.5e2"}
-  d2_bg_k1 = ${d2_bg_k1:-"0.15"}
-  d2_bg_k2 = ${d2_bg_k2:-"0.02"}
-  kord_tm = ${kord_tm:-"-9"}
-  kord_mt = ${kord_mt:-"9"}
-  kord_wz = ${kord_wz:-"9"}
-  kord_tr = ${kord_tr:-"9"}
-  hydrostatic = $hydrostatic
-  phys_hydrostatic = $phys_hydrostatic
-  use_hydro_pressure = $use_hydro_pressure
-  beta = 0.
-  a_imp = 1.
-  p_fac = 0.1
-  k_split = $k_split
-  n_split = $n_split
-  nwat = ${nwat:-6}
-  na_init = $na_init
-  d_ext = 0.
-  dnats = ${dnats:-1}
-  fv_sg_adj = ${fv_sg_adj:-"450"}
-  d2_bg = 0.
-  nord = ${nord:-3}
-  dddmp = ${dddmp:-0.2}
-  d4_bg = ${d4_bg:-0.15}
-  vtdm4 = $vtdm4
-  delt_max = ${delt_max:-"0.002"}
-  ke_bg = 0.
-  do_vort_damp = $do_vort_damp
-  external_ic = $external_ic
-  gfs_phil = ${gfs_phil:-".false."}
-  nggps_ic = $nggps_ic
-  ecmwf_ic = ${ecmwf_ic:-".false."}
-  mountain = $mountain
-  ncep_ic = $ncep_ic
-  d_con = $d_con
-  hord_mt = $hord_mt
-  hord_vt = $hord_xx
-  hord_tm = $hord_xx
-  hord_dp = -$hord_xx
-  hord_tr = ${hord_tr:-"-5"}
-  adjust_dry_mass = ${adjust_dry_mass:-".false."}
-  dry_mass=${dry_mass:-98320.0}
-  consv_te = $consv_te
-  do_sat_adj = ${do_sat_adj:-".false."}
-  consv_am = .false.
-  fill = .true.
-  dwind_2d = .false.
-  print_freq = $print_freq
-  warm_start = $warm_start
-  no_dycore = $no_dycore
-  z_tracer = .true.
-  do_inline_mp = .true. 
-  agrid_vel_rst = ${agrid_vel_rst:-".true."}
-  read_increment = $read_increment
-  res_latlon_dynamics = $res_latlon_dynamics
-EOF
-
-# Add namelist for replay
-if [ $replay -gt 0 ]; then
-  cat >> input.nml << EOF
-  replay = $replay
-  nrestartbg = ${nrestartbg:-1}
-  write_replay_ic = ${write_replay_ic:-".true."}
-EOF
-fi
-
-cat >> input.nml <<EOF
-  $fv_core_nml
-/
-EOF
-
-echo "" >> input.nml
-
-cat >> input.nml <<EOF
-&coupler_nml
-  months = ${months:-0}
-  days = ${days:-$((FHMAX/24))}
-  hours = ${hours:-$((FHMAX-24*(FHMAX/24)))}
-  dt_atmos = $DELTIM
-  dt_ocean = $DELTIM
-  current_date = $curr_date
-  calendar = 'julian'
-  memuse_verbose = .false.
-  atmos_nthreads = $NTHREADS_FV3
-  use_hyper_thread = ${hyperthread:-".false."}
-  restart_secs = ${restart_secs:-3600}
-  restart_start_secs = ${restart_start_secs:-10800}
-EOF
-
-if [ $restart_secs_aux -gt 0 ]; then
-  cat >> input.nml << EOF
-  restart_secs_aux = ${restart_secs_aux:-0}
-  restart_start_secs_aux = ${restart_start_secs_aux:-0}
-  restart_duration_secs_aux = ${restart_duration_secs_aux:-0}
-EOF
-fi
-
-cat >> input.nml <<EOF
-  iau_offset   = ${IAU_OFFSET}
-  $coupler_nml
-/
-
-&external_ic_nml
-  filtered_terrain = $filtered_terrain
-  levp = $ncep_levs
-  gfs_dwinds = $gfs_dwinds
-  checker_tr = .false.
-  nt_checker = 0
-  $external_ic_nml
-/
-
-&gfs_physics_nml
-  fhzero       = $FHZER
-  ldiag3d      = ${ldiag3d:-".false."}
-  fhcyc        = $FHCYC
-  nst_anl      = $nst_anl
-  use_ufo      = ${use_ufo:-".true."}
-  pre_rad      = ${pre_rad:-".false."}
-  ncld         = ${ncld:-5}
-  zhao_mic     = .false.
-  pdfcld       = ${pdfcld:-".true."}
-  fhswr        = ${FHSWR:-"3600."}
-  fhlwr        = ${FHLWR:-"3600."}
-  ialb         = ${IALB:-"1"}
-  iems         = ${IEMS:-"1"}
-  iaer         = $IAER
-  ico2         = $ICO2
-  isubc_sw     = ${isubc_sw:-"2"}
-  isubc_lw     = ${isubc_lw:-"2"}
-  isol         = ${ISOL:-"2"}
-  lwhtr        = ${lwhtr:-".true."}
-  swhtr        = ${swhtr:-".true."}
-  cnvgwd       = ${cnvgwd:-".true."}
-  do_deep      = ${do_deep:-".true."}
-  shal_cnv     = ${shal_cnv:-".true."}
-  cal_pre      = ${cal_pre:-".false."}
-  redrag       = ${redrag:-".true."}
-  dspheat      = ${dspheat:-".true."}
-  hybedmf      = ${hybedmf:-".false."}
-  random_clds  = ${random_clds:-".false."}
-  trans_trac   = ${trans_trac:-".true."}
-  cnvcld       = ${cnvcld:-".false."}
-  imfshalcnv   = ${imfshalcnv:-"1"}
-  imfdeepcnv   = ${imfdeepcnv:-"1"}
-  cdmbgwd      = ${cdmbgwd:-"3.5,0.25"}
-  prslrd0      = ${prslrd0:-"0."}
-  ivegsrc      = ${ivegsrc:-"1"}
-  isot         = ${isot:-"1"}
-  ysupbl       = ${ysupbl:-".false."}
-  satmedmf     = ${satmedmf:-".true."}
-  isatmedmf    = ${isatmedmf:-"0"}
-  do_dk_hb19   = .false.
-  xkzminv      = 0.0
-  xkzm_m       = 1.5
-  xkzm_h       = 1.5
-  xkzm_ml        = 1.0
-  xkzm_hl        = 1.0
-  xkzm_mi        = 1.5
-  xkzm_hi        = 1.5
-  cap_k0_land    = .false.
-  cloud_gfdl   = .true.
-  do_inline_mp = .true.
-  do_ocean     = ${do_ocean:-".true."}
-  do_z0_hwrf17_hwonly = .true.
-  debug        = ${gfs_phys_debug:-".false."}
-  nstf_name    = $nstf_name
-  do_sppt      = ${do_sppt:-".false."}
-  do_shum      = ${do_shum:-".false."}
-  do_skeb      = ${do_skeb:-".false."}
-EOF
-
-# Add namelist for IAU
-if [[ $DOIAU = "YES" && $fcst_wo_da = "NO" ]]; then
-  cat >> input.nml << EOF
-  iaufhrs      = ${IAUFHRS}
-  iau_delthrs  = ${IAU_DELTHRS}
-  iau_inc_files= ${IAU_INC_FILES}
-  iau_drymassfixer = .false.
-  iau_filter_increments=${IAU_FILTER_INCREMENTS:-".false."}
-EOF
-fi
-
-if [ $replay -eq 1 ]; then
-  cat >> input.nml << EOF
-  iau_forcing_var = ${IAU_FORCING_VAR}
-EOF
-fi
-
-cat >> input.nml <<EOF
-  $gfs_physics_nml
-/
-EOF
-
-echo "" >> input.nml
-
-cat >> input.nml <<EOF
-&ocean_nml
-  mld_option       = "obs"
-  ocean_option     = "MLM"
-  restore_method   = 2
-  mld_obs_ratio    = 1.
-  use_rain_flux    = .true.
-  sst_restore_tscale = 2.
-  start_lat        = -30.
-  end_lat          = 30.
-  Gam              = 0.2
-  use_old_mlm      = .true.
-  do_mld_restore   = .true.
-  mld_restore_tscale = 2.
-  stress_ratio     = 1.
-  eps_day          = 10.
-  $ocean_nml
-/
-
-&gfdl_mp_nml
-  do_sedi_heat = .false.
-  vi_max = 1.
-  vs_max = 2.
-  vg_max = 12.
-  vr_max = 12.
-  tau_l2v = 225.
-  dw_land = 0.16
-  dw_ocean = 0.10
-  ql_mlt = 1.0e-3
-  qi0_crt = 8.0e-5
-  rh_inc = 0.30
-  rh_inr = 0.30
-  rh_ins = 0.30
-  ccn_l = 300.
-  ccn_o = 200.
-  c_paut = 0.5
-  c_pracw = 0.8
-  c_psaci = 0.05
-  do_cld_adj = .true.
-  use_rhc_revap = .true.
-  f_dq_p = 3.0
-  rewmax = 10.0
-  rermin = 10.0
-  $gfdl_mp_nml
-/
-
-&interpolator_nml
-  interp_method = 'conserve_great_circle'
-  $interpolator_nml
-/
-
-&namsfc
-  FNGLAC   = '${FNGLAC}'
-  FNMXIC   = '${FNMXIC}'
-  FNTSFC   = '${FNTSFC}'
-  FNMLDC   = '${FNMLDC}'
-  FNSNOC   = '${FNSNOC}'
-  FNZORC   = '${FNZORC}'
-  FNALBC   = '${FNALBC}'
-  FNALBC2  = '${FNALBC2}'
-  FNAISC   = '${FNAISC}'
-  FNTG3C   = '${FNTG3C}'
-  FNVEGC   = '${FNVEGC}'
-  FNVETC   = '${FNVETC}'
-  FNSOTC   = '${FNSOTC}'
-  FNSMCC   = '${FNSMCC}'
-  FNMSKH   = '${FNMSKH}'
-  FNTSFA   = '${FNTSFA}'
-  FNACNA   = '${FNACNA}'
-  FNSNOA   = '${FNSNOA}'
-  FNVMNC   = '${FNVMNC}'
-  FNVMXC   = '${FNVMXC}'
-  FNSLPC   = '${FNSLPC}'
-  FNABSC   = '${FNABSC}'
-  LDEBUG = ${LDEBUG:-".false."}
-  FSMCL(2) = ${FSMCL2:-99999}
-  FSMCL(3) = ${FSMCL3:-99999}
-  FSMCL(4) = ${FSMCL4:-99999}
-  FTSFS = ${FTSFS:-90}
-  FAISL = ${FAISL:-99999}
-  FAISS = ${FAISS:-99999}
-  FSNOL = ${FSNOL:-99999}
-  FSNOS = ${FSNOS:-99999}
-  FSICL = 99999
-  FSICS = 99999
-  FTSFL = 99999
-  FVETL = 99999
-  FSOTL = 99999
-  FvmnL = 99999
-  FvmxL = 99999
-  FSLPL = 99999
-  FABSL = 99999
-  $namsfc_nml
-/
-
-&fv_grid_nml
-  grid_file = 'INPUT/grid_spec.nc'
-  $fv_grid_nml
-/
-EOF
-
-# Add namelist for stochastic physics options
-echo "" >> input.nml
-if [ $MEMBER -gt 0 ]; then
-
-    cat >> input.nml << EOF
-&nam_stochy
-EOF
-
-  if [ $DO_SKEB = "YES" ]; then
-    cat >> input.nml << EOF
-  skeb = $SKEB
-  iseed_skeb = ${ISEED_SKEB:-$ISEED}
-  skeb_tau = ${SKEB_TAU:-"-999."}
-  skeb_lscale = ${SKEB_LSCALE:-"-999."}
-  skebnorm = ${SKEBNORM:-"1"}
-  skeb_npass = ${SKEB_nPASS:-"30"}
-  skeb_vdof = ${SKEB_VDOF:-"5"}
-EOF
-  fi
-
-  if [ $DO_SHUM = "YES" ]; then
-    cat >> input.nml << EOF
-  shum = $SHUM
-  iseed_shum = ${ISEED_SHUM:-$ISEED}
-  shum_tau = ${SHUM_TAU:-"-999."}
-  shum_lscale = ${SHUM_LSCALE:-"-999."}
-EOF
-  fi
-
-  if [ $DO_SPPT = "YES" ]; then
-    cat >> input.nml << EOF
-  sppt = $SPPT
-  iseed_sppt = ${ISEED_SPPT:-$ISEED}
-  sppt_tau = ${SPPT_TAU:-"-999."}
-  sppt_lscale = ${SPPT_LSCALE:-"-999."}
-  sppt_logit = ${SPPT_LOGIT:-".true."}
-  sppt_sfclimit = ${SPPT_SFCLIMIT:-".true."}
-  use_zmtnblck = ${use_zmtnblck:-".true."}
-EOF
-  fi
-
-  cat >> input.nml << EOF
-  $nam_stochy_nml
-/
-EOF
-
-
-    cat >> input.nml << EOF
-&nam_sfcperts
-  $nam_sfcperts_nml
-/
-EOF
-
-else
-
-  cat >> input.nml << EOF
-&nam_stochy
-/
-&nam_sfcperts
-/
-EOF
-
-fi
-
+# Create input.nml
+shield_namelists
 
 #------------------------------------------------------------------
 # make symbolic links to write forecast files directly in memdir
@@ -1593,13 +1118,15 @@ EOF
   $ERRSCRIPT || exit 11
 fi
 
-#------------------------------------------------------------------
-# Clean up before leaving
-if [ $mkdata = "YES" ]; then rm -rf $DATA; fi
+################################################################################
+# Postprocessing
+cd $pwd
+[[ $mkdata = "YES" ]] && rm -rf $DATA
 
-#------------------------------------------------------------------
-set +x
-if [ $VERBOSE = "YES" ] ; then
-  echo $(date) EXITING $0 with return code $err >&2
-fi
-exit 0
+
+################################################################################
+
+exit $err
+
+################################################################################
+

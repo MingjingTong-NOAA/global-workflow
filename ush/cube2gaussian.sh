@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
@@ -23,12 +23,14 @@ if [[ $atminc = ".true." ]]; then
 fi
 
 if [[ $RHR == 0 ]]; then
-  export fhour=$((DELTIM/3600.))
+  #export fhour=$(( $DELTIM/3600. ))
+  export fhour=$( echo "$DELTIM / 3600" | bc)
 else
-  export fhour=$((1.0*(RHR-iau_halfdelthrs)))
+  export fhour=$(( $RHR-$iau_halfdelthrs ))
 fi
 
-export diag_fhr=$((fhour+2*iau_halfdelthrs))
+#export diag_fhr=$(( $fhour+2*$iau_halfdelthrs ))
+export diag_fhr=$( echo "2*$iau_halfdelthrs+$fhour" | bc)
 export RDATE=$($NDATE +$RHR $sCDATE)
 
 COMOUT=${COMOUTatmos:-"."}

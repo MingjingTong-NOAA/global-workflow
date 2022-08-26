@@ -1,11 +1,10 @@
-#!/bin/ksh
-set -x
+#! /usr/bin/env bash
 
 ###################################################
 # Fanglin Yang, 20180318
 # --create bunches of files to be archived to HPSS
 ###################################################
-
+source "$HOMEgfs/ush/preamble.sh"
 
 type=${1:-gfs}                ##gfs, gdas, enkfgdas or enkfggfs
 
@@ -35,6 +34,7 @@ DO_OCN=${DO_OCN:-"NO"}
 DO_ICE=${DO_ICE:-"NO"}
 arch4omg=${arch4omg:-"YES"}
 omgrun=${omgrun:-"NO"}
+RECENTER=${RECENTER:-1}
 
 #-----------------------------------------------------
 if [ $type = "gfs" ]; then
@@ -234,7 +234,7 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile4.nc  " >>gfs_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile5.nc  " >>gfs_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile6.nc  " >>gfs_restarta.txt
-  elif [ $MODE = "free" ]; then
+  elif [ $MODE = "forecast-only" ]; then
     echo  "${dirname}INPUT/gfs_ctrl.nc        " >>gfs_restarta.txt
     echo  "${dirname}INPUT/gfs_data.tile1.nc  " >>gfs_restarta.txt
     echo  "${dirname}INPUT/gfs_data.tile2.nc  " >>gfs_restarta.txt
@@ -317,6 +317,17 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}ice*nc                     " >>ice.txt
   fi
 
+  if [ $DO_AERO = "YES" ]; then
+    dirpath="gfs.${PDY}/${cyc}/chem"
+    dirname="./${dirpath}"
+
+    head="gocart"
+
+    rm -f chem.txt
+    touch chem.txt
+
+    echo "${dirname}/${head}*" >> chem.txt
+  fi
 
 #-----------------------------------------------------
 fi   ##end of gfs
@@ -350,7 +361,9 @@ if [ $type = "gdas" ]; then
     echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gdas.txt
     if [ -s $ROTDIR/${dirpath}${head}atmanl.ensres${SUFFIX} ]; then
        echo  "${dirname}${head}atmanl.ensres${SUFFIX}  " >>gdas.txt
-       echo  "${dirname}${head}atmf006.ensres${SUFFIX}  " >>gdas.txt
+       if [ $RECENTER -eq 2 ]; then
+          echo  "${dirname}${head}atmf006.ensres${SUFFIX}  " >>gdas.txt
+       fi
     fi
     if [ -s $ROTDIR/${dirpath}${head}atma003.ensres${SUFFIX} ]; then
        echo  "${dirname}${head}atma003.ensres${SUFFIX}  " >>gdas.txt
@@ -435,12 +448,6 @@ if [ $type = "gdas" ]; then
 
   #..................
   if [ $MODE = "cycled" ]; then
-    if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
-       echo  "${dirname}${head}cnvstat               " >>gdas_restarta.txt
-    fi
-    if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
-       echo  "${dirname}${head}radstat               " >>gdas_restarta.txt
-    fi
     if [ $DONST = "YES" ]; then
       echo  "${dirname}${head}nsstbufr                 " >>gdas_restarta.txt
     fi
@@ -460,7 +467,7 @@ if [ $type = "gdas" ]; then
     echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
   fi
   
-  if [[ $MODE != "free" && $DOGCYCLE = "YES" ]]; then
+  if [[ $MODE != "forecast-only" && $DOGCYCLE = "YES" ]]; then
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gdas_restarta.txt
     echo  "${dirname}RESTART/*0000.sfcanl_data.tile3.nc  " >>gdas_restarta.txt
@@ -509,7 +516,7 @@ if [ $type = "enkfgdas" -o $type = "enkfgfs" ]; then
 
   IAUFHRS_ENKF=${IAUFHRS_ENKF:-6}
   lobsdiag_forenkf=${lobsdiag_forenkf:-".false."}
-  nfhrs=`echo $IAUFHRS_ENKF | sed 's/,/ /g'`
+  nfhrs=$(echo $IAUFHRS_ENKF | sed 's/,/ /g')
   NMEM_ENKF=${NMEM_ENKF:-80}
   NMEM_EARCGRP=${NMEM_EARCGRP:-10}               ##number of ens memebers included in each tarball
   NTARS=$((NMEM_ENKF/NMEM_EARCGRP))

@@ -1,4 +1,5 @@
-#!/bin/ksh
+#! /usr/bin/env bash
+
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
@@ -109,7 +110,8 @@
 #
 ################################################################################
 
-#  Set environment.
+source "$HOMEgfs/ush/preamble.sh"
+
 VERBOSE=${VERBOSE:-"NO"}
 if [[ "$VERBOSE" = "YES" ]] ; then
    echo $(date) EXECUTING $0 $* >&2
@@ -148,7 +150,7 @@ FIXELONELAT=${FIXELONELAT:-$FIXshield/c2g_weight_${CASE}.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
-XC=${XC}
+XC=${XC:-''}
 GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$EXECgfs/gaussian_sfcfcst.exe}
 SIGLEVEL=${SIGLEVEL:-$FIXam/global_hyblev.l${LEVS}.txt}
 
@@ -164,7 +166,6 @@ export REDERR=${REDERR:-'2>'}
 # Set defaults
 ################################################################################
 #  Preprocessing
-$INISCRIPT
 pwd=$(pwd)
 if [[ -d $DATA ]]
 then
@@ -285,10 +286,5 @@ $ERRSCRIPT||exit 2
 #  Postprocessing
 cd $pwd
 [[ $mkdata = YES ]]&&rmdir $DATA
-$ENDSCRIPT
-set +x
-if [[ "$VERBOSE" = "YES" ]]
-then
-   echo $(date) EXITING $0 with return code $err >&2
-fi
+
 exit $err

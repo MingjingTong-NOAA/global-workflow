@@ -1,4 +1,6 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 ###############################################################
 ## Abstract:
@@ -217,7 +219,11 @@ if [[ $gfs_ver = "v16" ]]; then
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else   
-          export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+          if [ "$CDATE" -ge 2022062700 ]; then 
+             export tarball="com_gfs_v16.2_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+          else
+             export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+          fi
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status
@@ -336,7 +342,11 @@ if [[ $MODE != "cycled" && $DO_METP = "YES" && $ICSTYP = "gfs" && $ICDUMP = "gda
     
           else # Production source
             file="${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}"
-            export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+            if [ "$CDATE" -ge 2022062700 ]; then
+               export tarball="com_v16.2_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+            else
+               export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
+            fi
             htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
     
           fi # RETRO vs production
@@ -359,4 +369,6 @@ cd $DATAROOT
 
 ###############################################################
 # Exit out cleanly
+
+
 exit 0

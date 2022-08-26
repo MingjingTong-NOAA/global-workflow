@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.fv3 ##########
 # FV3 model resolution specific parameters
@@ -20,11 +20,7 @@ case_in=$1
 echo "BEGIN: config.fv3"
 
 
-if [[ "$machine" = "WCOSS_DELL_P3" ]]; then
-   export npe_node_max=28
-elif [[ "$machine" = "WCOSS_C" ]]; then
-   export npe_node_max=24
-elif [[ "$machine" = "JET" ]]; then
+if [[ "$machine" = "JET" ]]; then
    if [[ "$PARTITION_BATCH" = "xjet" ]]; then
      export npe_node_max=24
    elif [[ "$PARTITION_BATCH" = "vjet" || "$PARTITION_BATCH" = "sjet" ]]; then
@@ -37,7 +33,6 @@ elif [[ "$machine" = "HERA" ]]; then
 elif [[ "$machine" = "ORION" ]]; then
    export npe_node_max=40
 fi
-
 
 # (Standard) Model resolution dependent variables
 case $case_in in

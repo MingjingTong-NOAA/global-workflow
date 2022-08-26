@@ -1,9 +1,8 @@
-#!/bin/bash
+#! /usr/bin/env bash
 
-date
+source "$HOMEgfs/ush/preamble.sh"
+
 export RUN_ENVIR=${RUN_ENVIR:-"nco"}
-export PS4=' $SECONDS + '
-set -x -e
 
 #############################
 # Source relevant config files
@@ -86,7 +85,7 @@ else
   fi 
   if [ $WW3ICEINP = "YES" ]; then 
     if [ ! -L $ROTDIR/${CDUMP}.${PDY}/${cyc}/atmos/${WAVICEFILE} ]; then # Check if symlink already exists in ROTDIR
-      $NLN $DMPDIR/$CDUMP.${PDY}/$cyc/${WAVICEFILE} $ROTDIR/$CDUMP.${PDY}/$cyc/atmos/${WAVICEFILE}
+      $NLN $DMPDIR/$CDUMP.${PDY}/$cyc/atmos/${WAVICEFILE} $ROTDIR/$CDUMP.${PDY}/$cyc/atmos/${WAVICEFILE}
     fi
     export COMIN_WAV_ICE=${COMIN_WAV_ICE:-$ROTDIR/$RUN.$PDY/$cyc/atmos}
   fi 
@@ -101,5 +100,5 @@ $HOMEgfs/scripts/exgfs_wave_prep.sh
 cd $DATAROOT
 [[ $KEEPDATA = "NO" ]] && rm -rf $DATA
 
-date
+
 exit 0

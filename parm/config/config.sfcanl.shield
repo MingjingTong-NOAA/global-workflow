@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+########## config.sfcanl ##########
+# GFS surface analysis specific
+
+echo "BEGIN: config.sfcanl"
+
+# Get task specific resources
+. $EXPDIR/config.resources sfcanl
+
+export SFCANALSH="$HOMEgfs/scripts/exglobal_atmos_sfcanl_shield.sh"
+
+echo "END: config.sfcanl"
