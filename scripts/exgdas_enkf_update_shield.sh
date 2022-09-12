@@ -278,7 +278,7 @@ cat > enkf.nml << EOFnml
    lnsigcutoffpsnh=${lnsigcutoff},lnsigcutoffpssh=${lnsigcutoff},lnsigcutoffpstr=${lnsigcutoff},
    lnsigcutoffsatnh=${lnsigcutoff},lnsigcutoffsatsh=${lnsigcutoff},lnsigcutoffsattr=${lnsigcutoff},
    obtimelnh=1.e30,obtimelsh=1.e30,obtimeltr=1.e30,
-   saterrfact=1.0,numiter=0,
+   saterrfact=1.0,numiter=${numiter:-0},
    sprd_tol=1.e30,paoverpb_thresh=0.98,
    nlons=$LONA_ENKF,nlats=$LATA_ENKF,nlevs=$LEVS_ENKF,nanals=$NMEM_ENKF,
    deterministic=.true.,sortinc=.true.,lupd_satbiasc=.false.,

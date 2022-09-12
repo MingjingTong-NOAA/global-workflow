@@ -53,9 +53,9 @@ case $case_in in
         ;;
     "C96")
         export DELTIM=450
-        export layout_x=5
+        export layout_x=6
         export layout_y=4
-        export layout_x_gfs=5
+        export layout_x_gfs=6
         export layout_y_gfs=4
         export nth_fv3=1
         export nth_fv3_gfs=1

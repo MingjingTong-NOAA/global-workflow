@@ -41,7 +41,11 @@ class Tasks:
                       'CDUMP': self.cdump,
                       'CDATE': '<cyclestr>@Y@m@d@H</cyclestr>',
                       'PDY': '<cyclestr>@Y@m@d</cyclestr>',
-                      'cyc': '<cyclestr>@H</cyclestr>'}
+                      'cyc': '<cyclestr>@H</cyclestr>',
+                      'GDATE': '<cyclestr offset="-6:00:00">@Y@m@d@H</cyclestr>',
+                      'GDUMP': 'gdas',
+                      'gPDY': '<cyclestr offset="-6:00:00">@Y@m@d</cyclestr>',
+                      'gcyc': '<cyclestr offset="-6:00:00">@H</cyclestr>'}
         self.envars = self._set_envars(envar_dict)
 
     @staticmethod
@@ -382,14 +386,12 @@ class Tasks:
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}analdiag', 'offset': '-06:00:00'}
-        deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_hybvar:
             dep_dict = {'type': 'metatask', 'name': f'{"gdas"}epmn', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         else:
-            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            dependencies = rocoto.create_dependency(dep=deps)
 
         resources = self.get_resource('anal')
         task = create_wf_task('anal', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
@@ -1070,6 +1072,9 @@ class Tasks:
         deps = []
         dep_dict = {'type':'task', 'name':f'{self.cdump}fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.do_hybvar:
+            dep_dict = {'type':'task', 'name':f'{self.cdump}echgres'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_post or self.app_config.gdaspost:
             dep_dict = {'type':'metatask', 'name':f'{self.cdump}post'}
             deps.append(rocoto.add_dependency(dep_dict))

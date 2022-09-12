@@ -167,10 +167,15 @@ if [ ${stime} = "anl" ]; then
     fi
     rm pgbfile.grib2
   else
-    #### atmanl file not found need failing job
-    echo " *** FATAL ERROR: No model anl file output "
-    export err=9
-    err_chk
+    if [[ $CDATE -ge $FDATE && "$EXP_WARM_START" == ".false." ]]; then
+      #### atmanl file not found need failing job
+      echo " *** FATAL ERROR: No model anl file output "
+      export err=9
+      err_chk
+    else
+      echo "first cycle of cold start"
+      export err=0
+    fi
   fi
 else   ## not_anl if_stimes
   SLEEP_LOOP_MAX=$(expr $SLEEP_TIME / $SLEEP_INT)

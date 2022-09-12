@@ -8,6 +8,13 @@ echo "BEGIN: config.sfcanl"
 # Get task specific resources
 . $EXPDIR/config.resources sfcanl
 
+if [[ $DO_RTGSST = "NO" ]]; then
+   export FNTSFA="        "
+   if [[ $DO_TREF_TILE = ".false." ]]; then
+     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
+   fi
+fi
+
 export SFCANALSH="$HOMEgfs/scripts/exglobal_atmos_sfcanl_shield.sh"
 
 echo "END: config.sfcanl"

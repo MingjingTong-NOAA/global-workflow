@@ -126,8 +126,8 @@ export interval_days=0
 export envir=${envir:-"prod"}
 export NET="gfs"
 export RUN=${RUN:-${CDUMP:-"gfs"}}
-export COMIN_OBS=${DMPDIR}/${CDUMP}.${PDY}/$cyc/atmos
-export COMIN_GES_OBS=${DMPDIR}/${CDUMP}.${PDY}/$cyc/atmos
+export COMIN_OBS=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
+export COMIN_GES_OBS=${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/atmos
 export COMINatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMOUTatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMINwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
@@ -354,7 +354,6 @@ fi
 
 # Verification options
 export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
-export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive

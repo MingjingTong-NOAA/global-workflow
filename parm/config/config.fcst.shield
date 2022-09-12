@@ -170,6 +170,12 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
     # Turn on dry mass adjustment in GDAS
     export adjust_dry_mass=".true."
 
+    # diffusion test
+    export nord=2
+    export hord_mt_nh_nonmono=6
+    export hord_xx_nh_nonmono=6
+    export hord_tr=8
+
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
     # Write gfs restart files to rerun fcst from any break point

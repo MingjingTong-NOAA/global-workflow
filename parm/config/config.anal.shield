@@ -217,13 +217,6 @@ if [[ $full_hydro_anl = "YES" ]]; then
    export bkgv_write=".false."
 fi
 
-if [[ $DO_RTGSST = "NO" ]]; then
-   export FNTSFA="        "
-   if [[ $DO_TREF_TILE = ".false." ]]; then
-     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
-   fi
-fi
-
 #export USE_CORRELATED_OBERRS="NO"
 
 echo "END: config.anal"

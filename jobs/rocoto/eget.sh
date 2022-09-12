@@ -50,18 +50,18 @@ ARCH_LIST="$ROTDIR/enkf${CDUMP}.${gPDY}/${gcyc}/$COMPONENT/earc$ENSGRP"
 mkdir -p $ARCH_LIST
 cd $ARCH_LIST
 
-n=$((ENSGRP))
+export n=$((10#${ENSGRP}))
 
 pulldata="NO"
-rm -f enkf${CDUMP}_grp${n}.txt
-touch enkf${CDUMP}_grp${n}.txt
+rm -f enkf${CDUMP}_grp${ENSGRP}.txt
+touch enkf${CDUMP}_grp${ENSGRP}.txt
 if [[ $n -eq 0 ]]; then
   dirpath="enkf${CDUMP}.${gPDY}/${gcyc}/atmos/"
   dirname="./${dirpath}"
   head="${CDUMP}.t${gcyc}z."
   if [ ! -s $ENSDIR/${dirname}${head}atmf006.ensmean${SUFFIX} ]; then
-    echo "${dirname}${head}atmf006.ensmean${SUFFIX}      " >>enkf${CDUMP}_grp${n}.txt
-    echo "${dirname}${head}sfcf006.ensmean${SUFFIX}      " >>enkf${CDUMP}_grp${n}.txt
+    echo "${dirname}${head}atmf006.ensmean${SUFFIX}      " >>enkf${CDUMP}_grp${ENSGRP}.txt
+    echo "${dirname}${head}sfcf006.ensmean${SUFFIX}      " >>enkf${CDUMP}_grp${ENSGRP}.txt
     pulldata="YES"
   fi
   tarball="enkf${CDUMP}.tar"
@@ -79,8 +79,8 @@ else
        fname=$ENSDIR/${dirname}${head}atmf${fhr}${SUFFIX}
        fsize=`wc -c $fname | awk '{print $1}'`
        if [[ ! -s $fname || $fsize -lt 390000000 ]]; then
-         echo "${dirname}${head}atmf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
-         echo "${dirname}${head}sfcf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${n}.txt
+         echo "${dirname}${head}atmf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${ENSGRP}.txt
+         echo "${dirname}${head}sfcf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${ENSGRP}.txt
          pulldata="YES"
        fi
        fh=$((fh+1))
@@ -93,11 +93,9 @@ fi
 [[ ! -d $ENSDIR ]] && mkdir -p $ENSDIR
 cd $ENSDIR
 
-n=$((ENSGRP))
-
 TARCMD="htar"
 if [ $pulldata = "YES" ]; then
-  $TARCMD -xvf ${ETARDIR}/${RESTARTEXP}/${GDATE}/${tarball} -L $ARCH_LIST/enkf${CDUMP}_grp${n}.txt
+  $TARCMD -xvf ${ETARDIR}/${RESTARTEXP}/${GDATE}/${tarball} -L $ARCH_LIST/enkf${CDUMP}_grp${ENSGRP}.txt
   status=$?
   if [ $status -ne 0 ]; then
     echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $GDATE enkf${CDUMP}_grp${ENSGRP}.tar failed"

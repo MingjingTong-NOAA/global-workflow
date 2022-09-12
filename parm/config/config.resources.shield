@@ -171,8 +171,8 @@ elif [ $step = "anal" ]; then
       export nth_anal_gfs=10
     fi
     if [ $CASE = "C192" -o $CASE = "C96" -o $CASE = "C48" ]; then
-      export npe_anal=88
-      export npe_anal_gfs=88
+      export npe_anal=85
+      export npe_anal_gfs=85
     fi
     export npe_node_anal=$(echo "$npe_node_max / $nth_anal" | bc)
     export nth_cycle=$npe_node_max
@@ -187,16 +187,17 @@ elif [ $step = "anal" ]; then
 elif [ $step = "analcalc" ]; then
 
     export wtime_analcalc="00:10:00"
-    export npe_analcalc=127
+    export npe_analcalc=120
     export nth_analcalc=1
     export npe_node_analcalc=$npe_node_max
 
 elif [ $step = "analdiag" ]; then
 
     export wtime_analdiag="00:10:00"
-    export npe_analdiag=112
+    export npe_analdiag=96		# Should be at least twice npe_ediag
     export nth_analdiag=1
     export npe_node_analdiag=$npe_node_max
+    export memory_analdiag="48GB"
 
 elif [ $step = "sfcanl" ]; then
 
@@ -448,9 +449,10 @@ elif [ $step = "gcycle" ]; then
 elif [ $step = "ediag" ]; then
 
     export wtime_ediag="00:06:00"
-    export npe_ediag=56
+    export npe_ediag=48
     export nth_ediag=1
     export npe_node_ediag=$npe_node_max
+    export memory_ediag="24GB"
 
 elif [ $step = "eupd" ]; then
 
@@ -459,22 +461,19 @@ elif [ $step = "eupd" ]; then
       export npe_eupd=480
       export nth_eupd=6
       if [[ "$machine" = "HERA" ]]; then
-        export npe_eupd=150
-        export nth_eupd=40
+        export nth_eupd=5
       fi
     elif [ $CASE = "C384" ]; then
       export npe_eupd=270
       export nth_eupd=2
       if [[ "$machine" = "HERA" ]]; then
-        export npe_eupd=100
-        export nth_eupd=40
+        export nth_eupd=8
       fi
     elif [ $CASE = "C192" -o $CASE = "C96" -o $CASE = "C48" ]; then
-      export npe_eupd=42
+      export npe_eupd=80
       export nth_eupd=2
       if [[ "$machine" = "HERA" ]]; then
-        export npe_eupd=40
-        export nth_eupd=40
+        export nth_eupd=4
       fi
     fi
     export npe_node_eupd=$(echo "$npe_node_max / $nth_eupd" | bc)
@@ -483,7 +482,7 @@ elif [ $step = "ecen" ]; then
 
     export wtime_ecen="00:10:00"
     export npe_ecen=80
-    export nth_ecen=6
+    export nth_ecen=4
     if [ $CASE = "C384" -o $CASE = "C192" -o $CASE = "C96" -o $CASE = "C48" ]; then export nth_ecen=2; fi
     export npe_node_ecen=$(echo "$npe_node_max / $nth_ecen" | bc)
     export nth_cycle=$nth_ecen
@@ -516,17 +515,17 @@ elif [ $step = "epos" ]; then
 
     export wtime_epos="00:15:00"
     export npe_epos=80
-    export nth_epos=8
+    export nth_epos=4
     export npe_node_epos=$(echo "$npe_node_max / $nth_epos" | bc)
 
 elif [ $step = "postsnd" ]; then
 
     export wtime_postsnd="02:00:00"
     export npe_postsnd=40
-    export nth_postsnd=1
-    export npe_node_postsnd=5
+    export nth_postsnd=8
+    export npe_node_postsnd=10
     export npe_postsndcfp=9
-    export npe_node_postsndcfp=3
+    export npe_node_postsndcfp=1
     if [ $OUTPUT_FILE == "nemsio" ]; then
         export npe_postsnd=13
         export npe_node_postsnd=4
