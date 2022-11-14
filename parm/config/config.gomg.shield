@@ -173,7 +173,50 @@ if [[ "$CDATE" -lt "2021102612" ]]; then
    export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_2021102612
 fi
 
-export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_omg.sh"
+
+# iasi-metop-a discontinued since 2021102612
+# set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
+if [[ "$CDATE" -lt "2021102612" ]]; then
+   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_2021102612
+fi
+
+# Set all-sky radiance assimilation options
+#export hydrotable="$RTMFIX/CloudCoeff_DDA_ARTS.nc4"
+export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
+export hydrotable_format="netcdf"
+
+if [[ $full_hydro_anl = "YES" ]]; then
+   export GSIEXEC=$HOMEgfs/exec/gsi.x_allq
+   export lcalc_gfdl_cfrac=".true."
+   if [ $lcalc_gfdl_cfrac = ".false." ]; then
+      if [[ "$CDATE" -lt "2021102612" ]]; then
+         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt_2021102612
+      else
+         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt
+      fi
+   else
+      if [[ "$CDATE" -lt "2021102612" ]]; then
+         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt_2021102612
+      else
+         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
+      fi
+   fi
+   export allsky_gfdl=".true."
+   export crtm_overlap=4
+   export cnvw_option=".false."
+   export allsky_verbose=".true."
+   export cloud_mask_option=1
+   export mask_threshold=0.000001
+   export write_ens_sprd=".false."
+   export bkgv_write=".false."
+
+   #export qltype="LiquidSphere"
+   #export qitype="IceSphere"
+   #export qstype="SectorSnowflake"
+fi
+
+export USE_CORRELATED_OBERRS="NO"
 
 res=$(echo $CASE | cut -c2-)
 # help resolution

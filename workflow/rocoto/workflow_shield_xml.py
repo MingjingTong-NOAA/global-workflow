@@ -99,7 +99,10 @@ class RocotoXML:
     def _get_cycledefs(self):
 
         cycledef_map = {'cycled': self._get_cycledefs_cycled,
-                        'forecast-only': self._get_cycledefs_forecast_only}
+                        'forecast-only': self._get_cycledefs_forecast_only,
+                        'replay': self._get_cycledefs_replay,
+                        'omf': self._get_cycledefs_omf}
+                   
 
         try:
             cycledefs = cycledef_map[self._app_config.mode]()
@@ -138,6 +141,30 @@ class RocotoXML:
         strings = f'\t<cycledef group="{cdump}">{sdate} {edate} {interval}</cycledef>\n\n'
 
         return strings
+
+    def _get_cycledefs_replay(self):
+        sdate = self._base['SDATE'].strftime('%Y%m%d%H%M')
+        edate = self._base['EDATE'].strftime('%Y%m%d%H%M')
+        interval = self._base.get('INTERVAL', '06:00:00')
+        strings = [f'\t<cycledef group="gdas" >{sdate} {edate} {interval}</cycledef>']
+
+        if self._app_config.gfs_cyc != 0:
+            sdate_gfs = self._base['SDATE_GFS'].strftime('%Y%m%d%H%M')
+            edate_gfs = self._base['EDATE_GFS'].strftime('%Y%m%d%H%M')
+            interval_gfs = self._base['INTERVAL_GFS']
+            strings.append(f'\t<cycledef group="gfs"  >{sdate_gfs} {edate_gfs} {interval_gfs}</cycledef>')
+            strings.append('')
+            strings.append('')
+
+        return '\n'.join(strings)
+
+    def _get_cycledefs_omf(self):
+        sdate = self._base['SDATE'].strftime('%Y%m%d%H%M')
+        edate = self._base['EDATE'].strftime('%Y%m%d%H%M')
+        interval = self._base.get('INTERVAL', '06:00:00')
+        strings = [f'\t<cycledef group="gdas" >{sdate} {edate} {interval}</cycledef>']
+
+        return '\n'.join(strings)
 
     @staticmethod
     def _get_workflow_footer():

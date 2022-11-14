@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.base ##########
 # Common to all steps
@@ -59,8 +59,8 @@ export DO_VRFY="YES"       # VRFY step
 #  use RUNMOS flag (currently in config.vrfy)
 export REALTIME="YES"
 
-# Experiment mode (cycled or free-forecast)
-export MODE="@MODE@" # cycled/free/replay
+# Experiment mode (cycled or forecast-only or relay)
+export MODE="@MODE@" # cycled/forecast-only/replay/omf
 
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
@@ -76,7 +76,6 @@ export HOMEpost="$HOMEgfs"
 export HOMEobsproc_prep="$BASE_GIT/obsproc/obsproc_prep.v5.5.0_hpc-stack"
 export HOMEobsproc_network="$BASE_GIT/obsproc/obsproc_global.v3.4.2_hpc-stack"
 export HOMEobsproc_global=$HOMEobsproc_network
-export BASE_VERIF="$BASE_GIT/verif/global/tags/vsdb"
 
 # CONVENIENT utility scripts and other environment parameters
 export NCP="/bin/cp -p"
@@ -99,8 +98,8 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
+export RESTARTEXP="sda_cntl"
 export assim_freq=6
-export ICDUMP="@ICDUMP@"
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
 export ROTDIR="@ROTDIR@/$PSLOT"
@@ -113,14 +112,22 @@ export RUNDIR="$STMP/RUNDIRS/$PSLOT"
 export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
-export ICSTYP="@ICSTYP@"
+export ATARDIR="@ATARDIR@"
+
+# forecast-only and replay environment parameters
+export ICDUMP="gdas"
+export ICSTYP="gfs"
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
-export ATARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$PSLOT"
+
+# forecast-only environment parameters
+export interval_days=0
 
 # Commonly defined parameters in JJOBS
 export envir=${envir:-"prod"}
 export NET="gfs"
 export RUN=${RUN:-${CDUMP:-"gfs"}}
+export COMIN_OBS=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
+export COMIN_GES_OBS=${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/atmos
 export COMINatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMOUTatmos=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos
 export COMINwave=${ROTDIR}/${CDUMP}.${PDY}/${cyc}/wave
@@ -149,9 +156,6 @@ export LEVS=91
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
 
-# Run with CCPP physics
-export RUN_CCPP="YES"
-export CCPP_SUITE="FV3_GFS_v16"
 
 # Output frequency of the forecast model (for cycling)
 export FHMIN=0
@@ -165,7 +169,6 @@ export EUPD_CYC="gdas"
 export gfs_cyc=@gfs_cyc@ # 0: no GFS cycle, 1: 00Z only, 2: 00Z and 12Z only, 4: all 4 cycles.
 export gfs_delay=@gfs_delay@
 export gfsanl="NO"
-export interval_days=0
 
 # GFS output and frequency
 export FHMIN_GFS=0
@@ -206,21 +209,24 @@ export DO_CUBE2GAUS="YES"
 # IAU related parameters
 export DOIAU="NO"        # Enable 4DIAU for control with 3 increments
 export IAUFHRS="3,6,9"
-export IAU_FHROT=`echo $IAUFHRS | cut -c1`
+export IAU_FHROT=$(echo $IAUFHRS | cut -c1)
 export IAU_DELTHRS=6
 export IAU_OFFSET=6
 export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
 export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
 export IAU_FILTER_INCREMENTS=".false."
-# Check if cycle is cold starting, DOIAU off, or free-forecast mode
-if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "free" && $EXP_WARM_START = ".false." ]] ; then
+# Check if cycle is cold starting, DOIAU off, or forecast-only mode
+if [[ "$MODE" != "forecast-only" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "forecast-only" && $EXP_WARM_START = ".false." ]] ; then
   export IAU_OFFSET=0
   export IAU_FHROT=0
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=0
+export replay=1
+if [ $replay -eq 2 ]; then
+  export ICSTYP="gfs"
+fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="NO"
@@ -284,8 +290,8 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_cntl"
-   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${ENSFROM}"
+   export ENSFROM="sda_C192_cntl_n2h6"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
@@ -348,10 +354,14 @@ fi
 
 # Verification options
 export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
-export DO_VSDB="NO"         # Run VSDB package - set VSDB settings in config.vrfy
 
 # Archiving options
-export HPSSARCH="@HPSSARCH@" # save data to HPSS archive
+export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive
+export LOCALARCH="@LOCALARCH@"        # save data to local archive
+if [[ $HPSSARCH = "YES" ]] && [[ $LOCALARCH = "YES" ]]; then
+   echo "Both HPSS and local archiving selected.  Please choose one or the other."
+   exit 2
+fi
 export ARCH_CYC=00           # Archive data at this cycle for warm_start capability
 export ARCH_WARMICFREQ=4     # Archive frequency in days for warm_start capability
 export ARCH_FCSTICFREQ=1     # Archive frequency in days for gdas and gfs forecast-only capability

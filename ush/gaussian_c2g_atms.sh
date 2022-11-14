@@ -236,7 +236,7 @@ $NLN $memdir/${APREFIX}atm${AFHR}${ASUFFIX} ./atm${AFHR}${ASUFFIX}
 cat > fv3_da.nml <<EOF
    &fv3_da_nml
     finer_steps = 0,
-    nvar3dout = 14,
+    nvar3dout = ${nvar3dout:-14},
     write_res = .true.,
     read_res = .true.,
     write_nemsio = $nemsio,
@@ -245,7 +245,7 @@ cat > fv3_da.nml <<EOF
     atminc = ${atminc},
     data_file(1) = "fv_tracer.res",
     data_file(2) = "fv_core.res",
-    data_file(3) = "${phy_data}",
+    data_file(3) = "${phy_data:-""}",
     data_out = "atm${AFHR}${ASUFFIX}",
     gaus_file = "gaus_N${res}",
     atmos_nthreads = $OMP_NUM_THREADS,

@@ -1,4 +1,6 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 ###############################################################
 ## Abstract:
@@ -55,7 +57,9 @@ cd $COMIN
 
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
 $NCP ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
-$NCP tendency.dat $ARCDIR/tendency.${CDATE}
+if [[ $MODE != "omf" ]]; then
+  $NCP tendency.dat $ARCDIR/tendency.${CDATE}
+fi
 
 ###############################################################
 # Archive data to HPSS

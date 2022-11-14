@@ -10,6 +10,10 @@ echo "BEGIN: config.getfcst"
 
 export FTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch"
 
-export FCSTEXP="sfree_Jan"
+export FCSTEXP="sda_C192_cpsd_aero"
+
+export FCSTFROM="cycled"
+
+export FCSTDATA="/scratch2/NCEPDEV/stmp3/Mingjing.Tong/GDASFCST/$FCSTEXP"
 
 echo "END: config.getfcst"

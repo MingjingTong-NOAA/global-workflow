@@ -67,6 +67,8 @@ RADSTAT=${RADSTAT:-${COMOUT}/${APREFIX}radstat}
 PCPSTAT=${PCPSTAT:-${COMOUT}/${APREFIX}pcpstat}
 CNVSTAT=${CNVSTAT:-${COMOUT}/${APREFIX}cnvstat}
 OZNSTAT=${OZNSTAT:-${COMOUT}/${APREFIX}oznstat}
+JACSTAT=${JACSTAT:-${COMOUT}/${APREFIX}jacstat}
+JACMSTAT=${JACMSTAT:-${COMOUT}/${APREFIX}jacMstat}
 
 # Remove stat file if file already exists
 [[ -s $RADSTAT ]] && rm -f $RADSTAT
@@ -77,6 +79,7 @@ OZNSTAT=${OZNSTAT:-${COMOUT}/${APREFIX}oznstat}
 # Obs diag
 GENDIAG=${GENDIAG:-"YES"}
 DIAG_SUFFIX=${DIAG_SUFFIX:-""}
+DIAG_SUFFIX0=${DIAG_SUFFIX}
 if [ $netcdf_diag = ".true." ] ; then
    DIAG_SUFFIX="${DIAG_SUFFIX}.nc4"
 fi
@@ -94,6 +97,7 @@ REMOVE_DIAG_DIR=${REMOVE_DIAG_DIR:-"NO"}
 # Set script / GSI control parameters
 lrun_subdirs=${lrun_subdirs:-".true."}
 
+pcp_jacobian=${pcp_jacobian:-".false."}
 
 ################################################################################
 # If requested, generate diagnostic files
@@ -108,7 +112,17 @@ if [ $GENDIAG = "YES" ] ; then
    fi
 
    # Set up lists and variables for various types of diagnostic files.
-   ntype=3
+   if [ $pcp_jacobian = ".true." ]; then
+      ntype=5
+      if [ -s $JACSTAT ]; then
+         rm -f $JACSTAT
+      fi
+      if [ -s $JACMSTAT ]; then
+         rm -f $JACMSTAT
+      fi
+   else
+      ntype=3
+   fi
 
    diagtype[0]="conv conv_gps conv_ps conv_pw conv_q conv_sst conv_t conv_tcp conv_uv conv_spd"
    diagtype[1]="pcp_ssmi_dmsp pcp_tmi_trmm"
@@ -129,6 +143,21 @@ if [ $GENDIAG = "YES" ] ; then
    numfile[1]=0
    numfile[2]=0
    numfile[3]=0
+
+   if [ $pcp_jacobian = ".true." ]; then
+      diagtype[4]="amsua_n15 amsua_n16 amsua_n17 amsua_aqua amsua_n18 amsua_metop-a amsua_n19 amsua_metop-b atms_npp atms_n20"
+      diagtype[5]="amsua_n15 amsua_n16 amsua_n17 amsua_aqua amsua_n18 amsua_metop-a amsua_n19 amsua_metop-b atms_npp atms_n20"
+   
+      diaglist[4]=listjac
+      diaglist[5]=listjacM
+   
+      diagfile[4]=$JACSTAT
+      diagfile[5]=$JACMSTAT
+   
+      numfile[4]=0
+      numfile[5]=0
+   fi
+
 
    # Set diagnostic file prefix based on lrun_subdirs variable
    if [ $lrun_subdirs = ".true." ]; then
@@ -190,21 +219,39 @@ EOFdiag
       n=-1
       while [ $((n+=1)) -le $ntype ] ;do
          for type in $(echo ${diagtype[n]}); do
-            count=$(ls ${prefix}${type}_${loop}* 2>/dev/null | wc -l)
-            if [ $count -gt 1 ]; then
-               if [ $USE_CFP = "YES" ]; then
-                  echo "$nm $DATA/diag.sh $lrun_subdirs $binary_diag $type $loop $string $CDATE $DIAG_COMPRESS $DIAG_SUFFIX" | tee -a $DATA/mp_diag.sh
-		  if [ ${CFP_MP:-"NO"} = "YES" ]; then
-		      nm=$((nm+1))
-		  fi
+            if [ $n -lt 4 ]; then
+               count=$(ls ${prefix}${type}_${loop}* 2>/dev/null | wc -l)
+            else
+               if [ $n -gt 4 ]; then
+                  count=$(ls ${prefix}${type}_jacobianM_${loop}* | wc -l)
                else
-                  if [ $binary_diag = ".true." ]; then
-                     cat ${prefix}${type}_${loop}* > diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}
+                  count=$(ls ${prefix}${type}_jacobian_${loop}* | wc -l)
+               fi
+            fi
+            if [ $count -gt 1 ]; then
+               if [ $n -lt 4 ]; then
+                  if [ $USE_CFP = "YES" ]; then
+                     echo "$nm $DATA/diag.sh $lrun_subdirs $binary_diag $type $loop $string $CDATE $DIAG_COMPRESS $DIAG_SUFFIX" | tee -a $DATA/mp_diag.sh
+		     if [ ${CFP_MP:-"NO"} = "YES" ]; then
+		         nm=$((nm+1))
+		     fi
                   else
-                     $CATEXEC -o diag_${type}_${string}.${CDATE}${DIAG_SUFFIX} ${prefix}${type}_${loop}*
+                     if [ $binary_diag = ".true." ]; then
+                        cat ${prefix}${type}_${loop}* > diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}
+                     else
+                        $CATEXEC -o diag_${type}_${string}.${CDATE}${DIAG_SUFFIX} ${prefix}${type}_${loop}*
+                     fi
+                  fi
+                  echo "diag_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
+               else
+                  if [ $n -gt 4 ]; then
+                     cat ${prefix}${type}_jacobianM_${loop}* > jacM_${type}_${string}.${CDATE}${DIAG_SUFFIX0}
+                     echo "jacM_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
+                  else
+                     cat ${prefix}${type}_jacobian_${loop}* > jac_${type}_${string}.${CDATE}${DIAG_SUFFIX0}
+                     echo "jac_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
                   fi
                fi
-               echo "diag_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
                numfile[n]=$(expr ${numfile[n]} + 1)
             elif [ $count -eq 1 ]; then
                 cat ${prefix}${type}_${loop}* > diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}
@@ -266,8 +313,12 @@ EOFdiag
       done
 
       # Restrict CNVSTAT
-      chmod 750 $CNVSTAT
-      ${CHGRP_CMD} $CNVSTAT
+      if [ -s $CNVSTAT ]; then
+        chmod 750 $CNVSTAT
+        ${CHGRP_CMD} $CNVSTAT
+      else
+        echo WARNING: $CNVSTAT not found
+      fi
 
       # Restrict RADSTAT
       if [ -s $RADSTAT ]; then

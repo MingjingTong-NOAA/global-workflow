@@ -42,7 +42,6 @@ export NCP=${NCP:-"/bin/cp"}
 export NMV=${NMV:-"/bin/mv"}
 export NLN=${NLN:-"/bin/ln -sf"}
 export CHGRP_CMD=${CHGRP_CMD:-"chgrp ${group_name:-rstprod}"}
-export NEMSIOGET=${NEMSIOGET:-${NWPROD}/exec/nemsio_get}
 export NCLEN=${NCLEN:-$HOMEgfs/ush/getncdimlen}
 COMPRESS=${COMPRESS:-gzip}
 UNCOMPRESS=${UNCOMPRESS:-gunzip}
@@ -323,7 +322,8 @@ fi
 
 # GSI Fix files
 RTMFIX=${RTMFIX:-${CRTM_FIX}}
-BERROR=${BERROR:-${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77}
+berror_version=${berror_version:-""}
+BERROR=${BERROR:-${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}${berror_version}.f77}
 SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
 SATINFO=${SATINFO:-${FIXgsi}/global_satinfo_shield.txt}
 RADCLOUDINFO=${RADCLOUDINFO:-${FIXgsi}/cloudy_radiance_info_shield.txt}
@@ -458,9 +458,11 @@ $NLN $RTMFIX/NPOESS.VISsnow.EmisCoeff.bin  ./crtm_coeffs/NPOESS.VISsnow.EmisCoef
 $NLN $RTMFIX/NPOESS.VISwater.EmisCoeff.bin ./crtm_coeffs/NPOESS.VISwater.EmisCoeff.bin
 $NLN $RTMFIX/FASTEM6.MWwater.EmisCoeff.bin ./crtm_coeffs/FASTEM6.MWwater.EmisCoeff.bin
 $NLN $RTMFIX/AerosolCoeff.bin              ./crtm_coeffs/AerosolCoeff.bin
-$NLN $RTMFIX/CloudCoeff.bin                ./crtm_coeffs/CloudCoeff.bin
-#$NLN $RTMFIX/CloudCoeff.GFDLFV3.-109z-1.bin ./crtm_coeffs/CloudCoeff.bin
-
+if [[ ${hydrotable_format:-"binary"} == "binary" ]]; then
+  $NLN ${hydrotable:-$RTMFIX/CloudCoeff.bin} ./crtm_coeffs/CloudCoeff.bin
+else
+  $NLN ${hydrotable:-$RTMFIX/CloudCoeff.nc}  ./crtm_coeffs/CloudCoeff.nc
+fi
 
 ##############################################################
 # Observational data
@@ -726,11 +728,13 @@ if [ $DONST = "YES" ]; then
 fi
 
 # GSI namelist options for all-sky radiance assimilation
-if [ ${full_hydro_anl:-"NO"} = "YES" ]; then
-   ALLSKYOPT="crtm_overlap=${crtm_overlap:-4},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."},cnvw_option=${cnvw_option:-".false."}"
+if [[ ${full_hydro_anl:-"NO"} == "YES" ]]; then
+   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
+   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
    ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-0},mask_threshold=${mask_threshold:-0.000001}"
    FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
-   GFDLGRID="nlayers(90)=1,nlayers(91)=4,dlnpm_ratio=${dlnpm_ratia:-0.7},$GFDLGRID"
+   GFDLGRID="nlayers(90)=1,nlayers(91)=4,dlnpm_ratio=${dlnpm_ratio:-0.7},$GFDLGRID"
 fi
 
 ##############################################################

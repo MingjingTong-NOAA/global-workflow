@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.base ##########
 # Common to all steps
@@ -59,8 +59,8 @@ export DO_VRFY="YES"       # VRFY step
 #  use RUNMOS flag (currently in config.vrfy)
 export REALTIME="YES"
 
-# Experiment mode (cycled or free-forecast or relay)
-export MODE="@MODE@" # cycled/free/replay
+# Experiment mode (cycled or forecast-only or relay)
+export MODE="@MODE@" # cycled/forecast-only/replay/omf
 
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
@@ -216,8 +216,8 @@ export DOIAU_ENKF=${DOIAU:-"YES"}   # Enable 4DIAU for EnKF ensemble
 export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
 export IAU_FILTER_INCREMENTS=".false."
-# Check if cycle is cold starting, DOIAU off, or free-forecast mode
-if [[ "$MODE" != "free" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "free" && $EXP_WARM_START = ".false." ]] ; then
+# Check if cycle is cold starting, DOIAU off, or forecast-only mode
+if [[ "$MODE" != "forecast-only" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "forecast-only" && $EXP_WARM_START = ".false." ]] ; then
   export IAU_OFFSET=0
   export IAU_FHROT=0
 fi
@@ -291,8 +291,8 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_cntl"
-   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${ENSFROM}"
+   export ENSFROM="sda_C192_cntl_n2h6"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
@@ -343,6 +343,7 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="NO"
+export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"

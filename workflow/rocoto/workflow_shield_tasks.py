@@ -9,8 +9,8 @@ __all__ = ['Tasks', 'create_wf_task', 'get_wf_tasks']
 
 
 class Tasks:
-    SERVICE_TASKS = ['arch', 'earc', 'getic', 'eget', 'archomg']
-    VALID_TASKS = ['aerosol_init', 'coupled_ic', 'getic', 'init',
+    SERVICE_TASKS = ['arch', 'earc', 'getic', 'eget', 'getfcst', 'archomg']
+    VALID_TASKS = ['aerosol_init', 'coupled_ic', 'getic', 'init', 'getfcst',
                    'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 
                    'analinc', 'gomg', 'gldas', 'arch',
                    'atmanalprep', 'atmanalrun', 'atmanalpost',
@@ -234,6 +234,23 @@ class Tasks:
 
         return task
 
+    def getfcst(self):
+
+        suffix = self._base["SUFFIX"]
+        deps = []
+        data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/gdas.t@Hz.atmf006{suffix}'
+        dep_dict = {'type':'data', 'data':data, 'offset2': '-06:00:00'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        data = f'&ROTDIR;/{self.cdump}..@Y@m@d/@H/atmos/gdas.t@Hz.sfcf006{suffix}'
+        dep_dict = {'type':'data', 'data':data, 'offset2': '-06:00:00'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
+
+        resources = self.get_resource('getfcst')
+        task = create_wf_task('getfcst', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
+
+        return task
+
     def init(self):
 
         if self.app_config.mode != "cycled": 
@@ -279,7 +296,7 @@ class Tasks:
             data = f'&ROTDIR;/gdas.@Y@m@d/@H/atmos/gdas.t@Hz.atmf009{suffix}'
             dep_dict = {'type': 'data', 'data': data, 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+            data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -301,6 +318,12 @@ class Tasks:
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
             cycledef = self.cdump 
+        elif self.app_config.mode == "omf":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}getfcst'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps)
+            cycledef = self.cdump
         else:
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
@@ -311,7 +334,6 @@ class Tasks:
         resources = self.get_resource('prep')
         task = create_wf_task('prep', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies,
                               cycledef=cycledef)
-
 
         return task
 
@@ -386,12 +408,16 @@ class Tasks:
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.do_tref:
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}init'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_hybvar:
             dep_dict = {'type': 'metatask', 'name': f'{"gdas"}epmn', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-        else:
-            dependencies = rocoto.create_dependency(dep=deps)
+        if self.app_config.ensreplay:
+            dep_dict = {'type': 'metatask', 'name': f'{"gdas"}egmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('anal')
         task = create_wf_task('anal', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
@@ -483,12 +509,18 @@ class Tasks:
         return task
 
     def gomg(self):
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        if self.app_config.mode == "omf":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps)
+        else:
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('gomg')
         task = create_wf_task('gomg', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies,
@@ -606,7 +638,7 @@ class Tasks:
         deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_atm:
             if self._base.get('EXP_WARM_START',False):
-                data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+                data = f'&ROTDIR;/{self.app_config.icdump}.@Y@m@d/@H/atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
                 dep_dict = {'type': 'data', 'data': data}
                 deps.append(rocoto.add_dependency(dep_dict))
             else:
@@ -1112,7 +1144,7 @@ class Tasks:
         self._is_this_a_gdas_task(self.cdump, 'eget')
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{cdump}fcst', 'offset': '-06:00:00'}
+        dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
 
@@ -1123,7 +1155,7 @@ class Tasks:
 
         resources = self.get_resource('eget')
         task = create_wf_task('eget', resources, cdump=self.cdump, envar=egetenvars, dependency=dependencies,
-                              metatask='eamn', varname='grp', varval=groups)
+                              metatask='egmn', varname='grp', varval=groups)
 
         return task
 

@@ -78,7 +78,7 @@ if [[ $n -gt 0 ]] && [[ $HPSSARCH = "YES" || $LOCALARCH = "YES" ]]; then
    SAVEWARMICB="NO"
    mm=$(echo $CDATE|cut -c 5-6)
    dd=$(echo $CDATE|cut -c 7-8)
-   nday=$(( (mm-1)*30+dd ))
+   nday=$(( (10#$mm-1)*30 + 10#$dd ))
    mod=$(($nday % $ARCH_WARMICFREQ))
    if [ $CDATE -eq $firstday -a $cyc -eq $EARCINC_CYC ]; then SAVEWARMICA="YES" ; fi
    if [ $CDATE -eq $firstday -a $cyc -eq $EARCICS_CYC ]; then SAVEWARMICB="YES" ; fi
@@ -93,15 +93,14 @@ if [[ $n -gt 0 ]] && [[ $HPSSARCH = "YES" || $LOCALARCH = "YES" ]]; then
        if [ $CDATE -eq $SDATE -a $cyc -eq $EARCICS_CYC ] ; then SAVEWARMICB="YES" ; fi
    fi
 
+   $TARCMD -P -cvf $ATARDIR/$CDATE/enkf${CDUMP}_grp${ENSGRP}.tar $(cat $ARCH_LIST/enkf${CDUMP}_grp${n}.txt)
+   status=$?
+   if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
+       echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE enkf${CDUMP}_grp${ENSGRP}.tar failed"
+       exit $status
+   fi
+
    if [ $CDATE -gt $SDATE ]; then # Don't run for first half cycle
-
-     $TARCMD -P -cvf $ATARDIR/$CDATE/enkf${CDUMP}_grp${ENSGRP}.tar $(cat $ARCH_LIST/enkf${CDUMP}_grp${n}.txt)
-     status=$?
-     if [ $status -ne 0  -a $CDATE -ge $firstday ]; then
-         echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $CDATE enkf${CDUMP}_grp${ENSGRP}.tar failed"
-         exit $status
-     fi
-
      if [ $SAVEWARMICA = "YES" -a $cyc -eq $EARCINC_CYC ]; then
        $TARCMD -P -cvf $ATARDIR/$CDATE/enkf${CDUMP}_restarta_grp${ENSGRP}.tar $(cat $ARCH_LIST/enkf${CDUMP}_restarta_grp${n}.txt)
        status=$?

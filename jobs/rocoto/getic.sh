@@ -66,7 +66,11 @@ export replay_4DIAU=${replay_4DIAU:-"NO"}
 # Create ROTDIR/EXTRACT_DIR
 if [ ! -d $ROTDIR ]; then mkdir -p $ROTDIR ; fi
 if [ ! -d $EXTRACT_DIR ]; then mkdir -p $EXTRACT_DIR ; fi
-cd $EXTRACT_DIR
+if [[ $MODE = "forecast-only" && $EXP_WARM_START = ".true." ]]; then
+   cd $ROTDIR 
+else
+   cd $EXTRACT_DIR
+fi
 
 # Check version, cold/warm start, and resolution
 if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; then # Pull warm start ICs - no chgres
@@ -104,18 +108,30 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
 
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
 
-  # Run UFS_UTILS GETICSH
-  atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
-  sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
-  abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
-  if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
-    sh ${GETICSH} ${ICDUMP}
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-
+  if [[ $MODE == "forecast-only" && $EXP_WARM_START = ".true." ]]; then
+     # pull warm start files
+     hpssdir="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$RESTARTEXP"
+     gdasb=$hpssdir/$GDATE/gdas_restartb.tar
+     gdasa=$hpssdir/$CDATE/gdas_restarta.tar
+     htar -xvf $gdasb
+     htar -xvf $gdasa 
+     exit 0
   else
-    echo "IC atmanl exists, skip pulling data"
+     # Run UFS_UTILS GETICSH
+     atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
+     sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
+     abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
+     if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
+          sh ${GETICSH} ${ICDUMP}
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
+   
+     else
+       echo "IC atmanl exists, skip pulling data"
+     fi
   fi
+
+
 fi
 
 cd $EXTRACT_DIR
@@ -149,7 +165,7 @@ fi
 # Pull sfcanl restart file to get tref for replay and DA cycle
 cd ${ICSDIR}
 if [[ $gfs_ver = "v16" ]]; then
-  if [[  $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
+  if [[  $MODE != "forecast-only" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        getdata2="NO"

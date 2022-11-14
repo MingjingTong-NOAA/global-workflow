@@ -1,4 +1,6 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 ###############################################################
 ## Abstract:
@@ -42,50 +44,83 @@ export gmm=$(echo $GDATE | cut -c5-6)
 export gdd=$(echo $GDATE | cut -c7-8)
 export ghh=$(echo $GDATE | cut -c9-10)
 
-export DATA=${DATA:-${DATAROOT}/getfcst}
+export FCSTDATA=${FCSTDATA:-$ROTDIR}
 
-# Create ROTDIR/EXTRACT_DIR
-if [ ! -d $ROTDIR ]; then mkdir -p $ROTDIR ; fi
-cd $ROTDIR
+# Create FCSTDATA/ROTDIR
+if [ ! -d $FCSTDATA ]; then mkdir -p $FCSTDATA ; fi
+cd $FCSTDATA
 
-if [ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf006.nc ]; then
-  htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_netcdfb.tar
-  status=$?
-  if [ $status -ne 0 ]; then
-    echo "pull data failed"
-    exit $status
-  fi
+pulldata="NO"
+if [[ $FCSTFROM == "forecast-only" ]]; then
+   if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf006.nc ]; then
+     htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_netcdfb.tar
+     status=$?
+     if [ $status -ne 0 ]; then
+       echo "pull data failed"
+       exit $status
+     fi
+   fi
+else
+   >${ROTDIR}/logs/${CDATE}/list.txt
+   for n in $(seq 3 9); do
+      if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf00${n}.nc ]; then
+         echo "./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf00${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
+         pulldata="YES"
+      fi
+      if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.sfcf00${n}.nc ]; then
+         echo "./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.sfcf00${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
+         pulldata="YES"
+      fi
+      if [[ ${DO_MAKEPREPBUFR:-"NO"} == "YES" ]]; then
+         if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf00${n}.txt ]; then
+           echo "./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf00${n}.txt" >>${ROTDIR}/logs/${CDATE}/list.txt
+           pulldata="YES"
+         fi
+      fi
+   done
+   if [[ $pulldata == "YES" ]]; then
+      htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}.tar -L ${ROTDIR}/logs/${CDATE}/list.txt
+      status=$?
+      if [ $status -ne 0 ]; then
+         echo "pull data failed"
+         exit $status
+      fi
+   else
+      echo "data exist, skip pulling data"
+   fi
 fi
 
-if [[ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt && $DO_MAKEPREPBUFR == "YES" ]]; then
-  #htar -tvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}a.tar > ./list1
-  #>./list2
-  #grep "logf" ./list1 | awk '{ print $7 }' >> ./list2
-  #htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}a.tar -L ./list2
-  #rm -f ./list1 ./list2
-
+if [[ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt && ${DO_MAKEPREPBUFR:-"NO"} == "YES" ]]; then
   # create fake log files
-  if [[ ! -s ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt ]]; then
+  if [[ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf006.txt ]]; then
      for fhr in 3 6 9; do
-        cat > ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf00${fhr}.txt << EOF
+        cat > ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.logf00${fhr}.txt << EOF
  completed fv3gfs fhour=${fhr}.000 $GDATE
 EOF
      done
   fi
 fi
 
-
-if [[ $MODE == "free" ]]; then
+if [[ $FCSTFROM == "forecast-only" ]]; then
   COMOUT=${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos
   $NLN ${COMOUT}/*abias* ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
   $NLN ${COMOUT}/*radstat ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
 else
-  htar -tvf  ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}.tar > ./list1
-  >./list2
-  grep abias ./list1 | awk '{ print $7 }' >> ./list2
-  grep ratstat ./list1 | awk '{ print $7 }' >> ./list2
-  htar -xvf $directory/${CDUMP}.tar -L ./list2
+  if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat ]; then 
+    htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}.tar ./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat
+    htar -tvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_restarta.tar > ${ROTDIR}/logs/${CDATE}/list1
+  fi
+  if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.abias ]; then 
+    >${ROTDIR}/logs/${CDATE}/list2
+    grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
+    htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_restarta.tar -L ${ROTDIR}/logs/${CDATE}/list2
+  fi
 fi
+
+if [ ! -d $ROTDIR/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos ]; then 
+   mkdir -p $ROTDIR/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos
+fi
+$NLN ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/* ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
 
 exit 0
 

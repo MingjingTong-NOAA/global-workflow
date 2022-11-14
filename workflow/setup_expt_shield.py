@@ -33,7 +33,9 @@ def fill_COMROT(host, inputs):
 
     fill_modes = {
         'cycled': fill_COMROT_cycled,
-        'forecast-only': fill_COMROT_forecasts
+        'forecast-only': fill_COMROT_forecasts,
+        'replay': fill_COMROT_replay,
+        'omf': fill_COMROT_omf,
     }
 
     try:
@@ -83,6 +85,17 @@ def fill_COMROT_forecasts(host, inputs):
     """
     return
 
+def fill_COMROT_replay(host, inputs):
+    """
+    Implementation of 'fill_COMROT' for replay mode
+    """
+    return
+
+def fill_COMROT_omf(host, inputs):
+    """
+    Implementation of 'fill_COMROT' for omf mode
+    """
+    return
 
 def fill_EXPDIR(inputs):
     """
@@ -94,7 +107,7 @@ def fill_EXPDIR(inputs):
     expdir = os.path.join(inputs.expdir, inputs.pslot)
 
     configs = glob.glob(f'{configdir}/config.*')
-    exclude_configs = ['base', 'base.emc.dyn', 'base.nco.static', 'config.base.gfdl', 'fv3.nco.static']
+    exclude_configs = ['base', 'base.emc.dyn', 'base.nco.static', 'fv3.nco.static']
     for exclude in exclude_configs:
         try:
             configs.remove(f'{configdir}/config.{exclude}')
@@ -201,9 +214,13 @@ def input_args():
         'cycled', help='arguments for cycled mode')
     forecasts = subparser.add_parser(
         'forecast-only', help='arguments for forecast-only mode')
+    replay = subparser.add_parser(
+        'replay', help='arguments for replay mode')
+    omf = subparser.add_parser(
+        'omf', help='arguments for omf mode')
 
     # Common arguments across all modes
-    for subp in [cycled, forecasts]:
+    for subp in [cycled, forecasts, replay, omf]:
         subp.add_argument('--pslot', help='parallel experiment name',
                           type=str, required=False, default='test')
         subp.add_argument('--resdet', help='resolution of the deterministic model forecast',
@@ -236,6 +253,14 @@ def input_args():
     # forecast only mode additional arguments
     forecasts.add_argument('--app', help='UFS application', type=str, choices=[
         'ATM', 'ATMA', 'ATMW', 'S2S', 'S2SW', 'S2SWA', 'NG-GODAS'], required=False, default='ATM')
+
+    # replay mode additional arguments
+    replay.add_argument('--app', help='SHiELD application', type=str, choices=[
+        'ATM'], required=False, default='ATM')
+
+    # omf mode additional arguments
+    omf.add_argument('--app', help='SHiELD application', type=str, choices=[
+        'ATM'], required=False, default='ATM')
 
     args = parser.parse_args()
 

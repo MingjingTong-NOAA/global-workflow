@@ -34,7 +34,7 @@ fi
 export COMOUT="$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
 [[ ! -d $COMOUT ]] && mkdir -p $COMOUT
 
-# For free and replay mode, always use gdas dump
+# For forecast-only and replay mode, always use gdas dump
 if [ $MODE = "cycled" ]; then
    GDUMP=$CDUMP
 else

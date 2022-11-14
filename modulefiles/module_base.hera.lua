@@ -16,8 +16,7 @@ load(pathJoin("ncl", "6.6.2"))
 load(pathJoin("prod_util", "1.2.2"))
 load(pathJoin("grib_util", "1.2.2"))
 
-load(pathJoin("crtm", "2.3.0"))
-setenv("CRTM_FIX","/scratch2/NCEPDEV/nwprod/NCEPLIBS/fix/crtm_v2.3.0")
+load(pathJoin("crtm", "2.4.0"))
 
 load(pathJoin("jasper", "2.0.25"))
 load(pathJoin("zlib", "1.2.11"))

@@ -67,10 +67,11 @@ export SAVEDIR=$COMOUT/${CASE}/INPUT
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
   echo "Detected v16 $OPS_RES warm starts, will not run init. Exiting..."
-  
+elif [[ $MODE = "forecast-only" && $EXP_WARM_START = ".true." ]]; then
+  echo "warm-start forecast only, will not run init. Exiting..."  
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
-  if [[ $MODE = "free" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
+  if [[ $MODE = "forecast-only" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
     if [[ ! -d $SAVEDIR ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}
@@ -103,7 +104,7 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ $CASE != $OPS_RES && $MODE != "free" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
+  if [[ $CASE != $OPS_RES && $MODE != "forecast-only" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
     if [[ ! -s $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP} $IAUSDATE $CASE
       status=$?

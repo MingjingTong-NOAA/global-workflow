@@ -77,7 +77,7 @@ def get_gfs_cyc_dates(base: Dict[str, Any]) -> Dict[str, Any]:
 
 class AppConfig:
 
-    VALID_MODES = ['cycled', 'forecast-only']
+    VALID_MODES = ['cycled', 'forecast-only', 'replay', 'omf']
 
     def __init__(self, configuration: Configuration) -> None:
 
@@ -150,7 +150,9 @@ class AppConfig:
 
         # Update the base config dictionary based on application
         upd_base_map = {'cycled': self._cycled_upd_base,
-                        'forecast-only': self._forecast_only_upd_base}
+                        'forecast-only': self._forecast_only_upd_base,
+                        'replay': self._replay_upd_base,
+                        'omf': self._omf_upd_base}
         try:
             self.configs['base'] = upd_base_map[self.mode](self.configs['base'])
         except KeyError:
@@ -171,7 +173,8 @@ class AppConfig:
 
         configs_map = {'cycled': self._cycled_configs,
                        'forecast-only': self._forecast_only_configs,
-                       'replay': self._replay_configs}
+                       'replay': self._replay_configs,
+                       'omf': self._omf_configs}
         try:
             configs_names = configs_map[self.mode]
         except KeyError:
@@ -325,6 +328,18 @@ class AppConfig:
         if self.do_atm and self.do_post and self.do_metp:
             configs += ['metp']
 
+        return configs
+
+    @property 
+    def _omf_configs(self):
+        """
+        Returns the config_files that are involved in the forecast-only app
+        """
+
+        configs = ['getfcst','prep','gomg','analdiag','archomg']
+
+        return configs
+
     @staticmethod
     def _cycled_upd_base(base_in):
 
@@ -336,6 +351,18 @@ class AppConfig:
         base_out = base_in.copy()
         base_out['INTERVAL_GFS'] = get_gfs_interval(base_in['gfs_cyc'])
         base_out['CDUMP'] = 'gfs'
+
+        return base_out
+
+    @staticmethod
+    def _replay_upd_base(base_in):
+
+        return get_gfs_cyc_dates(base_in)
+
+    @staticmethod
+    def _omf_upd_base(base_in):
+
+        base_out = base_in.copy()
 
         return base_out
 
@@ -378,7 +405,8 @@ class AppConfig:
         # Get a list of all possible tasks that would be part of the application
         tasks_map = {'cycled': self._get_cycled_task_names,
                      'forecast-only': self._get_forecast_only_task_names,
-                     'replay': self._get_replay_task_names}
+                     'replay': self._get_replay_task_names,
+                     'omf': self._get_omf_task_names}               
         try:
             task_names = tasks_map[self.mode]()
         except KeyError:
@@ -396,6 +424,8 @@ class AppConfig:
         """
 
         gdas_gfs_common_tasks_before_fcst = ['prep']
+        if self.ensreplay:
+            gdas_gfs_common_tasks_before_fcst += ['eget']
         gdas_gfs_common_tasks_after_fcst = ['post', 'vrfy']
         gdas_gfs_common_cleanup_tasks = ['arch']
 
@@ -571,38 +601,52 @@ class AppConfig:
         This is the place where that order is set.
         """
 
-        tasks = []
+        gdas_tasks = []
 
-        if self.model_app in ['S2S', 'S2SW', 'S2SWA', 'NG-GODAS']:
-            tasks += ['coupled_ic']
-        else:
-            if self.do_hpssarch:
-                tasks += ['getic']
-            tasks += ['init']
-            if self.do_gomg:
-                tasks += ['prep']
+        if self.do_tref:
+            gdas_tasks = ['getic', 'init']
+
+        if self.do_gomg:
+            gdas_tasks += ['prep']
 
         if self.replay == 2:
-            tasks += ['analinc']
+            gdas_tasks += ['analinc']
 
         if self.do_gcycle:
-            tasks += ['sfcanl']
+            gdas_tasks += ['sfcanl']
             if self.do_gldas:
-                tasks += ['gldas']
+                gdas_tasks += ['gldas']
 
-        tasks += ['fcst']
+        gdas_tasks += ['fcst']
+
+        if self.do_gcycle and self.do_gldas:
+            gdas_tasks += ['post']
 
         if self.do_gomg:
-            tasks += ['gomg','analdiag']
+            gdas_tasks += ['gomg','analdiag','archomg']
 
-        if self.do_atm and self.gdaspost:
-            tasks += ['post','vrfy']
+        gfs_tasks = ['fcst','post','vrfy']
+        if self.do_metp:
+            gfs_tasks += ['metp']
 
-        if self.do_atm and self.do_metp and self.do_gdas:
-            tasks += ['metp']
+        gfs_tasks += ['arch']  # arch **must** be the last task
 
-        tasks += ['arch']  # arch **must** be the last task
-        if self.do_gomg:
-            tasks += ['archomg']
+        tasks = {'gdas': gdas_tasks, 'gfs': gfs_tasks}
 
-        return {f"{self._base['CDUMP']}": tasks}
+        return tasks
+
+    def _get_omf_task_names(self):
+        """
+        Get the task names for all the tasks in the omf application.
+        Note that the order of the task names matters in the XML.
+        This is the place where that order is set.
+        """
+
+        tasks = []
+
+        if self.do_hpssarch:
+            tasks += ['getfcst']
+        tasks += ['prep','gomg','analdiag','archomg']
+
+        return {'gdas': tasks}
+

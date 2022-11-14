@@ -186,15 +186,16 @@ export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
-LEVA=$((LEVS - 1))
 if [[ "$CDATE" -lt "2021102612" ]]; then
-   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVA}.txt_2021102612
+   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_2021102612
 fi
 
 # Set all-sky radiance assimilation options
+export hydrotable="$RTMFIX/CloudCoeff.bin"
+export hydrotable_format="binary"
+
 if [[ $full_hydro_anl = "YES" ]]; then
-   export GSIEXEC=$HOMEgfs/exec/global_gsi_gfdl.x
-   export lcalc_gfdl_cfrac=".false."
+   export lcalc_gfdl_cfrac=".true."
    if [ $lcalc_gfdl_cfrac = ".false." ]; then
       if [[ "$CDATE" -lt "2021102612" ]]; then
          export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt_2021102612
@@ -208,6 +209,7 @@ if [[ $full_hydro_anl = "YES" ]]; then
          export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
       fi
    fi
+   export allsky_gfdl=".false."
    export crtm_overlap=4
    export cnvw_option=".false."
    export allsky_verbose=".false."
@@ -217,6 +219,6 @@ if [[ $full_hydro_anl = "YES" ]]; then
    export bkgv_write=".false."
 fi
 
-#export USE_CORRELATED_OBERRS="NO"
+export USE_CORRELATED_OBERRS="NO"
 
 echo "END: config.anal"

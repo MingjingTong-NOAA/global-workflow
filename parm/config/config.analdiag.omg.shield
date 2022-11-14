@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
 
 ########## config.analdiag ##########
 # GFS post-anal specific (diag)
@@ -8,12 +8,14 @@ echo "BEGIN: config.analdiag"
 # Get task specific resources
 . $EXPDIR/config.resources analdiag
 
-export pcp_jacobian=".false."
+export pcp_jacobian=".true."
 
 export GDUMP=$CDUMP
 export GENDIAG="YES"
 export DIAG_TARBALL="YES"
 
 export loops="01"
+
+export RADSTAT=${COMOUTatmos}/${CDUMP}.t${cyc}z.radstat.omf
 
 echo "END: config.analdiag"

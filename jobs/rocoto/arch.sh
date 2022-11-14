@@ -269,7 +269,7 @@ elif [ $CDUMP = "gdas" ]; then
         targrp_list="$targrp_list gdaswave"
     fi
 
-    if [ $MODE != "free" ]; then
+    if [ $MODE != "forecast-only" ]; then
       if [ $SAVEWARMICA = "YES" -o $SAVEFCSTIC = "YES" ]; then
         if [[ $MODE = "cycled" || $DOGCYCLE = "YES" ]]; then
           targrp_list="$targrp_list gdas_restarta"
@@ -361,7 +361,7 @@ while [ $GDATE -le $GDATEEND ]; do
                             rm -rf $COMIN/$file
                         done
 		    else
-                        if [[ $MODE = "free" && $DO_OmF = "YES" ]]; then
+                        if [[ $MODE = "forecast-only" && $DO_OmF = "YES" ]]; then
                            ADATE=$($NDATE +6 $GDATE)
                            aPDY=$(echo $ADATE | cut -c1-8)
                            acyc=$(echo $ADATE | cut -c9-10)

@@ -1,4 +1,6 @@
-#!/bin/ksh -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 ###############################################################
 ## Abstract:
@@ -37,7 +39,7 @@ gcyc=$(echo $GDATE | cut -c9-10)
 
 export COMPONENT=${COMPONENT:-atmos}
 
-RESTARTEXP=${RESTARTEXP:-${PSLOT}}
+ENSFROM=${ENSFROM:-${PSLOT}}
 NMEM_EARCGRP=${NMEM_EARCGRP:-10}
 NTARS=$((NMEM_ENKF/NMEM_EARCGRP))
 [[ $NTARS -eq 0 ]] && NTARS=1
@@ -53,6 +55,11 @@ cd $ARCH_LIST
 export n=$((10#${ENSGRP}))
 
 pulldata="NO"
+if [ $CASE == "C192" ]; then
+  fzmin=102500000
+elif [ $CASE == "C384" ]; then
+  fzmin=390000000
+fi
 rm -f enkf${CDUMP}_grp${ENSGRP}.txt
 touch enkf${CDUMP}_grp${ENSGRP}.txt
 if [[ $n -eq 0 ]]; then
@@ -78,7 +85,7 @@ else
        fhr=$(printf %03i $fh)
        fname=$ENSDIR/${dirname}${head}atmf${fhr}${SUFFIX}
        fsize=`wc -c $fname | awk '{print $1}'`
-       if [[ ! -s $fname || $fsize -lt 390000000 ]]; then
+       if [[ ! -s $fname || $fsize -lt $fzmin ]]; then
          echo "${dirname}${head}atmf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${ENSGRP}.txt
          echo "${dirname}${head}sfcf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${ENSGRP}.txt
          pulldata="YES"
@@ -95,7 +102,7 @@ cd $ENSDIR
 
 TARCMD="htar"
 if [ $pulldata = "YES" ]; then
-  $TARCMD -xvf ${ETARDIR}/${RESTARTEXP}/${GDATE}/${tarball} -L $ARCH_LIST/enkf${CDUMP}_grp${ENSGRP}.txt
+  $TARCMD -xvf ${ETARDIR}/${ENSFROM}/${GDATE}/${tarball} -L $ARCH_LIST/enkf${CDUMP}_grp${ENSGRP}.txt
   status=$?
   if [ $status -ne 0 ]; then
     echo "$(echo $TARCMD | tr 'a-z' 'A-Z') $GDATE enkf${CDUMP}_grp${ENSGRP}.tar failed"

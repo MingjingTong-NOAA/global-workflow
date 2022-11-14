@@ -1,11 +1,10 @@
-#!/bin/ksh
-set -x
+#! /usr/bin/env bash
 
 ###################################################
 # Fanglin Yang, 20180318
 # --create bunches of files to be archived to HPSS
 ###################################################
-
+source "$HOMEgfs/ush/preamble.sh"
 
 type=${1:-gfs}                ##gfs, gdas
 
@@ -31,8 +30,14 @@ fi
 if [ -s $ROTDIR/${dirpath}${head}oznstat ]; then
    echo  "${dirname}${head}oznstat" >>${type}omg.txt
 fi
-if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
-   echo  "${dirname}${head}radstat" >>${type}omg.txt
+if [ -s $ROTDIR/${dirpath}${head}radstat.omf ]; then
+   echo  "${dirname}${head}radstat.omf" >>${type}omg.txt
+fi
+if [ -s $ROTDIR/${dirpath}${head}jacstat ]; then
+   echo "${dirpath}${head}jacstat" >>${type}omg.txt
+fi
+if [ -s $ROTDIR/${dirpath}${head}jacMstat ]; then
+   echo "${dirpath}${head}jacMstat" >>${type}omg.txt
 fi
 
 if [ $DO_MAKEPREPBUFR = "YES" ]; then
