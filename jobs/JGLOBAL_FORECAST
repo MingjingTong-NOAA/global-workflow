@@ -118,7 +118,7 @@ fi
 
 # Restart conditions for GFS cycle come from GDAS
 rCDUMP=$CDUMP
-[[ $MODE != "free" && $CDUMP = "gfs" ]] && export rCDUMP="gdas"
+[[ $MODE != "forecast-only" && $CDUMP = "gfs" ]] && export rCDUMP="gdas"
 
 # Forecast length for GFS forecast
 if [ $CDUMP = "gfs" ]; then

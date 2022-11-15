@@ -115,6 +115,7 @@ affix="nemsio"
 [[ "$OUTPUT_FILE" = "netcdf" ]] && affix="nc"
 
 rCDUMP=${rCDUMP:-$CDUMP}
+[[ $MODE = "forecast-only" ]] && rCDUMP=$ICDUMP
 
 # interpolate from cubesphere grid to gaussian grid
 DO_CUBE2GAUS=${DO_CUBE2GAUS:-"YES"}
@@ -166,14 +167,16 @@ if [ $CDUMP = "gfs" -a $rst_invt1 -gt 0 ]; then
     RSTDIR_ATM=${RSTDIR:-$ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos/RERUN_RESTART
     if [ ! -d $RSTDIR_ATM ]; then mkdir -p $RSTDIR_ATM ; fi
     $NLN $RSTDIR_ATM RESTART
+    filecount=$(find $RSTDIR_ATM -type f | wc -l)
 else
     mkdir -p $DATA/RESTART
+    filecount=0
 fi
 
 #-------------------------------------------------------
 # determine if restart IC exists to continue from a previous forecast
 RERUN="NO"
-filecount=$(find $RSTDIR_ATM -type f | wc -l) 
+filecount=$(find $RSTDIR_ATM -type f | wc -l)
 if [ $CDUMP = "gfs" -a $rst_invt1 -gt 0 -a $FHMAX -gt $rst_invt1 -a $filecount -gt 10 ]; then
     reverse=$(echo "${restart_interval[@]} " | tac -s ' ')
     for xfh in $reverse ; do
@@ -331,7 +334,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       if [ $fsufanl = "sfcanl_data" ]; then
         file2=$(echo $file2 | sed -e "s/sfcanl_data/sfc_data/g")
         # when NSST is off, use tref
-        if [[ $DONST = "YES" || $DOGCYCLE = "YES" ]]; then
+        if [[ $DONST = "YES" || $DOGCYCLE = "YES" || ($MODE = "forecast-only" && $IAU_OFFSET -ne 0) ]]; then
            $NLN $file $DATA/INPUT/$file2
         else
            $NLN $file $DATA/INPUT/sfc_org

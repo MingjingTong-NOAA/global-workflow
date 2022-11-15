@@ -236,6 +236,8 @@ elif [ $step = "fcst" ]; then
     if [ $CASE = "C192" ]; then
       export tasks_per_node_c2g=2
       export cpus_per_task_c2g=20
+      export tasks_per_node_c2g_gfs=8
+      export cpus_per_task_c2g_gfs=5
     fi
 
 elif [ $step = "post" ]; then

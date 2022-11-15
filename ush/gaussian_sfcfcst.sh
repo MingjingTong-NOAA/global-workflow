@@ -217,12 +217,10 @@ rPDY=$(echo $RDATE | cut -c1-8)
 rcyc=$(echo $RDATE | cut -c9-10)
 # input forecast tiles (with nst records)
 if [[ $RHR -ne $REND ]] ; then
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile1.nc   ./fcst.tile1.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile2.nc   ./fcst.tile2.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile3.nc   ./fcst.tile3.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile4.nc   ./fcst.tile4.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile5.nc   ./fcst.tile5.nc
-   $NLN $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile6.nc   ./fcst.tile6.nc
+   list1=`ls -C1 $DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data.tile*.nc`
+   for file in $list1; do
+       $NLN $file ./fcst${file#$DATA/RESTART/${rPDY}.${rcyc}0*.sfc_data}
+   done
 else
    $NLN $DATA/RESTART/sfc_data.tile1.nc   ./fcst.tile1.nc
    $NLN $DATA/RESTART/sfc_data.tile2.nc   ./fcst.tile2.nc
