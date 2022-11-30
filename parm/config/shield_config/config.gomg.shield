@@ -186,7 +186,7 @@ fi
 export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
 export hydrotable_format="netcdf"
 
-if [[ $full_hydro_anl = "YES" ]]; then
+if [[ $full_hydro_gfdl = "YES" ]]; then
    export GSIEXEC=$HOMEgfs/exec/gsi.x_allq
    export lcalc_gfdl_cfrac=".true."
    if [ $lcalc_gfdl_cfrac = ".false." ]; then

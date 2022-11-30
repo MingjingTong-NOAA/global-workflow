@@ -728,7 +728,7 @@ if [ $DONST = "YES" ]; then
 fi
 
 # GSI namelist options for all-sky radiance assimilation
-if [[ ${full_hydro_anl:-"NO"} == "YES" ]]; then
+if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
    ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
    ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
    ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
@@ -759,10 +759,12 @@ cat > gsiparm.anl << EOF
   newpc4pred=.true.,adp_anglebc=.true.,angord=4,passive_bc=.true.,use_edges=.false.,
   diag_precon=.true.,step_start=1.e-3,emiss_bc=.true.,nhr_obsbin=${nhr_obsbin:-3},
   cwoption=3,imp_physics=$imp_physics,lupp=$lupp,cnvw_option=$cnvw_option,
+  cao_check=${cao_check},
   netcdf_diag=$netcdf_diag,binary_diag=$binary_diag,
   lobsdiag_forenkf=$lobsdiag_forenkf,lwrite_peakwt=.false.,
   write_fv3_incr=$write_fv3_increment,
   nhr_anal=${IAUFHRS},
+  ta2tb=${ta2tb},
   $WRITE_INCR_ZERO
   $WRITE_ZERO_STRAT
   $WRITE_STRAT_EFOLD
@@ -773,6 +775,7 @@ cat > gsiparm.anl << EOF
   JCAP_B=$JCAP,JCAP=$JCAP_A,NLAT=$NLAT_A,NLON=$NLON_A,nsig=$LEVS,
   regional=.false.,nlayers(90)=2,nlayers(91)=3,
   $GRIDOPTS
+  $GFDLGRID
 /
 &BKGERR
   vs=0.7,

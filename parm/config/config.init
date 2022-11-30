@@ -51,7 +51,7 @@ if [ ${REDUCEDRES:-"NO"} = "YES" ]; then # gfs reduced resolution experiment
    export RUNICSH=${GDASINIT_DIR}/run_v16.chgres.sh
 fi
 
-if [ $gfs_ver = "v16" ]; then
+if [[ "$gfs_ver" == *"v16"* ]]; then
    export LEVS_INIT=128
    export ncep_levs=128
 else

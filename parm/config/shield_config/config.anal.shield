@@ -194,21 +194,8 @@ fi
 export hydrotable="$RTMFIX/CloudCoeff.bin"
 export hydrotable_format="binary"
 
-if [[ $full_hydro_anl = "YES" ]]; then
+if [[ $full_hydro_gfdl = "YES" ]]; then
    export lcalc_gfdl_cfrac=".true."
-   if [ $lcalc_gfdl_cfrac = ".false." ]; then
-      if [[ "$CDATE" -lt "2021102612" ]]; then
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt_2021102612
-      else
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt
-      fi
-   else
-      if [[ "$CDATE" -lt "2021102612" ]]; then
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt_2021102612
-      else
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
-      fi
-   fi
    export allsky_gfdl=".false."
    export crtm_overlap=4
    export cnvw_option=".false."

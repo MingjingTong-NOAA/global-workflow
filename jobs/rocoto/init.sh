@@ -78,7 +78,7 @@ else
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi 
-    if [[ $replay == 1 && $CDUMP = "gfs" ]]; then
+    if [[ $replay == 1 && $CDUMP = "gfs" || $MODE = "forecast-only" ]]; then
       COMOUTatmos=${ROTDIR}/gdas.${yy}${mm}${dd}/${hh}/atmos
     else
       COMOUTatmos=${COMOUTatmos}

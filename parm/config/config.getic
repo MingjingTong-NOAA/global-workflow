@@ -10,7 +10,8 @@ echo "BEGIN: config.getic"
 
 export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
-export gfs_ver="v16" # Default = v16
+export gfs_ver="v16"  # Default = v16
+#export gfs_ver="exp-v16p2_C192c"
 export ICDUMP="gdas"
 export START="cold"
 export OPS_RES=${OPS_RES:-"C768"} # Operational resolution
@@ -67,6 +68,10 @@ else # Operational input
     echo FATAL ERROR: NO V15 OR V16 DATA FOR 2021032100
     exit 1
   fi
+fi
+
+if [ $(echo $gfs_ver | cut -c1-4) = "exp-" ]; then
+   GETICSH=$HOMEgfs/ush/get_exp_ic.sh
 fi
 
 if [ $gfs_ver != "v16" ]; then

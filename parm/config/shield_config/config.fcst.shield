@@ -105,13 +105,13 @@ elif [ $imp_physics -eq 8 ]; then # Thompson
 
 elif [ $imp_physics -eq 11 ]; then # GFDL
     export ncld=5
-    export FIELD_TABLE="$HOMEgfs/parm/parm_fv3diag/field_table_6species"
+    export FIELD_TABLE="$HOMEgfs/parm/parm_fv3diag/field_table_6species_aero"
     export nwat=6
-    export dnats=1
+    export dnats=2
     export cal_pre=".false."
     export do_sat_adj=".false."
     export random_clds=".false."
-    export reiflag=1
+    export reiflag=7
 
     export hord_mt_nh_nonmono=5
     export hord_xx_nh_nonmono=5
@@ -120,7 +120,7 @@ elif [ $imp_physics -eq 11 ]; then # GFDL
     export imfdeepcnv=2
     export nord=3
     export dddmp=0.2
-    export d4_bg=0.15
+    export d4_bg=0.12
 
 else
     echo "Unknown microphysics option, ABORT!"
@@ -169,10 +169,10 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
     export adjust_dry_mass=".true."
 
     # diffusion test
-    export nord=2
-    export hord_mt_nh_nonmono=6
-    export hord_xx_nh_nonmono=6
-    export hord_tr=8
+    #export nord=2
+    #export hord_mt_nh_nonmono=6
+    #export hord_xx_nh_nonmono=6
+    #export hord_tr=8
 
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 

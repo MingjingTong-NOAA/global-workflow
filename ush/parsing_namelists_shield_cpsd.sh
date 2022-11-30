@@ -126,7 +126,7 @@ cat > input.nml <<EOF
   d2_bg = 0.
   nord = ${nord:-3}
   dddmp = ${dddmp:-0.2}
-  d4_bg = ${d4_bg:-0.15}
+  d4_bg = ${d4_bg:-0.12}
   vtdm4 = $vtdm4
   delt_max = ${delt_max:-"0.002"}
   ke_bg = 0.

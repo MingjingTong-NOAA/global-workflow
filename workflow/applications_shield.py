@@ -117,6 +117,7 @@ class AppConfig:
         self.replay = _base.get('replay',0)
         self.ensreplay = _base.get('ENSREPLAY',False)
         self.icdump = _base.get('ICDUMP', 'gdas')
+        self.icstyp = _base.get('ICSTYP', 'gfs')
      
         self.do_gomg = _base.get('DO_OmF', False)
         self.do_gcycle = _base.get('DOGCYCLE', False)

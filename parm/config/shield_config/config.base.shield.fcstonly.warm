@@ -98,7 +98,7 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="replay"
+export RESTARTEXP="sda_C192_cpsd_aero_hord5nord3"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -247,11 +247,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="YES"
+export DO_GLDAS="NO"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
-export DOGCYCLE="YES"
+export DOGCYCLE="NO"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -273,7 +273,6 @@ export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
-export RECENTER=1
 
 # forecast w/o DA increment for restart
 export fcst_wo_da="NO"
@@ -318,7 +317,7 @@ fi
 export nst_anl=".true."
 
 # full hydrometeors assimilation
-export full_hydro_anl="NO"
+export full_hydro_gfdl="NO"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -342,19 +341,19 @@ export netcdf_diag=".true."
 export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
-export DO_OmF="YES"
+export DO_OmF="NO"
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="YES"
+export gdaspost="NO"
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"
 fi
 
 # Verification options
-export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
+export DO_METP="NO"        # Run METPLUS jobs - set METPLUS settings in config.metp
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive

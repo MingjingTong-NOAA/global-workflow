@@ -317,7 +317,7 @@ if [ $type = "gfs" ]; then
     echo  "${dirname}ice*nc                     " >>ice.txt
   fi
 
-  if [ $DO_AERO = "YES" ]; then
+  if [ ${DO_AERO:-"NO"} = "YES" ]; then
     dirpath="gfs.${PDY}/${cyc}/chem"
     dirname="./${dirpath}"
 

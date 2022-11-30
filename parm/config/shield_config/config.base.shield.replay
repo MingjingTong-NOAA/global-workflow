@@ -98,7 +98,7 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="sda_cntl"
+export RESTARTEXP="replay"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -185,8 +185,8 @@ export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
-export FHOUT_aux=1
-export FHDUR_aux=9
+export FHOUT_aux=0
+export FHDUR_aux=6
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
@@ -207,7 +207,7 @@ fi
 export DO_CUBE2GAUS="YES"
 
 # IAU related parameters
-export DOIAU="NO"        # Enable 4DIAU for control with 3 increments
+export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
 export IAUFHRS="3,6,9"
 export IAU_FHROT=$(echo $IAUFHRS | cut -c1)
 export IAU_DELTHRS=6
@@ -247,11 +247,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="NO"
+export DO_GLDAS="YES"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
-export DOGCYCLE="NO"
+export DOGCYCLE="YES"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -273,6 +273,7 @@ export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
+export RECENTER=1
 
 # forecast w/o DA increment for restart
 export fcst_wo_da="NO"
@@ -317,7 +318,7 @@ fi
 export nst_anl=".true."
 
 # full hydrometeors assimilation
-export full_hydro_anl="NO"
+export full_hydro_gfdl="NO"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -346,7 +347,7 @@ export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="NO"
+export gdaspost="YES"
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"

@@ -254,10 +254,10 @@ class Tasks:
     def init(self):
 
         if self.app_config.mode != "cycled": 
-            files = ['gfs.t@Hz.sanl',
-                     'gfs.t@Hz.atmanl.nemsio',
-                     'gfs.t@Hz.atmanl.nc',
-                     'atmos/gfs.t@Hz.atmanl.nc',
+            files = [f'{self.app_config.icdump}.t@Hz.sanl',
+                     f'{self.app_config.icdump}.t@Hz.atmanl.nemsio',
+                     f'{self.app_config.icdump}.t@Hz.atmanl.nc',
+                     f'atmos/{self.app_config.icdump}.t@Hz.atmanl.nc',
                      'atmos/RESTART/@Y@m@d.@H0000.sfcanl_data.tile6.nc']
     
             deps = []
@@ -642,10 +642,10 @@ class Tasks:
                 dep_dict = {'type': 'data', 'data': data}
                 deps.append(rocoto.add_dependency(dep_dict))
             else:
-                data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                data = f'&ROTDIR;/{self.app_config.icdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
                 dep_dict = {'type': 'data', 'data': data}
                 deps.append(rocoto.add_dependency(dep_dict))
-                if self._base.get('ICSTYP','gfs') == 'ifs':
+                if self.app_config.icstyp == 'ifs':
                     data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
                     dep_dict = {'type':'data', 'data':data}
                     deps.append(rocoto.add_dependency(dep_dict))
@@ -740,7 +740,7 @@ class Tasks:
 
         replay = self._base.get('replay',1)
         if replay == 1:
-            if self._base.get('ICSTYP','gfs') == 'gfs':
+            if self.app_config.icstyp == 'gfs':
                 data = '&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
                 dep_dict = {'type':'data', 'data':data}
             else:

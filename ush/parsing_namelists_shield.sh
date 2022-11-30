@@ -17,7 +17,7 @@ DATA_TABLE=${DATA_TABLE:-$PARM_FV3DIAG/data_table}
 FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 
 # ensure non-prognostic tracers are set
-dnats=${dnats:-1}
+dnats=${dnats:-2}
 
 # build the diag_table with the experiment name and date stamp
 if [ "$DOIAU" == "YES" ]; then
@@ -121,12 +121,12 @@ cat > input.nml <<EOF
   nwat = ${nwat:-6}
   na_init = $na_init
   d_ext = 0.
-  dnats = ${dnats:-1}
+  dnats = ${dnats:-2}
   fv_sg_adj = ${fv_sg_adj:-"450"}
   d2_bg = 0.
   nord = ${nord:-3}
   dddmp = ${dddmp:-0.2}
-  d4_bg = ${d4_bg:-0.15}
+  d4_bg = ${d4_bg:-0.12}
   vtdm4 = $vtdm4
   delt_max = ${delt_max:-"0.002"}
   ke_bg = 0.
@@ -155,6 +155,7 @@ cat > input.nml <<EOF
   no_dycore = $no_dycore
   z_tracer = .true.
   do_inline_mp = .true.
+  do_aerosol = .true.
   agrid_vel_rst = ${agrid_vel_rst:-".true."}
   read_increment = $read_increment
   res_latlon_dynamics = $res_latlon_dynamics
@@ -317,6 +318,7 @@ cat >> input.nml << EOF
   vs_max = 2.
   vg_max = 12.
   vr_max = 12.
+  prog_ccn = .true.
   tau_l2v = 225.
   dw_land = 0.16
   dw_ocean = 0.10
@@ -327,11 +329,34 @@ cat >> input.nml << EOF
   rh_ins = 0.30
   c_paut = 0.5
   rthresh = 8.0e-6
+  c_pracw = 0.35
+  c_psacw = 1.0
+  c_pgacw = 1.e-4
+  c_praci = 1.0
+  c_psaci = 0.35
+  c_pgaci = 0.05
   do_cld_adj = .true.
   use_rhc_revap = .true.
   f_dq_p = 3.0
   rewmax = 10.0
   rermin = 10.0
+  vdiffflag = 2
+  do_new_acc_water = .true.
+  do_psd_water_fall = .true.
+  n0w_sig = 1.2
+  n0w_exp = 66
+  muw = 11.0
+  alinw = 3.e7
+  blinw = 2.0
+  rewflag = 4
+  do_new_acc_ice = .true.
+  do_psd_ice_fall = .true.
+  n0i_sig = 1.0
+  n0i_exp = 10
+  mui = 1.0
+  alini = 11.72
+  blini = 0.41
+  reiflag = 7
   ${gfdl_mp_nml:-}
 /
 

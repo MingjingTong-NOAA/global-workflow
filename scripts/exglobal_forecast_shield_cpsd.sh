@@ -7,7 +7,7 @@ source "$HOMEgfs/ush/preamble.sh"
 SCRIPTDIR=$(dirname $(readlink -f "$0") )/../ush
 
 # include all subroutines. Executions later.
-source $SCRIPTDIR/parsing_namelists_shield.sh
+source $SCRIPTDIR/parsing_namelists_shield_cpsd.sh
 
 machine=${machine:-"WCOSS_C"}
 machine=$(echo $machine | tr '[a-z]' '[A-Z]')
@@ -690,13 +690,6 @@ npy=$resp
 npz=$LEVS
 io_layout=${io_layout:-"1,1"}
 #ncols=$(( (${npx}-1)*(${npy}-1)*3/2 ))
-
-# link aerosol data
-if [[ $io_layout == "1,1" ]]; then
-  $NLN /scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/MERRA2_2015_2021/${CASE}/*.nc $DATA/INPUT/
-else
-  $NLN /scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/MERRA2_2015_2021/${CASE}/*.nc.* $DATA/INPUT/
-fi
 
 # spectral truncation and regular grid resolution based on FV3 resolution
 JCAP_CASE=$((2*res-2))

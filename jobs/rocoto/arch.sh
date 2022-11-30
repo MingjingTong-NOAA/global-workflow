@@ -215,20 +215,20 @@ if [ $CDUMP = "gfs" ]; then
         fi
     fi
 
-    if [ $DO_WAVE = "YES" -a "$WAVE_CDUMP" != "gdas" ]; then
+    if [ ${DO_WAVE:-"NO"} = "YES" -a "${WAVE_CDUMP:-"NO"}" != "gdas" ]; then
         targrp_list="$targrp_list gfswave"
     fi
 
-    if [ $DO_OCN = "YES" ]; then
+    if [ ${DO_OCN:-"NO"} = "YES" ]; then
         targrp_list="$targrp_list ocn_ice_grib2_0p5 ocn_ice_grib2_0p25 ocn_2D ocn_3D ocn_xsect ocn_daily wavocn gfs_flux_1p00"
     fi
 
-    if [ $DO_ICE = "YES" ]; then
+    if [ ${DO_ICE-"NO"} = "YES" ]; then
         targrp_list="$targrp_list ice"
     fi
 
     # Aerosols
-    if [ $DO_AERO = "YES" ]; then
+    if [ ${DO_AERO-"NO"} = "YES" ]; then
         for targrp in chem; do
             htar -P -cvf $ATARDIR/$CDATE/${targrp}.tar $(cat $ARCH_LIST/${targrp}.txt)
             status=$?

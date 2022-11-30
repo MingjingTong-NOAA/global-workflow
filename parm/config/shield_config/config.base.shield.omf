@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"       # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -186,7 +186,7 @@ export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
 export FHOUT_aux=0
-export FHDUR_aux=6
+export FHDUR_aux=9
 
 # GFS restart interval in hours
 export restart_interval_gfs=0
@@ -207,7 +207,7 @@ fi
 export DO_CUBE2GAUS="YES"
 
 # IAU related parameters
-export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
+export DOIAU="NO"        # Enable 4DIAU for control with 3 increments
 export IAUFHRS="3,6,9"
 export IAU_FHROT=$(echo $IAUFHRS | cut -c1)
 export IAU_DELTHRS=6
@@ -223,7 +223,7 @@ if [[ "$MODE" != "forecast-only" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".f
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=1
+export replay=0
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
 fi
@@ -247,11 +247,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="YES"
+export DO_GLDAS="NO"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
-export DOGCYCLE="YES"
+export DOGCYCLE="NO"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -268,12 +268,11 @@ export imp_physics=11
 # Shared parameters
 # Hybrid related
 export DOHYBVAR="NO"
-export ENSREPLAY="YES"
+export ENSREPLAY="NO"
 export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
-export RECENTER=1
 
 # forecast w/o DA increment for restart
 export fcst_wo_da="NO"
@@ -291,7 +290,7 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_C192_cpsd_aero_hord5nord3"
+   export ENSFROM="sda_C192_cntl_n2h6"
    export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
 fi
 
@@ -318,7 +317,7 @@ fi
 export nst_anl=".true."
 
 # full hydrometeors assimilation
-export full_hydro_anl="NO"
+export full_hydro_gfdl="YES"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -346,15 +345,15 @@ export DO_OmF="YES"
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
-export DO_POST="YES"
-export gdaspost="YES"
+export DO_POST="NO"
+export gdaspost="NO"
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"
 fi
 
 # Verification options
-export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
+export DO_METP="NO"        # Run METPLUS jobs - set METPLUS settings in config.metp
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive
