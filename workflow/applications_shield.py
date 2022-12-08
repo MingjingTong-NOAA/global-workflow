@@ -319,7 +319,7 @@ class AppConfig:
             if self.replay == 2:
                 configs += ['analinc']
             if self.do_gomg:
-                configs += ['prep','gomg','analdiag']
+                configs += ['prep','gomg','analdiag','archomg']
 
         if self.do_gcycle:
             configs += ['sfcanl']
@@ -602,10 +602,7 @@ class AppConfig:
         This is the place where that order is set.
         """
 
-        gdas_tasks = []
-
-        if self.do_tref:
-            gdas_tasks = ['getic', 'init']
+        gdas_tasks = ['getic', 'init']
 
         if self.do_gomg:
             gdas_tasks += ['prep']
@@ -626,7 +623,14 @@ class AppConfig:
         if self.do_gomg:
             gdas_tasks += ['gomg','analdiag','archomg']
 
-        gfs_tasks = ['fcst','post','vrfy']
+        gdas_tasks += ['arch']  # arch **must** be the last task
+
+        gfs_tasks = ['fcst']
+
+        if self.do_post:
+            gfs_tasks += ['post']
+        if self.do_vrfy:
+            gfs_tasks += ['vrfy']
         if self.do_metp:
             gfs_tasks += ['metp']
 

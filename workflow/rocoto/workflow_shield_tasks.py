@@ -311,7 +311,7 @@ class Tasks:
             data2 = '@Y@m@d.@H0000.coupler.res'
             dep_dict = {'type': 'data', 'data': [data,data2], 'age': 30, 'offset': ['-06:00:00','']}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = f'&DMPDIR;/{self.cdump}{dumpsuffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+            data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
@@ -726,7 +726,7 @@ class Tasks:
     @property
     def _fcst_replay(self):
 
-        if self.cdump in ['gdas'] or self.app_config.do_gcycle:
+        if self.cdump in ['gdas'] and self.app_config.do_gcycle:
             if self.app_config.do_gldas:
                 dep_dict = {'type': 'task', 'name': f'gdasgldas'}
             else:
@@ -741,13 +741,13 @@ class Tasks:
         replay = self._base.get('replay',1)
         if replay == 1:
             if self.app_config.icstyp == 'gfs':
-                data = '&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
                 dep_dict = {'type':'data', 'data':data}
             else:
                 data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
                 dep_dict = {'type':'data', 'data':data}
         elif replay == 2:
-            data = '&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
+            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
             dep_dict = {'type':'data', 'data':data}
         dependencies.append(rocoto.add_dependency(dep_dict))
 
@@ -757,7 +757,7 @@ class Tasks:
             deps=[]
             dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = '&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
             dep_dict = {'type':'data', 'data':data}
             deps.append(rocoto.add_dependency(dep_dict))
             deps = rocoto.create_dependency(dep_condition='and', dep=deps)

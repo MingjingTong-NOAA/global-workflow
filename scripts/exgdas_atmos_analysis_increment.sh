@@ -1,4 +1,5 @@
-#!/bin/ksh
+#! /usr/bin/env bash
+
 ################################################################################
 ####  UNIX Script Documentation Block
 #                      .                                             .
@@ -13,16 +14,12 @@
 #
 # Attributes:
 #   Language: POSIX shell
-#   Machine: WCOSS-Dell / Hera
 #
 ################################################################################
 
 #  Set environment.
-export VERBOSE=${VERBOSE:-"YES"}
-if [ $VERBOSE = "YES" ]; then
-   echo $(date) EXECUTING $0 $* >&2
-   set -x
-fi
+
+source "$HOMEgfs/ush/preamble.sh"
 
 #  Directories.
 pwd=$(pwd)
@@ -70,12 +67,14 @@ SENDDBN=${SENDDBN:-"NO"}
 # level info file (not need, ak, bk read from reference file)
 SIGLEVEL=${SIGLEVEL:-${FIXshield}/global_hyblev.l${LEVS}.txt}
 
-# forecast analysis files
+# forecast files
 APREFIX=${APREFIX:-""}
 ASUFFIX=${ASUFFIX:-$SUFFIX}
 ATMF03=${ATMF03:-$COMIN_GES/${GPREFIX}atmf003${GSUFFIX}}
 ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
 ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009${GSUFFIX}}
+ATMFCST_RES=${ATMFCST_RES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
+
 # external analysis
 ATMANL=${ATMANL:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
 ATMANLENS03=${ATMANLENS03:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atma003.ensres${ASUFFIX}}
@@ -113,17 +112,9 @@ cd $DATA || exit 99
 
 ##############################################################
 # get resolution information
-res=$(echo $CASE |cut -c2-5)
-resp=$((res+1))
-npx=$resp
-npy=$resp
-npz=$LEVS
-
-# spectral truncation and regular grid resolution based on FV3 resolution
-JCAP_CASE=$((2*res-2))
-LONB_CASE=$((4*res))
-LATB_CASE=$((2*res))
-LEVS_CASE=${LEVS:-91}
+LONB_CASE=${LONB_CASE:-$($NCLEN $ATMFCST_RES grid_xt)} # get LONB_ENKF
+LATB_CASE=${LATB_CASE:-$($NCLEN $ATMFCST_RES grid_yt)} # get LATB_ENFK
+LEVS_CASE=${LEVS_CASE:-$($NCLEN $ATMFCST_RES pfull)} # get LATB_ENFK
 
 ##############################################################
 # Regrid external analysis  to forecast resolution
@@ -141,7 +132,7 @@ else
   export IAUFHRS="6"
 fi
 
-nfhrs=`echo $IAUFHRS | sed 's/,/ /g'`
+nfhrs=$(echo $IAUFHRS_ENKF | sed 's/,/ /g')
 for FHR in $nfhrs; do
     echo "Regridding deterministic forecast for forecast hour $FHR"
     rm -f chgres_nc_gauss0$FHR.nml

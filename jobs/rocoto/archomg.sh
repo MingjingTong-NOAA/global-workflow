@@ -58,7 +58,10 @@ cd $COMIN
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
 $NCP ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
 if [[ $MODE != "omf" ]]; then
-  $NCP tendency.dat $ARCDIR/tendency.${CDATE}
+  GDATE=$($NDATE -6 $CDATE)
+  gPDY=$(echo $GDATE | cut -c1-8)
+  gcyc=$(echo $GDATE | cut -c9-10)
+  $NCP $ROTDIR/$CDUMP.$gPDY/$gcyc/atmos/tendency.dat $ARCDIR/tendency.${GDATE}
 fi
 
 ###############################################################

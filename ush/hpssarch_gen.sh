@@ -426,12 +426,23 @@ if [ $type = "gdas" ]; then
   else
     echo  "./logs/${CDATE}/gdasfcst.log                  " >>gdas.txt
     fh=0
-    while [ $fh -le 9 ]; do
+    while [ $fh -le $FHMAX ]; do
       fhr=$(printf %03i $fh)
       echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
       echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
-      fh=$((fh+1))
+      fh=$((fh+$FHOUT))
     done
+    if [[ $FHOUT_aux > 0 ]]; then
+       FHMIN_aux=$((FHMIN+3))
+       FHMAX_aux=$((FHMIN_aux+FHDUR_aux))
+       fh=$FHMIN_aux
+       while [ $fh -le $FHMAX_aux ]; do
+         fhr=$(printf %03i $fh)
+         echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
+         echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
+         fh=$((fh+$FHOUT_aux))
+       done
+    fi
   fi 
 
   if [ $MODE = "replay" ]; then

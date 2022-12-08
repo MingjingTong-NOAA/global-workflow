@@ -70,33 +70,37 @@ cd $COMIN
 source "${HOMEgfs}/ush/file_utils.sh"
 
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
-nb_copy ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
+if [[ $MODE == "cycled" || $DO_OmF == "YES" ]]; then
+  nb_copy ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
+  nb_copy ${APREFIX}pgrb2.1p00.anl $ARCDIR/pgbanl.${CDUMP}.${CDATE}.grib2
+fi
 if [ $CDUMP = "gfs" ]; then 
   nb_copy tendency.dat $ARCDIR/gfs.tendency.${CDATE}
 else
   nb_copy tendency.dat $ARCDIR/tendency.${CDATE}
 fi
-nb_copy ${APREFIX}pgrb2.1p00.anl $ARCDIR/pgbanl.${CDUMP}.${CDATE}.grib2
 
 # Archive 1 degree forecast GRIB2 files for verification
-if [ $CDUMP = "gdas" -o $FHMAX_GFS -le 9 ]; then
-    flist="0 3 6 9"
-    for fhr in $flist; do
-        fhr2=$(printf %02i $fhr)
-        fhr3=$(printf %03i $fhr)
-        $NCP ${APREFIX}pgrb2.1p00.f${fhr3} $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
-    done
-else
-    fhmax=$FHMAX_GFS
-    fhr=0
-    while [ $fhr -le $fhmax ]; do
-        fhr2=$(printf %02i $fhr)
-        fhr3=$(printf %03i $fhr)
-        nb_copy ${APREFIX}pgrb2.1p00.f$fhr3 $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
-        fhr=$((10#$fhr + 10#$FHOUT_GFS ))
-    done
+if [[ $DO_POST == "YES" ]]; then
+  if [ $CDUMP = "gdas" -o $FHMAX_GFS -le 9 ]; then
+     flist="0 3 6 9"
+     for fhr in $flist; do
+         fhr2=$(printf %02i $fhr)
+         fhr3=$(printf %03i $fhr)
+         $NCP ${APREFIX}pgrb2.1p00.f${fhr3} $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
+     done
+  else
+     fhmax=$FHMAX_GFS
+     fhr=0
+     while [ $fhr -le $fhmax ]; do
+         fhr2=$(printf %02i $fhr)
+         fhr3=$(printf %03i $fhr)
+         nb_copy ${APREFIX}pgrb2.1p00.f$fhr3 $ARCDIR/pgbf${fhr2}.${CDUMP}.${CDATE}.grib2
+         fhr=$((10#$fhr + 10#$FHOUT_GFS ))
+     done
+  fi
 fi
-if [ $CDUMP = "gdas" ]; then
+if [[ $CDUMP == "gdas" && $gdaspost == "YES" ]]; then
     flist="000 003 006 009"
     for fhr in $flist; do
         fname=${APREFIX}pgrb2.1p00.f${fhr}

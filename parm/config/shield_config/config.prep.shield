@@ -10,7 +10,7 @@ echo "BEGIN: config.prep"
 
 export DO_MAKEPREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
 export DMPDIR_S="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/dump"
-if [[ $MODE == "omf" ]]; then
+if [[ $MODE != "cycled" ]]; then
   export DO_MAKEPREPBUFR="NO"
 fi
 

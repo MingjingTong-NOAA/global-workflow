@@ -98,7 +98,7 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="sda_cntl"
+export RESTARTEXP="sda_C192_cpsd_aero_hord5nord3"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -290,7 +290,7 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_C192_cntl_n2h6"
+   export ENSFROM="sda_C192_cpsd_aero_hord5nord3"
    export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
 fi
 

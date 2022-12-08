@@ -8,7 +8,7 @@ export RUN_ENVIR=${RUN_ENVIR:-"nco"}
 # Source relevant config files
 #############################
 export EXPDIR=${EXPDIR:-$HOMEgfs/parm/config}
-configs="base anal analdiag"
+configs="base analdiag"
 config_path=${EXPDIR:-$NWROOT/gfs.${gfs_ver}/parm/config}
 for config in $configs; do
     . $config_path/config.$config
@@ -16,11 +16,22 @@ for config in $configs; do
     [[ $status -ne 0 ]] && exit $status
 done
 
+if [[ $MODE == "cycled" ]]; then
+   . $config_path/config.anal
+else
+   . $config_path/config.gomg
+fi
+status=$?
+[[ $status -ne 0 ]] && exit $status
 
 ##########################################
 # Source machine runtime environment
 ##########################################
-. $HOMEgfs/env/${machine}.env anal
+if [[ $MODE == "cycled" ]]; then
+   . $HOMEgfs/env/${machine}.env anal
+else
+   . $HOMEgfs/env/${machine}.env gomg
+fi
 status=$?
 [[ $status -ne 0 ]] && exit $status
 

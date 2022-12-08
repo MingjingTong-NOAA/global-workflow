@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 ########## config.gomg ##########
-# GSI innovation specific, dependency config.anal
+# GSI innovation
 
 echo "BEGIN: config.gomg"
 
@@ -46,6 +46,7 @@ export AMSREBF=${AMSREBF:-/dev/null}
 export SSMITBF=${SSMITBF:-/dev/null}
 export AMSR2BF=${AMSR2BF:-/dev/null}
 
+
 # Set default values for info files and observation error
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo_shield.txt
@@ -53,22 +54,23 @@ export OZINFO=$FIXgsi/global_ozinfo_shield.txt
 export SATINFO=$FIXgsi/global_satinfo_shield.txt
 export OBERROR=$FIXgsi/prepobs_errtable.global.shield
 
+
 # Use experimental dumps in EMC GFS v16 parallels
 if [[ $RUN_ENVIR == "emc" ]]; then
 	export ABIBF="/dev/null"
 	if [[ "$CDATE" -ge "2019022800" ]] ; then
-		export ABIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
+		export ABIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/atmos/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
 		if [[ "$CDATE" -ge "2019111000" && "$CDATE" -le "2020052612" ]]; then
-			export ABIBF="$DMPDIR/${CDUMP}y.${PDY}/${cyc}/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
+			export ABIBF="$DMPDIR/${CDUMP}y.${PDY}/${cyc}/atmos/${CDUMP}.t${cyc}z.gsrcsr.tm00.bufr_d"
 		fi
 	fi
 
 	export AHIBF="/dev/null"
 	if [[ "$CDATE" -ge "2019042300" ]]; then
-		export AHIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.ahicsr.tm00.bufr_d"
+		export AHIBF="$DMPDIR/${CDUMP}x.${PDY}/${cyc}/atmos/${CDUMP}.t${cyc}z.ahicsr.tm00.bufr_d"
 	fi
 
-	export HDOB=$DMPDIR/${CDUMP}x.${PDY}/${cyc}/${CDUMP}.t${cyc}z.hdob.tm00.bufr_d
+	export HDOB=$DMPDIR/${CDUMP}x.${PDY}/${cyc}/atmos/${CDUMP}.t${cyc}z.hdob.tm00.bufr_d
 
 	#   Use dumps from NCO GFS v16 parallel
 	if [[ "$CDATE" -ge "2020103012" ]]; then
@@ -167,13 +169,9 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 	#   fi
 fi
 
-# iasi-metop-a discontinued since 2021102612
-# set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
-if [[ "$CDATE" -lt "2021102612" ]]; then
-   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_2021102612
-fi
-
+# Set analysis script
 export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_omg.sh"
+export convonly="YES"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
@@ -187,25 +185,11 @@ export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
 export hydrotable_format="netcdf"
 
 if [[ $full_hydro_gfdl = "YES" ]]; then
-   export GSIEXEC=$HOMEgfs/exec/gsi.x_allq
    export lcalc_gfdl_cfrac=".true."
-   if [ $lcalc_gfdl_cfrac = ".false." ]; then
-      if [[ "$CDATE" -lt "2021102612" ]]; then
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt_2021102612
-      else
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt
-      fi
-   else
-      if [[ "$CDATE" -lt "2021102612" ]]; then
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt_2021102612
-      else
-         export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
-      fi
-   fi
-   export allsky_gfdl=".true."
+   export allsky_gfdl=".false."
    export crtm_overlap=4
    export cnvw_option=".false."
-   export allsky_verbose=".true."
+   export allsky_verbose=".false."
    export cloud_mask_option=1
    export mask_threshold=0.000001
    export write_ens_sprd=".false."

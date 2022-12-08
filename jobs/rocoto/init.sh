@@ -131,7 +131,7 @@ else
     if [ $CASE = $OPS_RES ]; then
       $NLN $COMOUT/RESTART_GFS/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile*.nc ${RESTARTDIR}/
     else
-      $NLN $COMOUT/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile*.nc ${RESTARTDIR}/
+      $NLN $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile*.nc ${RESTARTDIR}/
     fi
   fi
 fi

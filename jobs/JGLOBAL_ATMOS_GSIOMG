@@ -1,10 +1,8 @@
-#!/bin/ksh
-set -x
+#! /usr/bin/env bash
+
+source "$HOMEgfs/ush/preamble.sh"
 
 export RUN_ENVIR=${RUN_ENVIR:-"nco"}
-export PS4='$SECONDS + '
-date
-
 
 #############################
 # Source relevant config files
@@ -59,9 +57,6 @@ export pgmerr=errfile
 export CDATE=${CDATE:-${PDY}${cyc}}
 export CDUMP=${CDUMP:-${RUN:-"gfs"}}
 export COMPONENT=${COMPONENT:-atmos}
-if [ $RUN_ENVIR = "nco" ]; then
-    export ROTDIR=${COMROOT:?}/$NET/$envir
-fi
 export DO_CALC_ANALYSIS=${DO_CALC_ANALYSIS:-"NO"} 
 
 
@@ -88,12 +83,12 @@ export ASUFFIX=${ASUFFIX:-$SUFFIX}
 if [ $RUN_ENVIR = "nco" -o ${ROTDIR_DUMP:-NO} = "YES" ]; then
     export COMIN=${COMIN:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
     export COMOUT=${COMOUT:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
-    export COMIN_OBS=${COMIN_OBS:-$ROTDIR/$RUN.$PDY/$cyc/$COMPONENT}
-    export COMIN_GES_OBS=${COMIN_GES_OBS:-$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT}
+    export COMIN_OBS=${COMIN_OBS:-$(compath.py ${envir}/obsproc/${obsproc_ver})/$RUN.$PDY/$cyc/$COMPONENT}
+    export COMIN_GES_OBS=${COMIN_GES_OBS:-$(compath.py ${envir}/obsproc/${obsproc_ver})/$GDUMP.$gPDY/$gcyc/$COMPONENT}
 else
     export COMOUT="$ROTDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
-    export COMIN_OBS="$DMPDIR/$CDATE/$CDUMP"
-    export COMIN_GES_OBS="$DMPDIR/$GDATE/$GDUMP"
+    export COMIN_OBS="$DMPDIR/$CDUMP.$PDY/$cyc/$COMPONENT"
+    export COMIN_GES_OBS="$DMPDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
 fi
 mkdir -m 775 -p $COMOUT
 # COMIN_GES and COMIN_GES_ENS are used in script
@@ -107,10 +102,6 @@ if [ ! -f $ATMGES ]; then
     exit 1
 fi
 
-export GBIAS="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias"
-export GBIASPC="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_pc"
-export GBIASAIR="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.abias_air"
-export GRADSTAT="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT/${ICDUMP}.t${gcyc}z.radstat"
 
 # Get LEVS
 if [ ${GSUFFIX} = ".nc" ]; then
@@ -133,19 +124,13 @@ fi
 
 
 # Link observational data
-export PREPQC="${COMOUT}/${OPREFIX}prepbufr"
+export PREPQC="${COMIN_OBS}/${OPREFIX}prepbufr"
 if [ ! -f $PREPQC ]; then
-    echo "WARNING: PREPBUFR FILE $PREPQC MISSING"
-    msg="WARNING : Global PREPBUFR file is missing"
-    postmsg "$jlogfile" "$msg"
+    echo "WARNING: Global PREPBUFR FILE $PREPQC MISSING"
 fi
-export PREPQCPF="${COMOUT}/${OPREFIX}prepbufr.acft_profiles"
+export PREPQCPF="${COMIN_OBS}/${OPREFIX}prepbufr.acft_profiles"
 export TCVITL="${COMOUT}/${OPREFIX}syndata.tcvitals.tm00"
-[[ $DONST = "YES" ]] && export NSSTBF="${COMOUT}/${OPREFIX}nsstbufr"
-
-
-# Update surface fields with global_cycle
-export DOGCYCLE=${DOGCYCLE:-"NO"}
+[[ $DONST = "YES" ]] && export NSSTBF="${COMIN_OBS}/${OPREFIX}nsstbufr"
 
 
 # Generate Gaussian surface analysis
@@ -154,13 +139,8 @@ export DOGAUSFCANL=${DOGAUSFCANL:-"NO"}
 
 ###############################################################
 # Run relevant script
-env
-msg="HAS BEGUN on `hostname`"
-postmsg "$jlogfile" "$msg"
-$LOGSCRIPT
 
-
-${ANALYSISSH:-$SCRgfs/exglobal_atmos_analysis.sh}
+${ANALYSISSH:-$SCRgfs/exglobal_atmos_analysis_omg.sh}
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
@@ -186,16 +166,11 @@ if [ -e "$pgmout" ] ; then
   cat $pgmout
 fi
 
-
-msg="ENDED NORMALLY."
-postmsg "$jlogfile" "$msg"
-
-
 ##########################################
 # Remove the Temporary working directory
 ##########################################
 cd $DATAROOT
 [[ $KEEPDATA = "NO" ]] && rm -rf $DATA
 
-date
+
 exit 0
