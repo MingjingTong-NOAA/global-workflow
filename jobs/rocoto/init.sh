@@ -116,6 +116,8 @@ else
         status=$?
         [[ $status -ne 0 ]] && exit $status
       fi
+    fi
+    if [[ $MODE = "cycled" || $DOGCYCLE == "YES" ]]; then
       if [[ ! -s $COMOUT/RESTART_${CASE}/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc ]]; then
         sh ${RUNSFCANLSH} ${ICDUMP} $CDATE $CASE
         status=$?

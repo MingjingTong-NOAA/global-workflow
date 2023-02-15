@@ -187,8 +187,13 @@ elif [ $step = "anal" ]; then
 elif [ $step = "analcalc" ]; then
 
     export wtime_analcalc="00:10:00"
-    export npe_analcalc=120
+    if [ $MODE = "cycled" ]; then
+       export npe_analcalc=120
+    else
+       export npe_analcalc=127
+    fi
     export nth_analcalc=1
+   
     export npe_node_analcalc=$npe_node_max
 
 elif [ $step = "analdiag" ]; then

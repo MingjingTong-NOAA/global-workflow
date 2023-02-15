@@ -88,7 +88,11 @@ else
 fi
 mkdir -m 775 -p $COMOUT
 # COMIN_GES and COMIN_GES_ENS are used in script
-export COMIN_GES="$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
+if [[ $MODE == "cycled" ]]; then
+   export COMIN_GES="$ROTDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
+else
+   export COMIN_GES="$ICSDIR/$GDUMP.$gPDY/$gcyc/$COMPONENT"
+fi
 export COMIN_GES_ENS="$ROTDIR/enkfgdas.$gPDY/$gcyc/$COMPONENT"
 
 
@@ -120,7 +124,11 @@ fi
 
 
 # Generate Gaussian surface analysis
-export DOGAUSFCANL=${DOGAUSFCANL:-"YES"}
+if [[ $MODE == "cycled" ]]; then
+   export DOGAUSFCANL=${DOGAUSFCANL:-"YES"}
+else
+   export DOGAUSFCANL="NO"
+fi
 
 
 ###############################################################

@@ -453,18 +453,30 @@ class Tasks:
 
     def analcalc(self):
 
-        deps = []
-        if self.app_config.do_jedivar:
-            dep_dict = {'type': 'task', 'name': f'{self.cdump}atmanalrun'}
-        else:
-            dep_dict = {'type': 'task', 'name': f'{self.cdump}anal'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}sfcanl'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        if self.app_config.do_hybvar and self.cdump in ['gdas']:
-            dep_dict = {'type': 'task', 'name': f'{"gdas"}echgres', 'offset': '-06:00:00'}
+        if self.app_config.mode == "cycled":
+            deps = []
+            if self.app_config.do_jedivar:
+                dep_dict = {'type': 'task', 'name': f'{self.cdump}atmanalrun'}
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.cdump}anal'}
             deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}sfcanl'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            if self.app_config.do_hybvar and self.cdump in ['gdas']:
+                dep_dict = {'type': 'task', 'name': f'{"gdas"}echgres', 'offset': '-06:00:00'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        elif self.app_config.mode == "replay":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.logf009.txt'
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+    
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('analcalc')
         task = create_wf_task('analcalc', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
@@ -501,6 +513,11 @@ class Tasks:
 
         dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
+
+        if self.app_config.fullresanl:
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('analinc')
@@ -605,9 +622,12 @@ class Tasks:
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.cdump}sfcanl'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        if not self._base.get('EXP_WARM_START',False):
+            dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        else:
+            dependencies = rocoto.create_dependency(dep=deps)
 
         resources = self.get_resource('gldas')
         task = create_wf_task('gldas', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
@@ -726,7 +746,7 @@ class Tasks:
     @property
     def _fcst_replay(self):
 
-        if self.cdump in ['gdas'] and self.app_config.do_gcycle:
+        if self.app_config.do_gcycle:
             if self.app_config.do_gldas:
                 dep_dict = {'type': 'task', 'name': f'gdasgldas'}
             else:
@@ -741,13 +761,13 @@ class Tasks:
         replay = self._base.get('replay',1)
         if replay == 1:
             if self.app_config.icstyp == 'gfs':
-                data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                data = f'&ROTDIR;/{self.app_config.icdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
                 dep_dict = {'type':'data', 'data':data}
             else:
                 data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
                 dep_dict = {'type':'data', 'data':data}
         elif replay == 2:
-            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/gdas.t@Hz.atminc.nc'
+            data = f'&ROTDIR;/{self.app_config.icdump}.@Y@m@d/@H/atmos/{self.app_config.icdump}.t@Hz.atminc.nc'
             dep_dict = {'type':'data', 'data':data}
         dependencies.append(rocoto.add_dependency(dep_dict))
 
@@ -757,9 +777,21 @@ class Tasks:
             deps=[]
             dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
-            dep_dict = {'type':'data', 'data':data}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if not self._base.get('EXP_WARM_START', False):
+                data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/INPUT/sfc_data.tile6.nc'
+                dep_dict = {'type':'data', 'data':data}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                if self.app_config.do_gcycle:
+                    if self.app_config.do_gldas:
+                        dep_dict = {'type': 'task', 'name': f'gdasgldas'}
+                    else:
+                        dep_dict = {'type': 'task', 'name': f'gdassfcanl'}
+                else:
+                    data = f'&ROTDIR;/{self.app_config.icdump}.@Y@m@d/@H/atmos/RESTART/'
+                    data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+                    dep_dict = {'type': 'data', 'data': [data,data2], 'offset': ['','-03:00:00']}
+                deps.append(rocoto.add_dependency(dep_dict))
             deps = rocoto.create_dependency(dep_condition='and', dep=deps)
             dependencies.append(deps)
             dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
@@ -1107,7 +1139,10 @@ class Tasks:
         if self.app_config.do_hybvar:
             dep_dict = {'type':'task', 'name':f'{self.cdump}echgres'}
             deps.append(rocoto.add_dependency(dep_dict))
-        if self.app_config.do_post or self.app_config.gdaspost:
+        if self.cdump == 'gdas' and self.app_config.gdaspost:
+            dep_dict = {'type':'metatask', 'name':f'{self.cdump}post'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        if self.cdump == 'gfs' and self.app_config.do_post:
             dep_dict = {'type':'metatask', 'name':f'{self.cdump}post'}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_vrfy:

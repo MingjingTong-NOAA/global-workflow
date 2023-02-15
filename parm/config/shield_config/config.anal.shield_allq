@@ -147,27 +147,27 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 
 	#   Set satinfo for start of GFS v16 parallels
 	if [[ "$CDATE" -ge "2019021900" && "$CDATE" -lt "2019110706" ]]; then
-		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019021900
+		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2019021900
 	fi
 
 	#   Turn on assimilation of Metop-C AMSUA and MHS
 	if [[ "$CDATE" -ge "2019110706" && "$CDATE" -lt "2020022012" ]]; then
-		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2019110706
+		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2019110706
 	fi
 
 	#   Turn off assimilation of Metop-A MHS
 	if [[ "$CDATE" -ge "2020022012" && "$CDATE" -lt "2021052118" ]]; then
-		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2020022012
+		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2020022012
 	fi
 
 	#   Turn off assimilation of S-NPP CrIS
 	if [[ "$CDATE" -ge "2021052118" && "$CDATE" -lt "2021092206" ]]; then
-		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2021052118 
+		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2021052118 
 	fi
 
 	#   Turn off assimilation of MetOp-A IASI
 	if [[ "$CDATE" -ge "2021092206" && "$CDATE" -lt "2021102612" ]]; then
-		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2021092206 
+		export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2021092206 
 	fi
 
 	#   NOTE:  
@@ -177,12 +177,12 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 	#
 	#   Turn off assmilation of all Metop-A MHS
 	#   if [[ "$CDATE" -ge "2021110312" && "$CDATE" -lt "YYYYMMDDHH" ]]; then
-	#    	export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo.txt.2021110312
+	#    	export SATINFO=$FIXgsi/gfsv16_historical/global_satinfo_shield.txt.2021110312
 	#   fi
 fi
 
 # Set analysis script
-export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_allq.sh"
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
@@ -191,34 +191,33 @@ if [[ "$CDATE" -lt "2021102612" ]]; then
 fi
 
 # Set all-sky radiance assimilation options
+export RTMFIX=/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/RTMFIX
 export hydrotable="$RTMFIX/CloudCoeff.bin"
 export hydrotable_format="binary"
+#export hydrotable="$RTMFIX/CloudCoeff.GFDLFV3.-109z-1.nc4"
+#export hydrotable="$RTMFIX/CloudCoeff_DDA_ARTS.nc4"
+#export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
+#export hydrotable_format="netcdf"
 
 if [[ $full_hydro_gfdl = "YES" ]]; then
    export lcalc_gfdl_cfrac=".true."
    export allsky_gfdl=".true."
    export crtm_overlap=4
    export cnvw_option=".false."
-   export allsky_verbose=".false."
+   export allsky_verbose=".true."
    export cloud_mask_option=1
    export mask_threshold=0.000001
    export write_ens_sprd=".false."
    export bkgv_write=".false."
 fi
 
-if [ ${lcalc_gfdl_cfrac:-".true."} = ".false." ]; then
-   if [[ "$CDATE" -lt "2021102612" ]]; then
-      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt_2021102612
-   else
-      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allqcf.txt
-   fi
+if [[ "$CDATE" -lt "2021102612" ]]; then
+   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt_2021102612
 else
-   if [[ "$CDATE" -lt "2021102612" ]]; then
-      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt_2021102612
-   else
-      export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
-   fi
+   export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.allq.txt
 fi
+
+export GSIEXEC=$HOMEgfs/exec/gsi.x_devnew_crtmim
 
 export USE_CORRELATED_OBERRS="NO"
 

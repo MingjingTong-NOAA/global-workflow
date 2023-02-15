@@ -194,10 +194,6 @@ elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
     # Turn off dry mass adjustment in GFS
     export adjust_dry_mass=".false."
-    if [[ $MODE = "replay" && $replay -eq 1 ]]; then
-       export adjust_dry_mass=".true."
-    fi
-
 fi
 
 

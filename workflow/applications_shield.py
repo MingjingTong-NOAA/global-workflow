@@ -115,6 +115,7 @@ class AppConfig:
         self.gfsanl = _base.get('gfsanl', False)
         self.do_tref = _base.get('DO_TREF_TILE',False)
         self.replay = _base.get('replay',0)
+        self.fullresanl = _base.get('fullresanl',True)
         self.ensreplay = _base.get('ENSREPLAY',False)
         self.icdump = _base.get('ICDUMP', 'gdas')
         self.icstyp = _base.get('ICSTYP', 'gfs')
@@ -254,7 +255,7 @@ class AppConfig:
 
         configs = ['fcst']
 
-        if self.do_atm:
+        if self.do_atm and self.do_post:
             configs += ['post', 'vrfy']
 
         configs += ['arch']
@@ -317,6 +318,8 @@ class AppConfig:
             if self.do_hpssarch:
                 configs += ['getic']
             if self.replay == 2:
+                if self.fullresanl:
+                    configs += ['analcalc']
                 configs += ['analinc']
             if self.do_gomg:
                 configs += ['prep','gomg','analdiag','archomg']
@@ -556,13 +559,13 @@ class AppConfig:
         if self.do_gomg:
             tasks += ['prep','gomg','analdiag']
 
-        if self.do_atm:
+        if self.do_atm and self.do_post:
             tasks += ['post']
 
         if self.model_app in ['S2S', 'S2SW', 'S2SWA', 'NG-GODAS']:
             tasks += ['ocnpost']
 
-        if self.do_atm:
+        if self.do_atm and self.do_post:
             tasks += ['vrfy']
 
         if self.do_atm and self.do_metp:
@@ -608,6 +611,8 @@ class AppConfig:
             gdas_tasks += ['prep']
 
         if self.replay == 2:
+            if self.fullresanl:
+                gdas_tasks += ['analcalc']
             gdas_tasks += ['analinc']
 
         if self.do_gcycle:

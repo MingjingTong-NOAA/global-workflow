@@ -35,7 +35,7 @@ export SCRgfs=$HOMEgfs/scripts
 export NWPROD="@NWPROD@"
 export COMROOT="@COMROOT@"
 export DMPDIR="@DMPDIR@"
-export RTMFIX=$CRTM_FIX
+export RTMFIX="/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/RTMFIX"
 
 # USER specific paths
 export HOMEDIR="@HOMEDIR@"
@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"        # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -158,7 +158,7 @@ export CASE_ENKF="@CASEENS@"
 
 
 # Output frequency of the forecast model (for cycling)
-export FHMIN=0
+export FHMIN=3
 export FHMAX=9
 export FHOUT=1
 
@@ -171,21 +171,21 @@ export gfs_delay=@gfs_delay@
 export gfsanl="NO"
 
 # GFS output and frequency
-export FHMIN_GFS=0
+export FHMIN_GFS=3
 
-export FHMAX_GFS_00=240
-export FHMAX_GFS_06=240
-export FHMAX_GFS_12=240
-export FHMAX_GFS_18=240
+export FHMAX_GFS_00=9
+export FHMAX_GFS_06=9
+export FHMAX_GFS_12=9
+export FHMAX_GFS_18=9
 export FHMAX_GFS=$(eval echo \${FHMAX_GFS_$cyc})
 
-export FHOUT_GFS=6
-export FHMAX_HF_GFS=0
+export FHOUT_GFS=1
+export FHMAX_HF_GFS=3     # FHMAX_HF_GFS needs to be >= FHMIN_GFS
 export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
-export FHOUT_aux=1
+export FHOUT_aux=0
 export FHDUR_aux=9
 
 # GFS restart interval in hours
@@ -224,8 +224,12 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=1
+export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
+fi
+if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
+  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
@@ -317,7 +321,7 @@ fi
 export nst_anl=".true."
 
 # full hydrometeors assimilation
-export full_hydro_gfdl="NO"
+export full_hydro_gfdl="YES"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -345,7 +349,7 @@ export DO_OmF="YES"
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
-export DO_POST="YES"
+export DO_POST="NO"
 export gdaspost="NO"
 
 if [ $gdaspost = "NO" ]; then
@@ -353,7 +357,7 @@ if [ $gdaspost = "NO" ]; then
 fi
 
 # Verification options
-export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
+export DO_METP="NO"        # Run METPLUS jobs - set METPLUS settings in config.metp
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive

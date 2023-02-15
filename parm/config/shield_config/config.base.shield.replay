@@ -51,7 +51,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"        # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -224,8 +224,12 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=1
+export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
+fi
+if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
+  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
@@ -291,8 +295,8 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_C192_cntl_n2h6"
-   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
+   export ENSFROM="sda_cntl"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
@@ -343,7 +347,7 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="YES"
-export do_analinc="NO"
+export do_analinc="YES"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
@@ -354,7 +358,7 @@ if [ $gdaspost = "NO" ]; then
 fi
 
 # Verification options
-export DO_METP="YES"        # Run METPLUS jobs - set METPLUS settings in config.metp
+export DO_METP="NO"        # Run METPLUS jobs - set METPLUS settings in config.metp
 
 # Archiving options
 export HPSSARCH="@HPSSARCH@"        # save data to HPSS archive

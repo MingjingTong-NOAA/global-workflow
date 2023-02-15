@@ -116,7 +116,7 @@ export ATARDIR="@ATARDIR@"
 
 # forecast-only and replay environment parameters
 export ICDUMP="gdas"
-export ICSTYP="gfs"
+export ICSTYP="gfs" 
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 
 # forecast-only environment parameters
@@ -224,8 +224,12 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=1
+export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
+fi
+if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
+  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1

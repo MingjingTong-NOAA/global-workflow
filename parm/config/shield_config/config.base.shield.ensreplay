@@ -224,8 +224,12 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=1
+export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
+fi
+if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
+  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
@@ -318,7 +322,7 @@ fi
 export nst_anl=".true."
 
 # full hydrometeors assimilation
-export full_hydro_gfdl="YES"
+export full_hydro_gfdl="NO"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC

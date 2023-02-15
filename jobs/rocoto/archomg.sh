@@ -93,6 +93,8 @@ fi
 ###############################################################
 # Remove IC data directory
 ###############################################################
+[[ $MODE == "replay" ]] && exit 0
+
 RMCDUMP=${RMCDUMP:-"NO"}
 GDATEEND=$($NDATE -${RMOLDEND:-72} $CDATE)
 GDATE=$($NDATE -${RMOLDSTD:-120} $CDATE)

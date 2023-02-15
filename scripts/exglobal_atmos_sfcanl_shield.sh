@@ -159,8 +159,11 @@ else
     snoprv=${snoprv:-$FNSNOG}
 fi
 
-if [ $($WGRIB -4yr $FNSNOA 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') -le \
-    $($WGRIB -4yr $snoprv 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') ] ; then
+date1=$($WGRIB -4yr $FNSNOA 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}')
+date2=$($WGRIB -4yr $snoprv 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}')
+#if [ $($WGRIB -4yr $FNSNOA 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') -le \
+#    $($WGRIB -4yr $snoprv 2>/dev/null | grep -i snowc | awk -F: '{print $3}' | awk -F= '{print $2}') ] ; then
+if [ $date1 -le $date2 ]; then
     export FNSNOA=" "
     export CYCLVARS="FSNOL=99999.,FSNOS=99999.,"
 else
@@ -203,31 +206,32 @@ if [ $DOIAU = "YES" ]; then
     export err=$?; err_chk
 fi
 
-# Update surface restarts at middle of window
-for n in $(seq 1 $ntiles); do
-    $NLN $COMIN_GES/RESTART/$PDY.${cyc}0000.sfc_data.tile${n}.nc $DATA/fnbgsi.00$n
-    $NLN $COMOUT/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.00$n
-    $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                  $DATA/fngrid.00$n
-    $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc              $DATA/fnorog.00$n
-done
-
-if [ $DO_TREF_TILE = ".true." ]; then
-   for n in $(seq 1 $ntiles); do
-      if [ $CASE = $OPS_RES ]; then
-        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
-      else
-        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
-      fi
-   done
+if [[ $MODE == "cycled" || $DO_GLDAS == "YES" ]]; then
+  # Update surface restarts at middle of window
+  for n in $(seq 1 $ntiles); do
+      $NLN $COMIN_GES/RESTART/$PDY.${cyc}0000.sfc_data.tile${n}.nc $DATA/fnbgsi.00$n
+      $NLN $COMOUT/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.00$n
+      $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                  $DATA/fngrid.00$n
+      $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc              $DATA/fnorog.00$n
+  done
+  
+  if [ $DO_TREF_TILE = ".true." ]; then
+     for n in $(seq 1 $ntiles); do
+        if [ $CASE = $OPS_RES ]; then
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+        else
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+        fi
+     done
+  fi
+  
+  export APRUNCY=$APRUN_CYCLE
+  export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE
+  export MAX_TASKS_CY=$ntiles
+  
+  $CYCLESH
+  export err=$?; err_chk
 fi
-
-export APRUNCY=$APRUN_CYCLE
-export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE
-export MAX_TASKS_CY=$ntiles
-
-$CYCLESH
-export err=$?; err_chk
-
 
 ################################################################################
 # Postprocessing

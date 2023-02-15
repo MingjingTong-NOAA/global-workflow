@@ -222,11 +222,12 @@ if [[ $atminc = ".false." ]]; then
 else
   list1=`ls -C1 $DATA/ATMINC/atminc.fv_core.res.*`
   list2=`ls -C1 $DATA/ATMINC/atminc.fv_tracer.res.*`
-  for list in $list1 $list2 $list3; do
+  for list in $list1 $list2; do
       for file in $list; do
          $NLN $file ./${file#$DATA/ATMINC/atminc.}
       done
   done
+  $NLN $DATA/RESTART/fv_core.res.nc ./fv_core.res.nc
 fi
 
 # output gaussian global forecast files

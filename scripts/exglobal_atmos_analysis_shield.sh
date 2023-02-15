@@ -172,10 +172,17 @@ ATMGES=${ATMGES:-${COMIN_GES}/${GPREFIX}atmf006${GSUFFIX}}
 ATMG07=${ATMG07:-${COMIN_GES}/${GPREFIX}atmf007${GSUFFIX}}
 ATMG08=${ATMG08:-${COMIN_GES}/${GPREFIX}atmf008${GSUFFIX}}
 ATMG09=${ATMG09:-${COMIN_GES}/${GPREFIX}atmf009${GSUFFIX}}
-GBIAS=${GBIAS:-${COMIN_GES}/${GPREFIX}abias}
-GBIASPC=${GBIASPC:-${COMIN_GES}/${GPREFIX}abias_pc}
-GBIASAIR=${GBIASAIR:-${COMIN_GES}/${GPREFIX}abias_air}
-GRADSTAT=${GRADSTAT:-${COMIN_GES}/${GPREFIX}radstat}
+if [[ "$MODE" == "cycled" || "$MODE" == "omf" ]]; then
+  GBIAS=${GBIAS:-${COMIN_GES}/${GPREFIX}abias}
+  GBIASPC=${GBIASPC:-${COMIN_GES}/${GPREFIX}abias_pc}
+  GBIASAIR=${GBIASAIR:-${COMIN_GES}/${GPREFIX}abias_air}
+  GRADSTAT=${GRADSTAT:-${COMIN_GES}/${GPREFIX}radstat}
+else
+  GBIAS=${GBIAS:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias}
+  GBIASPC=${GBIASPC:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias_pc}
+  GBIASAIR=${GBIASAIR:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias_air}
+  GRADSTAT=${GRADSTAT:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}radstat}
+fi
 
 # Analysis files
 export APREFIX=${APREFIX:-""}
@@ -183,10 +190,17 @@ export ASUFFIX=${ASUFFIX:-$SUFFIX}
 SFCANL=${SFCANL:-${COMOUT}/${APREFIX}sfcanl${ASUFFIX}}
 DTFANL=${DTFANL:-${COMOUT}/${APREFIX}dtfanl.nc}
 ATMANL=${ATMANL:-${COMOUT}/${APREFIX}atmanl${ASUFFIX}}
-ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias}
-ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc}
-ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air}
-ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int}
+if [[ "$MODE" == "cycled" ]]; then
+  ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias}
+  ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc}
+  ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air}
+  ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int}
+else
+  ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias_out}
+  ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc_out}
+  ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air_out}
+  ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int_out}
+fi
 RADSTAT=${RADSTAT:-${COMOUT}/${APREFIX}radstat}
 GSISTAT=${GSISTAT:-${COMOUT}/${APREFIX}gsistat}
 PCPSTAT=${PCPSTAT:-${COMOUT}/${APREFIX}pcpstat}
@@ -730,9 +744,9 @@ fi
 # GSI namelist options for all-sky radiance assimilation
 if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
    ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
-   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".true."}"
    ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
-   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-0},mask_threshold=${mask_threshold:-0.000001}"
+   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
    FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
    GFDLGRID="nlayers(90)=1,nlayers(91)=4,dlnpm_ratio=${dlnpm_ratio:-0.7},$GFDLGRID"
 fi

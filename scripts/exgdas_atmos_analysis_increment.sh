@@ -76,7 +76,9 @@ ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009${GSUFFIX}}
 ATMFCST_RES=${ATMFCST_RES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
 
 # external analysis
-ATMANL=${ATMANL:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
+ATMA03=${ATMA03:-${COMOUT}/${ICDUMP}.t${cyc}z.atma003${ASUFFIX}}
+ATMANL=${ATMANL:-${COMOUT}/${ICDUMP}.t${cyc}z.atmanl${ASUFFIX}}
+ATMA09=${ATMA09:-${COMOUT}/${ICDUMP}.t${cyc}z.atma009${ASUFFIX}}
 ATMANLENS03=${ATMANLENS03:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atma003.ensres${ASUFFIX}}
 ATMANLENS06=${ATMANLENS06:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atmanl.ensres${ASUFFIX}}
 ATMANLENS09=${ATMANLENS09:-${ICSDIR}/${ICDUMP}.${PDY}/$cyc/atmos/${ICDUMP}.t${cyc}z.atma009.ensres${ASUFFIX}}
@@ -120,11 +122,17 @@ LEVS_CASE=${LEVS_CASE:-$($NCLEN $ATMFCST_RES pfull)} # get LATB_ENFK
 # Regrid external analysis  to forecast resolution
 $NLN $ATMF06 fcst.06
 if [ $replay_4DIAU = "YES" ]; then
-  $NLN $ATMANLENS03 anal.03
+  if [ $fullresanl = "YES" ]; then
+    $NLN $ATMA03 anal.03
+    $NLN $ATMANL anal.06
+    $NLN $ATMA09 anal.09
+  else
+    $NLN $ATMANLENS03 anal.03
+    $NLN $ATMANLENS06 anal.06
+    $NLN $ATMANLENS09 anal.09
+  fi
   $NLN $ATMANLFRES03 anal.fcstres.03
-  $NLN $ATMANLENS06 anal.06
   $NLN $ATMANLFRES06 anal.fcstres.06
-  $NLN $ATMANLENS09 anal.09
   $NLN $ATMANLFRES09 anal.fcstres.09
 else
   $NLN $ATMANL anal.06

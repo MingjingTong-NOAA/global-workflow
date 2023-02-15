@@ -100,7 +100,11 @@ DTFANL=${DTFANL:-${COMOUT}/${APREFIX}dtfanl.nc}
 ATMANL=${ATMANL:-${COMOUT}/${APREFIX}atmanl${ASUFFIX}}
 
 # Increment files
-ATMINC=${ATMINC:-${COMOUT}/${APREFIX}atminc.nc}
+if [[ $MODE == "cycled" ]]; then
+   ATMINC=${ATMINC:-${COMOUT}/${APREFIX}atminc.nc}
+else
+   ATMINC=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT}/${APREFIX}atminc.nc
+fi
 
 # Set script / GSI control parameters
 DOHYBVAR=${DOHYBVAR:-"NO"}
@@ -116,7 +120,7 @@ else
 fi
 
 # Set 4D-EnVar specific variables
-if [ $DOHYBVAR = "YES" -a $l4densvar = ".true." -a $lwrite4danl = ".true." ]; then
+if [[ $DOHYBVAR == "YES" && $l4densvar == ".true." && $lwrite4danl == ".true." ]]; then
    ATMA03=${ATMA03:-${COMOUT}/${APREFIX}atma003${ASUFFIX}}
    ATMI03=${ATMI03:-${COMOUT}/${APREFIX}atmi003.nc}
    ATMA04=${ATMA04:-${COMOUT}/${APREFIX}atma004${ASUFFIX}}
@@ -129,6 +133,11 @@ if [ $DOHYBVAR = "YES" -a $l4densvar = ".true." -a $lwrite4danl = ".true." ]; th
    ATMI08=${ATMI08:-${COMOUT}/${APREFIX}atmi008.nc}
    ATMA09=${ATMA09:-${COMOUT}/${APREFIX}atma009${ASUFFIX}}
    ATMI09=${ATMI09:-${COMOUT}/${APREFIX}atmi009.nc}
+elif [[ $MODE == "replay" && ${fullresanl:-"YES"} == "YES" ]]; then
+   ATMA03=${ATMA03:-${COMOUT}/${APREFIX}atma003${ASUFFIX}}
+   ATMI03=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT}/${APREFIX}atmi003.nc
+   ATMA09=${ATMA09:-${COMOUT}/${APREFIX}atma009${ASUFFIX}}
+   ATMI09=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT}/${APREFIX}atmi009.nc
 fi
 
 ################################################################################
@@ -163,6 +172,11 @@ if [ $DO_CALC_ANALYSIS == "YES" ]; then
       $NLN $ATMI07   sigi07.nc
       $NLN $ATMA08   siga08
       $NLN $ATMI08   sigi08.nc
+      $NLN $ATMA09   siga09
+      $NLN $ATMI09   sigi09.nc
+   elif [ $MODE = "replay" -a ${fullresanl:-"YES"} = "YES" ]; then
+      $NLN $ATMA03   siga03
+      $NLN $ATMI03   sigi03.nc
       $NLN $ATMA09   siga09
       $NLN $ATMI09   sigi09.nc
    fi

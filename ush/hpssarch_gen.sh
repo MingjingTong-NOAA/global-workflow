@@ -33,7 +33,6 @@ DO_WAVE=${DO_WAVE:-"NO"}
 DO_OCN=${DO_OCN:-"NO"}
 DO_ICE=${DO_ICE:-"NO"}
 arch4omg=${arch4omg:-"YES"}
-omgrun=${omgrun:-"NO"}
 RECENTER=${RECENTER:-1}
 
 #-----------------------------------------------------
@@ -117,7 +116,7 @@ if [ $type = "gfs" ]; then
     else
       fhi=6
     fi
-    if [ $omgrun = "NO" ]; then
+    if [[ $MODE != "omf" ]]; then
       fh=$fhi
       if [ $ARCH_GAUSSIAN_FHMAX -gt $FHMAX_GFS ]; then
         ARCH_GAUSSIAN_FHMAX=$FHMAX_GFS
@@ -220,10 +219,6 @@ if [ $type = "gfs" ]; then
 
     fh=$((fh+inc))
   done
-  fi
-
-  if [[ $MODE = "replay" && $DOGAUSFCANL = "YES" ]]; then
-    echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
   fi
 
   #..................

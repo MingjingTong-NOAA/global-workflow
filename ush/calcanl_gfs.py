@@ -17,7 +17,7 @@ import datetime
 def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
                 ComIn_Ges, GPrefix, GSuffix, FixDir, atmges_ens_mean,
                 RunDir, NThreads, NEMSGet, IAUHrs, ExecCMD, ExecCMDMPI,
-                ExecAnl, ExecChgresInc, Cdump, nvar, cliptracers):
+                ExecAnl, ExecChgresInc, Cdump, nvar, cliptracers, Mode):
     print('calcanl_gfs beginning at: ',datetime.datetime.utcnow())
 
     IAUHH = IAUHrs
@@ -27,7 +27,7 @@ def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
         IAUHH = IAUHrs
 
     ######## copy and link files
-    if DoIAU and l4DEnsVar and Write4Danl:
+    if (DoIAU and l4DEnsVar and Write4Danl) or Mode == "replay":
         for fh in IAUHH:
             if fh == 6:
                 # for full res analysis
@@ -40,7 +40,7 @@ def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
                 gsi_utils.link_file(RunDir+'/siganl', CalcAnlDir+'/anl.06')
                 gsi_utils.copy_file(ExecChgresInc, CalcAnlDir+'/chgres_inc.x')
                 # for ensemble res analysis
-                if Cdump == "gdas":
+                if Cdump == "gdas" and Mode == "cycled":
                     CalcAnlDir = RunDir+'/calcanl_ensres_'+format(fh, '02')
                     if not os.path.exists(CalcAnlDir):
                         gsi_utils.make_dir(CalcAnlDir)
@@ -53,37 +53,30 @@ def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
                 if os.path.isfile('sigi'+format(fh, '02')+'.nc'):
                     # for full res analysis
                     CalcAnlDir = RunDir+'/calcanl_'+format(fh, '02')
-                    CalcAnlDir6 = RunDir+'/calcanl_'+format(6, '02')
                     if not os.path.exists(CalcAnlDir):
                         gsi_utils.make_dir(CalcAnlDir)
-                    if not os.path.exists(CalcAnlDir6):
-                        gsi_utils.make_dir(CalcAnlDir6)
-                    gsi_utils.link_file(ComOut+'/'+APrefix+'atma'+format(fh, '03')+ASuffix,
-                                        CalcAnlDir6+'/anl.'+format(fh, '02'))
+                    gsi_utils.copy_file(ExecAnl, CalcAnlDir+'/calc_anl.x')
                     gsi_utils.link_file(RunDir+'/siga'+format(fh, '02'),
-                                        CalcAnlDir6+'/anl.'+format(fh, '02'))
+                                        CalcAnlDir+'/anl.'+format(fh, '02'))
                     gsi_utils.link_file(RunDir+'/sigi'+format(fh, '02')+'.nc',
                                         CalcAnlDir+'/siginc.nc.'+format(fh, '02'))
-                    gsi_utils.link_file(CalcAnlDir6+'/inc.fullres.'+format(fh, '02'),
-                                        CalcAnlDir+'/inc.fullres.'+format(fh, '02'))
-                    gsi_utils.link_file(RunDir+'/sigf'+format(fh, '02'),
-                                        CalcAnlDir6+'/ges.'+format(fh, '02'))
                     gsi_utils.link_file(RunDir+'/sigf'+format(fh, '02'),
                                         CalcAnlDir+'/ges.'+format(fh, '02'))
                     gsi_utils.copy_file(ExecChgresInc, CalcAnlDir+'/chgres_inc.x')
                     # for ensemble res analysis
-                    CalcAnlDir = RunDir+'/calcanl_ensres_'+format(fh, '02')
-                    CalcAnlDir6 = RunDir+'/calcanl_ensres_'+format(6, '02')
-                    if not os.path.exists(CalcAnlDir):
-                        gsi_utils.make_dir(CalcAnlDir)
-                    if not os.path.exists(CalcAnlDir6):
-                        gsi_utils.make_dir(CalcAnlDir6)
-                    gsi_utils.link_file(ComOut+'/'+APrefix+'atma'+format(fh, '03')+'.ensres'+ASuffix,
-                                        CalcAnlDir6+'/anl.ensres.'+format(fh, '02'))
-                    gsi_utils.link_file(RunDir+'/sigi'+format(fh, '02')+'.nc',
-                                        CalcAnlDir6+'/siginc.nc.'+format(fh, '02'))
-                    gsi_utils.link_file(ComIn_Ges+'/'+GPrefix+'atmf'+format(fh, '03')+'.ensres'+GSuffix,
-                                        CalcAnlDir6+'/ges.ensres.'+format(fh, '02'))
+                    if Mode == "cycled":
+                        CalcAnlDir = RunDir+'/calcanl_ensres_'+format(fh, '02')
+                        CalcAnlDir6 = RunDir+'/calcanl_ensres_'+format(6, '02')
+                        if not os.path.exists(CalcAnlDir):
+                            gsi_utils.make_dir(CalcAnlDir)
+                        if not os.path.exists(CalcAnlDir6):
+                            gsi_utils.make_dir(CalcAnlDir6)
+                        gsi_utils.link_file(ComOut+'/'+APrefix+'atma'+format(fh, '03')+'.ensres'+ASuffix,
+                                            CalcAnlDir6+'/anl.ensres.'+format(fh, '02'))
+                        gsi_utils.link_file(RunDir+'/sigi'+format(fh, '02')+'.nc',
+                                            CalcAnlDir6+'/siginc.nc.'+format(fh, '02'))
+                        gsi_utils.link_file(ComIn_Ges+'/'+GPrefix+'atmf'+format(fh, '03')+'.ensres'+GSuffix,
+                                            CalcAnlDir6+'/ges.ensres.'+format(fh, '02'))
 
 
     else:
@@ -275,39 +268,49 @@ def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
             print('f'+format(fh, '03')+' is in $IAUFHRS but increment file is missing. Skipping.')
 
     #### generate analysis from interpolated increment
-    CalcAnlDir6 = RunDir+'/calcanl_'+format(6, '02')
-    # set up the namelist
-    namelist = OrderedDict()
-    namelist["setup"] =  {"datapath": "'./'",
-                          "analysis_filename": "'anl'",
-                          "firstguess_filename": "'ges'",
-                          "increment_filename": "'inc.fullres'",
-                          "fhr": 6,
-                          "cliptracers": cliptracers
-                          }
+    if Mode == "cycled":
+        fhrs = [6]
+    else:
+        fhrs = IAUHH
+ 
+    for fh in fhrs:
+        CalcAnlDir = RunDir+'/calcanl_'+format(fh, '02')
+        if (os.path.isfile(CalcAnlDir+'/ges.'+format(fh, '02'))):
+            print('Calculating full resolution analysis for f'+format(fh, '03'))
 
-    gsi_utils.write_nml(namelist, CalcAnlDir6+'/calc_analysis.nml')
-
-    # run the executable
-    if ihost >= nhosts-1:
-        ihost = 0
-    if launcher == 'srun':
-        del os.environ['SLURM_HOSTFILE']
-    print('fullres_calc_anl', namelist)
-    fullres_anl_job = subprocess.Popen(ExecCMDMPILevs_nohost+' '+CalcAnlDir6+'/calc_anl.x', shell=True, cwd=CalcAnlDir6)
-    print(ExecCMDMPILevs_nohost+' '+CalcAnlDir6+'/calc_anl.x submitted')
-
-    sys.stdout.flush()
-    exit_fullres = fullres_anl_job.wait()
-    sys.stdout.flush()
-    if exit_fullres != 0:
-        print('Error with calc_analysis.x for deterministic resolution, exit code='+str(exit_fullres))
-        print(locals())
-        sys.exit(exit_fullres)
-
+            # set up the namelist
+            namelist = OrderedDict()
+            namelist["setup"] =  {"datapath": "'./'",
+                                  "analysis_filename": "'anl'",
+                                  "firstguess_filename": "'ges'",
+                                  "increment_filename": "'inc.fullres'",
+                                  "fhr": fh,
+                                  "cliptracers": cliptracers
+                                  }
+    
+            gsi_utils.write_nml(namelist, CalcAnlDir+'/calc_analysis.nml')
+    
+            # run the executable
+            if ihost >= nhosts-1:
+                ihost = 0
+            if launcher == 'srun' and fh == fhrs[0]:
+                del os.environ['SLURM_HOSTFILE']
+            print('fullres_calc_anl', namelist)
+            fullres_anl_job = subprocess.Popen(ExecCMDMPILevs_nohost+' '+CalcAnlDir+'/calc_anl.x', shell=True, cwd=CalcAnlDir)
+            print(ExecCMDMPILevs_nohost+' '+CalcAnlDir+'/calc_anl.x submitted')
+    
+            sys.stdout.flush()
+            exit_fullres = fullres_anl_job.wait()
+            sys.stdout.flush()
+            if exit_fullres != 0:
+                print('Error with calc_analysis.x for deterministic resolution, exit code='+str(exit_fullres))
+                print(locals())
+                sys.exit(exit_fullres)
+        else:
+            print('f'+format(fh, '03')+' is in $IAUHRS but guess file is missing. Skipping.')
 
     ######## compute determinstic analysis on ensemble resolution
-    if Cdump == "gdas":
+    if Cdump == "gdas" and Mode == "cycled":
         chgres_jobs = []
         for fh in IAUHH:
             # first check to see if guess file exists
@@ -350,6 +353,7 @@ def calcanl_gfs(DoIAU, l4DEnsVar, Write4Danl, ComOut, APrefix, ASuffix,
 
 # run the function if this script is called from the command line
 if __name__ == '__main__':
+    Mode = os.getenv('MODE', 'cycled')
     DoIAU = gsi_utils.isTrue(os.getenv('DOIAU', 'NO'))
     l4DEnsVar = gsi_utils.isTrue(os.getenv('l4densvar', 'NO'))
     Write4Danl = gsi_utils.isTrue(os.getenv('lwrite4danl', 'NO'))
@@ -378,4 +382,4 @@ if __name__ == '__main__':
                 ComIn_Ges, GPrefix, GSuffix,
                 FixDir, atmges_ens_mean, RunDir, NThreads, NEMSGet, IAUHrs,
                 ExecCMD, ExecCMDMPI, ExecAnl, ExecChgresInc,
-                Cdump,nvar,cliptracers)
+                Cdump,nvar,cliptracers,Mode)

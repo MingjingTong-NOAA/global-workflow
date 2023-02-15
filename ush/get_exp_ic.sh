@@ -27,10 +27,10 @@ EXECgfs=${EXECgfs:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/global_workflow/shield_d
 #----------------------------------------------------------------------
 
   if [ "$bundle" = "gdas" ] ; then
-    directory=${HPSSEXPDIR}/${gfs_ver:4}/${yy}${mm}${dd}${hh}
+    directory=${HPSSEXPDIR}/${ics_from}/${yy}${mm}${dd}${hh}
     file=gdas.tar
   else
-    directory=${HPSSEXPDIR}/${gfs_ver:4}/${yy}${mm}${dd}${hh}
+    directory=${HPSSEXPDIR}/${ics_from}/${yy}${mm}${dd}${hh}
     file=gfs_nca.tar
   fi
 
@@ -59,7 +59,7 @@ EXECgfs=${EXECgfs:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/global_workflow/shield_d
 
   if [ "$bundle" = "gdas" ] ; then
 
-    directory=${HPSSEXPDIR}/${gfs_ver:4}/${yy}${mm}${dd}${hh}
+    directory=${HPSSEXPDIR}/${ics_from}/${yy}${mm}${dd}${hh}
     file=gdas_restarta.tar
 
     if [ "${MODE:-"cycled"}" = "cycled" ] || [ "${DO_OmF:-"NO"}" = "YES" ]; then

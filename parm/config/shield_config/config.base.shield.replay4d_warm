@@ -159,8 +159,8 @@ export CASE_ENKF="@CASEENS@"
 
 # Output frequency of the forecast model (for cycling)
 export FHMIN=0
-export FHMAX=9
-export FHOUT=1
+export FHMAX=48
+export FHOUT=24
 
 # Cycle to run EnKF  (set to BOTH for both gfs and gdas)
 export EUPD_CYC="gdas"
@@ -185,7 +185,7 @@ export FHOUT_HF_GFS=1
 export ILPOST=1           # gempak output frequency up to F120
 
 # auxiliary forecast hours (restart)
-export FHOUT_aux=0
+export FHOUT_aux=1
 export FHDUR_aux=6
 
 # GFS restart interval in hours
@@ -251,11 +251,11 @@ fi
 export lobsdiag_forenkf=".true."
 
 # run GLDAS to spin up land ICs
-export DO_GLDAS="YES"
+export DO_GLDAS="NO"
 export gldas_cyc=00
 
 # run gcycle for DA or replay (only work with gfsv16 ICs) - self cycle surface fields
-export DOGCYCLE="YES"
+export DOGCYCLE="NO"
 export DO_RTGSST="NO"
 export DO_TREF_TILE=".true."
 if [[ $DOGCYCLE = "NO" ]]; then
@@ -347,11 +347,10 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="YES"
-export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
-export DO_POST="YES"
-export gdaspost="YES"
+export DO_POST="NO"
+export gdaspost="NO"
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"

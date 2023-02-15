@@ -163,8 +163,8 @@ if [ $cplwav = ".true." ]; then
     $NLN $RSTDIR_WAVE restart_wave
 fi
 
+RSTDIR_ATM=${RSTDIR:-$ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos/RERUN_RESTART
 if [ $CDUMP = "gfs" -a $rst_invt1 -gt 0 ]; then
-    RSTDIR_ATM=${RSTDIR:-$ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos/RERUN_RESTART
     if [ ! -d $RSTDIR_ATM ]; then mkdir -p $RSTDIR_ATM ; fi
     $NLN $RSTDIR_ATM RESTART
     filecount=$(find $RSTDIR_ATM -type f | wc -l)
@@ -516,7 +516,7 @@ fi
 
 #-------------------------------------------------------
 
-nfiles=$(ls -1 $DATA/INPUT/* | wc -l)
+nfiles=$(ls -l $DATA/INPUT/* | wc -l)
 if [ $nfiles -le 0 ]; then
   echo "Initial conditions must exist in $DATA/INPUT, ABORT!"
   msg="Initial conditions must exist in $DATA/INPUT, ABORT!"

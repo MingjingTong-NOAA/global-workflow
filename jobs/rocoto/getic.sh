@@ -63,6 +63,12 @@ export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
 export replay_4DIAU=${replay_4DIAU:-"NO"}
 
+if [ $CDATE -ge 2022062700 ]; then
+  version="v16.2"
+else
+  version="prod"
+fi
+
 # Create ROTDIR/EXTRACT_DIR
 if [ ! -d $ROTDIR ]; then mkdir -p $ROTDIR ; fi
 if [ ! -d $EXTRACT_DIR ]; then mkdir -p $EXTRACT_DIR ; fi
@@ -108,29 +114,65 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
 
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
 
-  if [[ $MODE == "forecast-only" && $EXP_WARM_START = ".true." ]]; then
-     # pull warm start files
-     hpssdir="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$RESTARTEXP"
-     gdasb=$hpssdir/$GDATE/gdas_restartb.tar
-     gdasa=$hpssdir/$CDATE/gdas_restarta.tar
-     htar -xvf $gdasb
-     htar -xvf $gdasa 
-     exit 0
-  else
-     # Run UFS_UTILS GETICSH
-     atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
-     sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
-     abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
-     if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
-          sh ${GETICSH} ${ICDUMP}
-       status=$?
-       [[ $status -ne 0 ]] && exit $status
-   
+  pullanldata="NO"
+  if [[ $MODE == "forecast-only" ]]; then
+     if [[ $EXP_WARM_START == ".true." ]]; then
+        # pull warm start files
+        hpssdir="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$RESTARTEXP"
+        gdasb=$hpssdir/$GDATE/gdas_restartb.tar
+        gdasa=$hpssdir/$CDATE/gdas_restarta.tar
+        htar -xvf $gdasb
+        htar -xvf $gdasa 
+        exit 0
      else
-       echo "IC atmanl exists, skip pulling data"
+        # Run UFS_UTILS GETICSH
+        atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
+        sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
+        abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
+        if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
+          sh ${GETICSH} ${ICDUMP}
+          status=$?
+          [[ $status -ne 0 ]] && exit $status
+          pullanldata="YES"
+        else
+          echo "IC atmanl exists, skip pulling data"
+          pullanldata="NO"
+        fi
+     fi
+  else 
+     # replay mode
+     if [[ $EXP_WARM_START == ".true." && "$CDATE" == "$SDATE" ]]; then
+        # pull warm start files
+        hpssdir="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/$RESTARTEXP"
+        gdasb=$hpssdir/$GDATE/gdas_restartb.tar
+        gdasa=$hpssdir/$CDATE/gdas_restarta.tar
+        if [ ! -d ${ROTDIR}/gdas.${gyy}${gmm}${gdd}/${ghh}/atmos/RESTART ]; then
+           htar -xvf $gdasb
+        else
+           echo "restart files exist, skip pulling restart files"
+        fi
+        if [[ $DOGCYCLE != "YES" ]]; then
+           htar -xvf $gdasa 
+        else
+           echo "will rerun surface analysis, skip pulling sfcanl data"
+        fi
+     fi 
+     if [[ $replay_4DIAU != "YES" || ($EXP_WARM_START != ".true." && "$CDATE" == "$SDATE") ]]; then 
+        # Run UFS_UTILS GETICSH
+        atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
+        sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
+        abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
+        if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
+          sh ${GETICSH} ${ICDUMP}
+          status=$?
+          [[ $status -ne 0 ]] && exit $status
+          pullanldata="YES" 
+        else
+          echo "IC atmanl exists, skip pulling data"
+          pullanldata="NO"
+        fi
      fi
   fi
-
 
 fi
 
@@ -139,11 +181,13 @@ cd $EXTRACT_DIR
 if [ ! -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
   mkdir -p ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}
 fi
-if [[ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh} && $MODE != "cycled" ]]; then
+if [[ $MODE != "cycled" && $pullanldata == "YES" ]]; then
   if [ -d ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT} ]; then
      mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
-  else
+  elif [ "$(ls -A ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh})" ]; then
      mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+  else
+     echo "Data not in right directory"
   fi
 fi
 
@@ -154,7 +198,7 @@ if [[ $MODE = "replay" && $DOGCYCLE = "YES" && $DONST = "YES" && ! -s $dtfanl ]]
       export tarball="${ICDUMP}_restarta.tar"
       htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
    else
-      export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+      export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
       htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
    fi
    mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
@@ -164,7 +208,8 @@ fi
 
 # Pull sfcanl restart file to get tref for replay and DA cycle
 cd ${ICSDIR}
-if [[ $gfs_ver = "v16" ]]; then
+# need to check the condition below, always use operational surface analysis for now
+#if [[ $gfs_ver == "v16" ]]; then
   if [[  $MODE != "forecast-only" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
@@ -235,11 +280,7 @@ if [[ $gfs_ver = "v16" ]]; then
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else   
-          if [ "$CDATE" -ge 2022062700 ]; then 
-             export tarball="com_gfs_v16.2_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
-          else
-             export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
-          fi
+          export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status
@@ -255,77 +296,68 @@ if [[ $gfs_ver = "v16" ]]; then
      fi
      rm -f list.txt
   fi
+#fi
 
-  if [[ $MODE = "replay" && $replay_4DIAU = "YES" && ( $EXP_WARM_START = ".true." || "$CDATE" != "$SDATE" ) ]]; then
+# Pull analysis for 4d replay
+if [[ $MODE == "replay" && $replay_4DIAU == "YES" && ( $EXP_WARM_START == ".true." || "$CDATE" != "$SDATE" ) && $ICSTYP != "ifs" ]]; then
+  OPS_RES_half=$(( ${OPS_RES:1} / 2 ))
+  if [[ ($ics_from == "opsgfs" || "pargfs") && ${fullresanl:-"NO"} != "YES" ]]; then
+     # replay to operational GFS
      if [ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
        cd $EXTRACT_DIR
        echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >list.txt
        echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>list.txt
        echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>list.txt
   
-       if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
+       if [[ ${RETRO:-"NO"} == "YES" && "$CDATE" -lt "2021032500" ]]; then
           export tarball="${ICDUMP}.tar"
           htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else
-          export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
+          export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status
        fi
-       status=$?
-       [[ $status -ne 0 ]] && exit $status
        mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*ensres.nc ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
      else
        echo "atmanl.ensres for 4DIAU replay exist, skip pulling data"
      fi
+  else
+     # replay to full resolution operational/experimental GFS or SHiELD
+     cd $EXTRACT_DIR
+     # first pull first guess
+     if [[ ! -s ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf006.nc ]]; then
+       cd $EXTRACT_DIR
+       echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf003.nc " >list.txt
+       echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf006.nc " >>list.txt
+       echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf009.nc " >>list.txt
+       tarball="${ICDUMP}.tar"
+       htar -xvf ${HPSSEXPDIR}/${ics_from}/${GDATE}/${tarball} -L ./list.txt
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
+       mv $EXTRACT_DIR/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf*.nc ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/
+     fi
+     # pull increment
+     if [[ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atminc.nc ]]; then
+       cd $EXTRACT_DIR  
+       echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi003.nc " >list.txt
+       echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atminc.nc "  >>list.txt
+       echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi009.nc " >>list.txt
+       tarball="${ICDUMP}_restarta.tar"
+       htar -xvf ${HPSSEXPDIR}/${ics_from}/${CDATE}/${tarball} -L ./list.txt
+       status=$?
+       [[ $status -ne 0 ]] && exit $status
+       mv $EXTRACT_DIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi*.nc ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+     fi
   fi
 fi
-
-# Pull surface analysis file for warm-start run
-if [[ $MODE = "replay" && $EXP_WARM_START = ".true." ]]; then
-  if [[ ( $CDUMP = "gfs" && $gfsanl = "NO" ) || "$CDATE" = "$SDATE" ]]; then
-    if [[ ! -d $ROTDIR/gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART && $DOGCYCLE = "YES" ]]; then
-      cd $ROTDIR
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >list.txt
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
-      echo  "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
-      # old run
-      #tarball="gdas_restartb.tar"
-      # new run
-      tarball="gdas_restarta.tar"
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/${tarball} -L ./list.txt
-      status=$?
-      [[ $status -ne 0 ]] && exit $status
-    fi
-    if [ ! -d $ROTDIR/gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/RESTART ]; then
-      cd $ROTDIR
-      tarball="gdas_restartb.tar"
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/${tarball}
-      status=$?
-      [[ $status -ne 0 ]] && exit $status
-    fi
-  fi
-  if [[ $MODE = "replay" && $replay_4DIAU = "YES" ]]; then
-     cd $ROTDIR
-     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atmi003.nc " >list.txt
-     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atminc.nc "  >>list.txt
-     echo "./gdas.${yy}${mm}${dd}/${hh}/${COMPONENT}/gdas.t${hh}z.atmi009.nc " >>list.txt
-     tarball="gdas.tar"
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/${tarball} -L ./list.txt
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
-  fi
-fi          
 
 # Pull pgbanl file for verification/archival - v14+
 # disable it for now
 if [ "YES" = "NO" ]; then
-if [[ $MODE != "cycled" && $DO_METP = "YES" && $ICSTYP = "gfs" && $ICDUMP = "gdas" ]]; then
+if [[ $MODE != "cycled" && $DO_METP == "YES" && $ICSTYP == "gfs" && $ICDUMP == "gdas" ]]; then
   if [ $gfs_ver = v14 -o $gfs_ver = v15 -o $gfs_ver = v16 ]; then
     if [ ! -s ${ARCDIR}/../${ICDUMP}/pgbanl.${ICDUMP}.${CDATE}.grib2 ]; then
       cd $EXTRACT_DIR
@@ -358,11 +390,7 @@ if [[ $MODE != "cycled" && $DO_METP = "YES" && $ICSTYP = "gfs" && $ICDUMP = "gda
     
           else # Production source
             file="${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}"
-            if [ "$CDATE" -ge 2022062700 ]; then
-               export tarball="com_v16.2_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
-            else
-               export tarball="com_gfs_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
-            fi
+            export tarball="com_${version}_prod_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_pgrb2.tar"
             htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${file}
     
           fi # RETRO vs production

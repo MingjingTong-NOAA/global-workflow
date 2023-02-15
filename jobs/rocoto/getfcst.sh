@@ -62,7 +62,12 @@ if [[ $FCSTFROM == "forecast-only" ]]; then
    fi
 else
    >${ROTDIR}/logs/${CDATE}/list.txt
-   for n in $(seq 3 9); do
+   if [[ $FCSTEXP == "gfs" ]]; then
+      fhrs=$(seq 3 3 9)
+   else
+      fhrs=$(seq 3 9)
+   fi
+   for n in $fhrs; do
       if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf00${n}.nc ]; then
          echo "./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/${CDUMP}.t${ghh}z.atmf00${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
          pulldata="YES"
@@ -79,7 +84,12 @@ else
       fi
    done
    if [[ $pulldata == "YES" ]]; then
-      htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}.tar -L ${ROTDIR}/logs/${CDATE}/list.txt
+      if [[ $FCSTEXP == "gfs" ]]; then
+         tarball=com_gfs_${version}_${CDUMP}.${gyy}${gmm}${gdd}_${ghh}.gdas_nc.tar
+      else
+         tarball=${CDUMP}.tar
+      fi
+      htar -xvf ${FTARDIR}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
       status=$?
       if [ $status -ne 0 ]; then
          echo "pull data failed"
@@ -107,13 +117,23 @@ if [[ $FCSTFROM == "forecast-only" ]]; then
   $NLN ${COMOUT}/*radstat ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
 else
   if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat ]; then 
-    htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}.tar ./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat
-    htar -tvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_restarta.tar > ${ROTDIR}/logs/${CDATE}/list1
+    if [[ $FCSTEXP == "gfs" ]]; then
+       tarball=com_gfs_${version}_${CDUMP}.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
+    else
+       tarball=${CDUMP}.tar
+    fi
+    htar -xvf ${FTARDIR}/${tarball} ./${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat
+    if [[ $FCSTEXP == "gfs" ]]; then
+       tarball=com_gfs_${version}_${CDUMP}.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
+    else
+       tarball=${CDUMP}_restarta.tar
+    fi
+    htar -tvf ${FTARDIR}/${tarball} > ${ROTDIR}/logs/${CDATE}/list1
   fi
   if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.abias ]; then 
     >${ROTDIR}/logs/${CDATE}/list2
     grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
-    htar -xvf ${FTARDIR}/${FCSTEXP}/${GDATE}/${CDUMP}_restarta.tar -L ${ROTDIR}/logs/${CDATE}/list2
+    htar -xvf ${FTARDIR}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list2
   fi
 fi
 
@@ -123,6 +143,5 @@ fi
 $NLN ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/* ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
 
 exit 0
-
 
 
