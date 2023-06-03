@@ -44,6 +44,20 @@ export gmm=$(echo $GDATE | cut -c5-6)
 export gdd=$(echo $GDATE | cut -c7-8)
 export ghh=$(echo $GDATE | cut -c9-10)
 
+if [[ $FCSTEXP == "gfs" ]]; then
+  if [[ $GDATE -ge 2022062700 ]]; then
+     export version="v16.2"
+  else
+     export version="prod"
+  fi
+  export FTARDIR="/NCEPPROD/hpssprod/runhistory/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}"
+else
+  export FTAREXP=${FTAREXP:-"/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${FCSTEXP}"}
+  export FTARDIR=${FTAREXP}/${GDATE}
+  export FTAREXP_aux=${FTAREXP_aux:-"/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${FCSTEXP}"}
+  export FTARDIR_aux=${FTAREXP_aux}/${GDATE}
+fi
+
 export FCSTDATA=${FCSTDATA:-$ROTDIR}
 
 # Create FCSTDATA/ROTDIR
@@ -89,7 +103,7 @@ else
       else
          tarball=${CDUMP}.tar
       fi
-      htar -xvf ${FTARDIR}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
+      htar -xvf ${FTARDIR_aux}/${tarball_aux:-$tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
       status=$?
       if [ $status -ne 0 ]; then
          echo "pull data failed"
@@ -116,7 +130,7 @@ if [[ $FCSTFROM == "forecast-only" ]]; then
   $NLN ${COMOUT}/*abias* ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
   $NLN ${COMOUT}/*radstat ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
 else
-  if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat ]; then 
+  # if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.radstat ]; then 
     if [[ $FCSTEXP == "gfs" ]]; then
        tarball=com_gfs_${version}_${CDUMP}.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
     else
@@ -129,18 +143,39 @@ else
        tarball=${CDUMP}_restarta.tar
     fi
     htar -tvf ${FTARDIR}/${tarball} > ${ROTDIR}/logs/${CDATE}/list1
-  fi
-  if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.abias ]; then 
+  # fi
+  # if [ ! -s ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.abias ]; then 
     >${ROTDIR}/logs/${CDATE}/list2
     grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
     htar -xvf ${FTARDIR}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list2
-  fi
+  # fi
 fi
 
 if [ ! -d $ROTDIR/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos ]; then 
    mkdir -p $ROTDIR/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos
 fi
 $NLN ${FCSTDATA}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/* ${ROTDIR}/${CDUMP}.${gyy}${gmm}${gdd}/${ghh}/atmos/
+
+# For omf mode, pull prepbufr data from original cycled run
+if [[ $pullprepbufrexp == "YES" ]]; then
+   mkdir -p $ROTDIR/dump
+   cd $ROTDIR/dump
+   tarball=${CDUMP}_restarta.tar
+   rm -f ${ROTDIR}/logs/${CDATE}/list*
+   htar -tvf ${PTARDIR}/${tarball} > ${ROTDIR}/logs/${CDATE}/list1
+   if [ ! -s ${ROTDIR}/${CDUMP}.${PDY}/${cyc}/atmos/gdas.t${cyc}z.prepbufr ]; then
+      >${ROTDIR}/logs/${CDATE}/list2
+      grep prepbufr ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
+      htar -xvf ${PTARDIR}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list2
+   fi
+fi
+
+# For omf mode, get surface mask from ensemble mean to be consisitent with cycled run
+if [[ ${enmeansfcmask:-"NO"} == "YES" ]]; then
+   cd $ROTDIR
+   tarball=enkfgdas.tar
+   htar -xvf ${FTARDIR}/${tarball} ./enkfgdas.${gyy}${gmm}${gdd}/${ghh}/atmos/gdas.t${ghh}z.sfcf006.ensmean.nc
+fi
 
 exit 0
 

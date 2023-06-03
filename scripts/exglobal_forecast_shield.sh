@@ -388,7 +388,7 @@ EOF
         res_latlon_dynamics='""'
       else
         if [ $fcst_wo_da = "NO" ]; then 
-          increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_INC}atminc.nc
+          increment_file=$incmemdir/${INCDUMP}.t${cyc}z.${PREFIX_ATMINC}atminc.nc
           if [ -f $increment_file ]; then
             $NLN $increment_file $DATA/INPUT/fv_increment.nc
             read_increment=".true."
@@ -691,6 +691,10 @@ npz=$LEVS
 io_layout=${io_layout:-"1,1"}
 #ncols=$(( (${npx}-1)*(${npy}-1)*3/2 ))
 
+if [[ $LEVS -eq 127 ]]; then
+  export external_eta=".true."
+fi
+
 # link aerosol data
 if [[ $io_layout == "1,1" ]]; then
   $NLN /scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/MERRA2_2015_2021/${CASE}/*.nc $DATA/INPUT/
@@ -773,7 +777,7 @@ blocksize=${blocksize:-32}
 # =0 implies no pre-conditioning
 # >0 means new adiabatic pre-conditioning
 # <0 means older adiabatic pre-conditioning
-na_init=${na_init:-0}
+na_init=${na_init:-1}
 [[ $warm_start = ".true." ]] && na_init=0
 
 # variables for controlling initialization of NCEP/NGGPS ICs
@@ -860,7 +864,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
   mountain=".true."
   if [ $replay -eq 1 ]; then
     if [ $ICSTYP = "gfs" ]; then
-      nudge_qv=${nudge_qv:-"true"}
+      nudge_qv=${nudge_qv:-".true."}
       nggps_ic=${nggps_ic:-".true."}
       ncep_ic=${ncep_ic:-".false."}
       ecmwf_ic=".false."
@@ -873,7 +877,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
       res_latlon_dynamics='"EXTIC/gk03_CF0.nc"'
     fi
   else
-    nudge_qv=${nudge_qv:-"true"}
+    nudge_qv=${nudge_qv:-".true."}
     nggps_ic=".false."
     ncep_ic=".false."
     ecmwf_ic=".false."
@@ -885,7 +889,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
 
 else # CHGRES'd GFS analyses
   if [ $ICSTYP = "gfs" ]; then
-    nudge_qv=${nudge_qv:-"true"}
+    nudge_qv=${nudge_qv:-".true."}
     nggps_ic=".true."
     ecmwf_ic=".false."
     res_latlon_dynamics='""'

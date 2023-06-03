@@ -7,7 +7,7 @@ Entry point for setting up an experiment in the global-workflow
 import os
 import glob
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from hosts import Host
 
@@ -154,8 +154,8 @@ def edit_baseconfig(host, inputs):
         }
         tmpl_dict = dict(tmpl_dict, **extend_dict)
 
-    # Open and read the templated config.base.emc.dyn
-    base_tmpl = f'{inputs.configdir}/config.base.emc.dyn'
+    # Open and read the templated config.base.gfs
+    base_tmpl = f'{inputs.configdir}/config.base.gfs'
     with open(base_tmpl, 'rt') as fi:
         basestr = fi.read()
 

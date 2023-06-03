@@ -147,7 +147,10 @@ if [ $DOIAU = "YES" ]; then
             memchar="mem$cmem"
 
             [[ $TILE_NUM -eq 1 ]] && mkdir -p $COMOUT_ENS/$memchar/RESTART
-
+            # in latest global_cycle code, surface fields are update in exiting fnbgso.00$n
+            # which is a copy of guess surface file fnbgsi.00$n
+            $NCP $COMIN_GES_ENS/$memchar/RESTART/${bPDY}.${bcyc}0000.sfc_data.tile${n}.nc \
+                 $COMOUT_ENS/$memchar/RESTART/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc
             $NLN $COMIN_GES_ENS/$memchar/RESTART/$bPDY.${bcyc}0000.sfc_data.tile${n}.nc $DATA/fnbgsi.$cmem
             $NLN $COMOUT_ENS/$memchar/RESTART/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.$cmem
             $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                                $DATA/fngrid.$cmem
@@ -175,7 +178,8 @@ if [ $DOSFCANL_ENKF = "YES" ]; then
         memchar="mem$cmem"
 
         [[ $TILE_NUM -eq 1 ]] && mkdir -p $COMOUT_ENS/$memchar/RESTART
-
+        $NCP $COMIN_GES_ENS/$memchar/RESTART/$PDY.${cyc}0000.sfc_data.tile${n}.nc \
+             $COMOUT_ENS/$memchar/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc
         $NLN $COMIN_GES_ENS/$memchar/RESTART/$PDY.${cyc}0000.sfc_data.tile${n}.nc $DATA/fnbgsi.$cmem
         $NLN $COMOUT_ENS/$memchar/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.$cmem
         $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                               $DATA/fngrid.$cmem

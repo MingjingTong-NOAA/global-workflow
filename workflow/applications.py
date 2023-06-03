@@ -29,6 +29,7 @@ def get_gfs_cyc_dates(base: Dict[str, Any]) -> Dict[str, Any]:
     base_out = base.copy()
 
     gfs_cyc = base['gfs_cyc']
+    gfs_delay = base['gfs_delay']
     sdate = base['SDATE']
     edate = base['EDATE']
     base_out['INTERVAL'] = '06:00:00'  # Cycled interval is 6 hours
@@ -52,7 +53,7 @@ def get_gfs_cyc_dates(base: Dict[str, Any]) -> Dict[str, Any]:
             hrdet = 6
     elif gfs_cyc == 4:
         hrinc = 6
-    sdate_gfs = sdate + timedelta(hours=hrinc)
+    sdate_gfs = sdate + timedelta(days=gfs_delay) + timedelta(hours=hrinc)
     edate_gfs = edate - timedelta(hours=hrdet)
     if sdate_gfs > edate:
         print('W A R N I N G!')
@@ -110,6 +111,11 @@ class AppConfig:
         self.do_jediens = _base.get('DO_JEDIENS', False)
 
         self.do_hpssarch = _base.get('HPSSARCH', False)
+        self.do_gomg = _base.get('DO_OmF', False)
+        self.do_gcycle = _base.get('DOGCYCLE', False)
+        self.do_gldas = _base.get('DO_GLDAS', False)
+        self.do_post = _base.get('DO_POST', True)
+        self.gdaspost = _base.get('gdaspost', True)
 
         self.wave_cdumps = None
         if self.do_wave:
@@ -238,6 +244,8 @@ class AppConfig:
             configs += ['init']
             if self.do_hpssarch:
                 configs += ['getic']
+            if self.do_gomg:
+                configs += ['prep','gomg','analdiag','archomg']
 
         if self.do_aero:
             configs += ['aerosol_init']
@@ -458,13 +466,15 @@ class AppConfig:
 
         tasks += ['fcst']
 
+        if self.do_gomg:
+            tasks += ['prep','gomg','analdiag']
         if self.do_atm:
             tasks += ['post']
 
         if self.model_app in ['S2S', 'S2SW', 'S2SWA', 'NG-GODAS']:
             tasks += ['ocnpost']
 
-        if self.do_atm:
+        if self.do_atm and self.do_vrfy:
             tasks += ['vrfy']
 
         if self.do_atm and self.do_metp:
@@ -492,5 +502,7 @@ class AppConfig:
             tasks += ['wafs', 'wafsgcip', 'wafsgrib2', 'wafsgrib20p25', 'wafsblending', 'wafsblending0p25']
 
         tasks += ['arch']  # arch **must** be the last task
+        if self.do_gomg:
+            tasks += ['archomg']
 
         return {f"{self._base['CDUMP']}": tasks}

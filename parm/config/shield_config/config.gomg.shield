@@ -26,7 +26,7 @@ export GENDIAG="YES"    # Diagnostic files must be created for gsi omg
 export SETUP='diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.'
 
 # GSI Namelist options for observation operator only
-export SETUP="miter=0,niter=1,"
+export SETUP="miter=0,niter=1,thin4d=.true."
 export BKGVERR="bkgv_flowdep=.false."
 export STRONGOPTS="tlnmc_option=0,nstrong=0,nvmodes_keep=0,baldiag_full=.false.,baldiag_inc=.false.,"
 
@@ -171,7 +171,7 @@ fi
 
 # Set analysis script
 export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_omg.sh"
-export convonly="YES"
+export convonly="NO"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
@@ -181,8 +181,8 @@ fi
 
 # Set all-sky radiance assimilation options
 #export hydrotable="$RTMFIX/CloudCoeff_DDA_ARTS.nc4"
-export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
-export hydrotable_format="netcdf"
+#export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
+#export hydrotable_format="netcdf"
 
 if [[ $full_hydro_gfdl = "YES" ]]; then
    export lcalc_gfdl_cfrac=".true."
@@ -201,6 +201,10 @@ if [[ $full_hydro_gfdl = "YES" ]]; then
 fi
 
 export USE_CORRELATED_OBERRS="NO"
+
+if [ $MODE != "replay" ]; then
+  export USE_READIN_ANL_SFCMASK=".true."
+fi
 
 res=$(echo $CASE | cut -c2-)
 # help resolution

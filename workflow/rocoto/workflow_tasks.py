@@ -9,9 +9,10 @@ __all__ = ['Tasks', 'create_wf_task', 'get_wf_tasks']
 
 
 class Tasks:
-    SERVICE_TASKS = ['arch', 'earc', 'getic']
+    SERVICE_TASKS = ['arch', 'earc', 'getic','archomg']
     VALID_TASKS = ['aerosol_init', 'coupled_ic', 'getic', 'init',
-                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'gldas', 'arch',
+                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 
+                   'gomg', 'gldas', 'arch',
                    'atmanalprep', 'atmanalrun', 'atmanalpost',
                    'earc', 'ecen', 'echgres', 'ediag', 'efcs',
                    'eobs', 'eomg', 'epos', 'esfc', 'eupd',
@@ -390,6 +391,39 @@ class Tasks:
         task = create_wf_task('analdiag', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
 
         return task
+
+    def gomg(self):
+        if self.app_config.mode == "omf":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps)
+        else:
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}prep'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        resources = self.get_resource('gomg')
+        task = create_wf_task('gomg', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies,
+                              cycledef='gdas')
+
+        return task
+
+    def archomg(self):
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.cdump}analdiag'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        resources = self.get_resource('archomg')
+        task = create_wf_task('archomg', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies,
+                              cycledef='gdas')
+
+        return task
+
 
     def atmanalprep(self):
 
@@ -891,6 +925,17 @@ class Tasks:
 
     def arch(self):
         deps = []
+        dep_dict = {'type':'task', 'name':f'{self.cdump}fcst'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.do_hybvar:
+            dep_dict = {'type':'task', 'name':f'{self.cdump}echgres'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        if self.cdump == 'gdas' and self.app_config.gdaspost:
+            dep_dict = {'type':'metatask', 'name':f'{self.cdump}post'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        if self.cdump == 'gfs' and self.app_config.do_post:
+            dep_dict = {'type':'metatask', 'name':f'{self.cdump}post'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.do_vrfy:
             dep_dict = {'type': 'task', 'name': f'{self.cdump}vrfy'}
             deps.append(rocoto.add_dependency(dep_dict))

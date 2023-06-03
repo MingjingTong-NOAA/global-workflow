@@ -8,26 +8,20 @@ echo "BEGIN: config.getfcst"
 # Get task specific resources
 . $EXPDIR/config.resources getfcst
 
-export FCSTEXP="sda_C192_cpsd_aero_hord5nord3"
-#export FCSTEXP="gfs"
+# Forecast data could come from user experiment or operational GFS ("FCSTEXP="gfs")
+export FCSTEXP=${RESTARTEXP:-"s2022_C192_v2"}
 
-date10_m6=`$NDATE -6 $CDATE`
-if [[ $FCSTEXP == "gfs" ]]; then
-  yy_m6=$(echo $date10_m6 | cut -c1-4)
-  ym_m6=$(echo $date10_m6 | cut -c1-6)
-  ymd_m6=$(echo $date10_m6 | cut -c1-8)
-  if [ $date10_m6 -ge 2022062700 ]; then
-     export version="v16.2"
-  else
-     export version="prod"
-  fi
-  export FTARDIR="/NCEPPROD/hpssprod/runhistory/rh${yy_m6}/${ym_m6}/${ymd_m6}"
-else
-  export FTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${FCSTEXP}/${date10_m6}"
-fi 
+# Default forecast tarball directory for user experiment is
+# "/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${FCSTEXP}"
+export FTAREXP="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${FCSTEXP}"
 
+# Forecast data can come from "cycled" or "forecast-only" experiment
 export FCSTFROM="cycled"
 
+# where to put forecast data pulled from HPSS
 export FCSTDATA="/scratch2/NCEPDEV/stmp3/Mingjing.Tong/GDASFCST/$FCSTEXP"
+
+# pull ensemble mean sfcf006 for surface mask
+export enmeansfcmask="YES"
 
 echo "END: config.getfcst"

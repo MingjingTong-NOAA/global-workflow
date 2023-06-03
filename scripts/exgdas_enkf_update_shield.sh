@@ -72,6 +72,7 @@ lupp=${lupp:-".true."}
 corrlength=${corrlength:-1250}
 lnsigcutoff=${lnsigcutoff:-2.5}
 analpertwt=${analpertwt:-0.85}
+analpertwt_rtpp=${analpertwt_rtpp:-0.0}
 readin_localization_enkf=${readin_localization_enkf:-".true."}
 reducedgrid=${reducedgrid:-".true."}
 letkf_flag=${letkf_flag:-".false."}
@@ -272,6 +273,7 @@ cat > enkf.nml << EOFnml
 &nam_enkf
    datestring="$CDATE",datapath="$DATA/",
    analpertwtnh=${analpertwt},analpertwtsh=${analpertwt},analpertwttr=${analpertwt},
+   analpertwtnh_rtpp=${analpertwt_rtpp},analpertwtsh_rtpp=${analpertwt_rtpp},analpertwttr_rtpp=${analpertwt_rtpp},
    covinflatemax=1.e2,covinflatemin=1,pseudo_rh=.true.,iassim_order=0,
    corrlengthnh=${corrlength},corrlengthsh=${corrlength},corrlengthtr=${corrlength},
    lnsigcutoffnh=${lnsigcutoff},lnsigcutoffsh=${lnsigcutoff},lnsigcutofftr=${lnsigcutoff},

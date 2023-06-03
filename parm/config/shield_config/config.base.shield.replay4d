@@ -224,12 +224,11 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=2
+# fullresanl - if YES, replay to full resolution analysis instead of analysis increment at ensemble resolution
+# In such case need to compute analysis at f03 and f09 and recompute analysis increment at full resolution
 export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
-fi
-if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
-  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1

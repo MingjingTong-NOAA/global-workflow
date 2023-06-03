@@ -187,7 +187,7 @@ elif [ $step = "anal" ]; then
 elif [ $step = "analcalc" ]; then
 
     export wtime_analcalc="00:10:00"
-    if [ $MODE = "cycled" ]; then
+    if [[ $MODE == "cycled" && $LEVS -eq 91 ]]; then
        export npe_analcalc=120
     else
        export npe_analcalc=127
@@ -435,7 +435,7 @@ elif [ $step = "gomg" ]; then
     elif [ $CASE = "C96" -o $CASE = "C48" ]; then
       export npe_gomg=20
     fi
-    export nth_gomg=2
+    export nth_gomg=4
     if [[ "$machine" = "WCOSS_DELL_P3" ]]; then export nth_gomg=7; fi
     export npe_node_gomg=$(echo "$npe_node_max / $nth_gomg" | bc)
     if [[ "$machine" == "WCOSS_C" ]]; then export memory_gomg="3072M"; fi

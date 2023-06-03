@@ -71,7 +71,7 @@ elif [[ $MODE = "forecast-only" && $EXP_WARM_START = ".true." ]]; then
   echo "warm-start forecast only, will not run init. Exiting..."  
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
-  if [[ $MODE = "forecast-only" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" ) ]]; then
+  if [[ $MODE = "forecast-only" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" && "$EXP_WARM_START" != ".true." ) ]]; then
     if [[ ! -d $SAVEDIR ]]; then
       if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR ; fi
       sh ${RUNICSH} ${ICDUMP}

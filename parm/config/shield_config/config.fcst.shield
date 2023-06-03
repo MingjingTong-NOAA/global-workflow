@@ -105,9 +105,19 @@ elif [ $imp_physics -eq 8 ]; then # Thompson
 
 elif [ $imp_physics -eq 11 ]; then # GFDL
     export ncld=5
-    export FIELD_TABLE="$HOMEgfs/parm/parm_fv3diag/field_table_6species_aero"
     export nwat=6
-    export dnats=2
+    export do_inline_mp=".true."
+    # CPSD configuration
+    export prog_ccn=".true."
+    # aerosol configuration
+    export do_aerosol=".true."
+    if [[ $do_aerosol == ".true." || $do_aerosol == ".T." ]]; then
+       export dnats=2
+       export FIELD_TABLE="$HOMEgfs/parm/parm_fv3diag/field_table_6species_aero"
+    else
+       export dnats=1
+       export FIELD_TABLE="$HOMEgfs/parm/parm_fv3diag/field_table_6species"
+    fi
     export cal_pre=".false."
     export do_sat_adj=".false."
     export random_clds=".false."
@@ -115,13 +125,13 @@ elif [ $imp_physics -eq 11 ]; then # GFDL
 
     export hord_mt_nh_nonmono=5
     export hord_xx_nh_nonmono=5
-    export vtdm4_nh_nonmono=0.03
+    export vtdm4_nh_nonmono=0.06
     export imfshalcnv=2
     export imfdeepcnv=2
-    export nord=3
+    export nord=2
     export dddmp=0.2
     export d4_bg=0.12
-
+    export fv_sg_adj=900
 else
     echo "Unknown microphysics option, ABORT!"
 
@@ -142,6 +152,7 @@ export USE_COUPLER_RES="NO"
 
 if [[ $EXP_WARM_START = ".false." && ( "$MODE" = "forecast-only" || "$SDATE" = "$CDATE" ) ]]; then
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
+   export first_time_step=".true."
 else
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
 fi
@@ -167,12 +178,6 @@ if [[ "$CDUMP" == "gdas" ]] ; then # GDAS cycle specific parameters
 
     # Turn on dry mass adjustment in GDAS
     export adjust_dry_mass=".true."
-
-    # diffusion test
-    #export nord=2
-    #export hord_mt_nh_nonmono=6
-    #export hord_xx_nh_nonmono=6
-    #export hord_tr=8
 
 elif [[ "$CDUMP" == "gfs" ]] ; then # GFS cycle specific parameters
 
@@ -235,5 +240,16 @@ fi
 # Remember config.efcs will over-ride these values for ensemble forecasts
 # if these variables are re-defined there.
 # Otherwise, the ensemble forecast will inherit from config.fcst
+
+export isatmedmf=0
+export xkgdx=5000.0
+export xkzminv=0.3
+export xkzm_m=1.0
+export xkzm_h=1.0
+export xkzm_ml=1.0
+export xkzm_hl=1.0
+export xkzm_mi=1.0
+export xkzm_hi=1.0
+export rlmx=300.0
 
 echo "END: config.fcst"

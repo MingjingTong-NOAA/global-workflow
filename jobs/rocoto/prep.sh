@@ -150,6 +150,11 @@ else
     fi
 fi
 
+if [[ ${pullprepbufrexp:-"NO"} == "YES" ]]; then
+   rm -rf $COMOUT/*prepbufr*
+   ln -fs $ROTDIR/dump/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr* $COMOUT/
+fi
+
 if [ ! -s $COMOUT/${OPREFIX}prepbufr ]; then
    exit 99
 fi

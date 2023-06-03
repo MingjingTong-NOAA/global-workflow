@@ -57,7 +57,7 @@ cd $COMIN
 
 [[ ! -d $ARCDIR ]] && mkdir -p $ARCDIR
 $NCP ${APREFIX}gsistat $ARCDIR/gsistat.${CDUMP}.${CDATE}
-if [[ $MODE != "omf" ]]; then
+if [[ $MODE != "omf" && -f $ROTDIR/$CDUMP.$gPDY/$gcyc/atmos/tendency.dat ]]; then
   GDATE=$($NDATE -6 $CDATE)
   gPDY=$(echo $GDATE | cut -c1-8)
   gcyc=$(echo $GDATE | cut -c9-10)
@@ -96,8 +96,8 @@ fi
 [[ $MODE == "replay" ]] && exit 0
 
 RMCDUMP=${RMCDUMP:-"NO"}
-GDATEEND=$($NDATE -${RMOLDEND:-72} $CDATE)
-GDATE=$($NDATE -${RMOLDSTD:-120} $CDATE)
+GDATEEND=$($NDATE -${RMOLDEND:-144} $CDATE)
+GDATE=$($NDATE -${RMOLDSTD:-240} $CDATE)
 while [ $GDATE -le $GDATEEND ]; do
     gPDY=$(echo $GDATE | cut -c1-8)
     gcyc=$(echo $GDATE | cut -c9-10)

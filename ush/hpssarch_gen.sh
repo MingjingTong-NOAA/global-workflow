@@ -93,7 +93,7 @@ if [ $type = "gfs" ]; then
   fi
 
   if [ $ARCH_GAUSSIAN = "YES" ]; then
-    if [[ $arch4omg == "YES" || $FHOUT_aux -gt 0 ]]; then
+    if [[ $arch4omg == "YES" || ${FHOUT_aux:-0} -gt 0 ]]; then
       fh=3
       while [ $fh -le 9 ]; do
         fhr=$(printf %03i $fh)
@@ -346,7 +346,9 @@ if [ $type = "gdas" ]; then
   head="gdas.t${cyc}z."
 
   #..................
-  echo  "${dirname}${head}gsistat                    " >>gdas.txt
+  if [[ $MODE != "forecast-only" ]]; then
+    echo  "${dirname}${head}gsistat                    " >>gdas.txt
+  fi
   if [ $MODE = "cycled" ]; then
     echo  "${dirname}${head}pgrb2.0p25.anl             " >>gdas.txt
     echo  "${dirname}${head}pgrb2.0p25.anl.idx         " >>gdas.txt
@@ -427,7 +429,7 @@ if [ $type = "gdas" ]; then
       echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
       fh=$((fh+$FHOUT))
     done
-    if [[ $FHOUT_aux > 0 ]]; then
+    if [[ ${FHOUT_aux:-0} > 0 ]]; then
        FHMIN_aux=$((FHMIN+3))
        FHMAX_aux=$((FHMIN_aux+FHDUR_aux))
        fh=$FHMIN_aux
@@ -435,7 +437,7 @@ if [ $type = "gdas" ]; then
          fhr=$(printf %03i $fh)
          echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt
          echo  "${dirname}${head}sfcf${fhr}${SUFFIX}        " >>gdas.txt
-         fh=$((fh+$FHOUT_aux))
+         fh=$((fh+${FHOUT_aux:-0}))
        done
     fi
   fi 

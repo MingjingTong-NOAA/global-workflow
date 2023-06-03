@@ -128,7 +128,11 @@ class RocotoXML:
     def _get_cycledefs_forecast_only(self):
         sdate = self._base['SDATE'].strftime('%Y%m%d%H%M')
         edate = self._base['EDATE'].strftime('%Y%m%d%H%M')
-        interval = self._base.get('INTERVAL_GFS', '24:00:00')
+        interval_days = self._base['interval_days']
+        if interval_days > 0:
+            interval = f'{interval_days}:00:00:00'
+        else:
+            interval = self._base.get('INTERVAL_GFS', '24:00:00')
         cdump = self._base['CDUMP']
         strings = f'\t<cycledef group="{cdump}">{sdate} {edate} {interval}</cycledef>\n\n'
 

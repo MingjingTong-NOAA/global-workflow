@@ -446,8 +446,6 @@ rPDY=$(echo $RDATE | cut -c1-8)
 COMIN="$ROTDIR/$CDUMP.$rPDY"
 [[ -d $COMIN ]] && rm -rf $COMIN
 
-exit 0
-
 if [ $ENSREPLAY = "YES" ]; then
 # Remove enkf*.$rPDY for the older of GDATE or RDATE
 GDATE=$($NDATE -${RMOLDSTD_ENKF:-48} $CDATE)

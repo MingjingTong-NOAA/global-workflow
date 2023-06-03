@@ -136,7 +136,10 @@ class RocotoXML:
         if interval_days > 0:
             interval = f'{interval_days}:00:00:00'
         else:
-            interval = self._base.get('INTERVAL_GFS', '24:00:00')
+            if self._base.get('DO_OmF', False):
+                interval = self._base.get('INTERVAL', '6:00:00') 
+            else:
+                interval = self._base.get('INTERVAL_GFS', '24:00:00')
         cdump = self._base['CDUMP']
         strings = f'\t<cycledef group="{cdump}">{sdate} {edate} {interval}</cycledef>\n\n'
 

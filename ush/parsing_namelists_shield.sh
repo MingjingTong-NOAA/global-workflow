@@ -18,6 +18,12 @@ FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 
 # ensure non-prognostic tracers are set
 dnats=${dnats:-2}
+do_aerosol=${do_aerosol:-".true."}
+if [[ $do_aerosol == ".true." || $do_aerosol == ".T." ]]; then
+   dnats=2
+else
+   dnats=1
+fi
 
 # build the diag_table with the experiment name and date stamp
 if [ "$DOIAU" == "YES" ]; then
@@ -121,7 +127,7 @@ cat > input.nml <<EOF
   nwat = ${nwat:-6}
   na_init = $na_init
   d_ext = 0.
-  dnats = ${dnats:-2}
+  dnats = $dnats
   fv_sg_adj = ${fv_sg_adj:-"450"}
   d2_bg = 0.
   nord = ${nord:-3}
@@ -132,6 +138,7 @@ cat > input.nml <<EOF
   ke_bg = 0.
   do_vort_damp = $do_vort_damp
   external_ic = $external_ic
+  external_eta = ${external_eta:-".false."}
   gfs_phil = ${gfs_phil:-".false."}
   nggps_ic = $nggps_ic
   ecmwf_ic = ${ecmwf_ic:-".false."}
@@ -154,8 +161,8 @@ cat > input.nml <<EOF
   warm_start = $warm_start
   no_dycore = $no_dycore
   z_tracer = .true.
-  do_inline_mp = .true.
-  do_aerosol = .true.
+  do_inline_mp = ${do_inline_mp:-".true."}
+  do_aerosol = $do_aerosol
   agrid_vel_rst = ${agrid_vel_rst:-".true."}
   read_increment = $read_increment
   res_latlon_dynamics = $res_latlon_dynamics
@@ -250,17 +257,19 @@ cat >> input.nml << EOF
   ysupbl       = ${ysupbl:-".false."}
   satmedmf     = ${satmedmf:-".true."}
   isatmedmf    = ${isatmedmf:-"0"}
-  do_dk_hb19   = .false.
-  xkzminv      = 0.0
-  xkzm_m       = 1.5
-  xkzm_h       = 1.5
-  xkzm_ml        = 1.0
-  xkzm_hl        = 1.0
-  xkzm_mi        = 1.5
-  xkzm_hi        = 1.5
-  cap_k0_land    = .false.
+  do_dk_hb19   = ${do_dk_hb19:-".false."}
+  xkgdx        = ${xkgdx:-"25000.0"}
+  xkzminv      = ${xkzminv:-"0.0"}
+  xkzm_m       = ${xkzm_m:-"1.5"}
+  xkzm_h       = ${xkzm_h:-"1.5"}
+  xkzm_ml      = ${xkzm_ml:-"1.0"}
+  xkzm_hl      = ${xkzm_hl:-"1.0"}
+  xkzm_mi      = ${xkzm_mi:-"1.5"}
+  xkzm_hi      = ${xkzm_hi:-"1.5"}
+  rlmx         = ${rlmx:-"300."}
+  cap_k0_land  = .false.
   cloud_gfdl   = .true.
-  do_inline_mp = .true.
+  do_inline_mp = ${do_inline_mp:-".true."}
   do_ocean     = ${do_ocean:-".true."}
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
@@ -318,7 +327,7 @@ cat >> input.nml << EOF
   vs_max = 2.
   vg_max = 12.
   vr_max = 12.
-  prog_ccn = .true.
+  prog_ccn = ${prog_ccn:-".true."}
   tau_l2v = 225.
   dw_land = 0.16
   dw_ocean = 0.10
@@ -329,17 +338,21 @@ cat >> input.nml << EOF
   rh_ins = 0.30
   c_paut = 0.5
   rthresh = 8.0e-6
+  do_cld_adj = .true.
+  use_rhc_revap = .true.
+  f_dq_p = 3.0
+  rewmax = 10.0
+  rermin = 10.0
+EOF
+
+if [[ $prog_ccn == ".true." || $prog_ccn == ".T." ]]; then
+  cat >> input.nml << EOF
   c_pracw = 0.35
   c_psacw = 1.0
   c_pgacw = 1.e-4
   c_praci = 1.0
   c_psaci = 0.35
   c_pgaci = 0.05
-  do_cld_adj = .true.
-  use_rhc_revap = .true.
-  f_dq_p = 3.0
-  rewmax = 10.0
-  rermin = 10.0
   vdiffflag = 2
   do_new_acc_water = .true.
   do_psd_water_fall = .true.
@@ -356,7 +369,11 @@ cat >> input.nml << EOF
   mui = 1.0
   alini = 11.72
   blini = 0.41
-  reiflag = 7
+  reiflag = ${reiflag:-"7"}
+EOF
+fi
+
+cat >> input.nml << EOF
   ${gfdl_mp_nml:-}
 /
 
@@ -432,6 +449,9 @@ EOF
   skebnorm = ${SKEBNORM:-"1"}
   skeb_npass = ${SKEB_nPASS:-"30"}
   skeb_vdof = ${SKEB_VDOF:-"5"}
+  skeb_sigtop1 = ${SKEB_SIGTOP1:-"0.1"}
+  skeb_sigtop2 = ${SKEB_SIGTOP2:-"0.025"}
+
 EOF
   fi
 
@@ -453,6 +473,8 @@ EOF
   sppt_logit = ${SPPT_LOGIT:-".true."}
   sppt_sfclimit = ${SPPT_SFCLIMIT:-".true."}
   use_zmtnblck = ${use_zmtnblck:-".true."}
+  sppt_sigtop1 = ${SPPT_SIGTOP1:-"0.1"}
+  sppt_sigtop2 = ${SPPT_SIGTOP2:-"0.025"}
 EOF
   fi
 

@@ -110,7 +110,7 @@ for fhr in $(seq $FHMIN $FHOUT $FHMAX); do
    ra=$?
    rc=$((rc+ra))
 
-   export_pgm=$GETATMENSMEANEXEC
+   export pgm=$GETATMENSMEANEXEC
    . prep_step
 
    if [ $ENKF_SPREAD = "YES" ]; then

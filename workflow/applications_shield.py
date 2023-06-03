@@ -353,8 +353,15 @@ class AppConfig:
     def _forecast_only_upd_base(base_in):
 
         base_out = base_in.copy()
-        base_out['INTERVAL_GFS'] = get_gfs_interval(base_in['gfs_cyc'])
-        base_out['CDUMP'] = 'gfs'
+        if base_in['DO_OmF']:
+            if base_in['gfs_cyc'] != 0:
+                base_out['INTERVAL'] = get_gfs_interval(base_in['gfs_cyc'])
+            else:
+               base_out['INTERVAL'] = '06:00:00' 
+            base_out['CDUMP'] = 'gdas'
+        else:
+            base_out['INTERVAL_GFS'] = get_gfs_interval(base_in['gfs_cyc'])
+            base_out['CDUMP'] = 'gfs'
 
         return base_out
 
