@@ -853,7 +853,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
   mountain=".true."
   if [ $replay -eq 1 ]; then
     if [ $ICSTYP = "gfs" ]; then
-      nudge_qv=${nudge_qv:-"true"}
+      nudge_qv=${nudge_qv:-".true."}
       nggps_ic=${nggps_ic:-".true."}
       ncep_ic=${ncep_ic:-".false."}
       ecmwf_ic=".false."
@@ -866,7 +866,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
       res_latlon_dynamics='"EXTIC/gk03_CF0.nc"'
     fi
   else
-    nudge_qv=${nudge_qv:-"true"}
+    nudge_qv=${nudge_qv:-".true."}
     nggps_ic=".false."
     ncep_ic=".false."
     ecmwf_ic=".false."
@@ -878,7 +878,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
 
 else # CHGRES'd GFS analyses
   if [ $ICSTYP = "gfs" ]; then
-    nudge_qv=${nudge_qv:-"true"}
+    nudge_qv=${nudge_qv:-".true."}
     nggps_ic=".true."
     ecmwf_ic=".false."
     res_latlon_dynamics='""'

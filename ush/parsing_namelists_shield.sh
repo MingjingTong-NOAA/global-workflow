@@ -19,11 +19,6 @@ FIELD_TABLE=${FIELD_TABLE:-$PARM_FV3DIAG/field_table}
 # ensure non-prognostic tracers are set
 dnats=${dnats:-2}
 do_aerosol=${do_aerosol:-".true."}
-if [[ $do_aerosol == ".true." || $do_aerosol == ".T." ]]; then
-   dnats=2
-else
-   dnats=1
-fi
 
 # build the diag_table with the experiment name and date stamp
 if [ "$DOIAU" == "YES" ]; then
@@ -220,6 +215,7 @@ cat >> input.nml << EOF
 &gfs_physics_nml
   fhzero       = $FHZER
   ldiag3d      = ${ldiag3d:-".false."}
+  lssav        = ${lssav:-".false."}
   fhcyc        = $FHCYC
   nst_anl      = $nst_anl
   use_ufo      = ${use_ufo:-".true."}
@@ -267,6 +263,8 @@ cat >> input.nml << EOF
   xkzm_mi      = ${xkzm_mi:-"1.5"}
   xkzm_hi      = ${xkzm_hi:-"1.5"}
   rlmx         = ${rlmx:-"300."}
+  bl_dnfr      = ${bl_dnfr:-"0.1"}
+  dspfac       = ${dspfac:-"1.0"}
   cap_k0_land  = .false.
   cloud_gfdl   = .true.
   do_inline_mp = ${do_inline_mp:-".true."}

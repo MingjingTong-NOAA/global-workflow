@@ -62,7 +62,7 @@ EXECgfs=${EXECgfs:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/global_workflow/shield_d
     directory=${HPSSEXPDIR}/${ics_from}/${yy}${mm}${dd}${hh}
     file=gdas_restarta.tar
 
-    if [ "${MODE:-"cycled"}" = "cycled" ] || [ "${DO_OmF:-"NO"}" = "YES" ]; then
+    if [ "${MODE:-"cycled"}" = "cycled" ]; then
       htar -xvf $directory/$file ./gdas.${yy}${mm}${dd}/${hh}/atmos/gdas.t${hh}z.abias
       rc=$?
       [ $rc != 0 ] && exit $rc

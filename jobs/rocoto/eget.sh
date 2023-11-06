@@ -33,7 +33,7 @@ done
 ###############################################################
 # Set script and dependency variables
 
-export GDATE=$($NDATE -${assim_freq:-"06"} $CDATE)
+GDATE=${GDATE:-$($NDATE -${assim_freq:-"06"} $CDATE)}
 gPDY=$(echo $GDATE | cut -c1-8)
 gcyc=$(echo $GDATE | cut -c9-10)
 
@@ -80,8 +80,8 @@ else
     dirpath="enkf${CDUMP}.${gPDY}/${gcyc}/atmos/mem${mem}/"
     dirname="./${dirpath}"
     head="${CDUMP}.t${gcyc}z."
-    fh=3
-    while [ $fh -le 9 ]; do
+    fh=${EFHMIN:-3}
+    while [ $fh -le ${EFHMAX:-9} ]; do
        fhr=$(printf %03i $fh)
        fname=$ENSDIR/${dirname}${head}atmf${fhr}${SUFFIX}
        fsize=`wc -c $fname | awk '{print $1}'`
@@ -90,7 +90,7 @@ else
          echo "${dirname}${head}sfcf${fhr}${SUFFIX}       " >>enkf${CDUMP}_grp${ENSGRP}.txt
          pulldata="YES"
        fi
-       fh=$((fh+1))
+       fh=$((fh+${EFHOUT:-1}))
     done
     m=$((m+1))
     tarball="enkf${CDUMP}_grp${ENSGRP}.tar"

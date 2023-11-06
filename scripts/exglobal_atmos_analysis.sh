@@ -42,7 +42,6 @@ export NCP=${NCP:-"/bin/cp"}
 export NMV=${NMV:-"/bin/mv"}
 export NLN=${NLN:-"/bin/ln -sf"}
 export CHGRP_CMD=${CHGRP_CMD:-"chgrp ${group_name:-rstprod}"}
-export NEMSIOGET=${NEMSIOGET:-${NWPROD}/exec/nemsio_get}
 export NCLEN=${NCLEN:-$HOMEgfs/ush/getncdimlen}
 COMPRESS=${COMPRESS:-gzip}
 UNCOMPRESS=${UNCOMPRESS:-gunzip}
@@ -173,10 +172,17 @@ ATMGES=${ATMGES:-${COMIN_GES}/${GPREFIX}atmf006${GSUFFIX}}
 ATMG07=${ATMG07:-${COMIN_GES}/${GPREFIX}atmf007${GSUFFIX}}
 ATMG08=${ATMG08:-${COMIN_GES}/${GPREFIX}atmf008${GSUFFIX}}
 ATMG09=${ATMG09:-${COMIN_GES}/${GPREFIX}atmf009${GSUFFIX}}
-GBIAS=${GBIAS:-${COMIN_GES}/${GPREFIX}abias}
-GBIASPC=${GBIASPC:-${COMIN_GES}/${GPREFIX}abias_pc}
-GBIASAIR=${GBIASAIR:-${COMIN_GES}/${GPREFIX}abias_air}
-GRADSTAT=${GRADSTAT:-${COMIN_GES}/${GPREFIX}radstat}
+if [[ "$MODE" == "cycled" || "$MODE" == "omf" ]]; then
+  GBIAS=${GBIAS:-${COMIN_GES}/${GPREFIX}abias}
+  GBIASPC=${GBIASPC:-${COMIN_GES}/${GPREFIX}abias_pc}
+  GBIASAIR=${GBIASAIR:-${COMIN_GES}/${GPREFIX}abias_air}
+  GRADSTAT=${GRADSTAT:-${COMIN_GES}/${GPREFIX}radstat}
+else
+  GBIAS=${GBIAS:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias}
+  GBIASPC=${GBIASPC:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias_pc}
+  GBIASAIR=${GBIASAIR:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}abias_air}
+  GRADSTAT=${GRADSTAT:-${ICSDIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos/${GPREFIX}radstat}
+fi
 
 # Analysis files
 export APREFIX=${APREFIX:-""}
@@ -184,10 +190,17 @@ export ASUFFIX=${ASUFFIX:-$SUFFIX}
 SFCANL=${SFCANL:-${COMOUT}/${APREFIX}sfcanl${ASUFFIX}}
 DTFANL=${DTFANL:-${COMOUT}/${APREFIX}dtfanl.nc}
 ATMANL=${ATMANL:-${COMOUT}/${APREFIX}atmanl${ASUFFIX}}
-ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias}
-ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc}
-ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air}
-ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int}
+if [[ "$MODE" == "cycled" ]]; then
+  ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias}
+  ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc}
+  ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air}
+  ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int}
+else
+  ABIAS=${ABIAS:-${COMOUT}/${APREFIX}abias_out}
+  ABIASPC=${ABIASPC:-${COMOUT}/${APREFIX}abias_pc_out}
+  ABIASAIR=${ABIASAIR:-${COMOUT}/${APREFIX}abias_air_out}
+  ABIASe=${ABIASe:-${COMOUT}/${APREFIX}abias_int_out}
+fi
 RADSTAT=${RADSTAT:-${COMOUT}/${APREFIX}radstat}
 GSISTAT=${GSISTAT:-${COMOUT}/${APREFIX}gsistat}
 PCPSTAT=${PCPSTAT:-${COMOUT}/${APREFIX}pcpstat}
@@ -219,6 +232,7 @@ DIAG_DIR=${DIAG_DIR:-${COMOUT}/gsidiags}
 
 # Set script / GSI control parameters
 DOHYBVAR=${DOHYBVAR:-"NO"}
+ENSREPLAY=${ENSREPLAY:-"NO"}
 NMEM_ENKF=${NMEM_ENKF:-0}
 export DONST=${DONST:-"NO"}
 NST_GSI=${NST_GSI:-0}
@@ -252,9 +266,13 @@ fi
 [ $LONB -eq -9999 -o $LATB -eq -9999 -o $LEVS -eq -9999 -o $JCAP -eq -9999 ] && exit -9999
 
 # Get header information from Ensemble Guess files
-if [ $DOHYBVAR = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || $ENSREPLAY == "YES" || ${RECENTER:-1} -eq 2 ]]; then
    SFCGES_ENSMEAN=${SFCGES_ENSMEAN:-${COMIN_GES_ENS}/${GPREFIX}sfcf006.ensmean${GSUFFIX}}
    export ATMGES_ENSMEAN=${ATMGES_ENSMEAN:-${COMIN_GES_ENS}/${GPREFIX}atmf006.ensmean${GSUFFIX}}
+   if [ ! -s $ATMGES_ENSMEAN ]; then
+      echo $ATMGES_ENSMEAN "not exist"
+      exit -9999
+   fi 
    if [ ${SUFFIX} = ".nc" ]; then
       LONB_ENKF=${LONB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_xt)} # get LONB_ENKF
       LATB_ENKF=${LATB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_yt)} # get LATB_ENFK
@@ -281,7 +299,7 @@ LATB_CASE=$((res*2))
 LONB_CASE=$((res*4))
 
 # Set analysis resolution information
-if [ $DOHYBVAR = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || $ENSREPLAY == "YES" || ${RECENTER:-1} -eq 2 ]]; then
    JCAP_A=${JCAP_A:-${JCAP_ENKF:-$JCAP}}
    LONA=${LONA:-${LONB_ENKF:-$LONB}}
    LATA=${LATA:-${LATB_ENKF:-$LATB}}
@@ -350,10 +368,12 @@ HYBRID_ENSEMBLE=${HYBRID_ENSEMBLE:-""}
 RAPIDREFRESH_CLDSURF=${RAPIDREFRESH_CLDSURF:-""}
 CHEM=${CHEM:-""}
 NST=${NST:-""}
+FULL_HYDRO=${FULL_HYDRO:-""}
+GFDLGRID=${GFDLGRID:-""}
 
-#uGSI Namelist parameters
+#GSI Namelist parameters
 lrun_subdirs=${lrun_subdirs:-".true."}
-if [ $DOHYBVAR = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || $ENSREPLAY == "YES" ]]; then
    l_hyb_ens=.true.
    export l4densvar=${l4densvar:-".false."}
    export lwrite4danl=${lwrite4danl:-".false."}
@@ -364,7 +384,7 @@ else
 fi
 
 # Set 4D-EnVar specific variables
-if [ $DOHYBVAR = "YES" -a $l4densvar = ".true." -a $lwrite4danl = ".true." ]; then
+if [[ ($DOHYBVAR == "YES" || $ENSREPLAY == "YES") && $l4densvar == ".true." && $lwrite4danl == ".true." ]]; then
    ATMA03=${ATMA03:-${COMOUT}/${APREFIX}atma003${ASUFFIX}}
    ATMI03=${ATMI03:-${COMOUT}/${APREFIX}atmi003.nc}
    ATMA04=${ATMA04:-${COMOUT}/${APREFIX}atma004${ASUFFIX}}
@@ -439,7 +459,7 @@ for file in $(awk '{if($1!~"!"){print $1}}' satinfo | sort | uniq); do
    $NLN $RTMFIX/${file}.SpcCoeff.bin ./crtm_coeffs/${file}.SpcCoeff.bin
    $NLN $RTMFIX/${file}.TauCoeff.bin ./crtm_coeffs/${file}.TauCoeff.bin
 done
-$NLN $RTMFIX/amsua_metop-a_v2.SpcCoeff.bin ./crtm_coeffs/amsua_metop-a_v2.SpcCoeff.bin
+#$NLN $RTMFIX/amsua_metop-a_v2.SpcCoeff.bin ./crtm_coeffs/amsua_metop-a_v2.SpcCoeff.bin
 
 $NLN $RTMFIX/Nalli.IRwater.EmisCoeff.bin   ./crtm_coeffs/Nalli.IRwater.EmisCoeff.bin
 $NLN $RTMFIX/NPOESS.IRice.EmisCoeff.bin    ./crtm_coeffs/NPOESS.IRice.EmisCoeff.bin
@@ -451,9 +471,11 @@ $NLN $RTMFIX/NPOESS.VISsnow.EmisCoeff.bin  ./crtm_coeffs/NPOESS.VISsnow.EmisCoef
 $NLN $RTMFIX/NPOESS.VISwater.EmisCoeff.bin ./crtm_coeffs/NPOESS.VISwater.EmisCoeff.bin
 $NLN $RTMFIX/FASTEM6.MWwater.EmisCoeff.bin ./crtm_coeffs/FASTEM6.MWwater.EmisCoeff.bin
 $NLN $RTMFIX/AerosolCoeff.bin              ./crtm_coeffs/AerosolCoeff.bin
-$NLN $RTMFIX/CloudCoeff.bin                ./crtm_coeffs/CloudCoeff.bin
-#$NLN $RTMFIX/CloudCoeff.GFDLFV3.-109z-1.bin ./crtm_coeffs/CloudCoeff.bin
-
+if [[ ${hydrotable_format:-"binary"} == "binary" ]]; then
+  $NLN ${hydrotable:-$RTMFIX/CloudCoeff.bin} ./crtm_coeffs/CloudCoeff.bin
+else
+  $NLN ${hydrotable:-$RTMFIX/CloudCoeff.nc}  ./crtm_coeffs/CloudCoeff.nc
+fi
 
 ##############################################################
 # Observational data
@@ -481,7 +503,7 @@ $NLN $AMUBDB           amsubbufr_db
 #$NLN $MHSDB            mhsbufr_db
 $NLN $SBUVBF           sbuvbufr
 $NLN $OMPSNPBF         ompsnpbufr
-$NLN $OMPSLPBF         ompslpbufr
+#$NLN $OMPSLPBF         ompslpbufr
 $NLN $OMPSTCBF         ompstcbufr
 $NLN $GOMEBF           gomebufr
 $NLN $OMIBF            omibufr
@@ -515,7 +537,7 @@ $NLN $B1AVHPM          avhpmbufr
 $NLN $AHIBF            ahibufr
 $NLN $ABIBF            abibufr
 $NLN $HDOB             hdobbufr
-$NLN $SSTVIIRS         sstviirs
+#$NLN $SSTVIIRS         sstviirs
 
 [[ $DONST = "YES" ]] && $NLN $NSSTBF nsstbufr
 
@@ -551,7 +573,7 @@ fi
 [[ -f $SFCG07 ]] && $NLN $SFCG07 sfcf07
 [[ -f $SFCG08 ]] && $NLN $SFCG08 sfcf08
 
-if [ $DOHYBVAR = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || $ENSREPLAY == "YES" ]]; then
 
    # Link ensemble members
    mkdir -p ensemble_data
@@ -580,7 +602,7 @@ fi
 # Handle inconsistent surface mask between background, ensemble and analysis grids
 # This needs re-visiting in the context of NSST; especially references to JCAP*
 if [ $JCAP -ne $JCAP_A ]; then
-   if [ $DOHYBVAR = "YES" -a $JCAP_A = $JCAP_ENKF ]; then
+   if [[ ( $DOHYBVAR == "YES" || $ENSREPLAY == "YES" ) && $JCAP_A = ${JCAP_ENKF:-$JCAP_A} ]]; then
       if [ -e $SFCGES_ENSMEAN ]; then
          USE_READIN_ANL_SFCMASK=.true.
          $NLN $SFCGES_ENSMEAN sfcf06_anlgrid
@@ -615,7 +637,7 @@ fi
 # Output files
 $NLN $ATMANL siganl
 $NLN $ATMINC siginc.nc
-if [ $DOHYBVAR = "YES" -a $l4densvar = ".true." -a $lwrite4danl = ".true." ]; then
+if [[ ( $DOHYBVAR == "YES" || $ENSREPLAY == "YES" ) && $l4densvar == ".true." && $lwrite4danl == ".true." ]]; then
    $NLN $ATMA03   siga03
    $NLN $ATMI03   sigi03.nc
    $NLN $ATMA04   siga04
@@ -704,7 +726,7 @@ fi # if [ $USE_RADSTAT = "YES" ]
 
 ##############################################################
 # GSI Namelist options
-if [ $DOHYBVAR = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || $ENSREPLAY == "YES" ]]; then
    HYBRID_ENSEMBLE="n_ens=$NMEM_ENKF,jcap_ens=$JCAP_ENKF,nlat_ens=$NLAT_ENKF,nlon_ens=$NLON_ENKF,jcap_ens_test=$JCAP_ENKF,$HYBRID_ENSEMBLE"
    if [ $l4densvar = ".true." ]; then
       SETUP="niter(1)=50,niter(2)=150,niter_no_qc(1)=25,niter_no_qc(2)=0,thin4d=.true.,ens_nstarthr=3,l4densvar=$l4densvar,lwrite4danl=$lwrite4danl,$SETUP"
@@ -716,6 +738,16 @@ fi
 
 if [ $DONST = "YES" ]; then
    NST="nstinfo=$NSTINFO,fac_dtl=$FAC_DTL,fac_tsl=$FAC_TSL,zsea1=$ZSEA1,zsea2=$ZSEA2,$NST"
+fi
+
+# GSI namelist options for all-sky radiance assimilation
+if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
+   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".true."}"
+   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
+   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
+   FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
+   GFDLGRID="nlayers(90)=1,nlayers(91)=4,dlnpm_ratio=${dlnpm_ratio:-0.7},$GFDLGRID"
 fi
 
 ##############################################################
@@ -739,12 +771,12 @@ cat > gsiparm.anl << EOF
   crtm_coeffs_path='./crtm_coeffs/',
   newpc4pred=.true.,adp_anglebc=.true.,angord=4,passive_bc=.true.,use_edges=.false.,
   diag_precon=.true.,step_start=1.e-3,emiss_bc=.true.,nhr_obsbin=${nhr_obsbin:-3},
-  cwoption=3,imp_physics=$imp_physics,lupp=$lupp,cnvw_option=$cnvw_option,cao_check=${cao_check},
+  cwoption=3,imp_physics=$imp_physics,lupp=$lupp,cnvw_option=$cnvw_option,cao_check=${cao_check:-".false."},
   netcdf_diag=$netcdf_diag,binary_diag=$binary_diag,
   lobsdiag_forenkf=$lobsdiag_forenkf,
   write_fv3_incr=$write_fv3_increment,
   nhr_anal=${IAUFHRS},
-  ta2tb=${ta2tb},
+  ta2tb=${ta2tb:-".false."},
   $WRITE_INCR_ZERO
   $WRITE_ZERO_STRAT
   $WRITE_STRAT_EFOLD
@@ -761,7 +793,7 @@ cat > gsiparm.anl << EOF
   hswgt=0.45,0.3,0.25,
   bw=0.0,norsp=4,
   bkgv_flowdep=.true.,bkgv_rewgtfct=1.5,
-  bkgv_write=.false.,
+  bkgv_write=${bkgv_write:-".false."},
   cwcoveqqcov=.false.,
   $BKGVERR
 /
@@ -778,7 +810,7 @@ cat > gsiparm.anl << EOF
   $STRONGOPTS
 /
 &OBSQC
-  dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=.false.,c_varqc=0.02,
+  dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=${oberrflg:-".false."},c_varqc=0.02,
   use_poq7=.true.,qc_noirjaco3_pole=.true.,vqc=.false.,nvqc=.true.,
   aircraft_t_bc=.true.,biaspredt=1.0e5,upd_aircraft=.true.,cleanup_tail=.true.,
   tcp_width=70.0,tcp_ermax=7.35,
@@ -920,7 +952,7 @@ OBS_INPUT::
   s_ens_h=800.,s_ens_v=-0.8,readin_localization=.true.,
   aniso_a_en=.false.,oz_univ_static=.false.,uv_hyb_ens=.true.,
   ensemble_path='./ensemble_data/',
-  ens_fast_read=.true.,
+  ens_fast_read=.true.,write_ens_sprd=${write_ens_sprd:-".false."},
   $HYBRID_ENSEMBLE
 /
 &RAPIDREFRESH_CLDSURF
@@ -946,13 +978,23 @@ cat gsiparm.anl
 ##############################################################
 #  Run gsi analysis
 
-export OMP_NUM_THREADS=$NTHREADS_GSI
+if [ $CASE == "C768" ]; then
+  export KMP_STACKSIZE=4096M
+  export FORT_BUFFERED=true
+else
+  export OMP_NUM_THREADS=$NTHREADS_GSI
+fi
 export pgm=$GSIEXEC
 . prep_step
 
 $NCP $GSIEXEC $DATA
 $APRUN_GSI ${DATA}/$(basename $GSIEXEC) 1>&1 2>&2
 export err=$?; err_chk
+
+if [ $err -gt 0 ]; then
+   echo $(date) EXITING $0 with return code $err >&2
+   exit $err
+fi
 
 
 ##############################################################

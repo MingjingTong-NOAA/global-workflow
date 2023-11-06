@@ -115,8 +115,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         # Run UFS_UTILS GETICSH
         atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
         sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
-        abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
-        if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
+        if [[ ! -s $atmanl || ! -s $sfcanl ]]; then
           sh ${GETICSH} ${ICDUMP}
           status=$?
           [[ $status -ne 0 ]] && exit $status
@@ -153,8 +152,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         # Run UFS_UTILS GETICSH
         atmanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.nc
         sfcanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.sfcanl.nc
-        abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias
-        if [[ ! -s $atmanl || ! -s $sfcanl || ! -s $abias ]]; then
+        if [[ ! -s $atmanl || ! -s $sfcanl ]]; then
           sh ${GETICSH} ${ICDUMP}
           status=$?
           [[ $status -ne 0 ]] && exit $status
@@ -202,6 +200,9 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
              htar -xvf ${HPSSEXPDIR}/${ics_from}/${GDATE}/${tarball} -L ./list.txt
              status=$?
              [[ $status -ne 0 ]] && exit $status
+             if [ ! -d ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT} ]; then
+                mkdir -p ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}
+             fi
              mv $EXTRACT_DIR/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf*.nc ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/
            fi
            # pull increment
@@ -216,17 +217,20 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
              mv $EXTRACT_DIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi*.nc ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
            fi
         fi
-        abias=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias_air
-        if [[ $DO_OmF == "YES" && ! -s $abias ]]; then
-           echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias "      >list.txt
-           echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias_air " >>list.txt
-           echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias_int " >>list.txt
-           echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.abias_pc  " >>list.txt
-           htar -xvf ${directory}/${tarball2} -L ./list.txt
-           status=$?
-           [[ $status -ne 0 ]] && exit $status
-           mv $EXTRACT_DIR/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*abias* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
-        fi
+     fi
+  fi
+  if [[ $DO_OmF == "YES" ]]; then
+     directory=${HPSSEXPDIR}/${ics_from}/${GDATE}
+     abias=${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air
+     if [[ ! -s $abias ]]; then
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias "      >list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air " >>list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_int " >>list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_pc  " >>list.txt
+        htar -xvf ${directory}/${tarball2} -L ./list.txt
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+        mv $EXTRACT_DIR/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/*abias* ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/
      fi
   fi
 fi

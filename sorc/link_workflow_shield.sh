@@ -114,7 +114,7 @@ cd ${pwd}/../scripts            ||exit 8
     fi
 cd ${pwd}/../ush                ||exit 8
     for file in emcsfc_ice_blend.sh  fv3gfs_driver_grid.sh  fv3gfs_make_orog.sh  global_cycle_driver.sh \
-        emcsfc_snow.sh  fv3gfs_filter_topo.sh  global_cycle.sh  fv3gfs_make_grid.sh ; do
+        emcsfc_snow.sh  fv3gfs_filter_topo.sh  global_cycle_shield.sh  fv3gfs_make_grid.sh ; do
         $LINK ../sorc/ufs_utils.fd/ush/$file                  .
     done
     if [ -d ../sorc/gldas.fd ]; then

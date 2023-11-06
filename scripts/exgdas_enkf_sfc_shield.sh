@@ -54,7 +54,7 @@ DOIAU=${DOIAU_ENKF:-"NO"}
 DO_TREF_TILE=${DO_TREF_TILE=:-".false."}
 
 # Global_cycle stuff
-CYCLESH=${CYCLESH:-$HOMEgfs/ush/global_cycle.sh}
+CYCLESH=${CYCLESH:-$HOMEgfs/ush/global_cycle_shield.sh}
 export CYCLEXEC=${CYCLEXEC:-$HOMEgfs/exec/global_cycle}
 APRUN_CYCLE=${APRUN_CYCLE:-${APRUN:-""}}
 NTHREADS_CYCLE=${NTHREADS_CYCLE:-${NTHREADS:-1}}

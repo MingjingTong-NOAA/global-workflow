@@ -208,7 +208,12 @@ class AppConfig:
         else:
             configs += ['anal', 'analdiag']
 
-        configs += ['sfcanl', 'analcalc', 'fcst', 'post', 'vrfy', 'arch']
+        configs += ['sfcanl', 'analcalc', 'fcst']
+
+        if self.do_atm and self.do_post:
+            configs += ['post','vrfy']
+
+        configs += ['arch'] 
 
 
         if self.do_gldas:
@@ -437,7 +442,9 @@ class AppConfig:
         gdas_gfs_common_tasks_before_fcst = ['prep']
         if self.ensreplay:
             gdas_gfs_common_tasks_before_fcst += ['eget']
-        gdas_gfs_common_tasks_after_fcst = ['post', 'vrfy']
+        gdas_gfs_common_tasks_after_fcst = ['post']
+        if self.do_vrfy:
+            gdas_gfs_common_tasks_after_fcst += ['vrfy']
         gdas_gfs_common_cleanup_tasks = ['arch']
 
         if self.do_jedivar:

@@ -25,4 +25,6 @@ if [[ $DO_RTGSST = "NO" ]]; then
    fi
 fi
 
+export PERTURB_TREF=".true."
+
 echo "END: config.esfc"

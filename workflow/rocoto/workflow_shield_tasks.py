@@ -1170,7 +1170,7 @@ class Tasks:
             dep_dict = {'type': 'metatask', 'name': f'{self.cdump}ocnpost'}
             deps.append(rocoto.add_dependency(dep_dict))
 
-        if self.app_config.mode == 'replay' and self.cdump == 'gdas':
+        if (self.app_config.mode == 'replay' or self.app_config.mode == "cycled") and self.cdump == 'gdas':
             dep_dict = {'type': 'task', 'name': f'{self.cdump}analdiag'}
             deps.append(rocoto.add_dependency(dep_dict))
 
