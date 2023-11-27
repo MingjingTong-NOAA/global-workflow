@@ -53,7 +53,7 @@ DOIAU=${DOIAU:-"NO"}
 export IAUFHRS=${IAUFHRS:-"6"}
 
 # Surface cycle related parameters
-CYCLESH=${CYCLESH:-$HOMEgfs/ush/global_cycle.sh}
+CYCLESH=${CYCLESH:-$HOMEgfs/ush/global_cycle_shield.sh}
 export CYCLEXEC=${CYCLEXEC:-$HOMEgfs/exec/global_cycle}
 NTHREADS_CYCLE=${NTHREADS_CYCLE:-24}
 APRUN_CYCLE=${APRUN_CYCLE:-${APRUN:-""}}

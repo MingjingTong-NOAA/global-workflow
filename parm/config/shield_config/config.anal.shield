@@ -182,7 +182,7 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 fi
 
 # Set analysis script
-export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_v2.sh"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612
@@ -207,5 +207,7 @@ if [[ $full_hydro_gfdl = "YES" ]]; then
 fi
 
 export USE_CORRELATED_OBERRS="NO"
+
+#export GSIEXEC=$HOMEgfs/exec/gsi.x_v3_crtm2p3
 
 echo "END: config.anal"
