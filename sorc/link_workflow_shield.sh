@@ -5,6 +5,7 @@ set -ex
 
 RUN_ENVIR=${1}
 machine=${2}
+SHiELD=${3}
 
 if [ $# -lt 2 ]; then
     echo '***ERROR*** must specify two arguements: (1) RUN_ENVIR, (2) machine'
@@ -240,8 +241,6 @@ for workflowexec in enkf_chgres_recenter.x enkf_chgres_recenter_nc.x fv3nc2nemsi
   $LINK ../sorc/install/bin/$workflowexec .
 done
 
-$LINK ../sorc/shield.fd/SHiELD_build/Build/bin/SHiELD_nh.prod.32bit.intel.x ./shield.x
-
 [[ -s gfs_ncep_post ]] && rm -f gfs_ncep_post
 $LINK ../sorc/upp.fd/exec/upp.x gfs_ncep_post
 
@@ -315,7 +314,7 @@ $LINK ../sorc/cube2gaus.fd/scripts/Build/bin/fv3_da_out_32bit.x gaussian_c2g_atm
 cd ${pwd}/../sorc   ||   exit 8
 
     if [ ! -d shield.fd ]; then
-      $SLINK /scratch2/GFDL/gfdlscr/Mingjing.Tong/SHiELD_da_2022                                shield.fd
+      $SLINK $SHiELD                                                                            shield.fd
     fi
       
     if [ -d gsi_enkf.fd ]; then
@@ -404,6 +403,18 @@ cd ${pwd}/../sorc   ||   exit 8
         $SLINK gldas.fd/sorc/$prog                                                     $prog
       done
     fi
+
+#------------------------------
+#--link SHiELD executable
+#------------------------------
+
+if [ ! -d shield.fd ]; then
+  echo "!!! shield.fd not exist, check $SHiELD and link SHiELD source code directory"
+  exit 8
+else
+  cd $pwd/../exec
+  $LINK ../sorc/shield.fd/SHiELD_build/Build/bin/SHiELD_nh.prod.32bit.intel.x ./shield.x
+fi
 
 #------------------------------
 #  copy $HOMEgfs/parm/config/config.base.nco.static as config.base for operations
