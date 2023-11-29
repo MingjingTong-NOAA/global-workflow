@@ -207,7 +207,10 @@ if [[ $full_hydro_gfdl = "YES" ]]; then
 fi
 
 export USE_CORRELATED_OBERRS="NO"
-
-#export GSIEXEC=$HOMEgfs/exec/gsi.x_v3_crtm2p3
+if [[ $USE_CORRELATED_OBERRS == "YES" ]]; then
+  export covdir="dnoinf2"
+  export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_Rcov_Rinf
+  export SETUP="lupdqc=".false.",${SETUP:-}"
+fi
 
 echo "END: config.anal"

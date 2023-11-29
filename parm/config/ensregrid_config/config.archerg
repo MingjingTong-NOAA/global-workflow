@@ -1,0 +1,11 @@
+#!/bin/ksh -x
+
+########## config.archerg ##########
+# Archive specific
+
+echo "BEGIN: config.archerg"
+
+# Get task specific resources
+. $EXPDIR/config.resources archerg
+
+echo "END: config.archerg"

@@ -1,0 +1,19 @@
+#!/bin/ksh -x
+
+########## config.eget ##########
+# Ensemble pull specific
+
+echo "BEGIN: config.eget"
+
+# Get task specific resources
+. $EXPDIR/config.resources eget
+
+export ETARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch"
+
+export EFHMIN=$FHMIN
+export EFHMAX=$FHMAX
+export EFHOUT=$FHOUT
+
+export GDATE=$CDATE
+
+echo "END: config.eget"

@@ -170,7 +170,7 @@ if [[ $RUN_ENVIR == "emc" ]]; then
 fi
 
 # Set analysis script
-export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield_omg.sh"
+export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
 export convonly="NO"
 
 # iasi-metop-a discontinued since 2021102612
@@ -180,16 +180,17 @@ if [[ "$CDATE" -lt "2021102612" ]]; then
 fi
 
 # Set all-sky radiance assimilation options
+#export hydrotable="$RTMFIX/CloudCoeff.GFDLFV3.-109z-1.bin"
 #export hydrotable="$RTMFIX/CloudCoeff_DDA_ARTS.nc4"
 #export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
 #export hydrotable_format="netcdf"
 
 if [[ $full_hydro_gfdl = "YES" ]]; then
    export lcalc_gfdl_cfrac=".true."
-   export allsky_gfdl=".false."
+   export allsky_gfdl=".true."
    export crtm_overlap=4
    export cnvw_option=".false."
-   export allsky_verbose=".false."
+   export allsky_verbose=".true."
    export cloud_mask_option=1
    export mask_threshold=0.000001
    export write_ens_sprd=".false."
@@ -198,6 +199,7 @@ if [[ $full_hydro_gfdl = "YES" ]]; then
    #export qltype="LiquidSphere"
    #export qitype="IceSphere"
    #export qstype="SectorSnowflake"
+   #export qstype="LargeBlockAggregate"
 fi
 
 export USE_CORRELATED_OBERRS="NO"

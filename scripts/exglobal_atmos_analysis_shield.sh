@@ -431,8 +431,8 @@ $NLN $OBERROR      errtable
 #If using correlated error, link to the covariance files
 if [ $USE_CORRELATED_OBERRS == "YES" ];  then
   if grep -q "Rcov" $ANAVINFO ;  then
-     if ls ${FIXgsi}/Rcov* 1> /dev/null 2>&1; then
-       $NLN ${FIXgsi}/Rcov* $DATA
+     if ls ${FIXgsi}/${covdir:-''}/Rcov* 1> /dev/null 2>&1; then
+       $NLN ${FIXgsi}/${covdir:-''}/Rcov* $DATA
        echo "using correlated obs error"
      else
        echo "FATAL ERROR: Satellite error covariance files (Rcov) are missing."
@@ -485,6 +485,7 @@ $NLN $PREPQCPF         prepbufr_profl
 $NLN $SATWND           satwndbufr
 $NLN $OSCATBF          oscatbufr
 $NLN $RAPIDSCATBF      rapidscatbufr
+if [[ ${convonly:-"NO"} != "YES" ]]; then
 $NLN $GSNDBF           gsndrbufr
 $NLN $GSNDBF1          gsnd1bufr
 $NLN $B1HRS2           hirs2bufr
@@ -531,12 +532,13 @@ $NLN $ESATMS           atmsbufrears
 $NLN $ATMSDB           atmsbufr_db
 $NLN $SSMITBF          ssmitbufr
 $NLN $SSMISBF          ssmisbufr
-$NLN $GPSROBF          gpsrobufr
-$NLN $TCVITL           tcvitl
 $NLN $B1AVHAM          avhambufr
 $NLN $B1AVHPM          avhpmbufr
 $NLN $AHIBF            ahibufr
 $NLN $ABIBF            abibufr
+fi
+$NLN $GPSROBF          gpsrobufr
+$NLN $TCVITL           tcvitl
 $NLN $HDOB             hdobbufr
 #$NLN $SSTVIIRS         sstviirs
 
@@ -613,6 +615,16 @@ if [ $JCAP -ne $JCAP_A ]; then
     else
       echo "Warning: Inconsistent sfc mask between analysis and background grids, GSI will interpolate"
    fi
+fi
+
+if [[ $DO_OmF == "YES" ]]; then
+      SFCGES_ENSMEAN=${SFCGES_ENSMEAN:-${COMIN_GES_ENS}/${GPREFIX}sfcf006.ensmean${GSUFFIX}}
+      if [ -e $SFCGES_ENSMEAN ]; then
+         USE_READIN_ANL_SFCMASK=.true.
+         $NLN $SFCGES_ENSMEAN sfcf06_anlgrid
+      else
+         echo "Warning: Inconsistent sfc mask between analysis and ensemble grids, GSI will interpolate"
+      fi
 fi
 
 ##############################################################
@@ -769,19 +781,14 @@ cat > gsiparm.anl << EOF
   use_gfs_nemsio=${use_gfs_nemsio},use_gfs_ncio=${use_gfs_ncio},sfcnst_comb=.true.,
   use_readin_anl_sfcmask=${USE_READIN_ANL_SFCMASK},
   lrun_subdirs=$lrun_subdirs,
-  crtm_coeffs_path='./crtm_coeffs/',hydrotable_format=${hydrotable_format:-"binary"},
-  hydrotype(1)=${qltype:-'WATER_CLOUD'},hydrotype(2)=${qitype:-'ICE_CLOUD'},
-  hydrotype(3)=${qrtype:-'RAIN_CLOUD'},hydrotype(4)=${qstype:-'SNOW_CLOUD'},
-  hydrotype(5)=${qgtype:-'GRAUPEL_CLOUD'},hydrotype(6)=${qhtype:-'HAIL_CLOUD'},
+  crtm_coeffs_path='./crtm_coeffs/',
   newpc4pred=.true.,adp_anglebc=.true.,angord=4,passive_bc=.true.,use_edges=.false.,
   diag_precon=.true.,step_start=1.e-3,emiss_bc=.true.,nhr_obsbin=${nhr_obsbin:-3},
   cwoption=3,imp_physics=$imp_physics,lupp=$lupp,cnvw_option=$cnvw_option,
-  cao_check=${cao_check},
   netcdf_diag=$netcdf_diag,binary_diag=$binary_diag,
   lobsdiag_forenkf=$lobsdiag_forenkf,lwrite_peakwt=.false.,
   write_fv3_incr=$write_fv3_increment,
   nhr_anal=${IAUFHRS},
-  ta2tb=${ta2tb},
   $WRITE_INCR_ZERO
   $WRITE_ZERO_STRAT
   $WRITE_STRAT_EFOLD
@@ -817,7 +824,7 @@ cat > gsiparm.anl << EOF
   $STRONGOPTS
 /
 &OBSQC
-  dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=.false.,c_varqc=0.02,
+  dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=${oberrflg:-".false."},c_varqc=0.02,
   use_poq7=.true.,qc_noirjaco3_pole=.true.,vqc=.false.,nvqc=.true.,
   aircraft_t_bc=.true.,biaspredt=1.0e5,upd_aircraft=.true.,cleanup_tail=.true.,
   tcp_width=70.0,tcp_ermax=7.35,

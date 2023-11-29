@@ -35,7 +35,7 @@ export SCRgfs=$HOMEgfs/scripts
 export NWPROD="@NWPROD@"
 export COMROOT="@COMROOT@"
 export DMPDIR="@DMPDIR@"
-export RTMFIX="/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/RTMFIX"
+export RTMFIX=$CRTM_FIX
 
 # USER specific paths
 export HOMEDIR="@HOMEDIR@"

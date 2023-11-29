@@ -1,0 +1,89 @@
+#! /usr/bin/env bash
+
+########## config.resources ##########
+# Set resource information for job tasks
+# e.g. walltime, node, cores per node, memory etc.
+
+if [ $# -ne 1 ]; then
+
+    echo "Must specify an input task argument to set resource variables!"
+    echo "argument can be any one of the following:"
+    echo "getic init coupled_ic aerosol_init"
+    echo "atmanalprep atmanalrun atmanalpost"
+    echo "atmensanalprep atmensanalrun atmensanalpost"
+    echo "anal sfcanl analcalc analdiag gldas fcst post vrfy metp arch echgres"
+    echo "eobs ediag eomg eupd ecen esfc efcs epos earc"
+    echo "init_chem mom6ic ocnpost"
+    echo "waveinit waveprep wavepostsbs wavepostbndpnt wavepostbndpntbll wavepostpnt"
+    echo "wavegempak waveawipsbulls waveawipsgridded"
+    echo "postsnd awips gempak"
+    echo "wafs wafsgrib2 wafsblending wafsgrib20p25 wafsblending0p25 wafsgcip"
+    exit 1
+
+fi
+
+step=$1
+
+echo "BEGIN: config.resources"
+
+if [[ "$machine" == "JET" ]]; then
+   if [[ "$PARTITION_BATCH" = "xjet" ]]; then
+     export npe_node_max=24
+   elif [[ "$PARTITION_BATCH" = "vjet" || "$PARTITION_BATCH" = "sjet" ]]; then
+     export npe_node_max=16
+   elif [[ "$PARTITION_BATCH" = "kjet" ]]; then
+     export npe_node_max=40
+   fi
+elif [[ "$machine" == "HERA" ]]; then
+   export npe_node_max=40
+elif [[ "$machine" == "ORION" ]]; then
+   export npe_node_max=40
+fi
+
+if [ $step = "eget" ]; then
+
+    eval "export wtime_$step='06:00:00'"
+    eval "export npe_$step=1"
+    eval "export npe_node_$step=1"
+    eval "export nth_$step=1"
+    eval "export memory_$step=2048M"
+
+elif [ $step = "enspost" ]; then
+
+    export wtime_enspost="00:10:00"
+    export wtime_enspost_gfs="00:30:00"
+    export npe_enspost=60
+    export nth_enspost=1
+    export npe_node_enspost=20
+    export npe_node_post=$npe_node_enspost
+    export npe_node_dwn=$npe_node_max
+
+    export npe_init=24
+    export nth_init=1
+    export npe_node_init=6
+    export memory_init="70G"
+
+elif [ $step = "ergpos" ]; then
+
+    export wtime_ergpos="00:15:00"
+    export npe_ergpos=80
+    export nth_ergpos=4
+    export npe_node_ergpos=$(echo "$npe_node_max / $nth_ergpos" | bc)
+    export npe_node_epos=$npe_node_ergpos
+
+elif [ $step = "archerg" ]; then
+
+    eval "export wtime_$step='06:00:00'"
+    eval "export npe_$step=1"
+    eval "export npe_node_$step=1"
+    eval "export nth_$step=1"
+    eval "export memory_$step=2048M"
+
+else
+
+    echo "Invalid step = $step, ABORT!"
+    exit 2
+
+fi
+
+echo "END: config.resources"

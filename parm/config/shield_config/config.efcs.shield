@@ -43,7 +43,8 @@ export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
 
 export npe_c2g=$(((FHMAX_ENKF-FHMIN_ENKF)/FHOUT_ENKF+1))
 
-
+# use TKE-EDMF scheme optin 0 and 1 in ensemble
+export dedmfens="YES"
 
 export replay=0
 

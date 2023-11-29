@@ -164,6 +164,15 @@ for imem in $(seq $ENSBEG $ENSEND); do
       export DATA=$DATATOP/$memchar
       if [ -d $DATA ]; then rm -rf $DATA; fi
       mkdir -p $DATA
+
+      if [[ $dedmfens == "YES" ]]; then
+         if [[ $MEMBER -le $((NMEM_ENKF / 2)) ]]; then
+            export isatmedmf=1
+         else
+            export isatmedmf=0
+         fi
+      fi
+
       $FORECASTSH
       ra=$?
 

@@ -88,6 +88,7 @@ sorc/gsi_monitor.fd
 sorc/ufs_utils.fd
 sorc/verif-global.fd
 sorc/cube2gaus.fd
+sorc/shield.fd
 
 # Ignore sorc symlinks
 #---------------------
@@ -179,6 +180,7 @@ ush/global_chgres.sh
 ush/global_chgres_driver.sh
 ush/global_cycle.sh
 ush/global_cycle_driver.sh
+ush/global_cycle_shield.sh
 ush/minmon_xtrct_costs.pl
 ush/minmon_xtrct_gnorms.pl
 ush/minmon_xtrct_reduct.pl
