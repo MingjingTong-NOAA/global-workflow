@@ -866,6 +866,10 @@ class Tasks:
         dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+        if add_anl_to_post:
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
+            dependencies.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         postenvars = self.envars.copy()
         postenvar_dict = {'FHRGRP': '#grp#',
