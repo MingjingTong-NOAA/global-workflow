@@ -867,8 +867,13 @@ class Tasks:
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
         if add_anl_to_post:
+            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            deps = rocoto.create_dependency(dep_condition='or', dep=deps)
+            dependencies.append(deps)
             dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         postenvars = self.envars.copy()
