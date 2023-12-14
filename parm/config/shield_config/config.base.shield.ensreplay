@@ -295,7 +295,7 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_C192_cpsd_aero_hord5nord3"
+   export ENSFROM="s2022_C192_v2p5_edmf1ens0"
    export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
 fi
 
