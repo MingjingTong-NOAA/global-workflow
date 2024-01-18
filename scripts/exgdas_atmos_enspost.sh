@@ -34,7 +34,7 @@ export GFSDWNSH=${GFSDWNSH:-$USHgfs/fv3gfs_dwn_nems.sh}
 export TRIMRH=${TRIMRH:-$USHgfs/trim_rh.sh}
 export MODICEC=${MODICEC:-$USHgfs/mod_icec.sh}
 export INLINE_POST=${INLINE_POST:-".false."}
-export GRIBBIN=${GRIBBIN:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/miniconda3/bin}
+export GRIBBIN=${GRIBBIN:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/miniconda3/envs/myxenv/bin}
 
 ############################################################
 #  Define Variables:
