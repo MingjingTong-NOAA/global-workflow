@@ -70,9 +70,6 @@ export COMIN="$ROTDIR/enkf$CDUMP.${PDY}/${cyc}/$COMPONENT"
 export COMOUT="$ROTDIR/enkf$CDUMP.${PDY}/${cyc}/$COMPONENT"
 
 
-export LEVS=$((LEVS-1))
-
-
 ###############################################################
 # Run relevant script
 

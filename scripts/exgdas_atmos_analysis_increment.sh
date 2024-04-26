@@ -140,7 +140,7 @@ else
   export IAUFHRS="6"
 fi
 
-nfhrs=$(echo $IAUFHRS_ENKF | sed 's/,/ /g')
+nfhrs=$(echo $IAUFHRS | sed 's/,/ /g')
 for FHR in $nfhrs; do
     echo "Regridding deterministic forecast for forecast hour $FHR"
     rm -f chgres_nc_gauss0$FHR.nml

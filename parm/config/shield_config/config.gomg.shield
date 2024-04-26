@@ -51,7 +51,10 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo_shield.txt
 export OZINFO=$FIXgsi/global_ozinfo_shield.txt
-export SATINFO=$FIXgsi/global_satinfo_shield.txt
+export SATINFO=$FIXgsi/global_satinfo.txt
+if [ "ICSTYP" = "shield" ]; then
+   export SATINFO=$FIXgsi/global_satinfo_shield.txt
+fi
 export OBERROR=$FIXgsi/prepobs_errtable.global.shield
 
 
@@ -171,7 +174,7 @@ fi
 
 # Set analysis script
 export ANALYSISSH="$HOMEgfs/scripts/exglobal_atmos_analysis_shield.sh"
-export convonly="NO"
+export convonly="YES"
 
 # iasi-metop-a discontinued since 2021102612
 # set Rcov for iasi-metop-a before 2021102612 and  for iasi-metop-c after 2021102612

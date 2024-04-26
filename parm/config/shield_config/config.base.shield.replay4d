@@ -98,7 +98,7 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="sda_cntl"
+export RESTARTEXP="v16p2_C192d"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -116,7 +116,7 @@ export ATARDIR="@ATARDIR@"
 
 # forecast-only and replay environment parameters
 export ICDUMP="gdas"
-export ICSTYP="gfs"
+export ICSTYP="gfs"   # could be gfs, shield, ifs
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 
 # forecast-only environment parameters

@@ -51,7 +51,7 @@ FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/fix_shield}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
-ICSTYP=${ICSTYP:-"gfs"}        # Initial condition type (gfs, ifs)
+ICSTYP=${ICSTYP:-"gfs"}        # Initial condition type (gfs, ifs, shield)
 ECICSDIR=${ECICSDIR:-"/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"} 
 DMPDIR=${DMPDIR:-$pwd}         # global dumps for seaice, snow and sst analysis
 
@@ -456,7 +456,7 @@ else ## cold start
        fi 
     fi
   done
-  if [ $ICSTYP = "ifs" ]; then
+  if [ "$ICSTYP" = "ifs" ]; then
     $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/INPUT/gk03_CF0.nc
   fi
 
@@ -476,7 +476,7 @@ if [ $replay -eq 1 ]; then
        $NLN $file $DATA/EXTIC/$file2
      fi
    done
-   if [ $ICSTYP = "ifs" ]; then
+   if [ "$ICSTYP" = "ifs" ]; then
      $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/EXTIC/gk03_CF0.nc
    fi
 
@@ -799,7 +799,7 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
   if [ $warm_start = ".true." ]; then
     make_nh=".false."              # restarts contain non-hydrostatic state
   else
-    if [ $ICSTYP = "gfs" ]; then
+    if [ "$ICSTYP" = "gfs" ] || [ "$ICSTYP" = "shield" ]; then
       make_nh=".false." 
     else
       make_nh=".true."
@@ -863,7 +863,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
   external_ic=".false."
   mountain=".true."
   if [ $replay -eq 1 ]; then
-    if [ $ICSTYP = "gfs" ]; then
+    if [ "$ICSTYP" = "gfs" ] || [ "$ICSTYP" = "shield" ]; then
       nudge_qv=${nudge_qv:-".true."}
       nggps_ic=${nggps_ic:-".true."}
       ncep_ic=${ncep_ic:-".false."}
@@ -888,7 +888,7 @@ if [ $warm_start = ".true." ]; then # warm start from restart file
   fi
 
 else # CHGRES'd GFS analyses
-  if [ $ICSTYP = "gfs" ]; then
+  if [ "$ICSTYP" = "gfs" ] || [ "$ICSTYP" = "shield" ]; then
     nudge_qv=${nudge_qv:-".true."}
     nggps_ic=".true."
     ecmwf_ic=".false."

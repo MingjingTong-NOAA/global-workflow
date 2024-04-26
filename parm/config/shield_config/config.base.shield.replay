@@ -98,7 +98,7 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="replay"
+export RESTARTEXP="v16p2_C192d"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -116,7 +116,7 @@ export ATARDIR="@ATARDIR@"
 
 # forecast-only and replay environment parameters
 export ICDUMP="gdas"
-export ICSTYP="gfs"
+export ICSTYP="gfs"   # could be gfs, shield, ifs
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 
 # forecast-only environment parameters
@@ -208,7 +208,7 @@ export DO_CUBE2GAUS="YES"
 
 # IAU related parameters
 export DOIAU="YES"        # Enable 4DIAU for control with 3 increments
-export IAUFHRS="3,6,9"
+export IAUFHRS="6"
 export IAU_FHROT=$(echo $IAUFHRS | cut -c1)
 export IAU_DELTHRS=6
 export IAU_OFFSET=6
@@ -223,13 +223,12 @@ if [[ "$MODE" != "forecast-only" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".f
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=1
+export replay=2
+# fullresanl - if YES, replay to full resolution analysis instead of analysis increment at ensemble resolution
+# In such case need to compute analysis at f03 and f09 and recompute analysis increment at full resolution
 export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
-fi
-if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
-  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1

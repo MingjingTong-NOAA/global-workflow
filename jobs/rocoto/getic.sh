@@ -156,6 +156,8 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
           sh ${GETICSH} ${ICDUMP}
           status=$?
           [[ $status -ne 0 ]] && exit $status
+          mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*abias* ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
+          mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/*radstat ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/
           pullanldata="YES" 
         else
           echo "IC atmanl exists, skip pulling data"
@@ -219,15 +221,21 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         fi
      fi
   fi
-  if [[ $DO_OmF == "YES" ]]; then
-     directory=${HPSSEXPDIR}/${ics_from}/${GDATE}
+  if [[ $DO_OmF == "YES" && "$CDATE" != "$SDATE" ]]; then
+     if [[ "$ics_from" == "opsgfs" ]]; then
+        directory=/NCEPPROD/hpssprod/runhistory/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}
+        tarball=com_gfs_${gfssubver}_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
+     else
+        directory=${HPSSEXPDIR}/${ics_from}/${GDATE}
+        tarball="${ICDUMP}.tar"
+     fi
      abias=${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air
      if [[ ! -s $abias ]]; then
         echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias "      >list.txt
         echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air " >>list.txt
         echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_int " >>list.txt
         echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_pc  " >>list.txt
-        htar -xvf ${directory}/${tarball2} -L ./list.txt
+        htar -xvf ${directory}/${tarball} -L ./list.txt
         status=$?
         [[ $status -ne 0 ]] && exit $status
         mv $EXTRACT_DIR/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/*abias* ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/

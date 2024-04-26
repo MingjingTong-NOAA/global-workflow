@@ -101,7 +101,6 @@ export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
 # Resolution specific parameters
-export LEVS="@LEVS@"
 export CASE="@CASECTL@"
 export CASE_ENKF="@CASEENS@"
 export NMEM_ENKF=@NMEM_ENKF@

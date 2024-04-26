@@ -98,8 +98,10 @@ else
       else
          $NLN ${SAVEDIR} ${COMOUTatmos}/INPUT
       fi
-      $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
-      $NLN ${COMOUT}/*radstat ${COMOUTatmos}/
+      if [[ "$ICSDIR" != "$ROTDIR" ]]; then
+         $NLN ${COMOUT}/*abias* ${COMOUTatmos}/
+         $NLN ${COMOUT}/*radstat ${COMOUTatmos}/
+      fi
     fi
   fi
     
