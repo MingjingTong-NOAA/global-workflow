@@ -156,8 +156,6 @@ mkdir shield.fd
 checkout "shield.fd/SHiELD_build" "https://gitlab.gfdl.noaa.gov/Mingjing.Tong/SHiELD_build.git" "4efbf9d"; errs=$((errs + $?))
 cd ../
 
-exit
-
 # The checkout version should always be a speciifc commit (hash or tag), not a branch
 checkout "ufs_utils.fd"    "https://github.com/MingjingTong-NOAA/UFS_UTILS.git" "1bdc488"          ; errs=$((errs + $?))
 checkout "verif-global.fd" "https://github.com/NOAA-EMC/EMC_verif-global.git"   "9377e84"          ; errs=$((errs + $?))
