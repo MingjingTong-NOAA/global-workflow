@@ -86,7 +86,7 @@ export KEEPDATA="NO"
 export CHGRP_RSTPROD="@CHGRP_RSTPROD@"
 export CHGRP_CMD="@CHGRP_CMD@"
 export NEMSIOGET="$HOMEgfs/exec/nemsio_get"
-export NCDUMP="$NETCDF/bin/ncdump"
+export NCDUMP="${NETCDF:-${netcdf_c_ROOT:-}}/bin/ncdump"
 export NCLEN="$HOMEgfs/ush/getncdimlen"
 
 # Machine environment, jobs, and other utility scripts
@@ -98,7 +98,8 @@ export SDATE=@SDATE@
 export FDATE=@FDATE@
 export EDATE=@EDATE@
 export EXP_WARM_START="@EXP_WARM_START@"
-export RESTARTEXP="s2022_C192_v2"
+export ANAL_START="@ANAL_START@"
+export RESTARTEXP="s2022_C192_v2p5_edmf1ens0"
 export assim_freq=6
 export PSLOT="@PSLOT@"
 export EXPDIR="@EXPDIR@/$PSLOT"
@@ -108,15 +109,15 @@ export DUMP_SUFFIX=""
 if [[ "$CDATE" -ge "2019092100" && "$CDATE" -le "2019110700" ]]; then
     export DUMP_SUFFIX="p"              # Use dumps from NCO GFS v15.3 parallel
 fi
-export RUNDIR="$STMP/RUNDIRS/$PSLOT"
-export DATAROOT="$RUNDIR/$CDATE/$CDUMP"
+export DATAROOT="${STMP}/RUNDIRS/${PSLOT}"
+export RUNDIR="${DATAROOT}"
 export ARCDIR="$NOSCRUB/archive/$PSLOT"
 export ICSDIR="@ICSDIR@"
 export ATARDIR="@ATARDIR@"
 
 # forecast-only and replay environment parameters
 export ICDUMP="gdas"
-export ICSTYP="gfs"
+export ICSTYP="gfs"   # could be gfs, shield, ifs
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 
 # forecast-only environment parameters
@@ -224,12 +225,11 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=1
+# fullresanl - if YES, replay to full resolution analysis instead of analysis increment at ensemble resolution
+# In such case need to compute analysis at f03 and f09 and recompute analysis increment at full resolution
 export fullresanl="YES"
 if [ $replay -eq 2 ]; then
   export ICSTYP="gfs"
-fi
-if [ "${CASE:1}" -lt "${OPS_RES:1}" ]; then
-  export fullresanl="NO"
 fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
@@ -257,13 +257,14 @@ export gldas_cyc=00
 # run gcycle for DA or replay (only work with gfsv16 ICs)
 export DOGCYCLE="NO"
 export DO_RTGSST="NO"
-export DO_TREF_TILE=".true."
+export DO_TSFC_TILE=".false."
+export USE_TREF=".false."
 if [[ $DOGCYCLE = "NO" ]]; then
    export DO_GLDAS="NO"
-   export DO_TREF_TILE=".false."
+   export DO_TSFC_TILE="NO"
 fi
 if [[ $DO_RTGSST = "YES" ]]; then
-   export DO_TREF_TILE=".false."
+   export DO_TSFC_TILE="NO"
 fi
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
@@ -294,8 +295,8 @@ if [ $DOHYBVAR = "YES" ]; then
 fi
 
 if [ $ENSREPLAY = "YES" ]; then
-   export ENSFROM="sda_C192_cntl_n2h6"
-   export ENSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ENSFCST/${CASE}/${ENSFROM}"
+   export ENSFROM="s2022_C192_v2p5_edmf1ens0"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${CASE}/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst

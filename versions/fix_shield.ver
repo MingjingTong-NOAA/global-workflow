@@ -1,0 +1,5 @@
+#!/bin/bash
+# Fix file subfolder versions
+
+export shield_ver=20240515
+export gsi_ver=20240515

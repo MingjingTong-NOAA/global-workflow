@@ -1,0 +1,21 @@
+# version 1
+The GSI version match GFS v16.2
+CRTM version: 2.3.0
+
+# 07/05/2024 version 2
+
+changes relative to version 1
+Interface cube2gaus.fd
+new version can produce results, but
+cmake version in shield_utils.fd cannot reproduce results
+
+GSI:
+Radiance assimilation
+1. CRTM version: 2.4.0.1. The difference between 2.4.0 and 2.4.0.1 is only 10^-7 for radiance J term
+The difference between 2.4.0 and 2.3.0 are very significant, particularly for all-sky channels.
+
+2. ATMS: #731 remove a kludge that was put in place to mitigate the effect of correlated errors. 
+The impact is increaing number of data assimilated and OmB std
+
+EnKF:
+remove use_qsatensmean, which make pseudo_RH=T to be really T (uses q/qsat as the analysis variable)

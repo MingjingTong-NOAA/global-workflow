@@ -150,14 +150,22 @@ export topdir=$(pwd)
 export logdir="${topdir}/logs"
 mkdir -p ${logdir}
 
-# The checkout version should always be a speciifc commit (hash or tag), not a branch
 errs=0
-checkout "ufs_utils.fd"    "https://github.com/MingjingTong-NOAA/UFS_UTILS.git" "584c0b0"          ; errs=$((errs + $?))
-checkout "verif-global.fd" "https://github.com/NOAA-EMC/EMC_verif-global.git"   "c267780"          ; errs=$((errs + $?))
-checkout "cube2gaus.fd" "https://github.com/MingjingTong-NOAA/cube2gaus.git"    "ecf0047"          ; errs=$((errs + $?))
+# checkout SHiELD model
+mkdir shield.fd
+checkout "shield.fd/SHiELD_build" "https://gitlab.gfdl.noaa.gov/Mingjing.Tong/SHiELD_build.git" "4efbf9d"; errs=$((errs + $?))
+cd ../
+
+exit
+
+# The checkout version should always be a speciifc commit (hash or tag), not a branch
+checkout "ufs_utils.fd"    "https://github.com/MingjingTong-NOAA/UFS_UTILS.git" "1bdc488"          ; errs=$((errs + $?))
+checkout "verif-global.fd" "https://github.com/NOAA-EMC/EMC_verif-global.git"   "9377e84"          ; errs=$((errs + $?))
+checkout "gfs_utils.fd" "https://github.com/NOAA-EMC/gfs-utils"                 "02ce084"          ; errs=$((errs + $?))
+checkout "shield_utils.fd" "https://github.com/MingjingTong-NOAA/shield_utils.git" "3c98e5d"       ; errs=$((errs + $?))
 
 if [[ $CHECKOUT_GSI == "YES" ]]; then
-  checkout "gsi_enkf.fd" "https://github.com/MingjingTong-NOAA/GSI.git" "cf752b5"; errs=$((errs + $?))
+  checkout "gsi_enkf.fd" "https://github.com/MingjingTong-NOAA/GSI.git" "4e8b370"; errs=$((errs + $?))
 fi
 
 if [[ $CHECKOUT_GDAS == "YES" ]]; then
@@ -165,8 +173,8 @@ if [[ $CHECKOUT_GDAS == "YES" ]]; then
 fi
 
 if [[ $CHECKOUT_GSI == "YES" || $CHECKOUT_GDAS == "YES" ]]; then
-  checkout "gsi_utils.fd"    "https://github.com/MingjingTong-NOAA/GSI-utils.git" "3911e58"; errs=$((errs + $?))
-  checkout "gsi_monitor.fd"  "https://github.com/NOAA-EMC/GSI-Monitor.git" "acf8870"; errs=$((errs + $?))
+  checkout "gsi_utils.fd"    "https://github.com/MingjingTong-NOAA/GSI-utils.git" "b343cee"; errs=$((errs + $?))
+  checkout "gsi_monitor.fd"  "https://github.com/NOAA-EMC/GSI-Monitor.git" "e1f9f21"; errs=$((errs + $?))
   checkout "gldas.fd"        "https://github.com/NOAA-EMC/GLDAS.git"       "fd8ba62"; errs=$((errs + $?))
 fi
 
@@ -174,7 +182,7 @@ if [[ $checkout_wafs == "YES" ]]; then
   checkout "gfs_wafs.fd" "https://github.com/NOAA-EMC/EMC_gfs_wafs.git" "014a0b8"; errs=$((errs + $?))
 fi
 
-checkout "upp.fd" "https://github.com/NOAA-EMC/UPP.git" "e227247"; errs=$((errs + $?))
+checkout "upp.fd" "https://github.com/NOAA-EMC/UPP.git" "4770a2f"; errs=$((errs + $?))
 if [[ $checkout_gtg == "YES" ]]; then
   ################################################################################
   # checkout_gtg

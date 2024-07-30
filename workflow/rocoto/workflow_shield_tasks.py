@@ -301,6 +301,16 @@ class Tasks:
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            if self._base.get('ANAL_START', True):
+                deps = []
+                dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                data = f'&ROTDIR;/gdas.@Y@m@d/@H/atmos/gdas.t@Hz.atmf009{suffix}'
+                dep_dict = {'type': 'data', 'data': data, 'offset': '-06:00:00'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                deps = rocoto.create_dependency(dep_condition='and', dep=deps)
+                dependencies.append(deps)
+                dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
             cycledef = self.cdump
             if self.cdump in ['gfs'] and gfs_enkf and gfs_cyc != 4:
@@ -492,8 +502,9 @@ class Tasks:
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.cdump}anal'}
             deps.append(rocoto.add_dependency(dep_dict))
-            dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if not self._base.get('ANAL_START', True):
+                dep_dict = {'type': 'cycleexist', 'offset': '-06:00:00'}
+                deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         else:
             deps = []
@@ -742,14 +753,15 @@ class Tasks:
                 dependencies.append(rocoto.add_dependency(dep_dict))
                 dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
             else:
-                deps=[]
-                dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
-                deps.append(rocoto.add_dependency(dep_dict))
-                dep_dict = {'type': 'task', 'name': f'{self.cdump}init'}
-                deps.append(rocoto.add_dependency(dep_dict))
-                deps = rocoto.create_dependency(dep_condition='and', dep=deps)
-                dependencies.append(deps)
-                dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+                if not self._base.get('ANL_START', True):
+                    deps=[]
+                    dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+                    dep_dict = {'type': 'task', 'name': f'{self.cdump}init'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps = rocoto.create_dependency(dep_condition='and', dep=deps)
+                    dependencies.append(deps)
+                    dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
         resources = self.get_resource('fcst')
         task = create_wf_task('fcst', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)
@@ -1179,9 +1191,14 @@ class Tasks:
             dep_dict = {'type': 'metatask', 'name': f'{self.cdump}ocnpost'}
             deps.append(rocoto.add_dependency(dep_dict))
 
+        deps2 = []
         if (self.app_config.mode == 'replay' or self.app_config.mode == "cycled") and self.cdump == 'gdas':
             dep_dict = {'type': 'task', 'name': f'{self.cdump}analdiag'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            deps2.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+            deps2.append(rocoto.add_dependency(dep_dict))
+            deps2 = rocoto.create_dependency(dep_condition='or', dep=deps2)
+        deps.append(deps2)
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -1197,6 +1214,10 @@ class Tasks:
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self._base.get('ANAL_START', True):
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
 
         egetenvars = self.envars.copy()

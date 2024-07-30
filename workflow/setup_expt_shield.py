@@ -150,6 +150,7 @@ def edit_baseconfig(host, inputs):
         "@QUEUE_SERVICE@": host.info["queue_service"],
         "@PARTITION_BATCH@": host.info["partition_batch"],
         "@EXP_WARM_START@": inputs.warm_start,
+        "@ANAL_START@": inputs.anal_start,
         "@MODE@": inputs.mode,
         "@CHGRP_RSTPROD@": host.info["chgrp_rstprod"],
         "@CHGRP_CMD@": host.info["chgrp_cmd"],
@@ -238,8 +239,8 @@ def input_args():
                           type=str, required=False, default='gdas')
         subp.add_argument('--gfs_cyc', help='GFS cycles to run', type=int,
                           choices=[0, 1, 2, 4], default=1, required=False)
-        subp.add_argument('--start', help='restart mode: warm or cold', type=str,
-                          choices=['warm', 'cold'], required=False, default='cold')
+        subp.add_argument('--start', help='restart mode: warm or cold or anal', type=str,
+                          choices=['warm', 'cold', 'anal'], required=False, default='cold')
         subp.add_argument('--gfs_delay', help='number of days to delay GFS cycle', type=int, default=0, required=False)
 
     # cycled mode additional arguments
@@ -268,12 +269,15 @@ def input_args():
         raise SyntaxError("An IC directory must be specified with --icsdir when running the S2S or S2SW app")
 
     # Add an entry for warm_start = .true. or .false.
-    if args.start == "warm":
+    args.anal_start = ".false."
+    if args.start == "warm" or args.start == "anal":
         args.warm_start = ".true."
+        args.fdate = args.idate
+        if args.start == "anal":
+            args.anal_start = ".true."
     else:
         args.warm_start = ".false."
-
-    args.fdate = args.idate + timedelta(hours=6)
+        args.fdate = args.idate + timedelta(hours=6)
 
     return args
 
