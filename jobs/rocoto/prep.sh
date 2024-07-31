@@ -8,6 +8,8 @@ source "$HOMEgfs/ush/preamble.sh"
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
+set -x
+
 ###############################################################
 # Source relevant configs
 configs="base prep prepbufr"
@@ -96,14 +98,14 @@ fi
 
 ###############################################################
 # Generate prepbufr files from dumps or copy from OPS
-if [ $DO_MAKEPREPBUFR = "YES" ]; then
-    if [ $ROTDIR_DUMP = "YES" ]; then
+if [[ $DO_MAKEPREPBUFR == "YES" ]]; then
+    if [[ $ROTDIR_DUMP == "YES" ]]; then
         rm $COMOUT/${OPREFIX}prepbufr
         rm $COMOUT/${OPREFIX}prepbufr.acft_profiles
         rm $COMOUT/${OPREFIX}nsstbufr
     fi
 
-    if [ $MODE = "cycled" ]; then
+    if [[ $MODE == "cycled" ]]; then
        export job="j${CDUMP}_prep_${cyc}"
     else
        export job="j${ICDUMP}_prep_${cyc}"
@@ -113,11 +115,11 @@ if [ $DO_MAKEPREPBUFR = "YES" ]; then
     export COMIN=${COMIN:-$ROTDIR}
     export COMINgdas=${COMINgdas:-$ROTDIR/gdas.$PDY/$cyc/$COMPONENT}
     export COMINgfs=${COMINgfs:-$ROTDIR/gfs.$PDY/$cyc/$COMPONENT}
-    if [ $ROTDIR_DUMP = "NO" ]; then
+    if [[ $ROTDIR_DUMP == "NO" ]]; then
         COMIN_OBS=${COMIN_OBS:-$DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}}
         export COMSP=${COMSP:-$COMIN_OBS/$CDUMP.t${cyc}z.}
     else
-        if [ $MODE = "cycled" ]; then
+        if [[ $MODE == "cycled" ]]; then
            export COMSP=${COMSP:-$ROTDIR/${CDUMP}.${PDY}/${cyc}/$COMPONENT/$CDUMP.t${cyc}z.}
         else
            export COMSP=${COMSP:-$ROTDIR/${CDUMP}.${PDY}/${cyc}/$COMPONENT/$ICDUMP.t${cyc}z.}
@@ -134,12 +136,12 @@ if [ $DO_MAKEPREPBUFR = "YES" ]; then
     [[ $status -ne 0 ]] && exit $status
 
     # If creating NSSTBUFR was disabled, copy from DMPDIR if appropriate.
-    if [[ ${DO_MAKE_NSSTBUFR:-"NO"} = "NO" ]]; then
-        [[ $DONST = "YES" ]] && $NCP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}nsstbufr $COMOUT/${OPREFIX}nsstbufr
+    if [[ ${DO_MAKE_NSSTBUFR:-"NO"} == "NO" ]]; then
+        [[ $DONST == "YES" ]] && $NCP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}nsstbufr $COMOUT/${OPREFIX}nsstbufr
     fi
 
 else
-    if [ $ROTDIR_DUMP = "NO" ]; then
+    if [[ $ROTDIR_DUMP = "NO" ]]; then
         if [ -s $DMPDIR/${ICDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr ]; then
            $NCP $DMPDIR/${ICDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/${COMPONENT}/${OPREFIX}prepbufr  $COMOUT/${OPREFIX}prepbufr
         else

@@ -248,7 +248,7 @@ cat > enkf.nml << EOFnml
 &nam_enkf
    datestring="$CDATE",datapath="$DATA/",
    analpertwtnh=${analpertwt},analpertwtsh=${analpertwt},analpertwttr=${analpertwt},
-   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=.true.,iassim_order=0,
+   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=${pseudo_rh:-.true.},iassim_order=0,
    corrlengthnh=${corrlength},corrlengthsh=${corrlength},corrlengthtr=${corrlength},
    lnsigcutoffnh=${lnsigcutoff},lnsigcutoffsh=${lnsigcutoff},lnsigcutofftr=${lnsigcutoff},
    lnsigcutoffpsnh=${lnsigcutoff},lnsigcutoffpssh=${lnsigcutoff},lnsigcutoffpstr=${lnsigcutoff},

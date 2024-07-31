@@ -69,7 +69,7 @@ fi
 if [ $HPSSARCH = "YES" ]; then
 ###############################################################
 
-ARCH_LIST="$COMIN/archlist"
+ARCH_LIST="$COMIN/archomglist"
 [[ -d $ARCH_LIST ]] && rm -rf $ARCH_LIST
 mkdir -p $ARCH_LIST
 cd $ARCH_LIST

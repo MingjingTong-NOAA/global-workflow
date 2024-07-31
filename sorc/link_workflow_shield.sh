@@ -267,8 +267,6 @@ do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gfs_utils.fd/install/bin/${utilexe}" .
 done
 
-${LINK_OR_COPY} "${HOMEgfs}/sorc/cube2gaus.fd/scripts/Build/bin/fv3_da_out_32bit.x" .
-
 for utilexe in fv3_c2g_atms.x gaussian_sfcanl.x gaussian_sfcfcst.x
 do
   [[ -s "${utilexe}" ]] && rm -f "${utilexe}"

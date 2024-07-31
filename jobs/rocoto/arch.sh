@@ -29,6 +29,8 @@ for config in $configs; do
     [[ $status -ne 0 ]] && exit $status
 done
 
+set -x
+
 # ICS are restarts and always lag INC by $assim_freq hours
 ARCHINC_CYC=$ARCH_CYC
 ARCHICS_CYC=$((ARCH_CYC-assim_freq))
@@ -82,7 +84,7 @@ fi
 
 # Archive 1 degree forecast GRIB2 files for verification
 if [[ $DO_POST == "YES" ]]; then
-  if [ $CDUMP = "gdas" -o $FHMAX_GFS -le 9 ]; then
+  if [[ ( $CDUMP == "gdas" && $gdaspost == "YES" ) || $FHMAX_GFS -le 9 ]]; then
      flist="0 3 6 9"
      for fhr in $flist; do
          fhr2=$(printf %02i $fhr)

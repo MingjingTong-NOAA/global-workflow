@@ -9,6 +9,7 @@ export nco_ver=5.0.6
 export hdf5_ver=1.14.0
 export netcdf_c_ver=4.9.2
 export netcdf_fortran_ver=4.6.1
+export esmf_ver=8.5.0
 
 export bufr_ver=11.7.0
 export gsi_ncdiag_ver=1.1.2
@@ -32,4 +33,4 @@ export obsproc_run_ver=1.1.2
 export prepobs_run_ver=1.0.1
 
 export ens_tracker_ver=feature-GFSv17_com_reorg
-export fit2obs_ver=1.1.1
+export fit2obs_ver=1.0.0

@@ -113,7 +113,7 @@ class AppConfig:
         self.do_hpssarch = _base.get('HPSSARCH', False)
         
         self.gfsanl = _base.get('gfsanl', False)
-        self.do_tref = _base.get('DO_TREF_TILE',False)
+        self.do_tref = _base.get('DO_TSFC_TILE',False)
         self.replay = _base.get('replay',0)
         self.fullresanl = _base.get('fullresanl',True)
         self.ensreplay = _base.get('ENSREPLAY',False)
@@ -636,7 +636,7 @@ class AppConfig:
 
         gdas_tasks += ['fcst']
 
-        if self.do_gcycle and self.do_gldas:
+        if (self.do_gcycle and self.do_gldas) or self.gdaspost:
             gdas_tasks += ['post']
 
         if self.do_gomg:

@@ -120,10 +120,10 @@ rCDUMP=${rCDUMP:-$CDUMP}
 # interpolate from cubesphere grid to gaussian grid
 DO_CUBE2GAUS=${DO_CUBE2GAUS:-"YES"}
 C2GSH=${C2GSH:-$HOMEgfs/ush/cube2gaussian.sh}
-export GAUATMSEXE=${GAUATMSEXE:-$HOMEgfs/exec/gaussian_c2g_atms.x}
+#export GAUATMSEXE=${GAUATMSEXE:-$HOMEgfs/exec/fv3_c2g_atms.x}
 NTHREADS_GAUATMS=${NTHREADS_GAUATMS:-40}
 GAUSFCFCSTSH=${GAUSFCFCSTSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
-export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcfcst.exe}
+export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcfcst.x}
 NTHREADS_GAUSFCFCST=${NTHREADS_GAUSFCFCST:-1}
 
 APRUN_C2G=${APRUN_C2G:-${APRUN:-""}}
@@ -248,13 +248,13 @@ fi
 
 #-------------------------------------------------------
 # initial conditions
-warm_start=${warm_start:-".false."}
+warm_start=${EXP_WARM_START:-".false."}
 fcst_wo_da=${fcst_wo_da:-"NO"}
 read_increment=${read_increment:-".false."}
 res_latlon_dynamics='""'
 
 # Determine if this is a warm start or cold start
-if [ -f $gmemdir/RESTART/${sPDY}.${scyc}0000.coupler.res ]; then
+if [[ "$MODE" != "forecast-only" && -f $gmemdir/RESTART/${sPDY}.${scyc}0000.coupler.res ]]; then
   export warm_start=".true."
 fi
 
@@ -334,7 +334,7 @@ if [ $warm_start = ".true." -o $RERUN = "YES" ]; then
       if [ $fsufanl = "sfcanl_data" ]; then
         file2=$(echo $file2 | sed -e "s/sfcanl_data/sfc_data/g")
         # when NSST is off, use tref
-        if [[ $DONST = "YES" || $DOGCYCLE = "YES" || ($MODE = "forecast-only" && $IAU_OFFSET -ne 0) ]]; then
+        if [[ $DONST == "YES" || $DOGCYCLE == "YES" || ($MODE = "forecast-only" && $IAU_OFFSET -ne 0) || ${USE_TREF:-".false."} != ".true." ]]; then
            $NLN $file $DATA/INPUT/$file2
         else
            $NLN $file $DATA/INPUT/sfc_org
@@ -435,19 +435,14 @@ EOF
 
 else ## cold start                            
 
-  if [ $MODE = "cycled" ]; then
-    icsdir=$memdir
-  else
-    icsdir=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/atmos/${CASE}
-  fi
-  for file in $(ls $icsdir/INPUT/*.nc); do
+  for file in $(ls $memdir/INPUT/*.nc); do
     file2=$(echo $(basename -- $file))
     fsuf=$(echo $file2 | cut -c1-3)
     if [ $fsuf = "gfs" ]; then
       $NLN $file $DATA/INPUT/$file2
     fi
     if [[ $fsuf = "sfc" ]]; then
-       if [[ $DONST = "YES" || ( $DOGCYCLE = "YES" && "$CDATE" != "$SDATE" ) ]]; then
+       if [[ $DONST == "YES" || ( $DOGCYCLE = "YES" && "$CDATE" != "$SDATE" ) || ${USE_TREF:-".false."} != ".true." ]]; then
           $NLN $file $DATA/INPUT/$file2
        else
           $NLN $file $DATA/INPUT/sfc_org

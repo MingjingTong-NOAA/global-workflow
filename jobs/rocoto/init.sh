@@ -35,7 +35,7 @@ done
 status=$?
 [[ $status -ne 0 ]] && exit $status
 
-module list
+set -x
 
 ###############################################################
 # Set script and dependency variables
@@ -106,7 +106,7 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ $CASE != $OPS_RES && $MODE != "forecast-only" && ($DO_TREF_TILE = ".true." || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
+  if [[ $CASE != $OPS_RES && $MODE != "forecast-only" && ($DO_TSFC_TILE == "YES" || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
     if [[ ! -s $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP} $IAUSDATE $CASE
       status=$?

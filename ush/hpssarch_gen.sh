@@ -377,15 +377,15 @@ if [ $type = "gdas" ]; then
     if [ -s $ROTDIR/${dirpath}${head}atmf009.ensres${SUFFIX} ]; then
        echo  "${dirname}${head}atmf009.ensres${SUFFIX}  " >>gdas.txt
     fi
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
-     echo  "${dirname}${head}cnvstat                 " >>gdas.txt
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}oznstat ]; then
-     echo  "${dirname}${head}oznstat                 " >>gdas.txt
-  fi
-  if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
-     echo  "${dirname}${head}radstat                 " >>gdas.txt
+    if [ -s $ROTDIR/${dirpath}${head}cnvstat ]; then
+       echo  "${dirname}${head}cnvstat                 " >>gdas.txt
+    fi
+    if [ -s $ROTDIR/${dirpath}${head}oznstat ]; then
+       echo  "${dirname}${head}oznstat                 " >>gdas.txt
+    fi
+    if [ -s $ROTDIR/${dirpath}${head}radstat ]; then
+       echo  "${dirname}${head}radstat                 " >>gdas.txt
+    fi
   fi
   if [[ $MODE = "cycled" || $gdaspost = "YES" ]]; then
     for fstep in prep anal gldas fcst vrfy radmon minmon oznmon; do
@@ -422,7 +422,7 @@ if [ $type = "gdas" ]; then
     done
   else
     echo  "./logs/${CDATE}/gdasfcst.log                  " >>gdas.txt
-    fh=0
+    fh=$FHMIN
     while [ $fh -le $FHMAX ]; do
       fhr=$(printf %03i $fh)
       echo  "${dirname}${head}atmf${fhr}${SUFFIX}        " >>gdas.txt

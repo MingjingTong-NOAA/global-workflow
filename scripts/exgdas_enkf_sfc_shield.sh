@@ -51,7 +51,7 @@ GSUFFIX=${GSUFFIX:-$SUFFIX}
 # Variables
 NMEM_ENKF=${NMEM_ENKF:-80}
 DOIAU=${DOIAU_ENKF:-"NO"}
-DO_TREF_TILE=${DO_TREF_TILE=:-".false."}
+DO_TSFC_TILE=${DO_TSFC_TILE=:-"YES"}
 
 # Global_cycle stuff
 CYCLESH=${CYCLESH:-$HOMEgfs/ush/global_cycle_shield.sh}
@@ -155,11 +155,13 @@ if [ $DOIAU = "YES" ]; then
             $NLN $COMOUT_ENS/$memchar/RESTART/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.$cmem
             $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                                $DATA/fngrid.$cmem
             $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc                            $DATA/fnorog.$cmem
-            if [ $DO_TREF_TILE = ".true." ]; then
-               $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENKF}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.$cmem
+            if [[ $DO_TSFC_TILE == "YES" ]]; then
+               $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENKF}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.$cmem
             fi
         done
 
+        #export ADATE=$BDATE  ! this should be the right one
+        export ADATE=$CDATE
         $CYCLESH
         export err=$?; err_chk
 
@@ -184,12 +186,13 @@ if [ $DOSFCANL_ENKF = "YES" ]; then
         $NLN $COMOUT_ENS/$memchar/RESTART/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fnbgso.$cmem
         $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc                               $DATA/fngrid.$cmem
         $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc                           $DATA/fnorog.$cmem
-        if [ $DO_TREF_TILE = ".true." ]; then
-           $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENKF}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.$cmem
+        if [[ $DO_TSFC_TILE == "YES" ]]; then
+           $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENKF}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.$cmem
         fi
 
     done
 
+    export ADATE=$CDATE
     $CYCLESH
     export err=$?; err_chk
 

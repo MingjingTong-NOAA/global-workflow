@@ -10,8 +10,8 @@ echo "BEGIN: config.getic"
 
 export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
-#export ics_from="opsgfs" # "opsgfs" or "pargfs" for emc GFS, others for experimental GFS or SHiELD
-export ics_from="v16p2_C192d"
+export ics_from="opsgfs" # "opsgfs" or "pargfs" for emc GFS, others for experimental GFS or SHiELD
+#export ics_from="v16p2_C192d"
 export ICDUMP="gdas"
 export START="cold"
 export OPS_RES=${OPS_RES:-"C768"} # Operational resolution
@@ -40,7 +40,7 @@ if [[ $CDATE -lt 2021032106 && ${RETRO:-"NO"} = "YES" ]]; then # Retrospective p
     echo NO DATA FOR $CDATE
     exit 3
   fi
-elif [ ${REDUCEDRES:-"NO"} = "YES" ]; then # gfs reduced resolution experiment input
+elif [[ ${REDUCEDRES:-"NO"} = "YES" ]]; then # gfs reduced resolution experiment input
   export GETICSH=${GDASINIT_DIR}/get_v16reducedres.data.sh
   export HPSSDIR=/NCEPDEV/emc-da/2year/Catherine.Thomas/HERA/scratch/v16x_june_ctl
 else # Operational input
@@ -76,9 +76,9 @@ if [[ "$ics_from" != "opsgfs" && "$ics_from" != "pargfs" ]]; then
 fi
 
 if [[ "$ics_from" == "opsgfs" ]]; then
-   if [ $CDATE -ge 2022112900 ]; then
+   if [[ $CDATE -ge 2022112900 ]]; then
      export gfssubver="v16.3"
-   elif [ $CDATE -ge 2022062700 ]; then
+   elif [[ $CDATE -ge 2022062700 ]]; then
      export gfssubver="v16.2"
    else
      export gfssubver="prod"
@@ -90,5 +90,7 @@ if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then
 fi
 
 export HPSSEXPDIR=/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch
+
+export EXTRACT_DIR=$ICSDIR
 
 echo "END: config.getic"

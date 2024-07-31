@@ -23,9 +23,6 @@ source "$HOMEgfs/ush/preamble.sh"
 pwd=$(pwd)
 
 # Utilities
-NCP=${NCP:-"/bin/cp -p"}
-NLN=${NLN:-"/bin/ln -sf"}
-NEMSIOGET=${NEMSIOGET:-$NWPROD/utils/exec/nemsio_get}
 NCLEN=${NCLEN:-$HOMEgfs/ush/getncdimlen}
 USE_CFP=${USE_CFP:-"NO"}
 CFP_MP=${CFP_MP:-"NO"}
@@ -45,9 +42,7 @@ CDATE=${CDATE:-"2001010100"}
 
 # Filenames.
 GPREFIX=${GPREFIX:-""}
-GSUFFIX=${GSUFFIX:-$SUFFIX}
 APREFIX=${APREFIX:-""}
-ASUFFIX=${ASUFFIX:-$SUFFIX}
 
 SMOOTH_ENKF=${SMOOTH_ENKF:-"YES"}
 
@@ -90,31 +85,21 @@ INCREMENTS_TO_ZERO=${INCREMENTS_TO_ZERO:-"'NONE'"}
 RECENTER=${RECENTER:-1}
 
 ################################################################################
-ATMGES_ENSMEAN=$COMIN_GES_ENS/${GPREFIX}atmf006.ensmean${GSUFFIX}
-if [ $SUFFIX = ".nc" ]; then
-   LONB_ENKF=${LONB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_xt)} # get LONB_ENKF
-   LATB_ENKF=${LATB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_yt)} # get LATB_ENFK
-   LEVS_ENKF=${LEVS_ENKF:-$($NCLEN $ATMGES_ENSMEAN pfull)} # get LEVS_ENFK
-   use_gfs_ncio=".true."
-   use_gfs_nemsio=".false."
-   paranc=${paranc:-".true."}
-   if [ $DO_CALC_INCREMENT = "YES" ]; then
-      write_fv3_incr=".false."
-   else
-      write_fv3_incr=".true."
-      WRITE_INCR_ZERO="incvars_to_zero= $INCREMENTS_TO_ZERO,"
-   fi
+ATMGES_ENSMEAN=${COMIN_GES_ENS}/${GPREFIX}atmf006.ensmean${GSUFFIX}
+LONB_ENKF=${LONB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_xt)} # get LONB_ENKF
+LATB_ENKF=${LATB_ENKF:-$($NCLEN $ATMGES_ENSMEAN grid_yt)} # get LATB_ENFK
+LEVS_ENKF=${LEVS_ENKF:-$($NCLEN $ATMGES_ENSMEAN pfull)} # get LEVS_ENFK
+use_gfs_ncio=".true."
+use_gfs_nemsio=".false."
+paranc=${paranc:-".true."}
+WRITE_INCR_ZERO="incvars_to_zero= $INCREMENTS_TO_ZERO,"
+if [ $DO_CALC_INCREMENT = "YES" ]; then
+   write_fv3_incr=".false."
 else
-   LEVS_ENKF=${LEVS_ENKF:-$($NEMSIOGET $ATMGES_ENSMEAN dimz | awk '{print $2}')}
-   LATB_ENKF=${LATB_ENKF:-$($NEMSIOGET $ATMGES_ENSMEAN dimy | awk '{print $2}')}
-   LONB_ENKF=${LONB_ENKF:-$($NEMSIOGET $ATMGES_ENSMEAN dimx | awk '{print $2}')}
-   use_gfs_ncio=".false."
-   use_gfs_nemsio=".true."
-   paranc=${paranc:-".false."}
+   write_fv3_incr=".true."
 fi
 LATA_ENKF=${LATA_ENKF:-$LATB_ENKF}
 LONA_ENKF=${LONA_ENKF:-$LONB_ENKF}
-
 SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
 SATINFO=${SATINFO:-${FIXgsi}/global_satinfo_shield.txt}
 CONVINFO=${CONVINFO:-${FIXgsi}/global_convinfo.txt}
@@ -123,7 +108,6 @@ SCANINFO=${SCANINFO:-${FIXgsi}/global_scaninfo.txt}
 HYBENSINFO=${HYBENSINFO:-${FIXgsi}/global_hybens_info.l${LEVS_ENKF}.txt}
 ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS_ENKF}.txt}
 VLOCALEIG=${VLOCALEIG:-${FIXgsi}/vlocal_eig_l${LEVS_ENKF}.dat}
-
 ENKF_SUFFIX="s"
 [[ $SMOOTH_ENKF = "NO" ]] && ENKF_SUFFIX=""
 
@@ -151,7 +135,7 @@ $NLN $VLOCALEIG  vlocal_eig.dat
 $NLN $COMOUT_ANL_ENS/$GBIASe satbias_in
 
 ################################################################################
-SCDATE=$($NDATE +6 $FDATE)
+SFDATE=$($NDATE +6 $FDATE)
 if [ $USE_CFP = "YES" ]; then
    [[ -f $DATA/untar.sh ]] && rm $DATA/untar.sh
    [[ -f $DATA/mp_untar.sh ]] && rm $DATA/mp_untar.sh
@@ -159,7 +143,7 @@ if [ $USE_CFP = "YES" ]; then
    cat > $DATA/untar.sh << EOFuntar
 #!/bin/sh
 memchar=\$1
-if [[ $CDATE -le $SCDATE && $EXP_WARM_START = ".false." && ! -f $RADSTAT ]]; then
+if [[ $CDATE -le $SFDATE && $EXP_WARM_START = ".false." && ! -f $RADSTAT ]]; then
    flist="$CNVSTAT $OZNSTAT"
 else
    flist="$CNVSTAT $OZNSTAT $RADSTAT"
@@ -176,9 +160,11 @@ EOFuntar
    chmod 755 $DATA/untar.sh
 fi
 
+set -x
+
 ################################################################################
 # Ensemble guess, observational data and analyses/increments
-if [[ $CDATE -le $SCDATE && $EXP_WARM_START = ".false." && ! -f $RADSTAT ]]; then
+if [[ $CDATE -le $SFDATE && $EXP_WARM_START = ".false." && ! -f $RADSTAT ]]; then
    flist="$CNVSTAT $OZNSTAT"
 else
    flist="$CNVSTAT $OZNSTAT $RADSTAT"
@@ -274,7 +260,7 @@ cat > enkf.nml << EOFnml
    datestring="$CDATE",datapath="$DATA/",
    analpertwtnh=${analpertwt},analpertwtsh=${analpertwt},analpertwttr=${analpertwt},
    analpertwtnh_rtpp=${analpertwt_rtpp},analpertwtsh_rtpp=${analpertwt_rtpp},analpertwttr_rtpp=${analpertwt_rtpp},
-   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=.true.,iassim_order=0,
+   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=${pseudo_rh:-.true.},iassim_order=0,
    corrlengthnh=${corrlength},corrlengthsh=${corrlength},corrlengthtr=${corrlength},
    lnsigcutoffnh=${lnsigcutoff},lnsigcutoffsh=${lnsigcutoff},lnsigcutofftr=${lnsigcutoff},
    lnsigcutoffpsnh=${lnsigcutoff},lnsigcutoffpssh=${lnsigcutoff},lnsigcutoffpstr=${lnsigcutoff},
@@ -288,7 +274,7 @@ cat > enkf.nml << EOFnml
    use_gfs_nemsio=${use_gfs_nemsio},use_gfs_ncio=${use_gfs_ncio},imp_physics=$imp_physics,lupp=$lupp,
    univaroz=.false.,adp_anglebc=.true.,angord=4,use_edges=.false.,emiss_bc=.true.,
    letkf_flag=${letkf_flag},nobsl_max=${nobsl_max},denkf=${denkf},getkf=${getkf}.,
-   nhr_anal=${IAUFHRS_ENKF},nhr_state=${IAUFHRS_ENKF},use_qsatensmean=.true.,
+   nhr_anal=${IAUFHRS_ENKF},nhr_state=${IAUFHRS_ENKF},
    lobsdiag_forenkf=$lobsdiag_forenkf,
    write_spread_diag=$write_spread_diag,
    modelspace_vloc=$modelspace_vloc,
@@ -401,15 +387,18 @@ export err=$?; err_chk
 # Cat runtime output files.
 cat stdout stderr > $COMOUT_ANL_ENS/$ENKFSTAT
 
+echo "done EnKF"
+
 # Tar spread diag file
+echo 'START tar spread diag file'
 if [ $write_spread_diag = ".true." ]; then
    # Set up lists and variables for various types of diagnostic files.
    ntype=3
 
    diagtype[0]="conv conv_gps conv_ps conv_pw conv_q conv_sst conv_t conv_tcp conv_uv conv_spd"
    diagtype[1]="pcp_ssmi_dmsp pcp_tmi_trmm"
-   diagtype[2]="sbuv2_n16 sbuv2_n17 sbuv2_n18 sbuv2_n19 gome_metop-a gome_metop-b omi_aura mls30_aura ompsnp_npp ompstc8_npp gome_metop-c"
-   diagtype[3]="hirs2_n14 msu_n14 sndr_g08 sndr_g11 sndr_g12 sndr_g13 sndr_g08_prep sndr_g11_prep sndr_g12_prep sndr_g13_prep sndrd1_g11 sndrd2_g11 sndrd3_g11 sndrd4_g11 sndrd1_g12 sndrd2_g12 sndrd3_g12 sndrd4_g12 sndrd1_g13 sndrd2_g13 sndrd3_g13 sndrd4_g13 sndrd1_g14 sndrd2_g14 sndrd3_g14 sndrd4_g14 sndrd1_g15 sndrd2_g15 sndrd3_g15 sndrd4_g15 hirs3_n15 hirs3_n16 hirs3_n17 amsua_n15 amsua_n16 amsua_n17 amsub_n15 amsub_n16 amsub_n17 hsb_aqua airs_aqua amsua_aqua imgr_g08 imgr_g11 imgr_g12 imgr_g14 imgr_g15 ssmi_f13 ssmi_f15 hirs4_n18 hirs4_metop-a amsua_n18 amsua_metop-a mhs_n18 mhs_metop-a amsre_low_aqua amsre_mid_aqua amsre_hig_aqua ssmis_f16 ssmis_f17 ssmis_f18 ssmis_f19 ssmis_f20 iasi_metop-a hirs4_n19 amsua_n19 mhs_n19 seviri_m08 seviri_m09 seviri_m10 seviri_m11 cris_npp cris-fsr_npp cris-fsr_n20 atms_npp atms_n20 hirs4_metop-b amsua_metop-b mhs_metop-b iasi_metop-b avhrr_metop-b avhrr_n18 avhrr_n19 avhrr_metop-a amsr2_gcom-w1 gmi_gpm saphir_meghat ahi_himawari8 abi_g16 abi_g17 amsua_metop-c mhs_metop-c iasi_metop-c avhrr_metop-c"
+   diagtype[2]="sbuv2_n16 sbuv2_n17 sbuv2_n18 sbuv2_n19 gome_metop-a gome_metop-b omi_aura mls30_aura ompsnp_npp ompstc8_npp  ompstc8_n20 ompsnp_n20 ompstc8_n21 ompsnp_n21 ompslp_npp gome_metop-c"
+   diagtype[3]="hirs2_n14 msu_n14 sndr_g08 sndr_g11 sndr_g12 sndr_g13 sndr_g08_prep sndr_g11_prep sndr_g12_prep sndr_g13_prep sndrd1_g11 sndrd2_g11 sndrd3_g11 sndrd4_g11 sndrd1_g12 sndrd2_g12 sndrd3_g12 sndrd4_g12 sndrd1_g13 sndrd2_g13 sndrd3_g13 sndrd4_g13 sndrd1_g14 sndrd2_g14 sndrd3_g14 sndrd4_g14 sndrd1_g15 sndrd2_g15 sndrd3_g15 sndrd4_g15 hirs3_n15 hirs3_n16 hirs3_n17 amsua_n15 amsua_n16 amsua_n17 amsub_n15 amsub_n16 amsub_n17 hsb_aqua airs_aqua amsua_aqua imgr_g08 imgr_g11 imgr_g12 imgr_g14 imgr_g15 ssmi_f13 ssmi_f15 hirs4_n18 hirs4_metop-a amsua_n18 amsua_metop-a mhs_n18 mhs_metop-a amsre_low_aqua amsre_mid_aqua amsre_hig_aqua ssmis_f16 ssmis_f17 ssmis_f18 ssmis_f19 ssmis_f20 iasi_metop-a hirs4_n19 amsua_n19 mhs_n19 seviri_m08 seviri_m09 seviri_m10 seviri_m11 cris_npp cris-fsr_npp cris-fsr_n20 atms_npp atms_n20 hirs4_metop-b amsua_metop-b mhs_metop-b iasi_metop-b avhrr_metop-b avhrr_n18 avhrr_n19 avhrr_metop-a amsr2_gcom-w1 gmi_gpm saphir_meghat ahi_himawari8 abi_g16 abi_g17 amsua_metop-c mhs_metop-c iasi_metop-c avhrr_metop-c viirs-m_npp viirs-m_j1 abi_g18 ahi_himawari9 viirs-m_j2 cris-fsr_n21 atms_n21"
 
    diaglist[0]=listcnv
    diaglist[1]=listpcp

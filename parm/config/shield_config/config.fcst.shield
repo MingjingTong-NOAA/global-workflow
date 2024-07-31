@@ -224,14 +224,15 @@ fi
 # Global latlon NetCDF to nemsio utility parameters
 export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
 
-export GAUATMSEXE=$HOMEgfs/exec/gaussian_c2g_atms.x
+export GAUATMSEXE=$EXECgfs/fv3_c2g_atms.x
 
 export SIGLEVEL="$FIXgsi/global_hyblev.l${LEVS}.txt"
 
 # cubed-sphere to gaussian regriding
 export rmhydro=".true."
 export pseudo_ps=".true."
-export phy_data="phy_data"
+# if phy_data="phy_data", will output cnvw and cnvc
+export phy_data=""
 
 if [[ $phy_data != "" ]]; then
    export nvar3dout=16

@@ -177,7 +177,7 @@ else
     export NST_FILE="NULL"
 fi
 
-export DO_TREF_TILE=${DO_TREF_TILE:-".false."}
+export DO_TSFC_TILE=${DO_TSFC_TILE:-"YES"}
 if [ $DOIAU = "YES" ]; then
     # update surface restarts at the beginning of the window, if IAU
     # For now assume/hold dtfanl.nc valid at beginning of window
@@ -196,16 +196,18 @@ if [ $DOIAU = "YES" ]; then
     export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE
     export MAX_TASKS_CY=$ntiles
 
-    if [ $DO_TREF_TILE = ".true." ]; then
+    if [[ $DO_TSFC_TILE == "YES" ]]; then
        for n in $(seq 1 $ntiles); do
           if [ $CASE = $OPS_RES ]; then
-            $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+            $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
           else
-            $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+            $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$bPDY.${bcyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
           fi
        done
     fi
 
+    #export ADATE=$BDATE  ! this should be the right one
+    export ADATE=$CDATE
     $CYCLESH
     export err=$?; err_chk
 fi
@@ -221,20 +223,17 @@ if [[ $MODE == "cycled" || $DO_GLDAS == "YES" ]]; then
       $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc              $DATA/fnorog.00$n
   done
   
-  if [ $DO_TREF_TILE = ".true." ]; then
+  if [ $DO_TSFC_TILE = "YES" ]; then
      for n in $(seq 1 $ntiles); do
         if [ $CASE = $OPS_RES ]; then
-          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
         else
-          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntref.00$n
+          $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/$PDY.${cyc}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
         fi
      done
   fi
   
-  export APRUNCY=$APRUN_CYCLE
-  export OMP_NUM_THREADS_CY=$NTHREADS_CYCLE
-  export MAX_TASKS_CY=$ntiles
-  
+  export ADATE=$CDATE
   $CYCLESH
   export err=$?; err_chk
 fi

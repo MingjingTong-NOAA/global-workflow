@@ -26,13 +26,32 @@ date10=$2
 CTAR=$3
 
 FIX_FV3=$UFS_DIR/fix
-FIX_ORO=${FIX_FV3}/fix_fv3_gmted2010
-FIX_AM=${FIX_FV3}/fix_am
+FIX_ORO=${FIX_FV3}/orog
+FIX_AM=${FIX_FV3}/am
 
 WORKDIR=${WORKDIR:-$OUTDIR/work.${MEMBER}}
 MODE=${MODE:-"cycled"}
 CINP=${OPS_RES}
 
+if [ ${CTAR} == 'C48' ] ; then
+  OCNRES='500'
+elif [ ${CTAR} == 'C96' ]; then
+  OCNRES='500'
+elif [ ${CTAR} == 'C192' ]; then
+  OCNRES='050'
+elif [ ${CTAR} == 'C384' ]; then
+  OCNRES='025'
+elif [ ${CTAR} == 'C768' ]; then
+  OCNRES='025'
+elif [ ${CTAR} == 'C1152' ]; then
+  OCNRES='025'
+else
+  OCNRES='025'
+fi
+
+ORO_DIR="${CTAR}"
+ORO_NAME="${CTAR}.mx${OCNRES}_oro_data"
+OROI_NAME="${CINP}.mx${OCNRES}_oro_data"
 #---------------------------------------------------------------------------
 # Some gfs tarballs from the v16 retro parallels dont have 'atmos'
 # in their path.  Account for this.
@@ -62,13 +81,13 @@ cd $WORKDIR
 cat << EOF > fort.41
 
 &config
- fix_dir_target_grid="${FIX_ORO}/${CTAR}/fix_sfc"
+ fix_dir_target_grid="${FIX_ORO}/${CTAR}/sfc"
  mosaic_file_input_grid="${FIX_ORO}/${CINP}/${CINP}_mosaic.nc"
  mosaic_file_target_grid="${FIX_ORO}/${CTAR}/${CTAR}_mosaic.nc"
  orog_dir_input_grid="${FIX_ORO}/${CINP}"
- orog_files_input_grid="${CINP}_oro_data.tile1.nc","${CINP}_oro_data.tile2.nc","${CINP}_oro_data.tile3.nc","${CINP}_oro_data.tile4.nc","${CINP}_oro_data.tile5.nc","${CINP}_oro_data.tile6.nc"
+ orog_files_input_grid="${OROI_NAME}.tile1.nc","${OROI_NAME}.tile2.nc","${OROI_NAME}.tile3.nc","${OROI_NAME}.tile4.nc","${OROI_NAME}.tile5.nc","${OROI_NAME}.tile6.nc"
  orog_dir_target_grid="${FIX_ORO}/${CTAR}"
- orog_files_target_grid="${CTAR}_oro_data.tile1.nc","${CTAR}_oro_data.tile2.nc","${CTAR}_oro_data.tile3.nc","${CTAR}_oro_data.tile4.nc","${CTAR}_oro_data.tile5.nc","${CTAR}_oro_data.tile6.nc"
+ orog_files_target_grid="${ORO_NAME}.tile1.nc","${ORO_NAME}.tile2.nc","${ORO_NAME}.tile3.nc","${ORO_NAME}.tile4.nc","${ORO_NAME}.tile5.nc","${ORO_NAME}.tile6.nc"
  data_dir_input_grid="${INPUT_DATA_DIR}"
  sfc_files_input_grid="${SFCTILE1}","${SFCTILE2}","${SFCTILE3}","${SFCTILE4}","${SFCTILE5}","${SFCTILE6}"
  vcoord_file_target_grid="${vcoord_file_target_grid:-${FIX_AM}/global_hyblev.l${LEVS}.txt}"
