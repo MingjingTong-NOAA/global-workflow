@@ -19,7 +19,7 @@ EOF
   exit 1
 }
 
-RUN_ENVIR="emc"
+RUN_ENVIR="gfdl"
 
 # Reset option counter in case this script is sourced
 OPTIND=1
@@ -46,7 +46,7 @@ while getopts ":ho-:" option; do
 done
 shift $((OPTIND-1))
 
-# LINK is always ln, LINK_OR_COPY can be ln or cp depending on RUN_ENVIR being emc or nco, respectively
+# LINK is always ln, LINK_OR_COPY can be ln or cp depending on RUN_ENVIR being gfdl or nco, respectively
 LINK="ln -fs"
 if [[ "${RUN_ENVIR}" == "nco" ]]; then
   LINK_OR_COPY="cp -rp"
