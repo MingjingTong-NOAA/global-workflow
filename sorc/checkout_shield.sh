@@ -163,7 +163,7 @@ checkout "gfs_utils.fd" "https://github.com/NOAA-EMC/gfs-utils"                 
 checkout "shield_utils.fd" "https://github.com/MingjingTong-NOAA/shield_utils.git" "208f06b"       ; errs=$((errs + $?))
 
 if [[ $CHECKOUT_GSI == "YES" ]]; then
-  checkout "gsi_enkf.fd" "https://github.com/MingjingTong-NOAA/GSI.git" "4e8b370"; errs=$((errs + $?))
+  checkout "gsi_enkf.fd" "https://github.com/MingjingTong-NOAA/GSI.git" "15088f4"; errs=$((errs + $?))
 fi
 
 if [[ $CHECKOUT_GDAS == "YES" ]]; then
