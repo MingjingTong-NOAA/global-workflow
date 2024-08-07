@@ -157,10 +157,10 @@ checkout "shield.fd/SHiELD_build" "https://gitlab.gfdl.noaa.gov/Mingjing.Tong/SH
 cd ../
 
 # The checkout version should always be a speciifc commit (hash or tag), not a branch
-checkout "ufs_utils.fd"    "https://github.com/MingjingTong-NOAA/UFS_UTILS.git" "1bdc488"          ; errs=$((errs + $?))
+checkout "ufs_utils.fd"    "https://github.com/MingjingTong-NOAA/UFS_UTILS.git" "3a6e8af"          ; errs=$((errs + $?))
 checkout "verif-global.fd" "https://github.com/NOAA-EMC/EMC_verif-global.git"   "9377e84"          ; errs=$((errs + $?))
 checkout "gfs_utils.fd" "https://github.com/NOAA-EMC/gfs-utils"                 "02ce084"          ; errs=$((errs + $?))
-checkout "shield_utils.fd" "https://github.com/MingjingTong-NOAA/shield_utils.git" "3c98e5d"       ; errs=$((errs + $?))
+checkout "shield_utils.fd" "https://github.com/MingjingTong-NOAA/shield_utils.git" "208f06b"       ; errs=$((errs + $?))
 
 if [[ $CHECKOUT_GSI == "YES" ]]; then
   checkout "gsi_enkf.fd" "https://github.com/MingjingTong-NOAA/GSI.git" "4e8b370"; errs=$((errs + $?))

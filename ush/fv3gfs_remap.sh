@@ -16,7 +16,7 @@ export DATA=${DATA:-$pwd}
 export NWPROD=${NWPROD:-$pwd}
 export HOMEgfs=${HOMEgfs:-$NWPROD}
 export FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
-export FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
+export FIXfv3=${FIXfv3:-$FIX_DIR/orog}
 export REMAPEXE=${REMAPEXE:-$HOMEgfs/exec/fregrid_parallel}
 export IPD4=${IPD4:-"YES"}
 

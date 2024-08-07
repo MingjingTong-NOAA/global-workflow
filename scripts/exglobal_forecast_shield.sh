@@ -43,11 +43,11 @@ pwd=$(pwd)
 NWPROD=${NWPROD:-${NWROOT:-$pwd}}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
-FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
-export FIX_AER=${FIX_AER:-$FIX_DIR/fix_aer}
-export FIX_LUT=${FIX_LUT:-$FIX_DIR/fix_lut}
-FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
-FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/fix_shield}
+FIX_AM=${FIX_AM:-$FIX_DIR/am}
+export FIX_AER=${FIX_AER:-$FIX_DIR/aer}
+export FIX_LUT=${FIX_LUT:-$FIX_DIR/lut}
+FIXorog=${FIXorog:-$FIX_DIR/orog}
+FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/shield}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
 ROTDIR=${ROTDIR:-$pwd}         # rotating archive directory
 ICSDIR=${ICSDIR:-$pwd}         # cold start initial conditions
@@ -530,10 +530,10 @@ fi
 #--------------------------------------------------------------------------
 # Grid and orography data
 for n in $(seq 1 $ntiles); do
-  $NLN $FIXfv3/$CASE/${CASE}_grid.tile${n}.nc     $DATA/INPUT/${CASE}_grid.tile${n}.nc
-  $NLN $FIXfv3/$CASE/${CASE}_oro_data.tile${n}.nc $DATA/INPUT/oro_data.tile${n}.nc
+  $NLN ${FIXorog}/${CASE}/${CASE}_grid.tile${n}.nc     $DATA/INPUT/${CASE}_grid.tile${n}.nc
+  $NLN ${FIXorog}/${CASE}/${CASE}_oro_data.tile${n}.nc $DATA/INPUT/oro_data.tile${n}.nc
 done
-$NLN $FIXfv3/$CASE/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
+$NLN ${FIXorog}/${CASE}/${CASE}_mosaic.nc  $DATA/INPUT/grid_spec.nc
 
 # GFS standard input data
 IAER=${IAER:-111}
@@ -551,14 +551,14 @@ $NLN $FIX_AM/global_solarconstant_noaa_an.txt  $DATA/INPUT/solarconstant_noaa_an
 $NLN $FIX_AM/global_sfc_emissivity_idx.txt     $DATA/INPUT/sfc_emissivity_idx.txt
 
 ## merra2 aerosol climo (only for gfs)
-for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
-$NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
-done
-$NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
-$NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
-$NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
-$NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
-$NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
+#for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
+#$NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
+#done
+#$NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
+#$NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
+#$NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
+#$NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
+#$NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
 
 $NLN $FIX_AM/global_co2historicaldata_glob.txt $DATA/INPUT/co2historicaldata_glob.txt
 $NLN $FIX_AM/co2monthlycyc.txt                 $DATA/INPUT/co2monthlycyc.txt

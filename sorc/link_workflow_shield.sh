@@ -10,7 +10,7 @@ function usage() {
 Builds all of the global-workflow components by calling the individual build
   scripts in sequence.
 
-Usage: ${BASH_SOURCE[0]} [-h][-o]
+Usage: ${BASH_SOURCE[0]} [-h][-o][--nest]
   -h:
     Print this help message and exit
   -o:
@@ -23,12 +23,17 @@ RUN_ENVIR="emc"
 
 # Reset option counter in case this script is sourced
 OPTIND=1
-while getopts ":ho" option; do
+while getopts ":ho-:" option; do
   case "${option}" in
     h) usage ;;
     o)
       echo "-o option received, configuring for NCO"
       RUN_ENVIR="nco";;
+    -)
+      if [[ "${OPTARG}" == "nest" ]]; then
+        LINK_NEST=ON
+      fi
+      ;;
     :)
       echo "[${BASH_SOURCE[0]}]: ${option} requires an argument"
       usage
@@ -60,17 +65,17 @@ machine=$(echo "${MACHINE_ID}" | cut -d. -f1)
 ${LINK_OR_COPY} "${HOMEgfs}/versions/build.${machine}.ver" "${HOMEgfs}/versions/build.ver"
 ${LINK_OR_COPY} "${HOMEgfs}/versions/run.${machine}.ver" "${HOMEgfs}/versions/run.ver"
 
-
 #------------------------------
 #--model fix fields
 #------------------------------
 case "${machine}" in
   "wcoss2")   FIX_DIR="/lfs/h2/emc/global/noscrub/emc.global/FIX/fix" ;;
-  "hera")     FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix_NEW" ;;
-  "orion")    FIX_DIR="/work/noaa/global/glopara/fix" ;;
-  "hercules") FIX_DIR="/work/noaa/global/glopara/fix" ;;
+  "hera")     FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix" ;;
+  "orion")    FIX_DIR="/work/noaa/global/kfriedma/glopara/fix" ;;
+  "hercules") FIX_DIR="/work/noaa/global/kfriedma/glopara/fix" ;;
   "jet")      FIX_DIR="/lfs4/HFIP/hfv3gfs/glopara/git/fv3gfs/fix" ;;
   "s4")       FIX_DIR="/data/prod/glopara/fix" ;;
+  "gaea")     FIX_DIR="/gpfs/f5/ufs-ard/world-shared/global/glopara/data/fix" ;;
   *)
     echo "FATAL: Unknown target machine ${machine}, couldn't set FIX_DIR"
     exit 1
@@ -96,46 +101,47 @@ if [[ -n "${FIX_DIR}" ]]; then
   if [[ ! -d "${HOMEgfs}/fix" ]]; then mkdir "${HOMEgfs}/fix" || exit 1; fi
 fi
 cd "${HOMEgfs}/fix" || exit 1
-for dir in fix_aer \
-            fix_am \
-            fix_chem \
-            fix_fv3_gmted2010 \
-            fix_gldas \
-            fix_lut \
-            fix_fv3_fracoro \
-            fix_orog \
-            fix_sfc_climo \
-            fix_verif \
-            fix_cice \
-            fix_mom6 \
-            fix_cpl \
-            fix_wave \
-            fix_reg2grb2 \
-            fix_ugwd
-            do
-    if [ -d $dir ]; then
-      [[ $RUN_ENVIR = nco ]] && chmod -R 755 $dir
-      rm -rf $dir
-    fi
-    $LINK $FIX_DIR/$dir .
-done
-
-set -x
-
-# Source fix version file
-source "${HOMEgfs}/versions/fix_shield.ver"
-
-# Link SHiELD fix directories
-for dir in shield \
-           gsi
+for dir in am \
+           sfc_climo \
+           verif
 do
   if [[ -d "${dir}" ]]; then
     [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${dir}"
     rm -rf "${dir}"
   fi
   fix_ver="${dir}_ver"
-  ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "fix_${dir}"
+  ${LINK_OR_COPY} "${FIX_DIR}/${dir}/${!fix_ver}" "${dir}"
 done
+
+# Source fix version file
+source "${HOMEgfs}/versions/fix_shield.ver"
+
+# Link SHiELD fix directories
+for dir in shield \
+           gsi \
+           orog
+do
+  if [[ -d "${dir}" ]]; then
+    [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${dir}"
+    rm -rf "${dir}"
+  fi
+  fix_ver="${dir}_ver"
+  ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
+done
+# global-nest uses different versions of orog and ugwd
+if [[ "${LINK_NEST:-OFF}" == "ON" ]] ; then
+  for dir in orog \
+             ugwd
+  do
+    nestdir=${dir}_nest
+    if [[ -d "${nestdir}" ]]; then
+      [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${nestdir}"
+      rm -rf "${nestdir}"
+    fi
+    fix_ver="${dir}_nest_ver"
+    ${LINK_OR_COPY} "${FIX_DIR}/${dir}/${!fix_ver}" "${nestdir}"
+  done
+fi
 
 #---------------------------------------
 #--add files from external repositories

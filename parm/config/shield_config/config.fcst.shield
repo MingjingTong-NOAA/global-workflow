@@ -224,6 +224,7 @@ fi
 # Global latlon NetCDF to nemsio utility parameters
 export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
 
+#export GAUATMSEXE=$EXECgfs/fv3_da_out_32bit.x
 export GAUATMSEXE=$EXECgfs/fv3_c2g_atms.x
 
 export SIGLEVEL="$FIXgsi/global_hyblev.l${LEVS}.txt"

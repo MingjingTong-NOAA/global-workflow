@@ -28,8 +28,8 @@ DATA=${DATA:-$pwd}
 NWPROD=${NWPROD:-$pwd}
 HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
-FIX_AM=${FIX_AM:-$FIX_DIR/fix_am}
-FIXfv3=${FIXfv3:-$FIX_DIR/fix_fv3_gmted2010}
+FIX_AM=${FIX_AM:-$FIX_DIR/am}
+FIXfv3=${FIXfv3:-$FIX_DIR/orog}
 REGRID_NEMSIO_EXEC=${REGRID_NEMSIO_EXEC:-$HOMEgfs/exec/regrid_nemsio}
 REGRID_NEMSIO_TBL=${REGRID_NEMSIO_TBL:-$HOMEgfs/parm/parm_fv3diag/variable_table.txt}
 

@@ -69,8 +69,8 @@ export MODE="@MODE@" # cycled/forecast-only/replay/omf
 # CLEAR
 ####################################################
 # Build paths relative to $HOMEgfs
-export FIXgsi="$HOMEgfs/fix/fix_gsi"
-export FIXshield="$HOMEgfs/fix/fix_shield"
+export FIXgsi="$HOMEgfs/fix/gsi"
+export FIXshield="$HOMEgfs/fix/shield"
 export HOMEfv3gfs="$HOMEgfs/sorc/fv3gfs.fd"
 export HOMEpost="$HOMEgfs"
 export HOMEobsproc_prep="$BASE_GIT/obsproc/obsproc_prep.v5.5.0_hpc-stack"
@@ -218,30 +218,35 @@ export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
 export IAU_FILTER_INCREMENTS=".false."
 # Check if cycle is cold starting, DOIAU off, or forecast-only mode
-if [[ "$MODE" != "forecast-only" && "$SDATE" = "$CDATE" && $EXP_WARM_START = ".false." ]] || [[ "$DOIAU" = "NO" ]] || [[ "$MODE" = "forecast-only" && $EXP_WARM_START = ".false." ]] ; then
+if [[ "$MODE" == "forecast-only" && $EXP_WARM_START == ".false." ]]; then
+  export DOIAU="NO"
+fi
+if [[ "$MODE" != "forecast-only" && "$SDATE" == "$CDATE" && $EXP_WARM_START == ".false." ]] || [[ "$DOIAU" == "NO" ]] || [[ "$MODE" == "forecast-only" && $EXP_WARM_START == ".false." ]] ; then
   export IAU_OFFSET=0
   export IAU_FHROT=0
 fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=1
+export replay=2
 # fullresanl - if YES, replay to full resolution analysis instead of analysis increment at ensemble resolution
 # In such case need to compute analysis at f03 and f09 and recompute analysis increment at full resolution
 export fullresanl="YES"
-if [ $replay -eq 2 ]; then
-  export ICSTYP="gfs"
-fi
 # number of forecasts used to compute mean background
 export nrestartbg=1
-export replay_4DIAU="NO"
+export replay_4DIAU="YES"
 export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
-if [ "$MODE" = "replay" ]; then
-   if [ $replay -eq 1 ]; then
+if [[ "$MODE" == "replay" ]]; then
+   if [[ "$ICSTYP" == "ifs" ]]; then
+      export replay=1
       export replay_4DIAU="NO"
    fi
-   if [ $replay_4DIAU = "NO" ]; then
+   if [[ $replay_4DIAU == "NO" ]]; then
+      export replay=1
       export IAUFHRS="6"
       export IAU_FILTER_INCREMENTS=".true."
+   else
+      export replay=2
+      export IAUFHRS="3,6,9"
    fi
 else
    export replay=0
@@ -259,6 +264,9 @@ export DOGCYCLE="YES"
 export DO_RTGSST="NO"
 export DO_TSFC_TILE="YES"
 export USE_TREF=".true."
+if [[ "$MODE" == "forecast-only" ]]; then
+   export DOGCYCLE="NO"
+fi
 if [[ $DOGCYCLE = "NO" ]]; then
    export DO_GLDAS="NO"
    export DO_TSFC_TILE="NO"
@@ -274,6 +282,9 @@ export imp_physics=11
 # Hybrid related
 export DOHYBVAR="YES"
 export ENSREPLAY="NO"
+if [[ "$MODE" != "cycled" || "$ENSREPLAY" == "YES" ]]; then
+   export DOHYBVAR="NO"
+fi
 export NMEM_ENKF=@NMEM_ENKF@
 export SMOOTH_ENKF="NO"
 export l4densvar=".true."
@@ -297,7 +308,7 @@ fi
 
 if [ $ENSREPLAY = "YES" ]; then
    export ENSFROM="s2022_C192_v2p5_edmf1ens0"
-   export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${CASE}/${ENSFROM}"
+   export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${ENSFROM}"
 fi
 
 # turned on nsst in anal and/or fcst steps, and turn off rtgsst
@@ -348,11 +359,16 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="NO"
+if [[ "$MODE" != "cycled" ]]; then
+   export DO_OmF="YES"
+fi
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
-export gdaspost="YES"
+if [[ "$MODE" == "cycled" ]]; then
+  export gdaspost="YES"
+fi
 
 if [ $gdaspost = "NO" ]; then
   export DO_GLDAS="NO"
