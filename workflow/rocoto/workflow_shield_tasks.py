@@ -741,10 +741,6 @@ class Tasks:
             dep_dict = {'type': 'task', 'name': f'{self.cdump}gldas'}
             dependencies.append(rocoto.add_dependency(dep_dict))
 
-        if self.app_config.do_wave and self.cdump in self.app_config.wave_cdumps:
-            dep_dict = {'type': 'task', 'name': f'{self.cdump}waveprep'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
-
         dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         if self.cdump in ['gdas']:
@@ -753,7 +749,7 @@ class Tasks:
                 dependencies.append(rocoto.add_dependency(dep_dict))
                 dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
             else:
-                if not self._base.get('ANL_START', True):
+                if not self._base.get('ANAL_START', True):
                     deps=[]
                     dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
                     deps.append(rocoto.add_dependency(dep_dict))
@@ -872,12 +868,9 @@ class Tasks:
             return grp, dep, lst
 
         deps = []
-        data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.log#dep#.txt'
-        dep_dict = {'type': 'data', 'data': data}
-        deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+        dependencies = rocoto.create_dependency(dep=deps)
         if add_anl_to_post:
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
