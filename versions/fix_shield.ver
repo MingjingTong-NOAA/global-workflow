@@ -1,6 +1,10 @@
 #!/bin/bash
 # Fix file subfolder versions
 
-export shield_ver=20240515
-export gsi_ver=20240515
+export am_ver=20220805
 export orog_ver=20220805
+export sfc_climo_ver=20220805
+export verif_ver=20220805
+export shield_ver=20240515
+export aer_ver=20240213
+export gsi_ver=20240515

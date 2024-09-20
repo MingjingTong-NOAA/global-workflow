@@ -216,6 +216,7 @@ class RocotoXML:
 
         expdir = self._base['EXPDIR']
         pslot = self._base['PSLOT']
+        machine = self._base['machine']
 
         rocotorunstr = f'{rocotoruncmd} -d {expdir}/{pslot}.db -w {expdir}/{pslot}.xml'
         cronintstr = f'*/{cronint} * * * *'
@@ -225,12 +226,27 @@ class RocotoXML:
         except KeyError:
             replyto = ''
 
-        strings = ['',
-                   f'#################### {pslot} ####################',
-                   f'MAILTO="{replyto}"',
-                   f'{cronintstr} {rocotorunstr}',
-                   '#################################################################',
-                   '']
+        if machine == "GAEA":
+            strings = ['',
+                       f'#################### {pslot} ####################',
+                       '#SCRON --account=gfdl_w',
+                       '#SCRON --time=00:01:00',
+                       f'#SCRON --job-name=scron_{pslot}',
+                       f'#SCRON --output={expdir}/logs/scron.out',
+                       '#SCRON --dependency=singleton',
+                       '#SCRON --partition=cron_c5',
+                       '#SCRON --mem=8G',
+                       f'MAILTO="{replyto}"',
+                       f'{cronintstr} {rocotorunstr}',
+                       '#################################################################',
+                       '']
+        else:
+            strings = ['',
+                       f'#################### {pslot} ####################',
+                       f'MAILTO="{replyto}"',
+                       f'{cronintstr} {rocotorunstr}',
+                       '#################################################################',
+                       '']
 
         if crontab_file is None:
             crontab_file = f"{expdir}/{pslot}.crontab"

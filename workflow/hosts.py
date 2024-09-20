@@ -24,7 +24,7 @@ class Host:
     """
 
     SUPPORTED_HOSTS = ['HERA', 'ORION', 'JET',
-                       'WCOSS2']
+                       'WCOSS2', 'GAEA']
 
     def __init__(self, host=None):
 
@@ -50,6 +50,8 @@ class Host:
             machine = 'JET'
         elif os.path.exists('/lfs/f1'):
             machine = 'WCOSS2'
+        elif os.path.exists('/gpfs/f5'):
+            machine = 'GAEA'
 
         if machine not in Host.SUPPORTED_HOSTS:
             raise NotImplementedError(f'This machine is not a supported host.\n' +

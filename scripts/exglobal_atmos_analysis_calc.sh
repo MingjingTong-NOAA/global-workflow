@@ -133,7 +133,7 @@ if [[ $DOHYBVAR == "YES" && $l4densvar == ".true." && $lwrite4danl == ".true." ]
    ATMI08=${ATMI08:-${COMOUT}/${APREFIX}atmi008.nc}
    ATMA09=${ATMA09:-${COMOUT}/${APREFIX}atma009${ASUFFIX}}
    ATMI09=${ATMI09:-${COMOUT}/${APREFIX}atmi009.nc}
-elif [[ $MODE == "replay" && ${fullresanl:-"YES"} == "YES" ]]; then
+elif [[ $MODE == "replay" && $(echo $CASE | cut -c2-) -ge $(echo $OPS_RES | cut -c2-) ]]; then
    ATMA03=${ATMA03:-${COMOUT}/${APREFIX}atma003${ASUFFIX}}
    ATMI03=${ICSDIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT}/${APREFIX}atmi003.nc
    ATMA09=${ATMA09:-${COMOUT}/${APREFIX}atma009${ASUFFIX}}
@@ -157,6 +157,9 @@ rm -rf dir.*
 
 ##############################################################
 # If analysis increment is written by GSI, produce an analysis file here
+# replay: if replay forecast resolution equals or greater than GFS resolution,
+# compute GFS analysis at deterministic forecast resolution, otherwise
+# use GFS analysis at ensemble forecast resolution, which is available from HPSS 
 if [ $DO_CALC_ANALYSIS == "YES" ]; then
    # link analysis and increment files
    $NLN $ATMANL siganl
@@ -174,7 +177,7 @@ if [ $DO_CALC_ANALYSIS == "YES" ]; then
       $NLN $ATMI08   sigi08.nc
       $NLN $ATMA09   siga09
       $NLN $ATMI09   sigi09.nc
-   elif [ $MODE = "replay" -a ${fullresanl:-"YES"} = "YES" ]; then
+   elif [ $MODE = "replay" -a $DO_ANALCALC ]; then
       $NLN $ATMA03   siga03
       $NLN $ATMI03   sigi03.nc
       $NLN $ATMA09   siga09

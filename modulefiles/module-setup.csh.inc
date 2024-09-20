@@ -38,29 +38,7 @@ else if ( { test -d /lustre -a -d /ncrc } ) then
     else
         set __ms_source_etc_csh_login=no
     endif
-    module purge
-    unsetenv _LMFILES_
-    unsetenv _LMFILES_000
-    unsetenv _LMFILES_001
-    unsetenv LOADEDMODULES
-    module load modules
-    if ( { test -d /opt/cray/ari/modulefiles } ) then
-        module use -a /opt/cray/ari/modulefiles
-    endif
-    if ( { test -d /opt/cray/pe/ari/modulefiles } ) then
-        module use -a /opt/cray/pe/ari/modulefiles
-    endif
-    if ( { test -d /opt/cray/pe/craype/default/modulefiles } ) then
-        module use -a /opt/cray/pe/craype/default/modulefiles
-    endif
-    setenv NCEPLIBS /lustre/f1/pdata/ncep_shared/NCEPLIBS/lib
-    if ( { test -d /lustre/f1/pdata/ncep_shared/NCEPLIBS/lib } ) then
-      module use $NCEPLIBS/modulefiles
-    endif
-    if ( "$__ms_source_etc_csh_login" == yes ) then
-      source /etc/csh.login
-      unset __ms_source_etc_csh_login
-    endif
+    module reset
 else
     # Workaround for csh limitation.  Use sh to print to stderr.
     sh -c 'echo WARNING: UNKNOWN PLATFORM 1>&2'

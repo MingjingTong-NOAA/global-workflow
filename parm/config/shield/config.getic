@@ -10,7 +10,7 @@ echo "BEGIN: config.getic"
 
 export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
-export ics_from="opsgfs" # "opsgfs" or "pargfs" for emc GFS, others for experimental GFS or SHiELD
+export ics_from="opsgfs" # operational GFS, others for experimental GFS or SHiELD
 #export ics_from="v16p2_C192d"
 export ICDUMP="gdas"
 export START="cold"

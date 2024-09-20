@@ -63,7 +63,7 @@ cat > input.nml <<EOF
   chksum_debug = $chksum_debug
   dycore_only = $dycore_only
   fdiag = $FDIAG
-  first_time_step = $first_time_step
+  write_first_time_step = $write_first_time_step
   fprint = .false.
   ${atmos_model_nml:-}
 /
@@ -148,7 +148,6 @@ cat > input.nml <<EOF
   adjust_dry_mass = ${adjust_dry_mass:-".false."}
   dry_mass=${dry_mass:-98320.0}
   consv_te = $consv_te
-  do_sat_adj = ${do_sat_adj:-".false."}
   consv_am = .false.
   fill = .true.
   dwind_2d = .false.
@@ -156,8 +155,6 @@ cat > input.nml <<EOF
   warm_start = $warm_start
   no_dycore = $no_dycore
   z_tracer = .true.
-  do_inline_mp = ${do_inline_mp:-".true."}
-  do_aerosol = $do_aerosol
   agrid_vel_rst = ${agrid_vel_rst:-".true."}
   read_increment = $read_increment
   res_latlon_dynamics = $res_latlon_dynamics
@@ -175,6 +172,13 @@ cat >> input.nml << EOF
   ${fv_core_nml:-}
 /
 
+&integ_phys_nml
+  do_sat_adj = ${do_sat_adj:-".false."}
+  do_inline_mp = ${do_inline_mp:-".true."}
+  do_aerosol = ${do_aerosol:-".true."}
+  ${integ_phys_nml:-}
+/
+
 &coupler_nml
   months = ${months:-0}
   days = ${days:-$((FHMAX/24))}
@@ -183,7 +187,6 @@ cat >> input.nml << EOF
   dt_ocean = $DELTIM
   current_date = $curr_date
   calendar = 'julian'
-  memuse_verbose = .false.
   atmos_nthreads = $NTHREADS_FV3
   use_hyper_thread = ${hyperthread:-".false."}
   restart_secs = ${restart_secs:-3600}
@@ -267,7 +270,7 @@ cat >> input.nml << EOF
   dspfac       = ${dspfac:-"1.0"}
   cap_k0_land  = .false.
   cloud_gfdl   = .true.
-  do_inline_mp = ${do_inline_mp:-".true."}
+  do_sat_adj   = .false.
   do_ocean     = ${do_ocean:-".true."}
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
@@ -326,6 +329,7 @@ cat >> input.nml << EOF
   vg_max = 12.
   vr_max = 12.
   prog_ccn = ${prog_ccn:-".true."}
+  prog_cin = ${prog_cin:-".true."}
   tau_l2v = 225.
   dw_land = 0.16
   dw_ocean = 0.10
@@ -333,7 +337,6 @@ cat >> input.nml << EOF
   qi0_crt = 8.0e-5
   rh_inc = 0.30
   rh_inr = 0.30
-  rh_ins = 0.30
   c_paut = 0.5
   rthresh = 8.0e-6
   do_cld_adj = .true.
@@ -473,6 +476,7 @@ EOF
   use_zmtnblck = ${use_zmtnblck:-".true."}
   sppt_sigtop1 = ${SPPT_SIGTOP1:-"0.1"}
   sppt_sigtop2 = ${SPPT_SIGTOP2:-"0.025"}
+  pbl_taper = ${pbl_taper:-"0,0,0,0.125,0.25,0.5,0.75"}
 EOF
   fi
 

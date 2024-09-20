@@ -86,7 +86,8 @@ esac
 #--shield fix fields
 #------------------------------
 case "${machine}" in
-  "hera")     FIX_SHiELD_DIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/fix_shield" ;;
+  "hera")     FIX_SHiELD_DIR="/scratch2/GFDL/gfdlscr/proj-shared" ;;
+  "gaea")     FIX_SHiELD_DIR="/gpfs/f5/gfdl_w/proj-shared/Mingjing.Tong/fix_shield" ;;
   *)
     echo "FATAL: Unknown target machine ${machine}, couldn't set FIX_SHiELD_DIR"
     exit 1
@@ -94,7 +95,7 @@ case "${machine}" in
 esac
 
 # Source fix version file
-source "${HOMEgfs}/versions/fix.ver"
+source "${HOMEgfs}/versions/fix_shield.ver"
 
 # Link fix directories
 if [[ -n "${FIX_DIR}" ]]; then
@@ -102,6 +103,7 @@ if [[ -n "${FIX_DIR}" ]]; then
 fi
 cd "${HOMEgfs}/fix" || exit 1
 for dir in am \
+           orog \
            sfc_climo \
            verif
 do
@@ -113,13 +115,10 @@ do
   ${LINK_OR_COPY} "${FIX_DIR}/${dir}/${!fix_ver}" "${dir}"
 done
 
-# Source fix version file
-source "${HOMEgfs}/versions/fix_shield.ver"
-
 # Link SHiELD fix directories
 for dir in shield \
-           gsi \
-           orog
+           aer \
+           gsi 
 do
   if [[ -d "${dir}" ]]; then
     [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${dir}"
@@ -128,6 +127,12 @@ do
   fix_ver="${dir}_ver"
   ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
 done
+if [[ "${machine}" == "hera" ]]; then
+  rm -f orog
+  fix_ver="orog_ver"
+  ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "orog"
+fi 
+
 # global-nest uses different versions of orog and ugwd
 if [[ "${LINK_NEST:-OFF}" == "ON" ]] ; then
   for dir in orog \

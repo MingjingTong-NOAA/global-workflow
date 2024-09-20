@@ -1,0 +1,486 @@
+#! /usr/bin/env bash
+
+########## config.resources ##########
+# Set resource information for job tasks
+# e.g. walltime, node, cores per node, memory etc.
+# Note: machine-specific resources should be placed into the appropriate config file:
+#       config.resources.${machine}
+
+if (( $# != 1 )); then
+
+    echo "Must specify an input task argument to set resource variables!"
+    echo "argument can be any one of the following:"
+    echo "getic init anal sfcanl analcalc analdiag"
+    echo "fcst post vrfy metp arch echgres"
+    echo "eobs ediag eomg eupd ecen esfc efcs epos earc"
+    echo "postsnd awips gempak"
+    exit 1
+
+fi
+
+step=$1
+
+echo "BEGIN: config.resources"
+
+case ${machine} in
+  "WCOSS2")
+              max_tasks_per_node=128
+              # shellcheck disable=SC2034
+              mem_node_max="500GB"
+    ;;
+  "HERA")
+              max_tasks_per_node=40
+              # shellcheck disable=SC2034
+              mem_node_max="96GB"
+    ;;
+  "GAEA")
+              max_tasks_per_node=128
+              # shellcheck disable=SC2034
+              mem_node_max="251GB"
+    ;;
+  "ORION")
+              max_tasks_per_node=40
+              # shellcheck disable=SC2034
+              mem_node_max="192GB"
+    ;;
+  "HERCULES")
+              max_tasks_per_node=80
+              # shellcheck disable=SC2034
+              mem_node_max="512GB"
+    ;;
+  "JET")
+    case ${PARTITION_BATCH} in
+      "xjet")
+              max_tasks_per_node=24
+              # shellcheck disable=SC2034
+              mem_node_max="61GB"
+        ;;
+      "vjet")
+              max_tasks_per_node=16
+              # shellcheck disable=SC2034
+              mem_node_max="61GB"
+        ;;
+      "sjet")
+              max_tasks_per_node=16
+              # shellcheck disable=SC2034
+              mem_node_max="29GB"
+        ;;
+      "kjet")
+              max_tasks_per_node=40
+              # shellcheck disable=SC2034
+              mem_node_max="88GB"
+        ;;
+      *)
+        echo "FATAL ERROR: Unknown partition ${PARTITION_BATCH} specified for ${machine}"
+        exit 3
+    esac
+    ;;
+  "S4")
+    case ${PARTITION_BATCH} in
+      "s4")   max_tasks_per_node=32
+              # shellcheck disable=SC2034
+              mem_node_max="168GB"
+        ;;
+      "ivy")
+              max_tasks_per_node=20
+              # shellcheck disable=SC2034
+              mem_node_max="128GB"
+        ;;
+      *)
+        echo "FATAL ERROR: Unknown partition ${PARTITION_BATCH} specified for ${machine}"
+        exit 3
+    esac
+    ;;
+  "AWSPW")
+    export PARTITION_BATCH="compute"
+    npe_node_max=36
+    max_tasks_per_node=36
+    # TODO Supply a max mem/node value for AWS
+    # shellcheck disable=SC2034
+    mem_node_max=""
+    ;;
+  "AZUREPW")
+    export PARTITION_BATCH="compute"
+    npe_node_max=24
+    max_tasks_per_node=24
+    # TODO Supply a max mem/node value for AZURE
+    # shellcheck disable=SC2034
+    mem_node_max=""
+    ;;
+  "GOOGLEPW")
+    export PARTITION_BATCH="compute"
+    npe_node_max=30
+    max_tasks_per_node=30
+    # TODO Supply a max mem/node value for GOOGLE
+    # shellcheck disable=SC2034
+    mem_node_max=""
+    ;;
+  "CONTAINER")
+    max_tasks_per_node=1
+    # TODO Supply a max mem/node value for a container
+    # shellcheck disable=SC2034
+    mem_node_max=""
+    ;;
+  *)
+    echo "FATAL ERROR: Unknown machine encountered by ${BASH_SOURCE[0]}"
+    exit 2
+    ;;
+esac
+
+export max_tasks_per_node
+export npe_node_max=$max_tasks_per_node
+
+case ${step} in
+
+  "prep" | "prepbufr")
+    walltime='00:30:00'
+    ntasks=4
+    tasks_per_node=4
+    threads_per_task=1
+    memory="40GB"
+    ;;
+
+  "anal")
+    walltime="01:00:00"
+    export walltime_gfs="01:00:00"
+    case ${CASE} in
+      "C768")
+        ntasks=780
+        export ntasks_gfs=825
+        threads_per_task=8
+        ;;
+      "C384")
+        ntasks=160
+        export ntasks_gfs=160
+        threads_per_task=10
+        ;;
+      "C192" | "C96" | "C48")
+        ntasks=84
+        export ntasks_gfs=84
+        threads_per_task=8
+        ;;
+      *)
+        echo "FATAL ERROR: Resources not defined for job ${step} at resolution ${CASE}"
+        exit 4
+        ;;
+    esac
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    export is_exclusive=True
+    ;;
+
+  "analinc")
+    walltime="00:15:00"
+    if [[ "$replay_4DIAU" == "YES" ]]; then
+       ntasks=3
+    else
+       ntasks=1
+    fi
+    threads_per_task=40
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task )) 
+    ;;
+
+  "analcalc")
+    walltime="00:15:00"
+    ntasks=127
+    export ntasks_calcanl="${ntasks}"
+    threads_per_task=1
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    export threads_per_task_echgres=4
+    export threads_per_task_echgres_gfs=12
+    export is_exclusive=True
+    memory="48GB"
+    if [[ "${CASE}" == "C384" || "${CASE}" == "C768" ]]; then
+       memory="${mem_node_max}"
+    fi
+    ;;
+
+  "analdiag")
+    walltime="00:15:00"
+    ntasks=96             # Should be at least twice ediag's tasks
+    threads_per_task=1
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    memory="48GB"
+    ;;
+
+  "sfcanl")
+    walltime="00:20:00"
+    ntasks=${ntiles:-6}
+    threads_per_task=1
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    export is_exclusive=True
+    ;;
+
+  "fcst" | "efcs")
+    export is_exclusive=True
+
+    export threads_per_task_gfs=${nth_fv3_gfs}
+    (( NTASKS_TOT = layout_x_gfs * layout_y_gfs * 6 ))
+    export ntasks_gfs=${NTASKS_TOT}
+
+    threads_per_task=${nth_fv3}
+    (( NTASKS_TOT = layout_x * layout_y * 6 )) 
+    ntasks=${NTASKS_TOT}
+
+    export walltime="00:30:00"
+    case "${CASE}" in
+      "C48" | "C96" | "C192")
+        export walltime_gfs="03:00:00"
+        ;;
+      "C384")
+        export walltime_gfs="04:00:00"
+        ;;
+      "C768" | "C1152")
+        export walltime_gfs="06:00:00"
+        ;;
+      *)
+        echo "FATAL ERROR: Resources not defined for job ${step} at resolution ${CASE}"
+        exit 4
+        ;;
+    esac
+
+    export threads_per_task_c2g=4
+
+    unset NTASKS_TOT
+    ;;
+
+  "post")
+    case "${CASE}" in
+      "C48" | "C96")
+        ntasks=${CASE:1}
+      ;;
+      "C192" | "C384" | "C768" )
+        ntasks=120
+        memory="${mem_node_max}"
+      ;;
+      *)
+        echo "FATAL ERROR: Resources not defined for job ${step} at resolution ${CASE}"
+        exit 4
+      ;;
+    esac
+    tasks_per_node=${ntasks}
+
+    threads_per_task=1
+
+    walltime="00:15:00"
+    if (( tasks_per_node > max_tasks_per_node )); then
+      tasks_per_node=${max_tasks_per_node}
+    fi
+    export is_exclusive=True
+    ;;
+
+  "vrfy")
+    walltime="03:00:00"
+    export walltime_gfs="06:00:00"
+    ntasks=3
+    threads_per_task=1
+    tasks_per_node=1
+    memory="16384M"
+    ;;
+
+  "fit2obs")
+    walltime="00:20:00"
+    ntasks=3
+    threads_per_task=1
+    tasks_per_node=1
+    memory="20GB"
+    [[ ${CASE} == "C768" ]] && memory="80GB"
+    ;;
+
+  "metp")
+    threads_per_task=1
+    walltime="03:00:00"
+    export walltime_gfs="06:00:00"
+    ntasks=1
+    tasks_per_node=1
+    memory="80GB"
+    ;;
+
+  "echgres")
+    walltime="00:10:00"
+    ntasks=3
+    threads_per_task=${max_tasks_per_node}
+    tasks_per_node=1
+    ;;
+
+  "init")
+    walltime="00:30:00"
+    ntasks=24
+    threads_per_task=1
+    tasks_per_node=6
+    memory="70GB"
+    ;;
+
+  "arch" | "earc" | "getic" | "archomg")
+    walltime="06:00:00"
+    ntasks=1
+    tasks_per_node=1
+    threads_per_task=1
+    memory="4096M"
+    ;;
+
+  "cleanup")
+    walltime="00:15:00"
+    ntasks=1
+    tasks_per_node=1
+    threads_per_task=1
+    memory="4G"
+    ;;
+
+  "stage_ic")
+    walltime="00:15:00"
+    ntasks=1
+    tasks_per_node=1
+    threads_per_task=1
+    export is_exclusive=True
+    ;;
+
+  "eobs" | "eomg" | "gomg")
+    if [[ "${step}" == "eobs" ]]; then
+      walltime="00:15:00"
+    else
+      walltime="00:30:00"
+    fi
+
+    case ${CASE} in
+      "C768")                 ntasks=200;;
+      "C384")                 ntasks=100;;
+      "C192" | "C96" | "C48") ntasks=40;;
+      *)
+        echo "FATAL ERROR: Resources not defined for job ${step} at resolution ${CASE}"
+        exit 4
+        ;;
+    esac
+    threads_per_task=2
+    # NOTE The number of tasks and cores used must be the same for eobs
+    # See https://github.com/NOAA-EMC/global-workflow/issues/2092 for details
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    export is_exclusive=True
+    # Unset tasks_per_node if it is not a multiple of max_tasks_per_node
+    # to prevent dropping data on the floor.  This should be set int
+    # config.resources.{machine} instead.  This will result in an error at
+    # experiment setup time if not set in config.resources.{machine}.
+    if [[ $(( max_tasks_per_node % tasks_per_node )) != 0 ]]; then
+      unset max_tasks_per_node
+    fi
+    ;;
+
+  "ediag")
+    walltime="00:15:00"
+    ntasks=48
+    threads_per_task=1
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    memory="30GB"
+    ;;
+
+  "eupd")
+    walltime="00:30:00"
+    case ${CASE} in
+      "C768")
+        ntasks=480
+        threads_per_task=6
+        ;;
+      "C384")
+        ntasks=270
+        threads_per_task=8
+        ;;
+      "C192" | "C96" | "C48")
+        ntasks=42
+        threads_per_task=2
+        ;;
+      *)
+        echo "FATAL ERROR: Resources not defined for job ${step} at resolution ${CASE}"
+        exit 4
+        ;;
+    esac
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    export is_exclusive=True
+    ;;
+
+  "ecen")
+    walltime="00:10:00"
+    ntasks=$NMEM_ENKF
+    threads_per_task=4
+    if [[ ${CASE} == "C384" || ${CASE} == "C192" || ${CASE} == "C96" || ${CASE} == "C48" ]]; then
+      threads_per_task=2
+    fi
+    export threads_per_task_cycle=${threads_per_task}
+    export tasks_per_node_cycle=${tasks_per_node}
+    export is_exclusive=True
+    ;;
+
+  "esfc")
+    walltime="00:15:00"
+    ntasks=$NMEM_ENKF
+    threads_per_task=1
+    threads_per_task_cycle=${threads_per_task}
+    tasks_per_node_cycle=$(( max_tasks_per_node / threads_per_task_cycle ))
+    ;;
+
+  "epos")
+    walltime="00:15:00"
+    [[ ${CASE} == "C768" ]] && walltime="00:25:00"
+    ntasks=$NMEM_ENKF
+    threads_per_task=1
+    export is_exclusive=True
+    ;;
+
+  "postsnd")
+    walltime="02:00:00"
+    ntasks=40
+    threads_per_task=8
+    tasks_per_node=10
+    export ntasks_postsndcfp=9
+    export tasks_per_node_postsndcfp=1
+    postsnd_req_cores=$(( tasks_per_node * threads_per_task ))
+    if (( postsnd_req_cores > max_tasks_per_node )); then
+        tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    fi
+    export is_exclusive=True
+    ;;
+
+  "awips")
+    walltime="03:30:00"
+    ntasks=1
+    tasks_per_node=1
+    threads_per_task=1
+    memory="3GB"
+    ;;
+
+  "gempak")
+    walltime="00:30:00"
+    ntasks=2
+    export ntasks_gfs=28
+    tasks_per_node=2
+    export tasks_per_node_gfs=28
+    threads_per_task=1
+    memory="4GB"
+    ;;
+
+  *)
+    echo "FATAL ERROR: Invalid job ${step} passed to ${BASH_SOURCE[0]}"
+    exit 1
+    ;;
+
+esac
+
+tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
+if [[ $nodes -gt 0 ]]; then
+   tasks_per_node=$(( ntasks / nodes ))
+else
+   tasks_per_node=$ntasks
+fi
+
+# Get machine-specific resources, overriding/extending the above assignments
+if [[ -f "${EXPDIR}/config.resources.${machine}" ]]; then
+   source "${EXPDIR}/config.resources.${machine}"
+fi
+
+# Check for RUN-specific variables and export them
+for resource_var in threads_per_task ntasks tasks_per_node memory walltime; do
+   if [[ -n "${!resource_var+0}" ]]; then
+      export "${resource_var?}"
+   fi
+done
+
+

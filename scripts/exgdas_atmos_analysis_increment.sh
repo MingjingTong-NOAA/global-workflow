@@ -122,7 +122,10 @@ LEVS_CASE=${LEVS_CASE:-$($NCLEN $ATMFCST_RES pfull)} # get LATB_ENFK
 # Regrid external analysis  to forecast resolution
 $NLN $ATMF06 fcst.06
 if [ $replay_4DIAU = "YES" ]; then
-  if [ $fullresanl = "YES" ]; then
+  # if replay forecast resolution equals or greater than GFS resolution, 
+  # use GFS analysis at deterministic forecast resolution, otherwise
+  # use GFS analysis at ensemble forecast resolution
+  if [ $DO_ANALCALC ]]; then
     $NLN $ATMA03 anal.03
     $NLN $ATMANL anal.06
     $NLN $ATMA09 anal.09

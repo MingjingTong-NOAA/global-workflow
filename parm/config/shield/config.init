@@ -5,19 +5,19 @@
 
 echo "BEGIN: config.init"
 
+# Get some parameters from getic
+. $EXPDIR/config.getic
+
 # Get task specific resources
 . $EXPDIR/config.resources init
 
-# Get task specific resources
-. $EXPDIR/config.getic
-
-export UFS_DIR=${HOMEgfs}/sorc/ufs_utils.fd
-export GDASINIT_DIR=${UFS_DIR}/util/gdas_init
+export UFS_DIR=${HOMEgfs}/sorc/chgres_shield.fd
+export GDAS_INIT_DIR=${UFS_DIR}/util/gdas_init
 
 export CRES_HIRES=$CASE
 export CRES_ENKF=$CASE_ENKF
 
-export RUNICSH=${GDASINIT_DIR}/run_v16.chgres.sh
+export RUNICSH=${GDAS_INIT_DIR}/run_v16.chgres.sh
 
 if [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
   # No ENKF data prior to 2012/05/21/00z
@@ -26,16 +26,16 @@ if [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
     echo FATAL ERROR: SCRIPTS DO NOT SUPPORT OLD GFS DATA
   elif [[ "$CDATE" -lt "2016051000" ]]; then
     export gfs_ver=v12
-    export RUNICSH=${GDASINIT_DIR}/run_pre-v14.chgres.sh
+    export RUNICSH=${GDAS_INIT_DIR}/run_pre-v14.chgres.sh
   elif [[ "$CDATE" -lt "2017072000" ]]; then
     export gfs_ver=v13
-    export RUNICSH=${GDASINIT_DIR}/run_pre-v14.chgres.sh
+    export RUNICSH=${GDAS_INIT_DIR}/run_pre-v14.chgres.sh
   elif [[ "$CDATE" -lt "2019061200" ]]; then
     export gfs_ver=v14
-    export RUNICSH=${GDASINIT_DIR}/run_${gfs_ver}.chgres.sh
+    export RUNICSH=${GDAS_INIT_DIR}/run_${gfs_ver}.chgres.sh
   elif [[ "$CDATE" -lt "2021032100" ]]; then
     export gfs_ver=v15
-    export RUNICSH=${GDASINIT_DIR}/run_${gfs_ver}.chgres.gfs.sh
+    export RUNICSH=${GDAS_INIT_DIR}/run_${gfs_ver}.chgres.gfs.sh
   elif [[ "$CDATE" -lt "2021032106" ]]; then
     # The way the v16 switch over was done, there is no complete
     # set of v16 or v15 data for 2021032100.  And although
@@ -48,7 +48,7 @@ if [ ${RETRO:-"NO"} = "NO" ]; then # Operational input
 fi
 
 if [ ${REDUCEDRES:-"NO"} = "YES" ]; then # gfs reduced resolution experiment
-   export RUNICSH=${GDASINIT_DIR}/run_v16.chgres.sh
+   export RUNICSH=${GDAS_INIT_DIR}/run_v16.chgres.sh
 fi
 
 if [[ "$gfs_ver" == *"v16"* ]]; then

@@ -21,5 +21,3 @@ export sfc_climo_ver=20220805
 export ugwd_ver=20231027
 export verif_ver=20220805
 export wave_ver=20240105
-export shield_ver=20240515
-export shield_gsi_ver=20240515

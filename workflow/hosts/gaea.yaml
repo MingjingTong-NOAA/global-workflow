@@ -1,0 +1,22 @@
+base_git: '/gpfs/f5/ufs-ard/world-shared/global/glopara/data/git'
+dmpdir: '/gpfs/f5/ufs-ard/world-shared/global/glopara/data/dump'
+nwprod: '/gpfs/f5/ufs-ard/world-shared/global/glopara/data/nwpara'
+comroot: '/gpfs/f5/ufs-ard/world-shared/global/glopara/data/com'
+homedir: '/gpfs/f5/gfdl_w/scratch/$USER'
+stmp: '/gpfs/f5/gfdl_w/scratch/$USER/stmp'
+ptmp: '/gpfs/f5/gfdl_w/scratch/$USER/stmp'
+noscrub: $HOMEDIR
+account: gfdl_w
+scheduler: slurm
+queue: normal
+queue_service: normal
+partition_batch: batch
+partition_service: rdtn_c5
+reservation: ''
+clusters: c5
+clusters_service: es
+chgrp_rstprod: 'NO'
+chgrp_cmd: 'chgrp rstprod'
+hpssarch: 'YES'
+localarch: 'NO'
+atardir: '/NCEPDEV/$HPSS_PROJECT/2year/$USER/$machine/scratch/$PSLOT'

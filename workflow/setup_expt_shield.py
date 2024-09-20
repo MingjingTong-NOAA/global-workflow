@@ -149,6 +149,10 @@ def edit_baseconfig(host, inputs):
         "@QUEUE@": host.info["queue"],
         "@QUEUE_SERVICE@": host.info["queue_service"],
         "@PARTITION_BATCH@": host.info["partition_batch"],
+        "@PARTITION_SERVICE@": host.info["partition_service"],
+        "@CLUSTERS@": host.info["clusters"],
+        "@CLUSTERS_SERVICE@": host.info["clusters_service"],
+        "@RESERVATION@": host.info["reservation"],
         "@EXP_WARM_START@": inputs.warm_start,
         "@ANAL_START@": inputs.anal_start,
         "@MODE@": inputs.mode,
@@ -170,8 +174,8 @@ def edit_baseconfig(host, inputs):
         }
         tmpl_dict = dict(tmpl_dict, **extend_dict)
 
-    # Open and read the templated config.base.shield
-    base_tmpl = f'{inputs.configdir}/config.base.shield'
+    # Open and read the templated config.base
+    base_tmpl = f'{inputs.configdir}/config.base'
     with open(base_tmpl, 'rt') as fi:
         basestr = fi.read()
 

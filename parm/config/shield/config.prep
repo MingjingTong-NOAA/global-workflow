@@ -10,7 +10,7 @@ echo "BEGIN: config.prep"
 
 export DO_MAKEPREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
 export DMPDIR_S="/scratch2/GFDL/gfdlscr/${USER}/scrub/dump"
-if [[ $MODE != "cycled" && $MODE != "replay" ]]; then
+if [[ $machine == "GAEA" || ($MODE != "cycled" && $MODE != "replay") ]]; then
   export DO_MAKEPREPBUFR="NO"
 fi
 
@@ -19,8 +19,8 @@ if [[ $MODE != "cycled" ]]; then
 fi
 
 # prepbufr data pulled from cycled run in getfcst or getic jobs for omf mode
-export pullprepbufrexp="YES"
-if [[ $MODE == "cycled" || $DO_MAKEPREPBUFR == "YES" ]]; then
+export pullprepbufrexp="NO"
+if [[ $MODE != "omf" || $DO_MAKEPREPBUFR == "YES" ]]; then
    export pullprepbufrexp="NO"
 fi
 export PTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${RESTARTEXP}/${CDATE}"

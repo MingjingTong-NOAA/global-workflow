@@ -73,7 +73,7 @@ class Tasks:
         Given a task name (task_name) and its configuration (task_names),
         return a dictionary of resources (task_resource) used by the task.
         Task resource dictionary includes:
-        account, walltime, cores, nodes, ppn, threads, memory, queue, partition, native
+        account, walltime, nodes, ppn, threads, memory, queue, partition, native
         """
 
         scheduler = self.app_config.scheduler
@@ -82,41 +82,52 @@ class Tasks:
 
         account = task_config['ACCOUNT']
 
-        walltime = task_config[f'wtime_{task_name}']
-        if self.cdump in ['gfs'] and f'wtime_{task_name}_gfs' in task_config.keys():
-            walltime = task_config[f'wtime_{task_name}_gfs']
+        walltime = task_config['walltime']
+        if self.cdump in ['gfs'] and 'walltime_gfs' in task_config.keys():
+            walltime = task_config['walltime_gfs']
+      
+        ntasks = task_config['ntasks']
+        if self.cdump in ['gfs'] and 'ntasks_gfs' in task_config.keys():
+            ntasks = task_config['ntasks_gfs']
 
-        cores = task_config[f'npe_{task_name}']
-        if self.cdump in ['gfs'] and f'npe_{task_name}_gfs' in task_config.keys():
-            cores = task_config[f'npe_{task_name}_gfs']
+        ppn = task_config['tasks_per_node']
+        if self.cdump in ['gfs'] and 'tasks_per_node_gfs' in task_config.keys():
+            ppn = task_config['tasks_per_node_gfs']
 
-        ppn = task_config[f'npe_node_{task_name}']
-        if self.cdump in ['gfs'] and f'npe_node_{task_name}_gfs' in task_config.keys():
-            ppn = task_config[f'npe_node_{task_name}_gfs']
+        nodes = int(np.ceil(float(ntasks) / float(ppn)))
 
-        nodes = np.int(np.ceil(np.float(cores) / np.float(ppn)))
+        threads = task_config['threads_per_task']
+        if self.cdump in ['gfs'] and 'threads_per_task_gfs' in task_config.keys():
+            threads = task_config['threads_per_task_gfs']
 
-        threads = task_config[f'nth_{task_name}']
-        if self.cdump in ['gfs'] and f'nth_{task_name}_gfs' in task_config.keys():
-            threads = task_config[f'nth_{task_name}_gfs']
+        # Memory is not required
+        memory = task_config.get(f'memory', None)
 
-        memory = task_config.get(f'memory_{task_name}', None)
+        native = None
+        if scheduler in ['slurm']:
+            if task_config.get('is_exclusive', False):
+                native = '--exclusive'
+            else:
+                native = '--export=NONE'
+            if task_config['RESERVATION'] != "":
+                native += '' if task_name in Tasks.SERVICE_TASKS else ' --reservation=' + task_config['RESERVATION']
+            if task_config.get('CLUSTERS', "") not in ["", '@CLUSTERS@']:
+                if task_name in Tasks.SERVICE_TASKS:
+                    native += ' --clusters=' + task_config['CLUSTERS_SERVICE']
+                else:
+                    native += ' --clusters=' + task_config['CLUSTERS']
 
-        native = '--export=NONE' if scheduler in ['slurm'] else None
-
-        queue = task_config['QUEUE']
-        if task_name in Tasks.SERVICE_TASKS and scheduler not in ['slurm']:
-            queue = task_config['QUEUE_SERVICE']
+        queue = task_config['QUEUE_SERVICE'] if task_name in Tasks.SERVICE_TASKS else task_config['QUEUE']
 
         partition = None
         if scheduler in ['slurm']:
-            partition = task_config['QUEUE_SERVICE'] if task_name in Tasks.SERVICE_TASKS else task_config[
+            partition = task_config['PARTITION_SERVICE'] if task_name in Tasks.SERVICE_TASKS else task_config[
                 'PARTITION_BATCH']
 
         task_resource = {'account': account,
                          'walltime': walltime,
                          'nodes': nodes,
-                         'cores': cores,
+                         'ntasks': ntasks,
                          'ppn': ppn,
                          'threads': threads,
                          'memory': memory,
@@ -297,9 +308,15 @@ class Tasks:
             data = f'&ROTDIR;/gdas.@Y@m@d/@H/atmos/gdas.t@Hz.atmf009{suffix}'
             dep_dict = {'type': 'data', 'data': data, 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
+            deps2 = []
+            data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+            dep_dict = {'type': 'data', 'data': data}
+            deps2.append(rocoto.add_dependency(dep_dict))
             data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
-            deps.append(rocoto.add_dependency(dep_dict))
+            deps2.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps2)
+            deps.append(dependencies)
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
             if self._base.get('ANAL_START', True):
                 deps = []
@@ -322,9 +339,15 @@ class Tasks:
             data2 = '@Y@m@d.@H0000.coupler.res'
             dep_dict = {'type': 'data', 'data': [data,data2], 'age': 30, 'offset': ['-06:00:00','']}
             deps.append(rocoto.add_dependency(dep_dict))
+            deps2 = []
+            data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+            dep_dict = {'type': 'data', 'data': data}
+            deps2.append(rocoto.add_dependency(dep_dict))
             data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
-            deps.append(rocoto.add_dependency(dep_dict))
+            deps2.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps2) 
+            deps.append(dependencies)
             dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -481,14 +504,16 @@ class Tasks:
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         elif self.app_config.mode == "replay":
             deps = []
-            dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
-            deps.append(rocoto.add_dependency(dep_dict))
             data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.logf009.txt'
             dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
-    
             dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
             deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            deps.append(dependencies)
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('analcalc')
@@ -528,7 +553,8 @@ class Tasks:
         dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
 
-        if self.app_config.fullresanl:
+        
+        if self.app_config.do_analcalc:
             dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
             deps.append(rocoto.add_dependency(dep_dict))
 
@@ -586,9 +612,15 @@ class Tasks:
         data = f'&ROTDIR;/gdas.@Y@m@d/@H/atmos/gdas.t@Hz.atmf009{suffix}'
         dep_dict = {'type': 'data', 'data': data, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
+        deps2 = []
         data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
         dep_dict = {'type': 'data', 'data': data}
-        deps.append(rocoto.add_dependency(dep_dict))
+        deps2.append(rocoto.add_dependency(dep_dict))
+        data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+        dep_dict = {'type': 'data', 'data': data}
+        deps2.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps2)
+        deps.append(dependencies)
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         cycledef = self.cdump
@@ -1294,9 +1326,15 @@ class Tasks:
         data = f'&ROTDIR;/gdas.@Y@m@d/@H/atmos/gdas.t@Hz.atmf009{suffix}'
         dep_dict = {'type': 'data', 'data': data, 'offset': '-06:00:00'}
         deps.append(rocoto.add_dependency(dep_dict))
+        deps2 = []
         data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
         dep_dict = {'type': 'data', 'data': data}
-        deps.append(rocoto.add_dependency(dep_dict))
+        deps2.append(rocoto.add_dependency(dep_dict))
+        data = f'{dmpdir}/{self.cdump}{dump_suffix}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.updated.status.tm00.bufr_d'
+        dep_dict = {'type': 'data', 'data': data}
+        deps2.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps2)
+        deps.append(dependencies)
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         cycledef = self.cdump

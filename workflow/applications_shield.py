@@ -115,7 +115,7 @@ class AppConfig:
         self.gfsanl = _base.get('gfsanl', False)
         self.do_tref = _base.get('DO_TSFC_TILE',False)
         self.replay = _base.get('replay',0)
-        self.fullresanl = _base.get('fullresanl',True)
+        self.do_analcalc = _base.get('DO_ANALCALC',False)
         self.ensreplay = _base.get('ENSREPLAY',False)
         self.icdump = _base.get('ICDUMP', 'gdas')
         self.icstyp = _base.get('ICSTYP', 'gfs')
@@ -323,7 +323,7 @@ class AppConfig:
             if self.do_hpssarch:
                 configs += ['getic']
             if self.replay == 2:
-                if self.fullresanl:
+                if self.do_analcalc:
                     configs += ['analcalc']
                 configs += ['analinc']
             if self.do_gomg:
@@ -625,7 +625,7 @@ class AppConfig:
             gdas_tasks += ['prep']
 
         if self.replay == 2:
-            if self.fullresanl:
+            if self.do_analcalc: 
                 gdas_tasks += ['analcalc']
             gdas_tasks += ['analinc']
 

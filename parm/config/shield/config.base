@@ -16,6 +16,10 @@ export ACCOUNT="@ACCOUNT@"
 export QUEUE="@QUEUE@"
 export QUEUE_SERVICE="@QUEUE_SERVICE@"
 export PARTITION_BATCH="@PARTITION_BATCH@"
+export PARTITION_SERVICE="@PARTITION_SERVICE@"
+export RESERVATION="@RESERVATION@"
+export CLUSTERS="@CLUSTERS@"
+export CLUSTERS_SERVICE="@CLUSTERS_SERVICE@"
 
 # Project to use in mass store:
 HPSS_PROJECT=emc-da
@@ -51,7 +55,7 @@ export DO_BUFRSND="NO"     # BUFR sounding products
 export DO_GEMPAK="NO"      # GEMPAK products
 export DO_AWIPS="NO"       # AWIPS products
 export WAFSF="NO"          # WAFS products
-export DO_VRFY="YES"       # VRFY step
+export DO_VRFY="NO"        # VRFY step
 
 # NO for retrospective parallel; YES for real-time parallel
 #  arch.sh uses REALTIME for MOS.  Need to set REALTIME=YES
@@ -228,13 +232,11 @@ fi
 # replay setup
 # 1 - compute increment inside model, 2 - read pre-computed increment
 export replay=2
-# fullresanl - if YES, replay to full resolution analysis instead of analysis increment at ensemble resolution
-# In such case need to compute analysis at f03 and f09 and recompute analysis increment at full resolution
-export fullresanl="YES"
-# number of forecasts used to compute mean background
 export nrestartbg=1
 export replay_4DIAU="YES"
 export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
+export ICS_FROM_EXP_RES='C768'
+export DO_ANALCALC="NO"
 if [[ "$MODE" == "replay" ]]; then
    if [[ "$ICSTYP" == "ifs" ]]; then
       export replay=1
@@ -247,6 +249,9 @@ if [[ "$MODE" == "replay" ]]; then
    else
       export replay=2
       export IAUFHRS="3,6,9"
+   fi
+   if [ $(echo $CASE | cut -c2-) -ge $(echo $ICS_FROM_EXP_RES | cut -c2-) ]; then 
+      export DO_ANALCALC="YES"
    fi
 else
    export replay=0
@@ -359,18 +364,19 @@ export binary_diag=".false."
 
 # Run OmF (for forecast only or replay workflow)
 export DO_OmF="NO"
-if [[ "$MODE" != "cycled" ]]; then
+if [[ "$MODE" == "replay" || "$MODE" == "omf" ]]; then
    export DO_OmF="YES"
 fi
 export do_analinc="NO"
 
 # Run post (for forecast only or replay workflow)
 export DO_POST="YES"
+export gdaspost="NO"
 if [[ "$MODE" == "cycled" ]]; then
   export gdaspost="YES"
 fi
 
-if [ $gdaspost = "NO" ]; then
+if [[ "$gdaspost" == "NO" ]]; then
   export DO_GLDAS="NO"
 fi
 

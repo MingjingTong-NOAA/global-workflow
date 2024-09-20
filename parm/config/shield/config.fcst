@@ -7,7 +7,6 @@ echo "BEGIN: config.fcst"
 
 # Source model specific information that is resolution dependent
 . $EXPDIR/config.fv3 $CASE
-[[ "$CDUMP" == "gfs" ]] && export nth_fv3=$nth_fv3_gfs
 
 # Get task specific resources
 . $EXPDIR/config.resources fcst
@@ -19,15 +18,6 @@ fi
 export FORECASTSH="$HOMEgfs/scripts/exglobal_forecast_shield.sh"
 export FCSTEXECDIR="$HOMEgfs/exec"
 export FCSTEXEC="shield.x"
-export npe_fv3=$npe_fcst # This is model resolution dependent, see note above
-
-if [[ "$CDUMP" == "gfs" ]] ; then
-   export npe_fv3=$npe_fcst_gfs
-   export layout_x=$layout_x_gfs
-   export layout_y=$layout_y_gfs
-   export WRITE_GROUP=$WRITE_GROUP_GFS
-   export WRTTASK_PER_GROUP=$WRTTASK_PER_GROUP_GFS
-fi
 
 # External IC configuration
 if [ ${gfs_ver:-"v16"} = "v16" ]; then
@@ -125,13 +115,23 @@ elif [ $imp_physics -eq 11 ]; then # GFDL
 
     export hord_mt_nh_nonmono=5
     export hord_xx_nh_nonmono=5
-    export vtdm4_nh_nonmono=0.06
     export imfshalcnv=2
     export imfdeepcnv=2
-    export nord=2
     export dddmp=0.2
-    export d4_bg=0.12
-    export fv_sg_adj=900
+    if [[ $CASE == "C192" ]]; then
+       export nord=2
+       export d4_bg=0.12
+       export vtdm4_nh_nonmono=0.06
+    else
+       export nord=3
+       export d4_bg=0.15
+       export vtdm4_nh_nonmono=0.03
+    fi
+    if [[ $MODE == "cycled" && $CDUMP = "gdas" ]]; then
+       export fv_sg_adj=900
+    else
+       export fv_sg_adj=600
+    fi
 else
     echo "Unknown microphysics option, ABORT!"
 
@@ -152,7 +152,7 @@ export USE_COUPLER_RES="NO"
 
 if [[ $EXP_WARM_START = ".false." && ( "$MODE" = "forecast-only" || "$SDATE" = "$CDATE" ) ]]; then
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield_ic"
-   export first_time_step=".true."
+   export write_first_time_step=".true."
 else
    export DIAG_TABLE="$HOMEgfs/parm/parm_fv3diag/diag_table_shield"
 fi
@@ -210,15 +210,10 @@ else
     export REGRID_NEMSIO_TBL="$HOMEgfs/parm/parm_fv3diag/variable_table_da_nonsst.txt"
 fi
 
-# Remap tiles to global latlon grid in NetCDF
-export REMAPSH="$HOMEgfs/ush/fv3gfs_remap.sh"
-export master_grid="0p25deg"                   # 1deg 0p5deg 0p25deg 0p125deg etc
-export npe_remap=$((npe_fcst < 240 ? npe_fcst : 240))
-
 if [[ "$CDUMP" == "gdas" ]] ; then
-   export npe_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
+   export ntasks_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
 else
-   export npe_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
+   export ntasks_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
 fi
 
 # Global latlon NetCDF to nemsio utility parameters
@@ -243,7 +238,7 @@ fi
 # if these variables are re-defined there.
 # Otherwise, the ensemble forecast will inherit from config.fcst
 
-export isatmedmf=1
+export isatmedmf=0
 export xkgdx=25000.0
 export xkzminv=0.0
 export xkzm_m=1.5
@@ -252,6 +247,10 @@ export xkzm_ml=1.0
 export xkzm_hl=1.0
 export xkzm_mi=1.5
 export xkzm_hi=1.5
-export rlmx=300.0
+if [[ $CASE == "C192" ]]; then
+  export rlmx=300.0
+else
+  export rlmx=500.0
+fi
 
 echo "END: config.fcst"

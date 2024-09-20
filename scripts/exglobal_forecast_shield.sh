@@ -28,7 +28,7 @@ FHMAX_HF=${FHMAX_HF:-0}
 FHOUT_HF=${FHOUT_HF:-1}
 NSOUT=${NSOUT:-"-1"}
 FDIAG=$FHOUT
-first_time_step=${first_time_step:-".false."}
+write_first_time_step=${write_first_time_step:-".false."}
 if [ $FHMAX_HF -gt 0 -a $FHOUT_HF -gt 0 ]; then FDIAG=$FHOUT_HF; fi
 WRITE_DOPOST=${WRITE_DOPOST:-".false."}
 restart_interval=${restart_interval:-0}
@@ -45,7 +45,6 @@ HOMEgfs=${HOMEgfs:-$NWPROD}
 FIX_DIR=${FIX_DIR:-$HOMEgfs/fix}
 FIX_AM=${FIX_AM:-$FIX_DIR/am}
 export FIX_AER=${FIX_AER:-$FIX_DIR/aer}
-export FIX_LUT=${FIX_LUT:-$FIX_DIR/lut}
 FIXorog=${FIXorog:-$FIX_DIR/orog}
 FIX_SHiELD=${FIX_SHiELD:-$FIX_DIR/shield}
 DATA=${DATA:-$pwd/fv3tmp$$}    # temporary running directory
@@ -92,16 +91,8 @@ cplwav=${cplwav:-.false.}
 
 # Model config options
 APRUN_FV3=${APRUN_FV3:-${APRUN_FCST:-${APRUN:-""}}}
-if [ $machine = "gaea" ] ; then
-   NTHREADS_FV3=4
-   hyperthread=".true."
-else
-   NTHREADS_FV3=${NTHREADS_FV3:-${NTHREADS_FCST:-${nth_fv3:-1}}}
-fi
-cores_per_node=${cores_per_node:-${npe_node_max:-24}}
 ntiles=${ntiles:-6}
-NTASKS_FV3=${NTASKS_FV3:-$npe_fv3}
-NNODES=$((NTASKS_FV3/npe_node_fcst))
+NTHREADS_FV3=${NTHREADS_FV3:-${nth_fv3:-1}}
 
 TYPE=${TYPE:-"nh"}                  # choices:  nh, hydro
 MONO=${MONO:-"non-mono"}            # choices:  mono, non-mono
@@ -283,7 +274,7 @@ if [[ $DOIAU = "YES" ]]; then
 else
   iau_halfdelthrs=0
   if [[ $FHMIN -eq 0 ]]; then
-    first_time_step=".true."
+    write_first_time_step=".true."
   fi
 fi
 
@@ -550,16 +541,6 @@ $NLN $FIX_AM/${H2OFORC}                        $DATA/INPUT/global_h2oprdlos.f77
 $NLN $FIX_AM/global_solarconstant_noaa_an.txt  $DATA/INPUT/solarconstant_noaa_an.txt
 $NLN $FIX_AM/global_sfc_emissivity_idx.txt     $DATA/INPUT/sfc_emissivity_idx.txt
 
-## merra2 aerosol climo (only for gfs)
-#for n in 01 02 03 04 05 06 07 08 09 10 11 12; do
-#$NLN $FIX_AER/merra2.aerclim.2003-2014.m${n}.nc $DATA/aeroclim.m${n}.nc
-#done
-#$NLN $FIX_LUT/optics_BC.v1_3.dat $DATA/optics_BC.dat
-#$NLN $FIX_LUT/optics_OC.v1_3.dat $DATA/optics_OC.dat
-#$NLN $FIX_LUT/optics_DU.v15_3.dat $DATA/optics_DU.dat
-#$NLN $FIX_LUT/optics_SS.v3_3.dat $DATA/optics_SS.dat
-#$NLN $FIX_LUT/optics_SU.v1_3.dat $DATA/optics_SU.dat
-
 $NLN $FIX_AM/global_co2historicaldata_glob.txt $DATA/INPUT/co2historicaldata_glob.txt
 $NLN $FIX_AM/co2monthlycyc.txt                 $DATA/INPUT/co2monthlycyc.txt
 if [ $ICO2 -gt 0 ]; then
@@ -690,11 +671,11 @@ if [[ $LEVS -eq 127 ]]; then
   export external_eta=".true."
 fi
 
-# link aerosol data
+# link SHiELD aerosol data
 if [[ $io_layout == "1,1" ]]; then
-  $NLN /scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/MERRA2_2015_2021/${CASE}/*.nc $DATA/INPUT/
+  $NLN ${FIX_AER}/${CASE}/*.nc $DATA/INPUT/
 else
-  $NLN /scratch2/GFDL/gfdlscr/Mingjing.Tong/noscrub/MERRA2_2015_2021/${CASE}/*.nc.* $DATA/INPUT/
+  $NLN ${FIX_AER}/${CASE}/*.nc.* $DATA/INPUT/
 fi
 
 # spectral truncation and regular grid resolution based on FV3 resolution
@@ -724,19 +705,20 @@ else
 fi
 FNSNOC=${FNSNOC:-"$FIX_AM/global_snoclim.1.875.grb"}
 FNZORC=${FNZORC:-"igbp"}
-FNALBC2=${FNALBC2:-"$FIX_AM/global_albedo4.1x1.grb"}
 FNAISC=${FNAISC:-"$FIX_AM/CFSR.SEAICE.1982.2012.monthly.clim.grb"}
-FNTG3C=${FNTG3C:-"$FIX_AM/global_tg3clim.2.6x1.5.grb"}
-FNVEGC=${FNVEGC:-"$FIX_AM/global_vegfrac.0.144.decpercent.grb"}
-FNMSKH=${FNMSKH:-"$FIX_AM/global_slmask.t1534.3072.1536.grb"}
-FNVMNC=${FNVMNC:-"$FIX_AM/global_shdmin.0.144x0.144.grb"}
-FNVMXC=${FNVMXC:-"$FIX_AM/global_shdmax.0.144x0.144.grb"}
-FNSLPC=${FNSLPC:-"$FIX_AM/global_slope.1x1.grb"}
-FNALBC=${FNALBC:-"$FIX_AM/global_snowfree_albedo.bosu.t${JCAP}.${LONB}.${LATB}.rg.grb"}
-FNVETC=${FNVETC:-"$FIX_AM/global_vegtype.igbp.t${JCAP}.${LONB}.${LATB}.rg.grb"}
-FNSOTC=${FNSOTC:-"$FIX_AM/global_soiltype.statsgo.t${JCAP}.${LONB}.${LATB}.rg.grb"}
-FNABSC=${FNABSC:-"$FIX_AM/global_mxsnoalb.uariz.t${JCAP}.${LONB}.${LATB}.rg.grb"}
+FNALBC2=${FNALBC2:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.facsf.tileX.nc"}
+FNTG3C=${FNTG3C:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.substrate_temperature.tileX.nc"}
+FNVEGC=${FNVEGC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.vegetation_greenness.tileX.nc"}
+FNMSKH=${FNMSKH:-"${FIXgfs}/am/global_slmask.t1534.3072.1536.grb"}
+FNVMNC=${FNVMNC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.vegetation_greenness.tileX.nc"}
+FNVMXC=${FNVMXC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.vegetation_greenness.tileX.nc"}
+FNSLPC=${FNSLPC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.slope_type.tileX.nc"}
+FNALBC=${FNALBC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.snowfree_albedo.tileX.nc"}
+FNVETC=${FNVETC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.vegetation_type.tileX.nc"}
+FNSOTC=${FNSOTC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.soil_type.tileX.nc"}
+#FNSMCC=${FNSMCC:-"$FIX_AM/global_soilmgldas.t${JCAP}.${LONB}.${LATB}.grb"}
 FNSMCC=${FNSMCC:-"$FIX_AM/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"}
+FNABSC=${FNABSC:-"${FIXorog}/${CASE}/fix_sfc/${CASE}.maximum_snow_albedo.tileX.nc"}
 
 # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
 [[ ! -f $FNALBC ]] && FNALBC="$FIX_AM/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
@@ -801,7 +783,7 @@ if [ ${TYPE} = "nh" ]; then # non-hydrostatic options
     fi
   fi
   consv_te=1.
-  if [ $CDUMP = "gdas" ]; then
+  if [[ $MODE == "cycled" && $CDUMP = "gdas" ]]; then
     k_split=${k_split:-2}
     n_split=${n_split:-6}
   else
@@ -1048,7 +1030,7 @@ if [[ "$CDUMP" = "gdas" || "$DO_CUBE2GAUS" = "YES" ]] ; then
   # rank command
 EOF
 
-  export OMP_NUM_THREADS_ATMS=$nth_fcst
+  export OMP_NUM_THREADS_ATMS=$threads_per_task_c2g
   export OMP_NUM_THREADS_SFC=$NTHREADS_GAUSFCFCST
   export rmhydro=${rmhydro:-".false."}
   export pseudo_ps=${pseudo_ps:-".false."}
@@ -1118,7 +1100,8 @@ EOF
   fi
 
   npe_c2g=$mc
-  APRUN_C2G="$launcher -n $npe_c2g --tasks-per-node=$tasks_per_node_c2g --cpus-per-task=$cpus_per_task_c2g -l --multi-prog"
+  tasks_per_node_c2g=$(( max_tasks_per_node / threads_per_task_c2g ))
+  APRUN_C2G="$launcher -n $npe_c2g --tasks-per-node=$tasks_per_node_c2g --cpus-per-task=${threads_per_task_c2g} -l --multi-prog"
 
   $APRUN_C2G serial-tasks.config 1>&1 2>&2
   rc=$?

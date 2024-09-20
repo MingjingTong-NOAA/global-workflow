@@ -97,10 +97,10 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
      status=$?
      [[ $status -ne 0 ]] && exit $status
      # VarBC coefficient
-     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias "      >list.txt
-     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_air " >>list.txt
-     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_int " >>list.txt
-     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_pc  " >>list.txt
+     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias "      >${ROTDIR}/logs/${CDATE}/list.txt
+     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_air " >>${ROTDIR}/logs/${CDATE}/list.txt
+     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_int " >>${ROTDIR}/logs/${CDATE}/list.txt
+     echo "./gdas.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/gdas.t${ghh}z.abias_pc  " >>${ROTDIR}/logs/${CDATE}/list.txt
      htar -xvf ${HPSSEXPDIR}/$RESTARTEXP/$GDATE/gdas_restarta.tar -L ./list.txt
      status=$?
      [[ $status -ne 0 ]] && exit $status
@@ -187,23 +187,15 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      fi
      if [[ $replay_4DIAU == "YES" && ( $EXP_WARM_START == ".true." || "$CDATE" != "$SDATE" ) ]]; then
         cd $EXTRACT_DIR
-        if [[ ($ics_from == "opsgfs" || $ics_from == "pargfs") && ${fullresanl:-"NO"} != "YES" ]]; then
-           
+        if [[ $ics_from == "opsgfs" && $(echo $CASE | cut -c2-) -lt $(echo $ICS_FROM_EXP_RES | cut -c2-) ]]; then
            # replay to operational GFS
-           if [[ ${RETRO:-"NO"} == "YES" && "$CDATE" -lt "2021032500" ]]; then
-              directory=${HPSSDIR}/${yy}${mm}${dd}${hh}
-              tarball="${ICDUMP}.tar"
-              tarball2="${ICDUMP}_restarta.tar"
-           else
-              directory=${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}
-              tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
-              tarball2="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
-           fi
+           directory=${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}
+           tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
            if [ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
-              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >list.txt
-              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>list.txt
-              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>list.txt
-              htar -xvf ${directory}/${tarball} -L ./list.txt
+              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >${ROTDIR}/logs/${CDATE}/list.txt
+              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
+              echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
+              htar -xvf ${directory}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
               status=$?
               [[ $status -ne 0 ]] && exit $status
               if [[ "${EXTRACT_DIR}" != "${ICSDIR}" ]]; then
@@ -213,16 +205,24 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
               echo "atmanl.ensres for 4DIAU replay exist, skip pulling data"
            fi
         else
-           # replay to full resolution experimental GFS or SHiELD (need to recompute full resolution analysis from analysis increment)
-           directory=${HPSSEXPDIR}/${ics_from}/${CDATE}
-           tarball2="${ICDUMP}_restarta.tar"
+           # replay to full resolution GFS or SHiELD analysis (need to recompute full resolution analysis from analysis increment)
+           if [[ $ics_from == "opsgfs" ]]; then
+              directoryg=${PRODHPSSDIR}/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}
+              directory=${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}
+              tarball="com_gfs_${version}_${ICDUMP}.${gyy}${gmm}${gdd}_${ghh}.${ICDUMP}_nc.tar"
+              tarball2="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar" 
+           else
+              directoryg=${HPSSEXPDIR}/${ics_from}/${GDATE}
+              directory=${HPSSEXPDIR}/${ics_from}/${CDATE}
+              tarball="${ICDUMP}.tar"
+              tarball2="${ICDUMP}_restarta.tar"
+           fi
            # first pull first guess
            if [[ ! -s ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf006.nc ]]; then
-             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf003.nc " >list.txt
-             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf006.nc " >>list.txt
-             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf009.nc " >>list.txt
-             tarball="${ICDUMP}.tar"
-             htar -xvf ${HPSSEXPDIR}/${ics_from}/${GDATE}/${tarball} -L ./list.txt
+             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf003.nc " >${ROTDIR}/logs/${CDATE}/list.txt
+             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf006.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
+             echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.atmf009.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
+             htar -xvf ${directoryg}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
              status=$?
              [[ $status -ne 0 ]] && exit $status
              if [ ! -d ${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT} ]; then
@@ -234,11 +234,10 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
            fi
            # pull increment
            if [[ ! -s ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atminc.nc ]]; then
-             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi003.nc " >list.txt
-             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atminc.nc "  >>list.txt
-             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi009.nc " >>list.txt
-             tarball="${ICDUMP}_restarta.tar"
-             htar -xvf ${HPSSEXPDIR}/${ics_from}/${CDATE}/${tarball} -L ./list.txt
+             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi003.nc " >${ROTDIR}/logs/${CDATE}/list.txt
+             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atminc.nc "  >>${ROTDIR}/logs/${CDATE}/list.txt
+             echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.atmi009.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
+             htar -xvf ${directory}/${tarball2} -L ${ROTDIR}/logs/${CDATE}/list.txt
              status=$?
              [[ $status -ne 0 ]] && exit $status
              if [[ "${EXTRACT_DIR}" != "${ICSDIR}" ]]; then
@@ -258,11 +257,11 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      fi
      abias=${ICSDIR}/${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air
      if [[ ! -s $abias ]]; then
-        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias "      >list.txt
-        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air " >>list.txt
-        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_int " >>list.txt
-        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_pc  " >>list.txt
-        htar -xvf ${directory}/${tarball} -L ./list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias "      >${ROTDIR}/logs/${CDATE}/list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_air " >>${ROTDIR}/logs/${CDATE}/list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_int " >>${ROTDIR}/logs/${CDATE}/list.txt
+        echo "./${ICDUMP}.${gyy}${gmm}${gdd}/${ghh}/${COMPONENT}/${ICDUMP}.t${ghh}z.abias_pc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+        htar -xvf ${directory}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
         status=$?
         [[ $status -ne 0 ]] && exit $status
         if [[ "${EXTRACT_DIR}" != "${ICSDIR}" ]]; then
@@ -289,7 +288,7 @@ dtfanl=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.
 if [[ $MODE = "replay" && $DOGCYCLE = "YES" && $DONST = "YES" && ! -s $dtfanl ]]; then
    if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
       export tarball="${ICDUMP}_restarta.tar"
-      htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
+      htar -xvf ${HPSSEXPDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
    else
       export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
       htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
@@ -320,7 +319,7 @@ cd ${ICSDIR}
      if [[ -d ${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS ]]; then
        getdata="NO"
        getdata2="NO"
-       >list.txt
+       >${ROTDIR}/logs/${CDATE}/list.txt
        for n in $(seq 1 6); do
           file=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc
           file2=${ICSDIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART_GFS/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc
@@ -331,17 +330,17 @@ cd ${ICSDIR}
             else
                if [ $fsize -lt $fsize1 ]; then
                   getdata="YES"
-                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                elif [ $fsize -gt $fsize1 ]; then
                   getdata="YES"
                   m = $((n - 1))
-                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${m}.nc" >>list.txt
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${m}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                   fsize1=$fsize
                fi
             fi
           else
             getdata="YES"
-            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
           fi
           if [ -s $file2 ]; then
             fsize=`wc -c $file2 | awk '{print $1}'`
@@ -350,44 +349,45 @@ cd ${ICSDIR}
             else
                if [ $fsize -lt $fsize1 ]; then
                   getdata2="YES"
-                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                elif [ $fsize -gt $fsize1 ]; then
                   getdata="YES" 
                   m = $((n - 1))
-                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${m}.nc" >>list.txt
+                  echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${m}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                   fsize1=$fsize
                fi
             fi
           else
             getdata2="YES"
-            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>list.txt
+            echo "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
           fi
        done 
      else
        getdata="YES"
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile1.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile2.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile3.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile4.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile5.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
        getdata2="YES"
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile1.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile2.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile3.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile4.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile5.nc  " >>list.txt
-       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc  " >>list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile1.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile2.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile3.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile4.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile5.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
+       echo  "./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/RESTART/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc  " >>${ROTDIR}/logs/${CDATE}/list.txt
      fi    
      if [[ $getdata = "YES" || $getdata2 = "YES" ]]; then
+       echo '$RETRO ' $RETRO
        if [[ (${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500") || ${REDUCEDRES:-"NO"} = "YES" ]]; then
           export tarball="${ICDUMP}_restarta.tar"
-          htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ./list.txt 
+          htar -xvf ${HPSSEXPDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt 
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else   
           export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
-          htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ./list.txt
+          htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status
        fi     
@@ -400,7 +400,7 @@ cd ${ICSDIR}
      else
        echo "sfcanl exist, skip pulling data"
      fi
-     rm -f list.txt
+     rm -f ${ROTDIR}/logs/${CDATE}/list.txt
   else
      echo "sfcanl exist, skip pulling data"
   fi
@@ -438,7 +438,7 @@ if [[ $MODE != "cycled" && $DO_METP == "YES" && $ICSTYP == "gfs" && $ICDUMP == "
               export tarball="gfsb.tar"
             fi
             file="${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${file}"
-            htar -xvf ${HPSSDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${file}
+            htar -xvf ${HPSSEXPDIR}/${yy}${mm}${dd}${hh}/${tarball} ./${file}
     
           else # Production source
             file="${ICDUMP}.${yy}${mm}${dd}/${hh}/atmos/${file}"

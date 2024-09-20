@@ -4,3 +4,4 @@ export spack_env=gsi-addon-dev
 
 source "${HOMEgfs:-}/versions/run.spack.ver"
 export spack_mod_path="/ncrc/proj/epic/spack-stack/spack-stack-${spack_stack_ver}/envs/${spack_env}/install/modulefiles/Core"
+export esmf_ver=8.6.0
