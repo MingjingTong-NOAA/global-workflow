@@ -12,8 +12,9 @@ if [ $DONST = "YES" ]; then
     . $EXPDIR/config.nsst
 fi
 
-export npe_gsi=$npe_gomg
-
+if [[ "$CDATE" = "$FDATE" && $EXP_WARM_START = ".false." ]]; then # Cold starting
+    export USE_RADSTAT="NO"
+fi
 # GSI namelist options
 export DOHYBVAR="NO"
 export DO_CALC_INCREMENT="NO"
@@ -51,10 +52,7 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
 export CONVINFO=$FIXgsi/global_convinfo_shield.txt
 export OZINFO=$FIXgsi/global_ozinfo_shield.txt
-export SATINFO=$FIXgsi/global_satinfo.txt
-if [ "ICSTYP" = "shield" ]; then
-   export SATINFO=$FIXgsi/global_satinfo_shield.txt
-fi
+export SATINFO=$FIXgsi/global_satinfo_shield.txt
 export OBERROR=$FIXgsi/prepobs_errtable.global.shield
 
 
@@ -206,6 +204,11 @@ if [[ $full_hydro_gfdl = "YES" ]]; then
 fi
 
 export USE_CORRELATED_OBERRS="NO"
+if [[ $USE_CORRELATED_OBERRS == "YES" ]]; then
+  export covdir="dnoinf2"
+  export ANAVINFO=$FIXgsi/global_anavinfo.l${LEVS}.txt_Rcov_Rinf
+  export SETUP="lupdqc=".false.",${SETUP:-}"
+fi
 
 if [ $MODE != "replay" ]; then
   export USE_READIN_ANL_SFCMASK=".true."
@@ -216,7 +219,5 @@ res=$(echo $CASE | cut -c2-)
 export JCAP_A=$((res-2))
 export LATA=$res
 export LONA=$((res*2))
-
-export DOGCYCLE="NO"
 
 echo "END: config.gomg"

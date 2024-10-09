@@ -236,7 +236,7 @@ export nrestartbg=1
 export replay_4DIAU="YES"
 export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
 export ICS_FROM_EXP_RES='C768'
-export DO_ANALCALC="NO"
+export DO_CHGRES_FCST="NO"
 if [[ "$MODE" == "replay" ]]; then
    if [[ "$ICSTYP" == "ifs" ]]; then
       export replay=1
@@ -250,8 +250,8 @@ if [[ "$MODE" == "replay" ]]; then
       export replay=2
       export IAUFHRS="3,6,9"
    fi
-   if [ $(echo $CASE | cut -c2-) -ge $(echo $ICS_FROM_EXP_RES | cut -c2-) ]; then 
-      export DO_ANALCALC="YES"
+   if [[ $replay_4DIAU == "YES" && $(echo $CASE | cut -c2-) -ge $(echo $ICS_FROM_EXP_RES | cut -c2-) ]]; then 
+      export DO_CHGRES_FCST="YES"
    fi
 else
    export replay=0

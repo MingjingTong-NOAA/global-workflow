@@ -166,6 +166,7 @@ sorc/gsi_utils.fd
 sorc/shield.fd
 sorc/shield_utils.fd
 sorc/ufs_utils.fd
+sorc/chgres_shield.fd
 sorc/verif-global.fd
 sorc/release
 

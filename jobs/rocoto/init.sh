@@ -58,6 +58,7 @@ export OUTDIR=${OUTDIR:-$ICSDIR}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
+export LEVS=$LEVS_INIT
 export RUNICSH=${RUNICSH:-${GDAS_INIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
@@ -106,8 +107,8 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ $CASE != $OPS_RES && $MODE != "forecast-only" && ($DO_TSFC_TILE == "YES" || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
-    if [[ ! -s $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
+  if [[ $MODE != "forecast-only" && ($DO_TSFC_TILE == "YES" || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
+    if [[ $CASE != $OPS_RES && ! -s $COMOUT/RESTART_${CASE}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP} $IAUSDATE $CASE
       status=$?
       [[ $status -ne 0 ]] && exit $status 
@@ -119,7 +120,7 @@ else
         [[ $status -ne 0 ]] && exit $status
       fi
     fi
-    if [[ $MODE = "cycled" || $DOGCYCLE == "YES" ]]; then
+    if [[ $CASE != $OPS_RES && ($MODE = "cycled" || $DOGCYCLE == "YES") ]]; then
       if [[ ! -s $COMOUT/RESTART_${CASE}/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile6.nc ]]; then
         sh ${RUNSFCANLSH} ${ICDUMP} $CDATE $CASE
         status=$?

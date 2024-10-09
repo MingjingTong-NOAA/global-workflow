@@ -187,6 +187,7 @@ cd "${HOMEgfs}/ush" || exit 8
 for file in emcsfc_ice_blend.sh global_cycle_driver.sh emcsfc_snow.sh global_cycle_shield.sh; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/${file}" .
 done
+${LINK_OR_COPY} "${HOMEgfs}/sorc/chgres_shield.fd/ush/run_sfcanl_chgres.sh" .
 for file in make_ntc_bull.pl make_NTC_file.pl make_tif.sh month_name.sh ; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gfs_utils.fd/ush/${file}" .
 done

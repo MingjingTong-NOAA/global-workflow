@@ -969,7 +969,7 @@ cat gsiparm.anl
 ##############################################################
 #  Run gsi analysis
 
-if [ $CASE == "C768" ]; then
+if [[ $CASE == "C768" && $machine == "HERA" ]]; then
   export KMP_STACKSIZE=4096M
   export FORT_BUFFERED=true
 else

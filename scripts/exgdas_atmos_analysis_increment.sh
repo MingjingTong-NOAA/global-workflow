@@ -70,10 +70,17 @@ SIGLEVEL=${SIGLEVEL:-${FIXshield}/global_hyblev.l${LEVS}.txt}
 # forecast files
 APREFIX=${APREFIX:-""}
 ASUFFIX=${ASUFFIX:-$SUFFIX}
-ATMF03=${ATMF03:-$COMIN_GES/${GPREFIX}atmf003${GSUFFIX}}
-ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
-ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009${GSUFFIX}}
-ATMFCST_RES=${ATMFCST_RES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
+if [ $DO_CHGRES_FCST = "YES" ]; then
+  ATMF03=${ATMF03:-$COMIN_GES/${GPREFIX}atmf003.ensres${GSUFFIX}}
+  ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006.ensres${GSUFFIX}}
+  ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009.ensres${GSUFFIX}}
+  ATMFCST_RES=${ATMFCST_RES:-$COMIN_GES/${GPREFIX}atmf006.ensres${GSUFFIX}}
+else
+  ATMF03=${ATMF03:-$COMIN_GES/${GPREFIX}atmf003${GSUFFIX}}
+  ATMF06=${ATMGES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
+  ATMF09=${ATMF09:-$COMIN_GES/${GPREFIX}atmf009${GSUFFIX}}
+  ATMFCST_RES=${ATMFCST_RES:-$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}}
+fi
 
 # external analysis
 ATMA03=${ATMA03:-${COMOUT}/${ICDUMP}.t${cyc}z.atma003${ASUFFIX}}
@@ -125,7 +132,7 @@ if [ $replay_4DIAU = "YES" ]; then
   # if replay forecast resolution equals or greater than GFS resolution, 
   # use GFS analysis at deterministic forecast resolution, otherwise
   # use GFS analysis at ensemble forecast resolution
-  if [ $DO_ANALCALC ]]; then
+  if [ ${DO_ANALCALC:-"NO"} = "YES" ]; then
     $NLN $ATMA03 anal.03
     $NLN $ATMANL anal.06
     $NLN $ATMA09 anal.09

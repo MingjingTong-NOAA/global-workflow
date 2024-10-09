@@ -117,7 +117,6 @@ GAUSFCFCSTSH=${GAUSFCFCSTSH:-$HOMEgfs/ush/gaussian_sfcfcst.sh}
 export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-$HOMEgfs/exec/gaussian_sfcfcst.x}
 NTHREADS_GAUSFCFCST=${NTHREADS_GAUSFCFCST:-1}
 
-APRUN_C2G=${APRUN_C2G:-${APRUN:-""}}
 export APREFIX="${CDUMP}.t${cyc}z."
 export ASUFFIX=${ASUFFIX:-$SUFFIX}
 

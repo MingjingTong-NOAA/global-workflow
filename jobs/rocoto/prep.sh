@@ -46,7 +46,11 @@ fi
 ###############################################################
 # If ROTDIR_DUMP=YES, copy dump files to rotdir
 if [ $ROTDIR_DUMP = "YES" ]; then
-   $HOMEgfs/ush/getdump.sh $CDATE $CDUMP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc} $COMOUT
+   if [ -d $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/atmos ]; then
+     $HOMEgfs/ush/getdump.sh $CDATE $CDUMP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc}/atmos $COMOUT
+   else
+     $HOMEgfs/ush/getdump.sh $CDATE $CDUMP $DMPDIR/${CDUMP}${DUMP_SUFFIX}.${PDY}/${cyc} $COMOUT
+   fi
    status=$?
    [[ $status -ne 0 ]] && exit $status
 

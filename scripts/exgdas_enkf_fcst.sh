@@ -134,7 +134,7 @@ fi
 
 # APRUN for different executables
 export APRUN_FV3=${APRUN_FV3:-${APRUN:-""}}
-export NTHREADS_FV3=${NTHREADS_FV3:-${NTHREADS:-1}}
+export NTHREADS_FV3=${threads_per_task:-${nth_fv3:-1}}
 
 ################################################################################
 # Run forecast for ensemble member

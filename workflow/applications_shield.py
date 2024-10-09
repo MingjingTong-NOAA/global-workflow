@@ -115,7 +115,7 @@ class AppConfig:
         self.gfsanl = _base.get('gfsanl', False)
         self.do_tref = _base.get('DO_TSFC_TILE',False)
         self.replay = _base.get('replay',0)
-        self.do_analcalc = _base.get('DO_ANALCALC',False)
+        self.do_chgres_fcst = _base.get('DO_CHGRES_FCST',False)
         self.ensreplay = _base.get('ENSREPLAY',False)
         self.icdump = _base.get('ICDUMP', 'gdas')
         self.icstyp = _base.get('ICSTYP', 'gfs')
@@ -323,8 +323,8 @@ class AppConfig:
             if self.do_hpssarch:
                 configs += ['getic']
             if self.replay == 2:
-                if self.do_analcalc:
-                    configs += ['analcalc']
+                if self.do_chgres_fcst:
+                    configs += ['echgres']
                 configs += ['analinc']
             if self.do_gomg:
                 configs += ['prep','gomg','analdiag','archomg']
@@ -625,8 +625,8 @@ class AppConfig:
             gdas_tasks += ['prep']
 
         if self.replay == 2:
-            if self.do_analcalc: 
-                gdas_tasks += ['analcalc']
+            if self.do_chgres_fcst: 
+                gdas_tasks += ['echgres']
             gdas_tasks += ['analinc']
 
         if self.do_gcycle:

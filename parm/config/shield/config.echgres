@@ -8,6 +8,11 @@ echo "BEGIN: config.echgres"
 # Get task specific resources
 . $EXPDIR/config.resources echgres
 
-export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_forenkf_shield.sh"
+if [[ $MODE == "cycled" ]]; then
+  export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_forenkf_shield.sh"
+else
+  export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_fcst.sh"
+  export SHiELD_ref="/gpfs/f5/gfdl_w/proj-shared/Mingjing.Tong/SHiELD_reference/C384"
+fi
 
 echo "END: config.echgres"

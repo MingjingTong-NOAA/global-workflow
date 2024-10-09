@@ -177,7 +177,7 @@ if [ $DO_CALC_ANALYSIS == "YES" ]; then
       $NLN $ATMI08   sigi08.nc
       $NLN $ATMA09   siga09
       $NLN $ATMI09   sigi09.nc
-   elif [ $MODE = "replay" -a $DO_ANALCALC ]; then
+   elif [ $MODE = "replay" -a ${DO_ANALCALC:-"NO"} = "YES" ]; then
       $NLN $ATMA03   siga03
       $NLN $ATMI03   sigi03.nc
       $NLN $ATMA09   siga09

@@ -235,6 +235,7 @@ class RocotoXML:
                        f'#SCRON --output={expdir}/logs/scron.out',
                        '#SCRON --dependency=singleton',
                        '#SCRON --partition=cron_c5',
+                       '#SCRON --nodelist=gaea55',
                        '#SCRON --mem=8G',
                        f'MAILTO="{replyto}"',
                        f'{cronintstr} {rocotorunstr}',

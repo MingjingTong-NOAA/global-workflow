@@ -554,8 +554,8 @@ class Tasks:
         deps.append(rocoto.add_dependency(dep_dict))
 
         
-        if self.app_config.do_analcalc:
-            dep_dict = {'type': 'task', 'name': f'{self.cdump}analcalc'}
+        if self.app_config.do_chgres_fcst:
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}echgres'}
             deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -1477,12 +1477,26 @@ class Tasks:
 
         self._is_this_a_gdas_task(self.cdump, 'echgres')
 
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}efcs01'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        if self.app_config.mode == "cycled":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}efcs01'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        elif self.app_config.mode == "replay":
+            deps = []
+            data = f'&ROTDIR;/{self.cdump}.@Y@m@d/@H/atmos/{self.cdump}.t@Hz.logf009.txt'
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}fcst', 'offset': '-06:00:00'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.cdump}getic'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            deps.append(dependencies)
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('echgres')
         task = create_wf_task('echgres', resources, cdump=self.cdump, envar=self.envars, dependency=dependencies)

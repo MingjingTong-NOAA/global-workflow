@@ -185,6 +185,9 @@ case ${step} in
     export ntasks_calcanl="${ntasks}"
     threads_per_task=1
     tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    if [[ "${CASE}" == "C768" ]]; then
+       tasks_per_node=$(( (ntasks + 1) / 2 ))
+    fi
     export threads_per_task_echgres=4
     export threads_per_task_echgres_gfs=12
     export is_exclusive=True
@@ -220,6 +223,7 @@ case ${step} in
     threads_per_task=${nth_fv3}
     (( NTASKS_TOT = layout_x * layout_y * 6 )) 
     ntasks=${NTASKS_TOT}
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
 
     export walltime="00:30:00"
     case "${CASE}" in
@@ -377,7 +381,7 @@ case ${step} in
     case ${CASE} in
       "C768")
         ntasks=480
-        threads_per_task=6
+        threads_per_task=16
         ;;
       "C384")
         ntasks=270
@@ -403,6 +407,7 @@ case ${step} in
     if [[ ${CASE} == "C384" || ${CASE} == "C192" || ${CASE} == "C96" || ${CASE} == "C48" ]]; then
       threads_per_task=2
     fi
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     export threads_per_task_cycle=${threads_per_task}
     export tasks_per_node_cycle=${tasks_per_node}
     export is_exclusive=True
@@ -412,8 +417,10 @@ case ${step} in
     walltime="00:15:00"
     ntasks=$NMEM_ENKF
     threads_per_task=1
-    threads_per_task_cycle=${threads_per_task}
-    tasks_per_node_cycle=$(( max_tasks_per_node / threads_per_task_cycle ))
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    if [[ ${CASE} == "C768" && $NMEM_ENKF -gt 60 ]]; then
+       tasks_per_node=$(( ntasks / 2 ))
+    fi
     ;;
 
   "epos")
@@ -421,6 +428,7 @@ case ${step} in
     [[ ${CASE} == "C768" ]] && walltime="00:25:00"
     ntasks=$NMEM_ENKF
     threads_per_task=1
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     export is_exclusive=True
     ;;
 
@@ -463,17 +471,16 @@ case ${step} in
 
 esac
 
-tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
-nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
-if [[ $nodes -gt 0 ]]; then
-   tasks_per_node=$(( ntasks / nodes ))
-else
-   tasks_per_node=$ntasks
-fi
-
 # Get machine-specific resources, overriding/extending the above assignments
 if [[ -f "${EXPDIR}/config.resources.${machine}" ]]; then
    source "${EXPDIR}/config.resources.${machine}"
+fi
+
+nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
+if [[ $nodes -gt 0 ]]; then
+   tasks_per_node=$(( (ntasks + nodes - 1) / nodes ))
+else
+   tasks_per_node=$ntasks
 fi
 
 # Check for RUN-specific variables and export them

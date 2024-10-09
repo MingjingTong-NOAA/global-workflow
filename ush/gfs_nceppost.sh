@@ -224,7 +224,7 @@ export OUTPUT_FILE=${OUTPUT_FILE:-"nemsio"}
 export GRIBVERSION=${GRIBVERSION:-'grib1'}
 #  Other variables.
 export POSTGPVARS=${POSTGPVARS}
-export NTHREADS=${NTHREADS:-1}
+export NTHREADS=${NTHREADS:-${threads_per_task:-1}}
 export NTHSTACK=${NTHSTACK:-64000000}
 export PGMOUT=${PGMOUT:-${pgmout:-'&1'}}
 export PGMERR=${PGMERR:-${pgmerr:-'&2'}}
@@ -271,7 +271,7 @@ fi
 
 # allow threads to use threading in Jim's sp lib
 # but set default to 1 
-export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1}
+export OMP_NUM_THREADS=${NTHREADS:-1}
 
 pwd=$(pwd)
 if [[ -d $DATA ]]; then

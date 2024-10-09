@@ -87,7 +87,11 @@ mkdir -m 775 -p $COMOUT
 
 export COMIN_GES="$ROTDIR/$CDUMP.$gPDY/$gcyc/$COMPONENT"
 
-export ATMGES="$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}"
+if [ $DO_CHGRES_FCST = "YES" ]; then
+    export ATMGES="$COMIN_GES/${GPREFIX}atmf006.ensres${GSUFFIX}"
+else
+    export ATMGES="$COMIN_GES/${GPREFIX}atmf006${GSUFFIX}"
+fi
 if [ ! -f $ATMGES ]; then
     echo "FATAL ERROR: FILE MISSING: ATMGES = $ATMGES"
     exit 1
