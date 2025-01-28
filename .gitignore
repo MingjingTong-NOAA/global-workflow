@@ -122,7 +122,6 @@ sorc/syndat_maksynrc.fd
 sorc/syndat_qctropcy.fd
 sorc/tave.fd
 sorc/tocsbufr.fd
-sorc/upp.fd
 sorc/vint.fd
 sorc/webtitle.fd
 sorc/ocnicepost.fd
@@ -159,6 +158,7 @@ ush/global_chgres.sh
 ush/global_chgres_driver.sh
 ush/global_cycle.sh
 ush/global_cycle_driver.sh
+ush/global_cycle_shield.sh
 ush/jediinc2fv3.py
 ush/ufsda
 ush/soca
