@@ -54,8 +54,10 @@ enkf:
         {% set da_files = ["enkfstat",
                            "gsistat.ensmean",
                            "cnvstat.ensmean",
-                           "oznstat.ensmean",
-                           "radstat.ensmean"] %}
+                           "oznstat.ensmean"] %}
+        {% if ARCHRADSTAT %}
+        {% set da_files = da_files + ["radstat.ensmean"] %}
+        {% endif %}
         {% else %}
         {% if lobsdiag_forenkf %}
         {% set da_files = ["atmensanlobs.yaml",

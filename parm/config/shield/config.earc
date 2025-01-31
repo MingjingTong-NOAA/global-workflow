@@ -1,0 +1,44 @@
+#! /usr/bin/env bash
+
+########## config.earc ##########
+# Ensemble archive specific
+
+echo "BEGIN: config.earc"
+
+# Get task specific resources
+. $EXPDIR/config.resources earc
+
+# Set the number of ensemble members to archive per earc job
+case "${CASE_ENS}" in
+   "C48" | "C96")
+      export NMEM_EARCGRP=80
+      ;;
+   "C192")
+      export NMEM_EARCGRP=20
+      ;;
+   "C384" | "C768")
+      export NMEM_EARCGRP=10
+      ;;
+   "C1152")
+      export NMEM_EARCGRP=4
+      ;;
+   *)
+      echo "FATAL ERROR: Unknown ensemble resolution ${CASE_ENS}, ABORT!"
+      exit 1
+      ;;
+esac
+
+#--starting and ending hours of previous cycles to be removed from rotating directory
+export RMOLDSTD_ENKF=144
+export RMOLDEND_ENKF=24
+
+radassim_delay=$(( assim_freq * 2 ))
+SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
+if [[ "${CDATE}" -le "${SEDATE}" && "${EXP_WARM_START}" = ".false." ]]; then
+  export ARCHRADSTAT="NO"
+else
+  export ARCHRADSTAT="YES"
+fi
+export ARCH4ENSREPLAY="YES"
+
+echo "END: config.earc"

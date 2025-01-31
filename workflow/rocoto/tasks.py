@@ -10,14 +10,14 @@ __all__ = ['Tasks']
 
 
 class Tasks:
-    SERVICE_TASKS = ['arch', 'earc', 'stage_ic', 'cleanup']
-    VALID_TASKS = ['aerosol_init', 'stage_ic',
-                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'arch', "cleanup",
+    SERVICE_TASKS = ['getic', 'eget', 'getfcst', 'arch', 'earc', 'stage_ic', 'cleanup']
+    VALID_TASKS = ['aerosol_init', 'stage_ic', 'getic', 'init', 'getfcst',
+                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'analinc', 'gomg', 'arch', "cleanup", 
                    'prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal',
                    'prepoceanobs',
                    'marineanlinit', 'marineanlletkf', 'marinebmat', 'marineanlvar', 'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
-                   'earc', 'ecen', 'echgres', 'ediag', 'efcs',
-                   'eobs', 'eomg', 'epos', 'esfc', 'eupd',
+                   'eget', 'earc', 'ecen', 'echgres', 'ediag', 'efcs',
+                   'eobs', 'eomg', 'epos', 'esfc', 'eupd', 'eupp', 'ergpos',
                    'atmensanlinit', 'atmensanlobs', 'atmensanlsol', 'atmensanlletkf', 'atmensanlfv3inc', 'atmensanlfinal',
                    'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb',
                    'snowanl', 'esnowanl',
@@ -225,7 +225,10 @@ class Tasks:
             if task_config['RESERVATION'] != "":
                 native += '' if task_name in Tasks.SERVICE_TASKS else ' --reservation=' + task_config['RESERVATION']
             if task_config.get('CLUSTERS', "") not in ["", '@CLUSTERS@']:
-                native += ' --clusters=' + task_config['CLUSTERS']
+                if task_name in Tasks.SERVICE_TASKS:
+                    native += ' --clusters=' + task_config['CLUSTERS_SERVICE']
+                else:
+                    native += ' --clusters=' + task_config['CLUSTERS']
 
         queue = task_config['QUEUE_SERVICE'] if task_name in Tasks.SERVICE_TASKS else task_config['QUEUE']
 

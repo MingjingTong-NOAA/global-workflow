@@ -112,6 +112,7 @@ DONST=${DONST:-"NO"}
 LEVS=${LEVS:-64}
 LEVSP1=$(($LEVS+1))
 FIXWGTS=${FIXWGTS:-${FIXorog}/${CASE}/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
+FIXWGTS2=${FIXWGTS2:-${FIXorog}/${CASE}/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
 DATA=${DATA:-$(pwd)}
 
 #  Filenames.
@@ -145,11 +146,13 @@ iy=${PDY:0:4}
 im=${PDY:4:2}
 id=${PDY:6:2}
 ih=${cyc}
+orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 
 export OMP_NUM_THREADS=${OMP_NUM_THREADS_SFC:-1}
 
 # input interpolation weights
 ${NLN} "${FIXWGTS}" "./weights.nc"
+${NLN} "${FIXWGTS2}" "./weightb.nc"
 
 # input analysis tiles (with nst records)
 ${NLN} "${COMIN_ATMOS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile1.nc" "./anal.tile1.nc"
@@ -160,12 +163,12 @@ ${NLN} "${COMIN_ATMOS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile5.nc" "./anal.t
 ${NLN} "${COMIN_ATMOS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile6.nc" "./anal.tile6.nc"
 
 # input orography tiles
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile1.nc" "./orog.tile1.nc"
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile2.nc" "./orog.tile2.nc"
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile3.nc" "./orog.tile3.nc"
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile4.nc" "./orog.tile4.nc"
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile5.nc" "./orog.tile5.nc"
-${NLN} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile6.nc" "./orog.tile6.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile1.nc" "./orog.tile1.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile2.nc" "./orog.tile2.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile3.nc" "./orog.tile3.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile4.nc" "./orog.tile4.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile5.nc" "./orog.tile5.nc"
+${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile6.nc" "./orog.tile6.nc"
 
 ${NLN} "${SIGLEVEL}" "./vcoord.txt"
 

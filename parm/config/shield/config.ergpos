@@ -1,0 +1,19 @@
+#! /usr/bin/env bash
+
+########## config.ergpos ##########
+# Compute ensemble mean and spread on regrided grid 
+
+echo "BEGIN: config.ergpos"
+
+# Get task specific resources
+. $EXPDIR/config.resources ergpos
+
+# No. of concurrent ergpos jobs [1 implies sequential]
+export NEPOSGRP=1
+
+# Generate ensemble spread files
+export ENKF_SPREAD="YES"
+
+export SUFFIX=".grib.nc"
+
+echo "END: config.ergpos"

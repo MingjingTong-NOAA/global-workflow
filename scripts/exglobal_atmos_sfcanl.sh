@@ -94,9 +94,10 @@ export OMP_NUM_THREADS_CY=${NTHREADS_CYCLE}
 export MAX_TASKS_CY=${ntiles}
 
 # Copy fix files required by global_cycle to DATA just once
+orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 for (( nn=1; nn <= ntiles; nn++ )); do
   ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${nn}.nc"                 "${DATA}/fngrid.00${nn}"
-  ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${nn}.nc" "${DATA}/fnorog.00${nn}"
+  ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${nn}.nc" "${DATA}/fnorog.00${nn}"
 done
 
 # Copy the NSST analysis file for global_cycle
@@ -129,6 +130,16 @@ for gcycle_date in "${gcycle_dates[@]}"; do
     ${NCP} "${sfcdata_dir}/${datestr}.sfc_data.tile${nn}.nc" "${DATA}/fnbgsi.00${nn}"
     ${NCP} "${DATA}/fnbgsi.00${nn}"                       "${DATA}/fnbgso.00${nn}"
   done
+
+  if [[ $DO_TSFC_TILE == "YES" ]]; then
+    for n in $(seq 1 $ntiles); do
+      if [ $CASE = $OPS_RES ]; then
+        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
+      else
+        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
+      fi
+    done
+  fi
 
   CDATE="${PDY}${cyc}" ${CYCLESH}
   export err=$?; err_chk

@@ -130,14 +130,16 @@ def edit_baseconfig(host, inputs, yaml_dict):
         "@INTERVAL_GFS@": inputs.interval,
         "@SDATE_GFS@": datetime_to_YMDH(inputs.sdate_gfs),
         "@APP@": inputs.app,
-        "@NMEM_ENS@": getattr(inputs, 'nens', 0)
+        "@NMEM_ENS@": getattr(inputs, 'nens', 0),
+        "@ICSDIR@": inputs.icsdir
     }
-
+   
     if getattr(inputs, 'nens', 0) > 0:
         extend_dict['@CASEENS@'] = f'C{inputs.resensatmos}'
 
     if inputs.mode in ['cycled']:
         extend_dict["@DOHYBVAR@"] = "YES" if inputs.nens > 0 else "NO"
+        extend_dict["@ENSREPLAY@"] = "YES" if inputs.ensreplay else "NO"
 
     # Further extend/redefine base_dict with extend_dict
     base_dict = dict(base_dict, **extend_dict)
@@ -207,6 +209,7 @@ def input_args(*argv):
     """
 
     ufs_apps = ['ATM', 'ATMA', 'ATMW', 'S2S', 'S2SA', 'S2SW', 'S2SWA']
+    shield_apps = ['ATM']
 
     def _validate_interval(interval_str):
         err_msg = f'must be a non-negative integer multiple of 6 ({interval_str} given)'
@@ -253,10 +256,29 @@ def input_args(*argv):
                             required=False, default=os.path.join(_top, 'parm/config/gfs/yaml/defaults.yaml'))
         return parser
 
+    def _shield_args(parser):
+        parser.add_argument('--start', help='restart mode: warm or cold', type=str,
+                            choices=['warm', 'cold'], required=False, default='cold')
+        parser.add_argument('--run', help='RUN to start the experiment',
+                            type=str, required=False, default='gdas')
+        # --configdir is hidden from help
+        parser.add_argument('--configdir', help=SUPPRESS, type=str, required=False, default=os.path.join(_top, 'parm/config/shield'))
+        parser.add_argument('--yaml', help='Defaults to substitute from', type=str,
+                            required=False, default=os.path.join(_top, 'parm/config/shield/yaml/defaults.yaml'))
+        return parser
+
     def _gfs_cycled_args(parser):
         parser.add_argument('--app', help='UFS application', type=str,
                             choices=ufs_apps, required=False, default='ATM')
         parser.add_argument('--sdate_gfs', help='date to start GFS', type=lambda dd: to_datetime(dd), required=False, default=None)
+        return parser
+
+    def _shield_cycled_args(parser):
+        parser.add_argument('--app', help='SHiELD application', type=str,
+                            choices=shield_apps, required=False, default='ATM')
+        parser.add_argument('--sdate_gfs', help='date to start GFS', type=lambda dd: to_datetime(dd), required=False, default=None)
+        parser.add_argument('--ensreplay', help='run ensemble replay of cycled mode (if it exists)',
+                            action='store_true', required=False)
         return parser
 
     def _gfs_or_gefs_ensemble_args(parser):
@@ -269,6 +291,11 @@ def input_args(*argv):
     def _gfs_or_gefs_forecast_args(parser):
         parser.add_argument('--app', help='UFS application', type=str,
                             choices=ufs_apps, required=False, default='ATM')
+        return parser
+
+    def _shield_forecast_args(parser):
+        parser.add_argument('--app', help='SHiELD application', type=str,
+                            choices=shield_apps, required=False, default='ATM')
         return parser
 
     def _gefs_args(parser):
@@ -293,6 +320,7 @@ def input_args(*argv):
     sysparser = parser.add_subparsers(dest='system')
     gfs = sysparser.add_parser('gfs', help='arguments for GFS')
     gefs = sysparser.add_parser('gefs', help='arguments for GEFS')
+    shield = sysparser.add_parser('shield', help='arguments for SHiELD')
 
     gfsmodeparser = gfs.add_subparsers(dest='mode')
     gfscycled = gfsmodeparser.add_parser('cycled', help='arguments for cycled mode')
@@ -301,31 +329,51 @@ def input_args(*argv):
     gefsmodeparser = gefs.add_subparsers(dest='mode')
     gefsforecasts = gefsmodeparser.add_parser('forecast-only', help='arguments for forecast-only mode')
 
+    shieldmodeparser = shield.add_subparsers(dest='mode')
+    shieldcycled = shieldmodeparser.add_parser('cycled', help='arguments for cycled mode')
+    shieldforecasts = shieldmodeparser.add_parser('forecast-only', help='arguments for forecast-only mode')
+    shieldreplay = shieldmodeparser.add_parser('replay', help='arguments for replay mode')
+    shieldomf = shieldmodeparser.add_parser('omf', help='arguments for OmF mode')
+    shieldensregrid = shieldmodeparser.add_parser('ensregrid', help='arguments for ensemble regrid mode') 
+
     # Common arguments across all modes
     for subp in [gfscycled, gfsforecasts, gefsforecasts]:
+        subp = _common_args(subp)
+    for subp in [shieldcycled,shieldreplay,shieldforecasts,shieldomf,shieldensregrid]:
         subp = _common_args(subp)
 
     # GFS-only arguments
     for subp in [gfscycled, gfsforecasts]:
         subp = _gfs_args(subp)
 
+    # SHiELD-only argumnets
+    for subp in [shieldcycled,shieldreplay,shieldforecasts,shieldomf,shieldensregrid]:
+        subp = _shield_args(subp)
+
     # ensemble-only arguments
-    for subp in [gfscycled, gefsforecasts]:
+    for subp in [gfscycled, gefsforecasts,shieldcycled,shieldensregrid]:
         subp = _gfs_or_gefs_ensemble_args(subp)
 
     # GFS/GEFS forecast-only additional arguments
     for subp in [gfsforecasts, gefsforecasts]:
         subp = _gfs_or_gefs_forecast_args(subp)
 
+    # SHiELD forecast-only additional arguments
+    for subp in [shieldreplay,shieldforecasts,shieldomf]:
+        subp = _shield_forecast_args(subp)
+
     # cycled mode additional arguments
     for subp in [gfscycled]:
         subp = _gfs_cycled_args(subp)
+    for subp in [shieldcycled]:
+        subp = _shield_cycled_args(subp)
 
     # GEFS forecast-only arguments
     for subp in [gefsforecasts]:
         subp = _gefs_args(subp)
 
     inputs = parser.parse_args(list(*argv) if len(argv) else None)
+    print ('xxxx ', inputs.system)
 
     # Validate dates
     if inputs.edate is None:

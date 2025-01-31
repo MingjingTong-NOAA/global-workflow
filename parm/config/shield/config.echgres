@@ -1,0 +1,20 @@
+#! /usr/bin/env bash
+
+########## config.echgres ##########
+# regrid full-res forecast for use in ensemble-res analysis generation
+
+echo "BEGIN: config.echgres"
+
+# Get task specific resources
+. $EXPDIR/config.resources echgres
+
+if [[ $MODE == "cycled" ]]; then
+  export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_forenkf.sh"
+else
+  export CHGRESFCSTSH="$HOMEgfs/scripts/exgdas_atmos_chgres_fcst.sh"
+  export SHiELD_ref="/gpfs/f5/gfdl_w/proj-shared/Mingjing.Tong/SHiELD_reference/C384"
+fi
+
+chgres_setup="cld_amt=${cld_amt:-".false."}"
+
+echo "END: config.echgres"

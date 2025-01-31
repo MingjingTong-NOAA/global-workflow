@@ -1,8 +1,10 @@
 from wxflow import Factory
 from rocoto.gfs_tasks import GFSTasks
 from rocoto.gefs_tasks import GEFSTasks
+from rocoto.shield_tasks import SHiELDTasks
 
 
 tasks_factory = Factory('Tasks')
 tasks_factory.register('gfs', GFSTasks)
 tasks_factory.register('gefs', GEFSTasks)
+tasks_factory.register('shield', SHiELDTasks)

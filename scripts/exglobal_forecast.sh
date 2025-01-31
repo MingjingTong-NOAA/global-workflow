@@ -17,7 +17,7 @@
 ## 2017-03-24  Fanglin Yang   Updated to use NEMS FV3GFS with IPD4
 ## 2017-05-24  Rahul Mahajan  Updated for cycling with NEMS FV3GFS
 ## 2017-09-13  Fanglin Yang   Updated for using GFDL MP and Write Component
-## 2019-04-02
+## 2025-01-21  Mingjing Tong  Adapted for SHiELD
 ##
 ## Attributes:
 ##   Language: Portable Operating System Interface (POSIX) Shell
@@ -83,9 +83,9 @@ source "${USHgfs}/preamble.sh"
 source "${USHgfs}/forecast_predet.sh" 	# include functions for variable definition
 source "${USHgfs}/forecast_det.sh"  # include functions for run type determination
 source "${USHgfs}/forecast_postdet.sh"	# include functions for variables after run type determination
-source "${USHgfs}/parsing_ufs_configure.sh"	 # include functions for ufs_configure processing
+[[ ${NET:-"gfs"} != "shield" ]] && source "${USHgfs}/parsing_ufs_configure.sh"	 # include functions for ufs_configure processing
 
-source "${USHgfs}/atparse.bash"  # include function atparse for parsing @[XYZ] templated files
+[[ ${NET:-"gfs"} != "shield" ]] && source "${USHgfs}/atparse.bash"  # include function atparse for parsing @[XYZ] templated files
 
 # Coupling control switches, for coupling purpose, off by default
 cpl=${cpl:-.false.}
@@ -127,12 +127,16 @@ FV3_postdet
 echo "MAIN: Post-determination set up of run type finished"
 
 echo "MAIN: Writing namelists and model configuration"
+if [[ ${NET:-"gfs"} != "shield" ]]; then
 FV3_nml
+else
+SHiELD_nml
+fi
 [[ ${cplflx} = .true. ]] && MOM6_nml
 [[ ${cplwav} = .true. ]] && WW3_nml
 [[ ${cplice} = .true. ]] && CICE_nml
 [[ ${cplchm} = .true. ]] && GOCART_rc
-UFS_configure
+[[ ${NET:-"gfs"} != "shield" ]] && UFS_configure
 echo "MAIN: Name lists and model configuration written"
 
 #------------------------------------------------------------------
@@ -149,13 +153,20 @@ else
   export OMP_NUM_THREADS=${UFS_THREADS:-1}
 fi
 
+[[ ${DO_CUBE2GAUS:-"NO"} = "YES" ]] && export OMP_NUM_THREADS=${NTHREADS_FV3:-1}
+
 ${NCP} "${EXECgfs}/${FCSTEXEC}" "${DATA}/"
+if [[ ${NET:-"gfs"} != "shield" ]]; then
 ${APRUN_UFS} "${DATA}/${FCSTEXEC}" 1>&1 2>&2
+else
+${APRUN_FV3} "${DATA}/${FCSTEXEC}" 1>&1 2>&2
+fi
 export ERR=$?
 export err=${ERR}
 ${ERRSCRIPT} || exit "${err}"
 
 FV3_out
+[[ ${DO_CUBE2GAUS:-"NO"} = "YES" ]] && CUBE2GAUS
 [[ ${cplflx} = .true. ]] && MOM6_out
 [[ ${cplflx} = .true. ]] && CMEPS_out
 [[ ${cplwav} = .true. ]] && WW3_out

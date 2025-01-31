@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+########## config.ediag ##########
+# GFS ensemble post-eobs specific
+
+echo "BEGIN: config.ediag"
+
+# Get task specific resources
+. $EXPDIR/config.resources ediag
+
+export KEEPDATA="YES"
+
+echo "END: config.ediag"

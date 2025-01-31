@@ -10,25 +10,32 @@ function usage() {
 Builds all of the global-workflow components by calling the individual build
   scripts in sequence.
 
-Usage: ${BASH_SOURCE[0]} [-h][-o][--nest]
+Usage: ${BASH_SOURCE[0]} [-h][-o][-u][--nest]
   -h:
     Print this help message and exit
   -o:
     Configure for NCO (copy instead of link)
+  -s:
+    Configure for SHiELD
 EOF
   exit 1
 }
 
 RUN_ENVIR="emc"
+MODEL="shield"
 
 # Reset option counter in case this script is sourced
 OPTIND=1
-while getopts ":ho-:" option; do
+while getopts ":hmo-:" option; do
   case "${option}" in
   h) usage ;;
   o)
     echo "-o option received, configuring for NCO"
     RUN_ENVIR="nco"
+    ;;
+  u)
+    echo "-m option received, configuring for SHiELD"
+    MODEL="ufs"
     ;;
   -)
     if [[ "${OPTARG}" == "nest" ]]; then
@@ -56,7 +63,7 @@ else
 fi
 
 # shellcheck disable=SC1091
-COMPILER="intel" source "${HOMEgfs}/sorc/gfs_utils.fd/ush/detect_machine.sh" # (sets MACHINE_ID)
+COMPILER="intel" source "${HOMEgfs}/ush/detect_machine.sh" # (sets MACHINE_ID)
 # shellcheck disable=
 machine=$(echo "${MACHINE_ID}" | cut -d. -f1)
 
@@ -76,7 +83,8 @@ case "${machine}" in
 "hercules") FIX_DIR="/work/noaa/global/glopara/fix" ;;
 "jet") FIX_DIR="/lfs5/HFIP/hfv3gfs/glopara/FIX/fix" ;;
 "s4") FIX_DIR="/data/prod/glopara/fix" ;;
-"gaea") FIX_DIR="/gpfs/f5/ufs-ard/world-shared/global/glopara/data/fix" ;;
+"gaeac5") FIX_DIR="/gpfs/f5/ufs-ard/world-shared/global/glopara/data/fix" ;;
+"gaeac6") FIX_DIR="/gpfs/f6/ufs-ard/world-shared/global/glopara/data/fix" ;;
 "noaacloud") FIX_DIR="/contrib/global-workflow-shared-data/fix" ;;
 *)
   echo "FATAL: Unknown target machine ${machine}, couldn't set FIX_DIR"
@@ -86,6 +94,24 @@ esac
 
 # Source fix version file
 source "${HOMEgfs}/versions/fix.ver"
+
+if [[ "${MODEL}" == "shield" ]]; then
+#------------------------------
+#--shield fix fields
+#------------------------------
+case "${machine}" in
+  "hera")     FIX_SHiELD_DIR="/scratch2/GFDL/gfdlscr/proj-shared/fix_shield" ;;
+  "gaeac5")   FIX_SHiELD_DIR="/gpfs/f5/gfdl_w/proj-shared/Mingjing.Tong/fix_shield" ;;
+  "gaeac6")   FIX_SHiELD_DIR="/gpfs/f6/bil-coastal-gfdl/proj-shared/Mingjing.Tong/fix_shield" ;; 
+  *)
+    echo "FATAL: Unknown target machine ${machine}, couldn't set FIX_SHiELD_DIR"
+    exit 1
+    ;;
+esac
+  
+# Source fix version file
+source "${HOMEgfs}/versions/fix_shield.ver"
+fi
 
 # Link GDASapp python packages in ush/python
 packages=("jcb")
@@ -135,6 +161,29 @@ if [[ "${LINK_NEST:-OFF}" == "ON" ]]; then
   done
 fi
 
+if [[ "${MODEL}" == "shield" ]]; then
+# Link SHiELD fix directories
+  for dir in shield \
+             aer \
+             gsi
+  do
+    if [[ -d "${dir}" ]]; then
+      [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${dir}"
+      rm -rf "${dir}"
+    fi
+    fix_ver="${dir}_ver"
+    ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
+  done
+  if [[ "${machine}" == "hera" ]]; then
+    rm -f orog
+    fix_ver="orog_ver"
+    ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/orog/${!fix_ver}" "orog"
+  fi
+
+  cd ${HOMEgfs}/sorc/chgres_shield.fd/fix
+  ./link_fixdirs.sh emc ${machine}
+fi
+
 #---------------------------------------
 #--add files from external repositories
 #---------------------------------------
@@ -170,6 +219,14 @@ done
 for file in make_ntc_bull.pl make_NTC_file.pl make_tif.sh month_name.sh; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gfs_utils.fd/ush/${file}" .
 done
+set -x
+if [[ "${MODEL}" == "shield" ]]; then
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/global_cycle_shield.sh" .
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/chgres_shield.fd/ush/run_sfcanl_chgres.sh" .
+  for file in cube2gaussian.sh gaussian_c2g_atms.sh gaussian_sfcfcst.sh ; do
+    ${LINK_OR_COPY} "${HOMEgfs}/sorc/shield_utils.fd/ush/${file}" .
+  done
+fi
 
 # Link these templates from ufs-weather-model
 cd "${HOMEgfs}/parm/ufs" || exit 1
@@ -290,6 +347,21 @@ for utilexe in fbwndgfs.x gaussian_sfcanl.x gfs_bufr.x supvit.x syndat_getjtbul.
   [[ -s "${utilexe}" ]] && rm -f "${utilexe}"
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gfs_utils.fd/install/bin/${utilexe}" .
 done
+
+if [[ "${MODEL}" == "shield" ]]; then
+  model_exe="shield_model.x"
+  if [[ -s "${model_exe}" ]]; then
+    rm -f "${model_exe}"
+  fi
+  if [[ -f "${HOMEgfs}/sorc/shield.fd/SHiELD_build/Build/bin/${model_exe}" ]]; then
+    ${LINK_OR_COPY} "${HOMEgfs}/sorc/shield.fd/SHiELD_build/Build/bin/${model_exe}" "${model_exe}"
+  fi
+  for utilexe in fv3_c2g_atms.x gaussian_sfcanl.x gaussian_sfcfcst.x
+  do
+    [[ -s "${utilexe}" ]] && rm -f "${utilexe}"
+    ${LINK_OR_COPY} "${HOMEgfs}/sorc/shield_utils.fd/install/bin/${utilexe}" .
+  done
+fi
 
 declare -a model_systems=("gfs" "gefs" "sfs")
 for sys in "${model_systems[@]}"; do

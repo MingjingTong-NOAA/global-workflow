@@ -306,6 +306,7 @@ OBERROR=${OBERROR:-${FIXgfs}/gsi/prepobs_errtable.global}
 
 # GSI namelist
 SETUP=${SETUP:-""}
+FULL_HYDRO=${FULL_HYDRO:-""}
 GRIDOPTS=${GRIDOPTS:-""}
 BKGVERR=${BKGVERR:-""}
 ANBKGERR=${ANBKGERR:-""}
@@ -561,8 +562,8 @@ fi
 ##############################################################
 # Handle inconsistent surface mask between background, ensemble and analysis grids
 # This needs re-visiting in the context of NSST; especially references to JCAP*
-if [ ${JCAP} -ne ${JCAP_A} ]; then
-   if [ ${DOHYBVAR} = "YES" -a ${JCAP_A} = ${JCAP_ENKF} ]; then
+if [ ${JCAP} -ne ${JCAP_A} ] || [ ${MODE} != "cycled" ]; then
+   if [ ${DOHYBVAR} = "YES" -a ${JCAP_A} = ${JCAP_ENKF} ] || [ ${MODE} != "cycled" ] ; then
       if [ -e ${SFCGES_ENSMEAN} ]; then
          USE_READIN_ANL_SFCMASK=.true.
          ${NLN} ${SFCGES_ENSMEAN} sfcf06_anlgrid
@@ -700,6 +701,15 @@ if [ ${DONST} = "YES" ]; then
    NST="nstinfo=${NSTINFO},fac_dtl=${FAC_DTL},fac_tsl=${FAC_TSL},zsea1=${ZSEA1},zsea2=${ZSEA2},${NST}"
 fi
 
+# GSI namelist options for all-sky radiance assimilation
+if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
+   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".true."}"
+   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
+   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
+   FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
+fi
+
 ##############################################################
 # Create global_gsi namelist
 cat > gsiparm.anl << EOF
@@ -723,7 +733,7 @@ cat > gsiparm.anl << EOF
   diag_precon=.true.,step_start=1.e-3,emiss_bc=.true.,nhr_obsbin=${nhr_obsbin:-3},
   cwoption=3,imp_physics=${imp_physics},lupp=${lupp},cnvw_option=${cnvw_option},cao_check=${cao_check},
   netcdf_diag=${netcdf_diag},binary_diag=${binary_diag},
-  lobsdiag_forenkf=${lobsdiag_forenkf},
+  lobsdiag_forenkf=${lobsdiag_forenkf},lwrite_peakwt=${lwrite_peakwt:-".false."},
   write_fv3_incr=${write_fv3_increment},
   nhr_anal=${IAUFHRS},
   ta2tb=${ta2tb},
@@ -731,6 +741,7 @@ cat > gsiparm.anl << EOF
   ${WRITE_ZERO_STRAT}
   ${WRITE_STRAT_EFOLD}
   ${SETUP}
+  ${FULL_HYDRO}
 /
 &GRIDOPTS
   JCAP_B=${JCAP},JCAP=${JCAP_A},NLAT=${NLAT_A},NLON=${NLON_A},nsig=${LEVS},

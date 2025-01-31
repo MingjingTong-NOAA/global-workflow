@@ -140,6 +140,7 @@ common_predet(){
 FV3_predet(){
   echo "SUB ${FUNCNAME[0]}: Defining variables for FV3"
 
+  local model=${FCSTEXEC:-"gfs"}
   if [[ ! -d "${COMOUT_ATMOS_HISTORY}" ]]; then mkdir -p "${COMOUT_ATMOS_HISTORY}"; fi
   if [[ ! -d "${COMOUT_ATMOS_MASTER}" ]]; then mkdir -p "${COMOUT_ATMOS_MASTER}"; fi
   if [[ ! -d "${COMOUT_ATMOS_RESTART}" ]]; then mkdir -p "${COMOUT_ATMOS_RESTART}"; fi
@@ -217,8 +218,8 @@ FV3_predet(){
   resp=$((res+1))
   npx=${resp}
   npy=${resp}
-  npz=$((LEVS-1))
-  io_layout="1,1"
+  npz=${npz:-$((LEVS-1))}
+  io_layout=${io_layout:-"1,1"}
   #ncols=$(( (${npx}-1)*(${npy}-1)*3/2 ))
 
   # spectral truncation and regular grid resolution based on FV3 resolution
@@ -271,6 +272,8 @@ FV3_predet(){
   # <0 means older adiabatic pre-conditioning
   na_init=${na_init:-1}
 
+  if [[ ${model} == gfs* ]]; then
+
   local suite_file="${HOMEgfs}/sorc/ufs_model.fd/FV3/ccpp/suites/suite_${CCPP_SUITE}.xml"
   if [[ ! -f "${suite_file}" ]]; then
     echo "FATAL ERROR: CCPP Suite file ${suite_file} does not exist, ABORT!"
@@ -318,11 +321,16 @@ FV3_predet(){
     IEMS=${IEMS:-1}
   fi
 
+  fi
+
   if [[ "${TYPE}" == "nh" ]]; then  # non-hydrostatic options
     hydrostatic=".false."
     phys_hydrostatic=".false."     # enable heating in hydrostatic balance in non-hydrostatic simulation
     use_hydro_pressure=".false."   # use hydrostatic pressure for physics
     make_nh=".true."               # running in non-hydrostatic mode
+    if [[ "${ICFROM}" == "gfs" || "${ICFROM}" == "shield" ]]; then
+      make_nh=".false."
+    fi
     pass_full_omega_to_physics_in_non_hydrostatic_mode=".true."
   else  # hydrostatic options
     hydrostatic=".true."
@@ -381,14 +389,23 @@ FV3_predet(){
     vtdm4=${vtdm4:-"0.05"}
   fi
 
-  # Initial conditions are chgres-ed from GFS analysis file
-  nggps_ic=${nggps_ic:-".true."}
+  if [[ "${ICFROM}" == "gfs" || "${ICFROM}" == "shield" ]]; then
+    # Initial conditions are chgres-ed from GFS analysis file
+    nudge_qv=${nudge_qv:-".true."}
+    nggps_ic=${nggps_ic:-".true."}
+    ecmwf_ic=".false."
+    res_latlon_dynamics='""'
+  else
+    nudge_qv=".false."
+    nggps_ic=".false."
+    ecmwf_ic=".true."
+    res_latlon_dynamics='"INPUT/gk03_CF0.nc"'
+  fi
   ncep_ic=${ncep_ic:-".false."}
   external_ic=".true."
   mountain=".false."
   warm_start=".false."
   read_increment=".false."
-  res_latlon_dynamics='""'
 
   # Stochastic Physics Options
   do_skeb=".false."
@@ -432,25 +449,44 @@ FV3_predet(){
   #--------------------------------------------------------------------------
 
   # Fix files
+  sfcfix=${sfcfix:-"sfc"}
+  orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
+
   FNGLAC=${FNGLAC:-"${FIXgfs}/am/global_glacier.2x2.grb"}
   FNMXIC=${FNMXIC:-"${FIXgfs}/am/global_maxice.2x2.grb"}
   FNTSFC=${FNTSFC:-"${FIXgfs}/am/RTGSST.1982.2012.monthly.clim.grb"}
   FNSNOC=${FNSNOC:-"${FIXgfs}/am/global_snoclim.1.875.grb"}
   FNZORC=${FNZORC:-"igbp"}
+  if [[ ${model} == gfs* ]]; then
   FNAISC=${FNAISC:-"${FIXgfs}/am/IMS-NIC.blended.ice.monthly.clim.grb"}
-  FNALBC2=${FNALBC2:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.facsf.tileX.nc"}
-  FNTG3C=${FNTG3C:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.substrate_temperature.tileX.nc"}
-  FNVEGC=${FNVEGC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.vegetation_greenness.tileX.nc"}
+  else
+  FNAISC=${FNAISC:-"${FIXgfs}/am/CFSR.SEAICE.1982.2012.monthly.clim.grb"}
+  fi
+  FNALBC2=${FNALBC2:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.facsf.tileX.nc"}
+  FNTG3C=${FNTG3C:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.substrate_temperature.tileX.nc"}
+  FNVEGC=${FNVEGC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc"}
   FNMSKH=${FNMSKH:-"${FIXgfs}/am/global_slmask.t1534.3072.1536.grb"}
-  FNVMNC=${FNVMNC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.vegetation_greenness.tileX.nc"}
-  FNVMXC=${FNVMXC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.vegetation_greenness.tileX.nc"}
-  FNSLPC=${FNSLPC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.slope_type.tileX.nc"}
-  FNALBC=${FNALBC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.snowfree_albedo.tileX.nc"}
-  FNVETC=${FNVETC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.vegetation_type.tileX.nc"}
-  FNSOTC=${FNSOTC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.soil_type.tileX.nc"}
-  FNSOCC=${FNSOCC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.soil_color.tileX.nc"}
-  FNABSC=${FNABSC:-"${FIXorog}/${CASE}/sfc/${CASE}.mx${OCNRES}.maximum_snow_albedo.tileX.nc"}
+  FNVMNC=${FNVMNC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc"}
+  FNVMXC=${FNVMXC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc"}
+  FNSLPC=${FNSLPC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.slope_type.tileX.nc"}
+  FNALBC=${FNALBC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.snowfree_albedo.tileX.nc"}
+  FNVETC=${FNVETC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_type.tileX.nc"}
+  FNSOTC=${FNSOTC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.soil_type.tileX.nc"}
+  FNSOCC=${FNSOCC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.soil_color.tileX.nc"}
+  FNABSC=${FNABSC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.maximum_snow_albedo.tileX.nc"}
   FNSMCC=${FNSMCC:-"${FIXgfs}/am/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"}
+
+  [[ ! -f $FNALBC ]] && FNALBC="$FIXam/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNVETC ]] && FNVETC="$FIXam/global_vegtype.igbp.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNSOTC ]] && FNSOTC="$FIXam/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNABSC ]] && FNABSC="$FIXam/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNSMCC ]] && FNSMCC="$FIXam/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+
+  if [[ "$DONST" == "NO" && "${DOMLO}" == ".true." ]]; then
+    FNMLDC=${FNMLDC:-"${FIXshield}/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
+  else
+    FNMLDC="        "
+  fi 
 
   # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
   [[ ! -f "${FNSMCC}" ]] && FNSMCC="${FIXgfs}/am/global_soilmgldas.statsgo.t1534.3072.1536.grb"
@@ -468,7 +504,7 @@ FV3_predet(){
   # Files for orography, GWD tiles
   local tt
   for (( tt = 1; tt <= ntiles; tt++ )); do
-    ${NCP} "${FIXorog}/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${tt}.nc" "${DATA}/INPUT/oro_data.tile${tt}.nc"
+    ${NCP} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile${tt}.nc"          "${DATA}/INPUT/oro_data.tile${tt}.nc"
     ${NCP} "${FIXorog}/${CASE}/${CASE}_grid.tile${tt}.nc"                 "${DATA}/INPUT/${CASE}_grid.tile${tt}.nc"
     ${NCP} "${FIXugwd}/${CASE}/${CASE}_oro_data_ls.tile${tt}.nc"          "${DATA}/INPUT/oro_data_ls.tile${tt}.nc"
     ${NCP} "${FIXugwd}/${CASE}/${CASE}_oro_data_ss.tile${tt}.nc"          "${DATA}/INPUT/oro_data_ss.tile${tt}.nc"
@@ -481,6 +517,8 @@ FV3_predet(){
     ${NLN} "${DATA}/INPUT/oro_data_ss.tile7.nc" "${DATA}/INPUT/oro_data_ss.nest02.tile7.nc"
   fi
 
+  
+  if [[ ${model} == gfs* ]]; then
   # NoahMP table
   local noahmptablefile="${PARMgfs}/ufs/noahmptable.tbl"
   if [[ ! -f "${noahmptablefile}" ]]; then
@@ -488,6 +526,7 @@ FV3_predet(){
     exit 1
   else
     ${NCP} "${noahmptablefile}" "${DATA}/noahmptable.tbl"
+  fi
   fi
 
   #  Thompson microphysics fix files
@@ -504,15 +543,15 @@ FV3_predet(){
     O3FORC="global_o3prdlos.f77"
   fi
   H2OFORC=${H2OFORC:-"global_h2o_pltc.f77"}
-  ${NCP} "${FIXgfs}/am/${O3FORC}"  "${DATA}/global_o3prdlos.f77"
-  ${NCP} "${FIXgfs}/am/${H2OFORC}" "${DATA}/global_h2oprdlos.f77"
+  ${NCP} "${FIXgfs}/am/${O3FORC}"  "${DATA}/${subdir:-""}global_o3prdlos.f77"
+  ${NCP} "${FIXgfs}/am/${H2OFORC}" "${DATA}/${subdir:-""}global_h2oprdlos.f77"
 
   # GFS standard input data
 
   ISOL=${ISOL:-2}
 
-  ${NCP} "${FIXgfs}/am/global_solarconstant_noaa_an.txt" "${DATA}/solarconstant_noaa_an.txt"
-  ${NCP} "${FIXgfs}/am/global_sfc_emissivity_idx.txt"    "${DATA}/sfc_emissivity_idx.txt"
+  ${NCP} "${FIXgfs}/am/global_solarconstant_noaa_an.txt" "${DATA}/${subdir:-""}solarconstant_noaa_an.txt"
+  ${NCP} "${FIXgfs}/am/global_sfc_emissivity_idx.txt"    "${DATA}/${subdir:-""}sfc_emissivity_idx.txt"
 
   # Aerosol options
   IAER=${IAER:-1011}
@@ -526,11 +565,11 @@ FV3_predet(){
     done
   fi
 
-  ${NCP} "${FIXgfs}/am/global_climaeropac_global.txt" "${DATA}/aerosol.dat"
+  ${NCP} "${FIXgfs}/am/global_climaeropac_global.txt" "${DATA}/${subdir:-""}aerosol.dat"
   if (( IAER > 0 )) ; then
     local file
     for file in "${FIXgfs}/am/global_volcanic_aerosols"* ; do
-      ${NCP} "${file}" "${DATA}/$(basename "${file//global_}")"
+      ${NCP} "${file}" "${DATA}/${subdir:-""}$(basename "${file//global_}")"
     done
   fi
 
@@ -543,8 +582,8 @@ FV3_predet(){
   # CO2 options
   ICO2=${ICO2:-2}
 
-  ${NCP} "${FIXgfs}/am/global_co2historicaldata_glob.txt" "${DATA}/co2historicaldata_glob.txt"
-  ${NCP} "${FIXgfs}/am/co2monthlycyc.txt"                 "${DATA}/co2monthlycyc.txt"
+  ${NCP} "${FIXgfs}/am/global_co2historicaldata_glob.txt" "${DATA}/${subdir:-""}co2historicaldata_glob.txt"
+  ${NCP} "${FIXgfs}/am/co2monthlycyc.txt"                 "${DATA}/${subdir:-""}co2monthlycyc.txt"
   # Set historical CO2 values based on whether this is a reforecast run or not
   # Ref. issue 2403
   local co2dir
@@ -555,8 +594,17 @@ FV3_predet(){
   if (( ICO2 > 0 )); then
     local file
     for file in "${FIXgfs}/am/${co2dir}/global_co2historicaldata"* ; do
-      ${NCP} "${file}" "${DATA}/$(basename "${file//global_}")"
+      ${NCP} "${file}" "${DATA}/${subdir:-""}$(basename "${file//global_}")"
     done
+  fi
+
+  if [[ ${model} == shield* ]]; then
+  # SHiELD aerosol data
+  if [[ ${io_layout} == "1,1" ]]; then
+    ${NLN} ${FIXaer}/${CASE}/*.nc $DATA/INPUT/
+  else
+    ${NLN} ${FIXaer}/${CASE}/*.nc.* $DATA/INPUT/
+  fi
   fi
 
   # Inline UPP fix files

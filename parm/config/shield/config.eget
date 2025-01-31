@@ -1,0 +1,33 @@
+#!/bin/ksh -x
+
+########## config.eget ##########
+# Ensemble pull specific
+
+echo "BEGIN: config.eget"
+
+# Get task specific resources
+. $EXPDIR/config.resources eget
+
+# Set the number of ensemble members to archive per earc job
+case "${CASE_ENS}" in
+   "C48" | "C96")
+      export NMEM_EARCGRP=80
+      ;;
+   "C192")
+      export NMEM_EARCGRP=20
+      ;;
+   "C384" | "C768")
+      export NMEM_EARCGRP=10
+      ;;
+   "C1152")
+      export NMEM_EARCGRP=4
+      ;;
+   *)
+      echo "FATAL ERROR: Unknown ensemble resolution ${CASE_ENS}, ABORT!"
+      exit 1
+      ;;
+esac
+
+export ETARDIR=$ATARDIR
+
+echo "END: config.eget"

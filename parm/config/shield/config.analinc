@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+########## config.analinc ##########
+# GFS post-anal specific (non-diag)
+
+echo "BEGIN: config.analinc"
+
+# Get task specific resources
+. $EXPDIR/config.resources analinc
+
+echo "END: config.analinc"

@@ -150,6 +150,7 @@ class RocotoXML(ABC):
 
         expdir = self._base['EXPDIR']
         pslot = self._base['PSLOT']
+        machine = self._base['machine']
 
         rocotorunstr = f'{rocotoruncmd} -d {expdir}/{pslot}.db -w {expdir}/{pslot}.xml'
         cronintstr = f'*/{cronint} * * * *'
@@ -159,17 +160,28 @@ class RocotoXML(ABC):
         except KeyError:
             replyto = ''
 
-        strings = ['',
-                   f'#################### {pslot} ####################',
-                   f'MAILTO="{replyto}"'
-                   ]
-        # AWS need 'SHELL', and 'BASH_ENV' defined, or, the crontab job won't start.
-        if os.environ.get('PW_CSP', None) in ['aws', 'azure', 'google']:
-            strings.extend([f'SHELL="/bin/bash"',
-                            f'BASH_ENV="/etc/bashrc"'])
-        strings.extend([f'{cronintstr} {rocotorunstr}',
-                        '#################################################################',
-                        ''])
+        if machine == "GAEA":
+            strings = ['',
+                       f'#################### {pslot} ####################',
+                       '#SCRON --account=gfdl_w',
+                       '#SCRON --time=00:01:00',
+                       f'#SCRON --job-name=scron_{pslot}',
+                       f'#SCRON --output={expdir}/logs/scron.out',
+                       '#SCRON --dependency=singleton',
+                       '#SCRON --partition=cron_c5',
+                       '#SCRON --nodelist=gaea55',
+                       '#SCRON --mem=8G',
+                       f'MAILTO="{replyto}"',
+                       f'{cronintstr} {rocotorunstr}',
+                       '#################################################################',
+                       '']
+        else:
+            strings = ['',
+                       f'#################### {pslot} ####################',
+                       f'MAILTO="{replyto}"',
+                       f'{cronintstr} {rocotorunstr}',
+                       '#################################################################',
+                       '']
 
         if crontab_file is None:
             crontab_file = f"{expdir}/{pslot}.crontab"

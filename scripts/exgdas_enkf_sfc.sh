@@ -55,6 +55,7 @@ else
    mem_offset=0
 fi
 DOIAU=${DOIAU_ENKF:-"NO"}
+DO_TSFC_TILE=${DO_TSFC_TILE=:-"NO"}
 
 # Global_cycle stuff
 CYCLESH=${CYCLESH:-${USHgfs}/global_cycle.sh}
@@ -118,6 +119,7 @@ fi
 export APRUNCY=${APRUN_CYCLE:-$APRUN_ESFC}
 export OMP_NUM_THREADS_CY=${NTHREADS_CYCLE:-$NTHREADS_ESFC}
 export MAX_TASKS_CY=$NMEM_ENS
+orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 
 if [ $DOIAU = "YES" ]; then
     # Update surface restarts at beginning of window when IAU is ON
@@ -161,7 +163,10 @@ if [ $DOIAU = "YES" ]; then
                 "${DATA}/fnbgsi.${cmem}"
             ${NCP} "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
             ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"     "${DATA}/fngrid.${cmem}"
-            ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+            ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+            if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
+               ${NLN} $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENS}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
+            fi
 
             if [[ ${GSI_SOILANAL} = "YES" ]]; then
                 FHR=6
@@ -236,8 +241,10 @@ if [ $DOSFCANL_ENKF = "YES" ]; then
                 "${DATA}/fnbgsi.${cmem}"
             ${NCP} "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
             ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"      "${DATA}/fngrid.${cmem}"
-            ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
-
+            ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+            if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
+              ${NLN} ${ICSDIR}/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENS}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
+            fi
         done
 
         CDATE="${PDY}${cyc}" ${CYCLESH}

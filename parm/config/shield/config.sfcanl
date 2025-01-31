@@ -1,0 +1,27 @@
+#! /usr/bin/env bash
+
+########## config.sfcanl ##########
+# GFS surface analysis specific
+
+echo "BEGIN: config.sfcanl"
+
+# Get task specific resources
+. $EXPDIR/config.resources sfcanl
+
+# Turn off NST in JEDIATMVAR
+if [[ "${DO_JEDIATMVAR}" == "YES" ]]; then
+   export DONST="NO"
+fi
+
+if [[ ${DO_RTGSST:-"NO"} == "NO" ]]; then
+   export FNTSFA="        "
+   if [[ ${DO_TSFC_TILE:-"YES"} != "YES" ]]; then
+     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
+   fi
+fi
+
+export SFCANALSH="$HOMEgfs/scripts/exglobal_atmos_sfcanl.sh"
+export CYCLESH="$USHgfs/global_cycle_shield.sh"
+export orogfix="${CASE}"
+
+echo "END: config.sfcanl"

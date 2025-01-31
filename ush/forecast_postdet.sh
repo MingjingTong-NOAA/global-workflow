@@ -19,10 +19,20 @@ FV3_postdet() {
     echo "Copying FV3 cold start files for 'RUN=${RUN}' at '${current_cycle}' from '${COMIN_ATMOS_INPUT}'"
     local fv3_file
     for fv3_file in ${file_list}; do
-      ${NCP} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/${fv3_file}" \
-      || ( echo "FATAL ERROR: Unable to copy FV3 IC, ABORT!"; exit 1 )
+      if [[ $DONST != "YES" && ${USE_TREF:-".false."} == ".true." && "${fv3_file:0:3}" == "sfc" ]]; then
+        ${NLN} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/sfc_org"
+        ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
+        ncrename -O -v tref,tsea out.nc ${DATA}/INPUT/${fv3_file}
+      else
+        ${NCP} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/${fv3_file}" \
+        || ( echo "FATAL ERROR: Unable to copy FV3 IC, ABORT!"; exit 1 )
+      fi
     done
-
+    replay=0
+    if [ "$ICFROM" = "ifs" ]; then
+      ${NCP} "${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc" "$DATA/INPUT/gk03_CF0.nc" \
+      || ( echo "FATAL ERROR: Unable to copy IFS IC, ABORT!"; exit 1 )
+    fi
   # warm start case
   elif [[ "${warm_start}" == ".true." ]]; then
 
@@ -65,8 +75,15 @@ FV3_postdet() {
       for (( nn = 1; nn <= ntiles; nn++ )); do
         if [[ -f "${COMOUT_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" ]]; then
           rm -f "${DATA}/INPUT/sfc_data.tile${nn}.nc"
-          ${NCP} "${COMOUT_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
-                 "${DATA}/INPUT/sfc_data.tile${nn}.nc"
+          if [[ ${DONST:-"NO"} == "YES" || ${DO_SFCANL:-"NO"} == "YES" || (${MODE} = "forecast-only" && ${IAU_OFFSET} -ne 0) || ${USE_TREF:-".false."} != ".true." ]]; then
+            ${NCP} "${COMOUT_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
+                   "${DATA}/INPUT/sfc_data.tile${nn}.nc"
+          else
+            ${NLN} "${COMOUT_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
+                   "${DATA}/INPUT/sfc_org"
+            ncrename -O -v tsea,tsea_org ${DATA}/INPUT/sfc_org out.nc
+            ncrename -O -v tref,tsea out.nc ${DATA}/INPUT/sfc_data.tile${nn}.nc
+          fi
         else
           echo "'sfcanl_data.tile1.nc' not found in '${COMOUT_ATMOS_RESTART}', using 'sfc_data.tile1.nc'"
           break
@@ -184,16 +201,51 @@ EOF
         fi
       fi
 
-      local increment_file
-      for inc_file in "${inc_files[@]}"; do
-        increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${PREFIX_ATMINC}${inc_file}"
-        if [[ -f "${increment_file}" ]]; then
-          ${NCP} "${increment_file}" "${DATA}/INPUT/${inc_file}"
-        else
-          echo "FATAL ERROR: missing increment file '${increment_file}', ABORT!"
-          exit 1
+      if (( replay == 1 )); then
+        # compute increment inside model
+        inc_files=()
+        read_increment=".false."
+        IAU_INC_FILES=""
+ 
+        # link analysis and restart files for replay
+        mkdir -p $DATA/EXTIC
+        mkdir -p $DATA/ATMINC
+        mkdir -p $DATA/ATMANL
+        # link external IC
+        local file_list
+        file_list=$(FV3_coldstarts)
+        echo "Link FV3 cold start files for 'RUN=${RUN}' at '${current_cycle}' from '${COMIN_ATMOS_INPUT}'"
+        local fv3_file
+        for fv3_file in ${file_list}; do
+          if [[ "${fv3_file:0:3}" != "sfc" ]]; then
+            ${NLN} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/EXTIC/${fv3_file}"
+          fi
+        done
+        if [[ "$ICFROM" == "ifs" ]]; then
+          $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/EXTIC/gk03_CF0.nc
         fi
-      done
+     
+        # Link restart background files
+        local file_list
+        file_list=$(FV3_restarts)
+        echo "Link FV3 restarts for 'RUN=${RUN}' at '${restart_date}' from '${restart_dir}'"
+        local fv3_file restart_file
+        for fv3_file in ${file_list}; do
+          restart_file="${CDATE:0:8}.${CDATE:8:2}0000.${fv3_file}"
+          ${NLN} "${restart_dir}/${restart_file}" "${DATA}/INPUT/${fv3_file}"
+        done
+      else
+        local increment_file
+        for inc_file in "${inc_files[@]}"; do
+          increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${PREFIX_ATMINC}${inc_file}"
+          if [[ -f "${increment_file}" ]]; then
+            ${NCP} "${increment_file}" "${DATA}/INPUT/${inc_file}"
+          else
+            echo "FATAL ERROR: missing increment file '${increment_file}', ABORT!"
+            exit 1
+          fi
+        done
+      fi
 
     fi  # if [[ "${RERUN}" == "YES" ]]; then
     #--------------------------------------------------------------------------
@@ -203,7 +255,8 @@ EOF
 
   #============================================================================
   # If doing IAU, change forecast hours
-  if [[ "${DOIAU:-NO}" == "YES" ]]; then
+
+  if [[ "${DOIAU:-NO}" == "YES" && "${DO_CUBE2GAUS:-NO}" == "NO" ]]; then
     FHMAX=$((FHMAX + 6))
     if (( FHMAX_HF > 0 )); then
       FHMAX_HF=$((FHMAX_HF + 6))
@@ -226,6 +279,27 @@ EOF
 
     # do not pre-condition the solution
     na_init=0
+
+    if (( replay == 1 )); then
+      if [[ "${ICFROM}" == "gfs" || "${ICFROM}" == "shield" ]]; then
+        nudge_qv=${nudge_qv:-".true."}
+        nggps_ic=${nggps_ic:-".true."}
+        ncep_ic=${ncep_ic:-".false."}
+        ecmwf_ic=".false."
+        res_latlon_dynamics='""'
+      else
+        nudge_qv=".false."
+        nggps_ic=".false."
+        ncep_ic=".false."
+        ecmwf_ic=".true."
+        res_latlon_dynamics='"EXTIC/gk03_CF0.nc"'
+      fi
+    else
+      nudge_qv=${nudge_qv:-".true."}
+      nggps_ic=".false."
+      ncep_ic=".false."
+      ecmwf_ic=".false."
+    fi
 
   fi  # warm_start == .true.
   #============================================================================
@@ -263,8 +337,62 @@ EOF
         fi
       fi
     done
+  else
+    if [[ ${RUN} == "gfs" && "${DO_CUBE2GAUS}" == "NO" ]]; then
+      local nn
+      for (( nn = 1; nn <= ntiles; nn++ )); do
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/grid_spec.tile${nn}.nc" "grid_spec.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/atmos_4xdaily.tile${nn}.nc" "atmos_4xdaily.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/atmos_static.tile${nn}.nc" "atmos_static.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/atmos_sos.tile${nn}.nc" "atmos_sos.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/nggps2d.tile${nn}.nc" "nggps2d.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/nggps3d_4xdaily.tile${nn}.nc" "nggps3d_4xdaily.tile${nn}.nc"
+        ${NLN} "${COMOUT_ATMOS_HISTORY}/tracer3d_4xdaily.tile${nn}.nc" "tracer3d_4xdaily.tile${nn}.nc"
+      done
+    fi
   fi
   #============================================================================
+
+  if [[ "${DO_CUBE2GAUS:-NO}" == "YES" ]]; then
+    write_first_time_step=${write_first_time_step:-".false."}
+    FHOUT_aux=${FHOUT_aux:-0}
+    FHDUR_aux=${FHDUR_aux:-0}
+    FDIAG=$FHOUT
+    if [[ "${DOIAU:-NO}" == "YES" ]]; then
+      FHMIN=$((IAU_DELTHRS/2+FHMIN))
+      FHMAX=$((IAU_DELTHRS/2+FHMAX))
+      iau_halfdelthrs=$((IAU_DELTHRS/2))
+      if (( FHOUT >= 6 )); then
+        FDIAG=$((IAU_DELTHRS/2))
+      fi
+    else
+      iau_halfdelthrs=0
+      if (( FHMIN = 0 )); then
+        write_first_time_step=".true."
+      fi
+    fi
+    restart_start_secs=$((FHMIN*3600))
+    restart_secs=$((FHOUT*3600))
+    if (( FHOUT_aux > 0 )); then
+      FHMIN_aux=$((FHMIN+3))
+      FHMAX_aux=$((FHMIN_aux+FHDUR_aux))
+      restart_secs_aux=$((FHOUT_aux*3600))
+      restart_start_secs_aux=$((FHMIN_aux*3600))
+      restart_duration_secs_aux=$((FHDUR_aux*3600))
+    else
+      restart_secs_aux=0
+      restart_start_secs_aux=0
+      restart_duration_secs_aux=0
+    fi
+    local nn
+    for (( nn = 1; nn <= ntiles; nn++ )); do
+      ${NLN} "${COMOUT_ATMOS_HISTORY}/gfs_physics.tile${nn}.nc" "gfs_physics.tile${nn}.nc"
+    done
+    ${NLN} "${COMOUT_ATMOS_HISTORY}/tendency.dat" "fort.555"
+  fi
+
+  #============================================================================
+
 }
 
 FV3_nml() {
@@ -287,15 +415,29 @@ FV3_nml() {
   echo "SUB ${FUNCNAME[0]}: FV3 name lists and model configure file created"
 }
 
+SHiELD_nml() {
+  # namelist output for SHiELD
+  echo "SUB ${FUNCNAME[0]}: Creating name lists for SHiELD"
+   
+  source "${NAMELISTSH:-"parsing_namelists_shield.sh"}"
+  SHiELD_namelists
+
+  echo "SUB ${FUNCNAME[0]}: SHiELD name lists created"
+}
+
 FV3_out() {
   echo "SUB ${FUNCNAME[0]}: copying output data for FV3"
 
   # Copy configuration files
-  ${NCP} "${DATA}/input.nml" "${COMOUT_CONF}/ufs.input.nml"
-  ${NCP} "${DATA}/model_configure" "${COMOUT_CONF}/ufs.model_configure"
-  ${NCP} "${DATA}/ufs.configure" "${COMOUT_CONF}/ufs.ufs.configure"
-  ${NCP} "${DATA}/diag_table" "${COMOUT_CONF}/ufs.diag_table"
-
+  if [[ ${NET:-"gfs"} != "shield" ]]; then
+    ${NCP} "${DATA}/input.nml" "${COMOUT_CONF}/ufs.input.nml"
+    ${NCP} "${DATA}/model_configure" "${COMOUT_CONF}/ufs.model_configure"
+    ${NCP} "${DATA}/ufs.configure" "${COMOUT_CONF}/ufs.ufs.configure"
+    ${NCP} "${DATA}/diag_table" "${COMOUT_CONF}/ufs.diag_table"
+  else
+    ${NCP} "${DATA}/input.nml" "${COMOUT_CONF}/shield.input.nml"
+    ${NCP} "${DATA}/diag_table" "${COMOUT_CONF}/shield.diag_table"
+  fi
 
   # Determine the dates for restart files to be copied to COM
   local restart_date restart_dates
@@ -324,13 +466,118 @@ FV3_out() {
     for restart_date in "${restart_dates[@]}"; do
       echo "Copying FV3 restarts for 'RUN=${RUN}' at ${restart_date}"
       for fv3_file in ${file_list}; do
-        ${NCP} "${DATArestart}/FV3_RESTART/${restart_date}.${fv3_file}" \
-               "${COMOUT_ATMOS_RESTART}/${restart_date}.${fv3_file}"
+        if [[ ! -s "${DATArestart}/FV3_RESTART/${restart_date}.${fv3_file}" \
+             && -s "${DATArestart}/FV3_RESTART/${fv3_file}" ]]; then
+          ${NCP} "${DATArestart}/FV3_RESTART/${fv3_file}" \
+                 "${COMOUT_ATMOS_RESTART}/${restart_date}.${fv3_file}"
+        else   
+          ${NCP} "${DATArestart}/FV3_RESTART/${restart_date}.${fv3_file}" \
+                 "${COMOUT_ATMOS_RESTART}/${restart_date}.${fv3_file}"
+        fi
       done
     done
 
     echo "SUB ${FUNCNAME[0]}: Output data for FV3 copied"
   fi
+}
+
+CUBE2GAUS() {
+  echo "SUB ${FUNCNAME[0]}: run cube2gaus for FV3"
+
+  C2GSH=${C2GSH:-${USHgfs}/cube2gaussian.sh}
+  export GAUATMSEXE=${GAUATMSEXE:-${EXECgfs}/fv3_c2g_atms.x}
+  GAUSFCFCSTSH=${GAUSFCFCSTSH:-${USHgfs}/gaussian_sfcfcst.sh}
+  export GAUSFCFCSTEXE=${GAUSFCFCSTEXE:-${EXECgfs}/gaussian_sfcfcst.x}
+  export APREFIX="${RUN}.t${cyc}z."
+  export ASUFFIX=".nc"
+  export memdir=${COMOUT_ATMOS_HISTORY}
+
+  cd $DATA
+
+  cat > serial-tasks.config <<EOF
+  # rank command
+EOF
+
+  export OMP_NUM_THREADS_ATMS=$threads_per_task_c2g
+  export OMP_NUM_THREADS_SFC=$NTHREADS_GAUSFCFCST
+  export rmhydro=${rmhydro:-".false."}
+  export pseudo_ps=${pseudo_ps:-".false."}
+  export phy_data=${phy_data=:-""}
+  export sCDATE=${model_start_date_current_cycle}
+  export FHMIN=$FHMIN
+  export FHMAX=$FHMAX
+  export DELTIM=$DELTIM
+  export iau_halfdelthrs=$iau_halfdelthrs
+  export FHZER=$FHZER
+
+  RHR=$FHMIN
+  mc=0
+  while [[ $RHR -le $FHMAX ]] ; do
+     echo "s/_RHR/$RHR/"          > changedate
+     echo "s/_auxfhr/"NO"/"      >> changedate
+     echo "s/_atminc/".false."/" >> changedate
+     sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+     chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
+EOF
+     RHR=$(($RHR+$FHOUT))
+     mc=$((mc+1))
+  done
+
+# Auxiliary forecast hours
+  if [[ $restart_secs_aux -gt 0 ]]; then
+     RHR_aux=$FHMIN_aux
+     while [[ $RHR_aux -le $FHMAX_aux ]] ; do
+        # check if duplicated
+        found=0
+        drhr=$((FHMIN+FHOUT))
+        while [[ $drhr -le $FHMAX_aux ]]; do
+           if [[ $RHR_aux -eq $drhr ]]; then
+              found=1
+              break
+           fi
+           drhr=$((drhr+FHOUT))
+        done
+        if [[ $found -eq 0 ]]; then
+           echo "s/_RHR/$RHR_aux/"      > changedate
+           echo "s/_auxfhr/"YES"/"     >> changedate
+           echo "s/_atminc/".false."/" >> changedate
+           sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+           chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
+EOF
+           mc=$((mc+1))
+        fi
+        RHR_aux=$((RHR_aux+FHOUT_aux))
+     done
+  fi
+
+# replay increment file
+  if [[ $replay -eq 1 && $warm_start = ".true." ]]; then
+     echo "s/_RHR/0/"            > changedate
+     echo "s/_auxfhr/"NO"/"     >> changedate
+     echo "s/_atminc/".true."/" >> changedate
+     sed -f changedate $C2GSH > c2g_$( printf "%03d" $mc).sh
+     chmod 755 c2g_$( printf "%03d" $mc).sh
+     cat >> serial-tasks.config <<EOF
+     $mc c2g_$( printf "%03d" $mc).sh
+EOF
+     mc=$((mc+1))
+  fi
+
+  npe_c2g=$mc
+  tasks_per_node_c2g=$(( max_tasks_per_node / threads_per_task_c2g ))
+  APRUN_C2G="$launcher -n $npe_c2g --tasks-per-node=$tasks_per_node_c2g --cpus-per-task=${threads_per_task_c2g} -l --multi-prog"
+
+  $APRUN_C2G serial-tasks.config 1>&1 2>&2
+  rc=$?
+  export ERR=$rc
+  export err=$ERR
+  $ERRSCRIPT || exit 11
+
+  echo "SUB ${FUNCNAME[0]}: done cube2gaus"
 }
 
 # Disable variable not used warnings

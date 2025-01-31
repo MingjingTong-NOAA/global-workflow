@@ -115,7 +115,7 @@ gdas:
             {% set fhr3 = '%03d' % fhr %}
         - "logs/{{ cycle_YMDH }}/{{ RUN }}_atmos_prod_f{{ fhr3 }}.log"
             {% if not WRITE_DOPOST %}
-        - "logs/{{ cycle_YMDH }}/{{ RUN }}_atmos_upp_f{{ fhr3 }}.log"
+        - "logs/{{ cycle_YMDH }}/{{ RUN }}_atmupp_f{{ fhr3 }}.log"
             {% endif %}  ## not WRITE_DOPOST
         # Forecast GRIB2 data
         - "{{ COMIN_ATMOS_GRIB_0p25 | relpath(ROTDIR) }}/{{ head }}pgrb2.0p25.f{{ fhr3 }}"

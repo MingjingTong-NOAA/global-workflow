@@ -41,6 +41,7 @@ fix/ugwd
 fix/ugwd_nest
 fix/verif
 fix/wave
+fix/shield
 
 # Ignore parm file symlinks
 #--------------------------
@@ -170,6 +171,10 @@ ush/imsfv3_scf2ioda.py
 ush/atparse.bash
 ush/run_bufr2ioda.py
 ush/bufr2ioda_insitu*
+ush/gaussian_sfcfcst.sh
+ush/gaussian_c2g_atms.sh
+ush/cube2gaussian.sh
+ush/run_sfcanl_chgres.sh
 
 # version files
 versions/build.ver

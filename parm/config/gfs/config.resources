@@ -1201,7 +1201,7 @@ case ${step} in
 
   "ecen")
     walltime="00:10:00"
-    ntasks=80
+    ntasks=$NMEM_ENKF
     threads_per_task=4
     if [[ ${CASE} == "C384" || ${CASE} == "C192" || ${CASE} == "C96" || ${CASE} == "C48" ]]; then
       threads_per_task=2
@@ -1214,7 +1214,7 @@ case ${step} in
 
   "esfc")
     walltime="00:25:00"
-    ntasks=80
+    ntasks=$NMEM_ENKF
     threads_per_task=1
     tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     threads_per_task_cycle=${threads_per_task}
@@ -1224,7 +1224,7 @@ case ${step} in
   "epos")
     walltime="00:15:00"
     [[ ${CASE} == "C768" ]] && walltime="00:25:00"
-    ntasks=80
+    ntasks=$NMEM_ENKF
     threads_per_task=1
     tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     export is_exclusive=True

@@ -142,6 +142,7 @@ input_file="fcst.0$FHR"
 output_file="fcst.ensres.0$FHR"
 terrain_file="atmens_fcst"
 ref_file="atmens_fcst"
+${chgres_setup:-}
 /
 EOF
      if [ $USE_CFP = "YES" ]; then

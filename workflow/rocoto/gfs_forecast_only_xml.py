@@ -26,6 +26,14 @@ class GFSForecastOnlyRocotoXML(RocotoXML):
             date2_gfs_str = date2_gfs.strftime("%Y%m%d%H%M")
             strings.append(f'\t<cycledef group="gfs_seq">{date2_gfs_str} {edate_gfs_str} {interval_gfs_str}</cycledef>')
 
+        if self._base['DO_OmF']:
+            interval_gdas = self._base['interval_gdas']
+            sdate_omf = sdate_gfs + interval_gdas
+            edate_omf = edate_gfs + interval_gdas
+            sdate_omf_str = sdate_omf.strftime("%Y%m%d%H%M")
+            edate_omf_str = edate_omf.strftime("%Y%m%d%H%M")
+            strings.append(f'\t<cycledef group="gfs_omf">{sdate_omf_str} {edate_omf_str} {interval_gfs_str}</cycledef>')
+
         if self._base['DO_METP']:
             if interval_gfs < to_timedelta('24H'):
                 # Run verification at 18z, no matter what if there is more than one gfs per day
