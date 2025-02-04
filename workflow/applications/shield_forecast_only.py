@@ -117,7 +117,7 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
 
         if options['do_atm']:
 
-            if options['do_gomg']:
+            if options['do_omf']:
                 tasks += ['prep','gomg','analdiag']
 
             if options['do_upp']:

@@ -146,7 +146,8 @@ ${NLN} "${COM_ATMOS_ANALYSIS_STAT}/${GBIASe}" "satbias_in"
 
 ################################################################################
 # first EnKF cycle assimilate radiance data
-SEDATE=$($NDATE +$assim_freq $SADATE)
+radassim_delay=$(( assim_freq * 2 ))
+SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
 if [ $USE_CFP = "YES" ]; then
    [[ -f $DATA/untar.sh ]] && rm $DATA/untar.sh
    [[ -f $DATA/mp_untar.sh ]] && rm $DATA/mp_untar.sh

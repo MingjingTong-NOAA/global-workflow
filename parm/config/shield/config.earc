@@ -32,13 +32,6 @@ esac
 export RMOLDSTD_ENKF=144
 export RMOLDEND_ENKF=24
 
-radassim_delay=$(( assim_freq * 2 ))
-SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
-if [[ "${CDATE}" -le "${SEDATE}" && "${EXP_WARM_START}" = ".false." ]]; then
-  export ARCHRADSTAT="NO"
-else
-  export ARCHRADSTAT="YES"
-fi
 export ARCH4ENSREPLAY="YES"
 
 echo "END: config.earc"

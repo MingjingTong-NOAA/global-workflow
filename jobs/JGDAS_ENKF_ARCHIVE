@@ -13,6 +13,14 @@ MEMDIR="ensstat" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
   COMIN_ATMOS_HISTORY_ENSSTAT:COM_ATMOS_HISTORY_TMPL \
   COMIN_SNOW_ANALYSIS_ENSSTAT:COM_SNOW_ANALYSIS_TMPL
 
+radassim_delay=$(( assim_freq * 2 ))
+SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
+if [[ "${CDATE}" -le "${SEDATE}" && "${EXP_WARM_START}" = ".false." ]]; then
+  export ARCHRADSTAT="NO"
+else
+  export ARCHRADSTAT="YES"
+fi
+
 ###############################################################
 # Run archive script
 ###############################################################

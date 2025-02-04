@@ -8,10 +8,10 @@ echo "BEGIN: config.prep"
 # Get task specific resources
 . $EXPDIR/config.resources prep
 
-export DO_MAKEPREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
-export DMPDIR_S="/scratch2/GFDL/gfdlscr/${USER}/scrub/dump"
+export MAKE_PREPBUFR="YES"   # if NO, will copy prepbufr from globaldump
+export cdate10=${PDY}${cyc}
 if [[ $machine == "GAEA*" || ($MODE != "cycled" && $MODE != "replay") ]]; then
-  export DO_MAKEPREPBUFR="NO"
+  export MAKE_PREPBUFR="NO"
 fi
 
 if [[ $MODE != "cycled" ]]; then
@@ -20,52 +20,45 @@ fi
 
 # prepbufr data pulled from cycled run in getfcst or getic jobs for omf mode
 export pullprepbufrexp="NO"
-if [[ $MODE != "omf" || $DO_MAKEPREPBUFR == "YES" ]]; then
+if [[ $MODE != "omf" || $MAKE_PREPBUFR == "YES" ]]; then
    export pullprepbufrexp="NO"
 fi
 export PTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${RESTARTEXP}/${CDATE}"
 
 # Relocation and syndata QC
 export PROCESS_TROPCY=${PROCESS_TROPCY:-NO}
-[[ $RUN_ENVIR == "nco" && $envir == "prod" ]] && export PROCESS_TROPCY="YES"
-export DO_RELOCATE="NO"
-export TROPCYQCRELOSH="$HOMEgfs/scripts/exglobal_atmos_tropcy_qc_reloc.sh"
-export SENDCOM=YES
+export TROPCYQCRELOSH="${SCRgfs}/exglobal_atmos_tropcy_qc_reloc.sh"
 
-export COMINsyn=${COMINsyn:-${COMROOT}/gfs/prod/syndat}
-
-export HOMERELO=$HOMEgfs
-export EXECRELO=${HOMERELO}/exec
-export FIXRELO=${HOMERELO}/fix/fix_am
-export USHRELO=${HOMERELO}/ush
+export COMINtcvital=${COMINtcvital:-${DMPDIR}/${RUN}.${PDY}/${cyc}/atmos}
+export COMINsyn=${COMINsyn:-$(compath.py ${envir}/com/gfs/${gfs_ver})/syndat}
 
 # Adjust observation error for GFS v16 parallels
 #
 #   NOTE:  Remember to set OBERROR in config.anal as PRVT is set below
 #
 # Set default prepobs_errtable.global
-export PRVT=$FIXgsi/prepobs_errtable.global.shield
+export PRVT=${FIXgfs}/gsi/prepobs_errtable.global.shield
 
 
 # Set prepobs.errtable.global for GFS v16 retrospective parallels
 if [[ $RUN_ENVIR == "emc" ]]; then
-  if [[ "$CDATE" -ge "2019021900" && "$CDATE" -lt "2019110706" ]]; then
-    export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.shield.2019021900
+  if [[ "${PDY}${cyc}" -ge "2019021900" && "${PDY}${cyc}" -lt "2019110706" ]]; then
+    export PRVT=${FIXgfs}/gsi/gfsv16_historical/prepobs_errtable.global.2019021900
   fi
 
 #   Place GOES-15 AMVs in monitor, assimilate GOES-17 AMVs, assimilate KOMPSAT-5 gps
-  if [[ "$CDATE" -ge "2019110706" && "$CDATE" -lt "2020040718" ]]; then
-    export PRVT=$FIXgsi/gfsv16_historical/prepobs_errtable.global.shield.2019110706
+  if [[ "${PDY}${cyc}" -ge "2019110706" && "${PDY}${cyc}" -lt "2020040718" ]]; then
+    export PRVT=${FIXgfs}/gsi/gfsv16_historical/prepobs_errtable.global.2019110706
   fi
 
 #   NOTE:
-#   As of 2020040718, gfsv16_historical/prepobs_errtable.global.shield.2020040718 is
-#   identical to ../prepobs_errtable.global.shield  Thus, the logic below is not
+#   As of 2020040718, gfsv16_historical/prepobs_errtable.global.2020040718 is
+#   identical to ../prepobs_errtable.global.  Thus, the logic below is not
 #   needed at this time
 
 #   Set observation errors for type 135 (T) & 235 (uv) Canadian AMDAR observations
-#   if [[ "$CDATE" -ge "2020040718" && "$CDATE" -lt "YYYMMDDHH" ]]; then
-#     export PRVT=$EXPDIR/prepobs_errtable.global.shield
+#   if [[ "${PDY}${cyc}" -ge "2020040718" && "${PDY}${cyc}" -lt "YYYMMDDHH" ]]; then
+#     export PRVT=$EXPDIR/prepobs_errtable.global
 #   fi
 
 fi
@@ -73,11 +66,11 @@ fi
 # NSST bufr was created with a different set of files prior to 2020102200
 # See comments at the end of
 # https://github.com/NOAA-EMC/global-workflow/issues/313
-if [[ "$CDATE" -ge "2020102200" ]]; then
+if [[ "${PDY}${cyc}" -ge "2020102200" ]]; then
   export DTYPS_nsst='sfcshp tesac bathy trkob'
 else
   export DTYPS_nsst='sfcshp dbuoyb mbuoyb tesac bathy trkob'
 fi
-export DO_MAKE_NSSTBUFR="NO"   # if NO, will copy nsstbufr from globaldump
+export MAKE_NSSTBUFR="NO"   # if NO, will copy nsstbufr from globaldump
 
 echo "END: config.prep"
