@@ -60,6 +60,7 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
         elif self.app_config.mode == "replay":
+            cycledef = 'gdas_half,gdas'
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -87,7 +88,7 @@ class SHiELDTasks(Tasks):
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': self.run,
+                     'cycledef': cycledef,
                      'command': f'{self.HOMEgfs}/jobs/rocoto/getic.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -99,6 +100,8 @@ class SHiELDTasks(Tasks):
         return task
 
     def init(self):
+   
+        cycledef = 'gdas_half,gdas' if self.app_config.mode == "replay" else self.run
 
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
@@ -111,7 +114,7 @@ class SHiELDTasks(Tasks):
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': self.run,
+                     'cycledef': cycledef,
                      'command': f'{self.HOMEgfs}/jobs/rocoto/init.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -1244,7 +1247,7 @@ class SHiELDTasks(Tasks):
             else:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_analinc'}
         dep = rocoto.add_dependency(dep_dict)
-        dependencies = rocoto.create_dependency(dep=dependencies)
+        dependencies = rocoto.create_dependency(dep=dep)
 
         if self.run in ['gdas']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
@@ -2547,6 +2550,8 @@ class SHiELDTasks(Tasks):
 
     def arch(self):
         deps = []
+        dep_dict = {'type':'task', 'name':f'{self.run}_fcst'}
+        deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlprod'}
@@ -2579,7 +2584,8 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
             deps.append(rocoto.add_dependency(dep_dict))
         # Post job dependencies
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
+        if self.options['do_post']:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_wave']:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavepostsbs'}
@@ -3148,9 +3154,8 @@ class SHiELDTasks(Tasks):
 
     def echgres(self):
 
-        self._is_this_a_gdas_task(self.run, 'echgres')
-
         if self.app_config.mode == "cycled":
+            self._is_this_a_gdas_task(self.run, 'echgres')
             deps = []
             dep_dict = {'type': 'metatask', 'name': f'{self.run.replace("enkf","")}_fcst'}
             deps.append(rocoto.add_dependency(dep_dict))

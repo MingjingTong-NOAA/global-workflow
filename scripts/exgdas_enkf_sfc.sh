@@ -165,7 +165,7 @@ if [ $DOIAU = "YES" ]; then
             ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"     "${DATA}/fngrid.${cmem}"
             ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
             if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
-               ${NLN} $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENS}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
+               ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
             fi
 
             if [[ ${GSI_SOILANAL} = "YES" ]]; then
@@ -243,7 +243,7 @@ if [ $DOSFCANL_ENKF = "YES" ]; then
             ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"      "${DATA}/fngrid.${cmem}"
             ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
             if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
-              ${NLN} ${ICSDIR}/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE_ENS}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
+              ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
             fi
         done
 

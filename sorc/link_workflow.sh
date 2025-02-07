@@ -403,6 +403,8 @@ for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle fregrid; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/exec/${ufs_utilsexe}" .
 done
 
+${LINK_OR_COPY} "${HOMEgfs}/sorc/chgres_shield.fd/exec/chgres_cube" .
+
 # GSI
 if [[ -d "${HOMEgfs}/sorc/gsi_enkf.fd/install" ]]; then
   for gsiexe in enkf.x gsi.x; do
@@ -415,7 +417,7 @@ fi
 if [[ -d "${HOMEgfs}/sorc/gsi_utils.fd/install" ]]; then
   for exe in calc_analysis.x calc_increment_ens_ncio.x calc_increment_ens.x \
     getsfcensmeanp.x getsigensmeanp_smooth.x getsigensstatp.x \
-    interp_inc.x recentersigp.x; do
+    interp_inc.x recentersigp.x zero_biascoeff.x; do
     [[ -s "${exe}" ]] && rm -f "${exe}"
     ${LINK_OR_COPY} "${HOMEgfs}/sorc/gsi_utils.fd/install/bin/${exe}" .
   done

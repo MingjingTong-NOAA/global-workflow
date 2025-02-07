@@ -8,10 +8,9 @@ echo "BEGIN: config.getic"
 # Get task specific resources
 . $EXPDIR/config.resources getic
 
-export RETRO="NO" # YES = Pull v16 inputs from retrospective parallels; NO = use operational inputs
 export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
-export ics_from="opsgfs" # operational GFS, others for experimental GFS or SHiELD
-#export ics_from="v16p2_C192d"
+export ICFROM=${ICFROM:-"gfs"}
+export RETRO="NO" # YES = Pull gfs inputs from retrospective parallels; NO = use operational inputs
 export ICDUMP=${ICDUMP:-"gdas"}
 export START="cold"
 export OPS_RES=${OPS_RES:-"C768"} # Operational resolution
@@ -21,9 +20,10 @@ export GDASINIT_DIR=${UFS_DIR}/util/gdas_init
 
 export PRODHPSSDIR=/NCEPPROD/hpssprod/runhistory
 export gfs_ver=${gfs_ver:-"v16"}
+export exp_ver=${exp_ver:-"2024"}
 export GETICSH=${GDASINIT_DIR}/get_v16.data.sh
 
-if [[ $CDATE -lt 2021032106 && ${RETRO:-"NO"} = "YES" ]]; then # Retrospective parallel input
+if [[ $CDATE -lt 2021032106 && ${RETRO:-"NO"} != "YES" ]]; then # Retrospective parallel input
   export GETICSH=${GDASINIT_DIR}/get_v16retro.data.sh
   if [[ $CDATE -lt 2019060106 ]]; then
     export HPSSDIR=/NCEPDEV/emc-global/5year/emc.glopara/WCOSS_D/gfsv16/v16retro0e
@@ -40,9 +40,6 @@ if [[ $CDATE -lt 2021032106 && ${RETRO:-"NO"} = "YES" ]]; then # Retrospective p
     echo NO DATA FOR $CDATE
     exit 3
   fi
-elif [[ ${REDUCEDRES:-"NO"} = "YES" ]]; then # gfs reduced resolution experiment input
-  export GETICSH=${GDASINIT_DIR}/get_v16reducedres.data.sh
-  export HPSSDIR=/NCEPDEV/emc-da/2year/Catherine.Thomas/HERA/scratch/v16x_june_ctl
 else # Operational input
   # No ENKF data prior to 2012/05/21/00z
   if [[ $CDATE -lt 2012052100 ]]; then
@@ -71,11 +68,11 @@ else # Operational input
   fi
 fi
 
-if [[ "$ics_from" != "opsgfs" && "$ics_from" != "pargfs" ]]; then
+if [[ "$ICFROM" != "gfs" ]]; then
    GETICSH=$HOMEgfs/ush/get_exp_ic.sh
 fi
 
-if [[ "$ics_from" == "opsgfs" ]]; then
+if [[ "$ICFROM" == "gfs" ]]; then
    if [[ $CDATE -ge 2022112900 ]]; then
      export gfssubver="v16.3"
    elif [[ $CDATE -ge 2022062700 ]]; then
@@ -89,7 +86,7 @@ if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then
    export IAUFHRS="6"
 fi
 
-export HPSSEXPDIR=/NCEPDEV/emc-da/1year/Mingjing.Tong/HERA/scratch
+export HPSSEXPDIR=${ATARDIR}/../
 
 export EXTRACT_DIR=$ICSDIR
 

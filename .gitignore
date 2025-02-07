@@ -126,6 +126,7 @@ sorc/tocsbufr.fd
 sorc/vint.fd
 sorc/webtitle.fd
 sorc/ocnicepost.fd
+sorc/shield.fd/SHiELD_SRC
 
 # Ignore scripts from externals
 #------------------------------

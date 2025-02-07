@@ -17,7 +17,7 @@ if (( $# != 1 )); then
     echo "atmensanlinit atmensanlobs atmensanlsol atmensanlletkf atmensanlfv3inc atmensanlfinal"
     echo "snowanl esnowanl"
     echo "prepobsaero aeroanlinit aeroanlvar aeroanlfinal aeroanlgenb"
-    echo "anal sfcanl analcalc analdiag fcst echgres"
+    echo "anal sfcanl analinc analcalc analdiag fcst echgres"
     echo "upp atmos_products"
     echo "tracker genesis genesis_fsu"
     echo "verfozn verfrad vminmon fit2obs metp arch cleanup"
@@ -697,6 +697,17 @@ case ${step} in
     export threads_per_task_cycle=${threads_per_task}
     export tasks_per_node_cycle=$(( max_tasks_per_node / threads_per_task_cycle ))
     export is_exclusive=True
+    ;;
+
+  "analinc")
+    walltime="00:15:00"
+    if [[ "$replay_4DIAU" == "YES" ]]; then
+       ntasks=3
+    else
+       ntasks=1
+    fi
+    threads_per_task=40
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     ;;
 
   "analcalc")

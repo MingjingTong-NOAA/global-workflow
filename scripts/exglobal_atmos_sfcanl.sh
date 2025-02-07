@@ -133,11 +133,7 @@ for gcycle_date in "${gcycle_dates[@]}"; do
 
   if [[ $DO_TSFC_TILE == "YES" ]]; then
     for n in $(seq 1 $ntiles); do
-      if [ $CASE = $OPS_RES ]; then
-        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_GFS/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
-      else
-        $NLN $ICSDIR/gdas.${PDY}/${cyc}/atmos/RESTART_${CASE}/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
-      fi
+      $NLN ${COMIN_ATMOS_ANALYSIS_RESTART}/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
     done
   fi
 

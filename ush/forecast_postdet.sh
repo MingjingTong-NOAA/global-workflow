@@ -451,7 +451,7 @@ FV3_out() {
       restart_date=$(date --utc -d "${restart_date:0:8} ${restart_date:8:2} + ${restart_interval} hours" +%Y%m%d%H)
     done
   elif [[ "${RUN}" == "gfs" || "${RUN}" == "gefs" ]]; then # Copy restarts at the end of the forecast segment for RUN=gfs|gefs
-    if [[ "${COPY_FINAL_RESTARTS}" == "YES" ]]; then
+    if [[ "${COPY_FINAL_RESTARTS:-"NO"}" == "YES" ]]; then
       restart_dates+=("${forecast_end_cycle:0:8}.${forecast_end_cycle:8:2}0000")
     fi
   fi

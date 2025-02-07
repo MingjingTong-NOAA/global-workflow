@@ -5,9 +5,6 @@
 
 echo "BEGIN: config.init"
 
-# Get some parameters from getic
-. $EXPDIR/config.getic
-
 # Get task specific resources
 . $EXPDIR/config.resources init
 
@@ -58,5 +55,7 @@ else
    export LEVS_INIT=65
    export ncep_levs=65
 fi
+
+export EXTRACT_DIR=$ICSDIR
 
 echo "END: config.init"

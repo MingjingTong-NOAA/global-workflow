@@ -517,12 +517,19 @@ export ENSFROM="s2022_C192_v2p5_edmf1ens0"
 export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${ENSFROM}"
 
 # forecast-only and replay environment parameters
-export ICFROM="gfs"   # could be gfs, shield, ifs 
+export ICFROM="gfs"   # could be gfs, shield, ifs or experiment name 
 export gfs_ver="v16"  # gfs version
+export exp_ver="2025" # experiment version
 export ICDUMP="gdas"
 export ICRES="C768"
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
 export DO_OmF="NO"
+if [[ ${DO_OmF} == "YES" ]]; then
+  export FHMIN_GFS=FHMIN
+  export FHMAX_GFS=FHMAX
+  export FHOUT_GFS=FHOUT
+  export restart_interval_gfs=restart_interval_gdas
+fi
 
 # OmF and ensemble regrid environment parameters
 export diag_interval="@DIAG_INTERVAL@"

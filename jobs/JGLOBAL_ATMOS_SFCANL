@@ -21,6 +21,14 @@ YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
   COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL \
   COMIN_SNOW_ANALYSIS:COM_SNOW_ANALYSIS_TMPL
 
+if [[ $CASE == $OPS_RES ]]; then
+  ROTDIR=${ICSDIR} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+         COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+else
+  ROTDIR=${ICSDIR}/output/${CASE} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+         COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+fi
+
 YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
   COMOUT_ATMOS_RESTART:COM_ATMOS_RESTART_TMPL
 

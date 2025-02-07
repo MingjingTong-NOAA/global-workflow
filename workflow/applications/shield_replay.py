@@ -12,7 +12,8 @@ class SHiELDReplayAppConfig(AppConfig):
         super().__init__(conf)
 
         base = conf.parse_config('config.base')
-        self.run = base.get('RUN', 'gdas')
+        self.run = base.get('RUN', 'gfs')
+        self.run = "gdas"
         self.runs = [self.run]
 
     def _get_run_options(self, conf: Configuration) -> Dict[str, Any]:
@@ -24,8 +25,8 @@ class SHiELDReplayAppConfig(AppConfig):
         run_options[self.run]['replay'] = base.get('replay', 1)
         run_options[self.run]['icfrom'] = base.get('ICFROM', 'gfs')
         run_options[self.run]['icres'] = base.get('ICRES', 'C768')
-        run_options[run]['shield_res'] = base.get('CASE','C768')
-        run_options[run]['do_sfcanl'] = base.get('DO_SFCANL', False)
+        run_options[self.run]['shield_res'] = base.get('CASE','C768')
+        run_options[self.run]['do_sfcanl'] = base.get('DO_SFCANL', False)
         run_options[self.run]['do_omf'] = base.get('DO_OmF', False)
         run_options[self.run]['do_post'] = base.get('DO_POST', False)
 
@@ -45,7 +46,7 @@ class SHiELDReplayAppConfig(AppConfig):
         if options['do_atm']:
 
             if options['replay'] == 2:
-                if options['icres'] != option['shield_res']:
+                if options['icres'] != options['shield_res']:
                     configs += ['echgres']
                 configs += ['analinc']
 
@@ -88,7 +89,7 @@ class SHiELDReplayAppConfig(AppConfig):
         if options['do_atm']:
 
             if options['replay'] == 2:
-                if options['icres'] != option['shield_res']:
+                if options['icres'] != options['shield_res']:
                     tasks += ['echgres']
                 tasks += ['analinc']
 
