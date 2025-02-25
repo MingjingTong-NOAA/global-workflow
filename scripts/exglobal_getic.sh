@@ -40,6 +40,7 @@ export idd=$(echo $IAUSDATE | cut -c7-8)
 export ihh=$(echo $IAUSDATE | cut -c9-10)
 
 export DATA=${DATA:-${DATAROOT}/getic}
+export EXTRACT_DIR=${EXTRACT_DIR:-$ICSDIR}
 export PRODHPSSDIR=${PRODHPSSDIR:-/NCEPPROD/hpssprod/runhistory}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
@@ -125,8 +126,12 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         # pull warm start files
         gdasb=${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
         gdasa=${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
-        if [ ! -d ${COMOUT_ATMOS_RESTART} ]; then
+        if [ ! -d ${COMIN_ATMOS_RESTART} ]; then
            htar -xvf $gdasb
+           [[ ! -d ${COMOUT_ATMOS_RESTART} ]] && mkdir -p ${COMOUT_ATMOS_RESTART}
+           if [[ ${COMOUT_ATMOS_RESTART} != ${COMIN_ATMOS_RESTART} ]]; then
+             $NLN ${COMIN_ATMOS_RESTART}/* ${COMOUT_ATMOS_RESTART}/
+           fi
         else
            echo "restart files exist, skip pulling restart files"
         fi
@@ -138,8 +143,8 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      fi 
      if [[ $replay_4DIAU != "YES" || ($EXP_WARM_START != ".true." && "$CDATE" == "$SDATE") ]]; then 
         # Run UFS_UTILS GETICSH
-        atmanl=${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.nc
-        sfcanl=${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.sfcanl.nc
+        atmanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.nc
+        sfcanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.sfcanl.nc
         if [[ ! -s $atmanl || ! -s $sfcanl ]]; then
           sh ${GETICSH} ${ICDUMP}
           status=$?
@@ -152,7 +157,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      fi
      if [[ $replay_4DIAU == "YES" && ( $EXP_WARM_START == ".true." || "$CDATE" != "$SDATE" ) ]]; then
         cd $EXTRACT_DIR
-        if [[ $ICFROM == "opsgfs" ]]; then
+        if [[ $ICFROM == "gfs" ]]; then
            # replay to operational GFS
            directory=${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}
            tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
@@ -161,7 +166,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
            directory=${HPSSEXPDIR}/${ICFROM}/${CDATE}
            tarball="${ICDUMP}.tar"
         fi
-        if [ ! -s ${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
+        if [ ! -s ${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >${ROTDIR}/logs/${CDATE}/list.txt
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
@@ -174,7 +179,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         fi
      fi
   fi
-  if [[ $DO_OmF == "YES" && "$CDATE" != "$SDATE" ]]; then
+  if [[ $DO_OMF == "YES" && "$CDATE" != "$SDATE" ]]; then
      if [[ "$ICFROM" == "gfs" ]]; then
         directory=/NCEPPROD/hpssprod/runhistory/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}
         tarball=com_gfs_${gfssubver}_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
@@ -182,33 +187,30 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         directory=${HPSSEXPDIR}/${ICFROM}/${GDATE}
         tarball="${ICDUMP}.tar"
      fi
-     abias=${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${ghh}z.abias_air
-     if [[ ! -s $abias ]]; then
-        htar -tvf $tarball > ${ROTDIR}/logs/${CDATE}/list1
-        >${ROTDIR}/logs/${CDATE}/list2
-        grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
-        htar -xvf ${directory}/$tarball -L ${ROTDIR}/logs/${CDATE}/list2
-        status=$?
-        [[ $status -ne 0 ]] && exit $status
-        pullanldata="YES"
+     if [[ ! -s ${COMOUT_ATMOS_ANALYSIS_PREV}/${ICDUMP}.t${ghh}z.abias_air ]]; then
+        if [[ ! -s ${COMIN_ATMOS_ANALYSIS_PREV}/${ICDUMP}.t${ghh}z.abias_air ]]; then 
+          htar -tvf ${directory}/${tarball} > ${ROTDIR}/logs/${CDATE}/list1
+          >${ROTDIR}/logs/${CDATE}/list2
+          grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
+          htar -xvf ${directory}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list2
+          status=$?
+          [[ $status -ne 0 ]] && exit $status
+        fi
+        $NLN ${COMIN_ATMOS_ANALYSIS_PREV}/*abias* ${COMOUT_ATMOS_ANALYSIS_PREV}/
+     else
+        echo "skip pulling previous cycle *abias* "
      fi
   fi
 fi
 
-cd $EXTRACT_DIR
+[[ ! -d ${COMOUT_ATMOS_ANALYSIS} ]] && mkdir -p ${COMOUT_ATMOS_ANALYSIS}
 # Move extracted data to ICSDIR
-if [[ $MODE != "cycled" && $pullanldata == "YES" && "${EXTRACT_DIR}" != "${ICSDIR}" ]]; then
-  if [ -d ${EXTRACT_DIR}${ATMOS_ANALYSIS} ]; then
-     mv ${EXTRACT_DIR}${ATMOS_ANALYSIS}/* ${COMOUT_ATMOS_ANALYSIS}/
-  elif [ "$(ls -A ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh})" ]; then
-     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/* ${COMOUT_ATMOS_ANALYSIS}/
-  else
-     echo "Data not in right directory"
-  fi
+if [[ $MODE != "cycled" && $pullanldata == "YES" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
+  $NLN ${COMIN_ATMOS_ANALYSIS}/* ${COMOUT_ATMOS_ANALYSIS}/
 fi
 
 # Pull dtfanl for GFS replay
-dtfanl=${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.dtfanl.nc
+dtfanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.dtfanl.nc
 if [[ $MODE = "replay" && $DO_SFCANL = "YES" && $DONST = "YES" && ! -s $dtfanl ]]; then
    if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
       export tarball="${ICDUMP}_restarta.tar"
@@ -217,8 +219,8 @@ if [[ $MODE = "replay" && $DO_SFCANL = "YES" && $DONST = "YES" && ! -s $dtfanl ]
       export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
       htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
    fi
-   if [[ "${EXTRACT_DIR}" != "${ICSDIR}" ]]; then
-     mv ${EXTRACT_DIR}/${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc ${COMOUT_ATMOS_ANALYSIS}/
+   if [[ "${COMOUT_ATMOS_ANALYSIS}" != "${COMIN_ATMOS_ANALYSIS}" ]]; then
+     $NLN $dtfanl ${COMOUT_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.dtfanl.nc
    fi
    rc=$?
    [ $rc != 0 ] && exit $rc
@@ -233,20 +235,17 @@ cd ${ICSDIR}
      getsfcanl="YES" 
   fi
   runchgres="NO" 
-  if [[ ! -d ${COMOUT_ATMOS_ANALYSIS_RESTART}/${CASE} && $MODE != "forecast-only" ]]; then
-     runchgres="YES"
-  fi
-  if [[ ! -d ${COMOUT_ATMOS_ANALYSIS_RESTART}/${CASE_ENS} && $MODE == "cycled" ]]; then
+  if [[ ! -d ${COMIN_ATMOS_ANALYSIS_RESTART} && ("${MODE}" == "cycled" || "${MODE}" == "replay") ]]; then
      runchgres="YES"
   fi
   if [[ $getsfcanl == "YES" && ($runchgres == "YES" || $OPS_RES == $CASE) ]]; then
-     if [[ -d ${COMOUT_ATMOS_ANALYSIS_RESTART} ]]; then
+     if [[ -d ${COMIN_ATMOS_ANALYSIS_RESTART} ]]; then
        getdata="NO"
        getdata2="NO"
        >${ROTDIR}/logs/${CDATE}/list.txt
        for n in $(seq 1 6); do
-          file=${COMOUT_ATMOS_ANALYSIS_RESTART}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc
-          file2=${COMOUT_ATMOS_ANALYSIS_RESTART}/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc
+          file=${COMIN_ATMOS_ANALYSIS_RESTART}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc
+          file2=${COMIN_ATMOS_ANALYSIS_RESTART}/${yy}${mm}${dd}.${hh}0000.sfcanl_data.tile${n}.nc
           if [ -s $file ]; then
             fsize=`wc -c $file | awk '{print $1}'`
             if [ $n -eq 1 ]; then
@@ -318,10 +317,11 @@ cd ${ICSDIR}
      else
        echo "sfcanl exist, skip pulling data"
      fi
-     rm -f ${ROTDIR}/logs/${CDATE}/list.txt
   else
      echo "sfcanl exist, skip pulling data"
   fi
 #fi
+
+rm -f ${ROTDIR}/logs/${CDATE}/list*
 
 exit 0

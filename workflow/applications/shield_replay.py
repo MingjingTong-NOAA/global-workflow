@@ -27,7 +27,8 @@ class SHiELDReplayAppConfig(AppConfig):
         run_options[self.run]['icres'] = base.get('ICRES', 'C768')
         run_options[self.run]['shield_res'] = base.get('CASE','C768')
         run_options[self.run]['do_sfcanl'] = base.get('DO_SFCANL', False)
-        run_options[self.run]['do_omf'] = base.get('DO_OmF', False)
+        run_options[self.run]['do_tsfc_tile']  = base.get('DO_TSFC_TILE', False)
+        run_options[self.run]['do_omf'] = base.get('DO_OMF', False)
         run_options[self.run]['do_post'] = base.get('DO_POST', False)
 
         return run_options
@@ -46,8 +47,6 @@ class SHiELDReplayAppConfig(AppConfig):
         if options['do_atm']:
 
             if options['replay'] == 2:
-                if options['icres'] != options['shield_res']:
-                    configs += ['echgres']
                 configs += ['analinc']
 
             if options['do_sfcanl']:
@@ -89,9 +88,10 @@ class SHiELDReplayAppConfig(AppConfig):
         if options['do_atm']:
 
             if options['replay'] == 2:
-                if options['icres'] != options['shield_res']:
-                    tasks += ['echgres']
                 tasks += ['analinc']
+
+            if options['do_sfcanl']:
+                tasks += ['sfcanl']
 
             if options['do_omf']:
                 tasks += ['prep','gomg','analdiag']

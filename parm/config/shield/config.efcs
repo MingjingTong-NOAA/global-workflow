@@ -97,10 +97,10 @@ export NMEM_EFCSGRP=4
 export RERUN_EFCSGRP="NO"
 
 export ldiag3d=".false."
-export ntasks_c2g=$(((FHMAX_ENKF-FHMIN_ENKF)/FHOUT_ENKF+1))
+export ntasks_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
 
 # use TKE-EDMF scheme optin 0 and 1 in ensemble
-export dedmfens="NO"
+export dedmfens="YES"
 
 export replay=0
 

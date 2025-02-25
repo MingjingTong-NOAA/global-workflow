@@ -36,7 +36,7 @@ datasets:
     {% endfilter %}
 {% endif %}
 
-{% if MODE == "cycled" %}
+{% if MODE == "cycled" or MODE == "replay" %}
     # Determine if we will save restart ICs or not (only valid for cycled)
     {% set save_warm_start_forecast, save_warm_start_cycled = ( False, False ) %}
 
@@ -45,6 +45,12 @@ datasets:
         {% if (current_cycle - SDATE).days % ARCH_WARMICFREQ == 0 %}
             {% set save_warm_start_forecast = True %}
         {% elif (current_cycle - SDATE).days % ARCH_FCSTICFREQ == 0 %}
+            {% set save_warm_start_forecast = True %}
+        {% endif %}
+    {% endif %}
+
+    {% if MODE == "replay" %}
+        {% if current_cycle != SDATE %}
             {% set save_warm_start_forecast = True %}
         {% endif %}
     {% endif %}

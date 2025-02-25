@@ -88,6 +88,4 @@ fi
 
 export HPSSEXPDIR=${ATARDIR}/../
 
-export EXTRACT_DIR=$ICSDIR
-
 echo "END: config.getic"

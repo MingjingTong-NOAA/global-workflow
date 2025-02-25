@@ -373,7 +373,6 @@ def input_args(*argv):
         subp = _gefs_args(subp)
 
     inputs = parser.parse_args(list(*argv) if len(argv) else None)
-    print ('xxxx ', inputs.system)
 
     # Validate dates
     if inputs.edate is None:

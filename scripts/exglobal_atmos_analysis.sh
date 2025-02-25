@@ -524,6 +524,11 @@ ${NLN} ${SFCG03} sfcf03
 ${NLN} ${SFCGES} sfcf06
 ${NLN} ${SFCG09} sfcf09
 
+# Link hourly backgrounds (if present)
+if [ -f ${ATMG04} -a -f ${ATMG05} -a -f ${ATMG07} -a -f ${ATMG08} ]; then
+   nhr_obsbin=1
+fi
+
 [[ -f ${ATMG04} ]] && ${NLN} ${ATMG04} sigf04
 [[ -f ${ATMG05} ]] && ${NLN} ${ATMG05} sigf05
 [[ -f ${ATMG07} ]] && ${NLN} ${ATMG07} sigf07
@@ -534,7 +539,7 @@ ${NLN} ${SFCG09} sfcf09
 [[ -f ${SFCG07} ]] && ${NLN} ${SFCG07} sfcf07
 [[ -f ${SFCG08} ]] && ${NLN} ${SFCG08} sfcf08
 
-if [ ${DOHYBVAR} = "YES" ]; then
+if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ]]; then
 
    # Link ensemble members
    mkdir -p ensemble_data
@@ -567,8 +572,8 @@ fi
 # Handle inconsistent surface mask between background, ensemble and analysis grids
 # This needs re-visiting in the context of NSST; especially references to JCAP*
 if [ ${JCAP} -ne ${JCAP_A} ] || [ ${MODE} != "cycled" ]; then
-   if [ ${DOHYBVAR} = "YES" -a ${JCAP_A} = ${JCAP_ENKF} ] || [ ${MODE} != "cycled" ] ; then
-      if [ -e ${SFCGES_ENSMEAN} ]; then
+   if [ ${DOHYBVAR} = "YES" -a ${JCAP_A} = ${JCAP_ENKF:--9999} ] || [ ${MODE} != "cycled" ] ; then
+      if [ -e ${SFCGES_ENSMEAN:-${COMIN_ATMOS_HISTORY_ENS_PREV}/${GPREFIX_ENS}sfcf006.ensmean.nc} ]; then
          USE_READIN_ANL_SFCMASK=.true.
          ${NLN} ${SFCGES_ENSMEAN} sfcf06_anlgrid
       else
@@ -602,7 +607,7 @@ fi
 # Output files
 ${NLN} ${ATMANL} siganl
 ${NLN} ${ATMINC} siginc.nc
-if [ ${DOHYBVAR} = "YES" -a ${l4densvar} = ".true." -a ${lwrite4danl} = ".true." ]; then
+if [[ ( ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ) && ${l4densvar} = ".true." && ${lwrite4danl} = ".true." ]]; then
    ${NLN} ${ATMA03}   siga03
    ${NLN} ${ATMI03}   sigi03.nc
    ${NLN} ${ATMA04}   siga04
@@ -749,7 +754,7 @@ cat > gsiparm.anl << EOF
 /
 &GRIDOPTS
   JCAP_B=${JCAP},JCAP=${JCAP_A},NLAT=${NLAT_A},NLON=${NLON_A},nsig=${LEVS},
-  regional=.false.,nlayers(63)=3,nlayers(64)=6,
+  regional=.false.,
   ${GRIDOPTS}
 /
 &BKGERR

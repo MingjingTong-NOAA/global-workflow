@@ -11,8 +11,8 @@ base:
   DO_GEMPAK: "NO"
   DO_AWIPS: "NO"
   DO_NPOESS: "NO"
-  DO_TRACKER: "YES"
-  DO_GENESIS: "YES"
+  DO_TRACKER: "NO"
+  DO_GENESIS: "NO"
   DO_GENESIS_FSU: "NO"
   DO_METP: "NO"
   FHMAX_GFS: 120
@@ -25,6 +25,6 @@ base:
   DOHYBVAR_OCN: "NO"
   DO_TEST_MODE: "NO"
   ENSREPLAY: "NO"
-  DO_OMF: "NO"
-  DO_POST: "YES"
+  DO_OMF: "YES"
+  DO_POST: "NO"
 

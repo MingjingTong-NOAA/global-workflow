@@ -37,7 +37,7 @@ export icyc=$(echo $IAUSDATE | cut -c9-10)
 export DATA=${DATA:-${DATAROOT}/init}
 export EXTRACT_DIR=${EXTRACT_DIR:-$ICSDIR}
 export WORKDIR=${WORKDIR:-$DATA}
-export OUTDIR=${OUTDIR:-${ICSDIR}/${CASE}}
+export OUTDIR=${OUTDIR:-${ICSDIR}/output}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
@@ -57,16 +57,20 @@ else
     if [[ ! -d $OUTDIR ]]; then
       mkdir -p $OUTDIR
     fi
-    sh ${RUNICSH} ${ICDUMP}
-    status=$?
-    [[ $status -ne 0 ]] && exit $status
-    if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
-      for file in $(ls gfs_data.tile*.nc); do
-         ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT ${COMOUT_ATMOS_INPUT}/$file -O ${COMOUT_ATMOS_INPUT}/out.nc
-         $NMV ${COMOUT_ATMOS_INPUT}/out.nc ${COMOUT_ATMOS_INPUT}/$file
-      done
-      ncks -d levsp,1,$LEVS_INIT ${COMOUT_ATMOS_INPUT}/gfs_ctrl.nc -O ${COMOUT_ATMOS_INPUT}/out.nc
-      $NMV ${COMOUT_ATMOS_INPUT}/out.nc ${COMOUT_ATMOS_INPUT}/gfs_ctrl.nc
+    if [[ ! -s ${COMOUT_ATMOS_INPUT}/gfs_ctrl.nc ]]; then
+      sh ${RUNICSH} ${ICDUMP}
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+      if [[ $LEVS_INIT -eq $((ncep_levs + 1)) ]]; then
+        for file in $(ls gfs_data.tile*.nc); do
+           ncks -d lev,1,$ncep_levs -d levp,1,$LEVS_INIT ${COMOUT_ATMOS_INPUT}/$file -O ${COMOUT_ATMOS_INPUT}/out.nc
+           $NMV ${COMOUT_ATMOS_INPUT}/out.nc ${COMOUT_ATMOS_INPUT}/$file
+        done
+        ncks -d levsp,1,$LEVS_INIT ${COMOUT_ATMOS_INPUT}/gfs_ctrl.nc -O ${COMOUT_ATMOS_INPUT}/out.nc
+        $NMV ${COMOUT_ATMOS_INPUT}/out.nc ${COMOUT_ATMOS_INPUT}/gfs_ctrl.nc
+      fi
+    else
+      echo "data exist, skip chgres"
     fi
   fi
     

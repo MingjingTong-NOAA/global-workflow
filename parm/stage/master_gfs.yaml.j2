@@ -47,9 +47,11 @@
 
 # Determine restart RUN
 # ---------------------
+{% set cRUN = RUN %}
 {% set rRUN = RUN %}
 {% if RUN == "gfs" %}
     {% set rRUN = "gdas" %}
+    {% set cRUN = ICDUMP %} 
 {% endif %}
 
 # Set first/last mem for loop
@@ -85,7 +87,7 @@
     {% endif %}
 
     {% set current_cycle_dict = ({ '${ROTDIR}':ROTDIR,
-                                   '${RUN}':ICDUMP,
+                                   '${RUN}':cRUN,
                                    '${YMD}':current_cycle_YMD,
                                    '${HH}':current_cycle_HH,
                                    '${MEMDIR}': mem_char }) %}

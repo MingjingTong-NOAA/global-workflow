@@ -19,9 +19,7 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
 
         run_options = super()._get_run_options(conf)
 
-        base = conf.parse_config('config.base', RUN=self.run) 
-        run_options[self.run]['exp_warm_start'] = base.get('EXP_WARM_START', False)
-        run_options[self.run]['do_omf'] = base.get('DO_OmF', False)
+        run_options[self.run]['exp_warm_start'] = conf.parse_config('config.base').get('EXP_WARM_START', False)
 
         return run_options
 
@@ -34,9 +32,6 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         configs = ['getic', 'init', 'stage_ic', 'fcst', 'arch', 'cleanup']
 
         if options['do_atm']:
-
-            if options['do_omf']:
-                configs += ['prep','gomg','analdiag']
 
             if options['do_upp'] or options['do_goes']:
                 configs += ['upp']
@@ -116,9 +111,6 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         tasks += ['fcst']
 
         if options['do_atm']:
-
-            if options['do_omf']:
-                tasks += ['prep','gomg','analdiag']
 
             if options['do_upp']:
                 tasks += ['atmupp']

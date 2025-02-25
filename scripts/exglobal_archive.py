@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os
+import os, sys
 
 from pygfs.task.archive import Archive
 from wxflow import AttrDict, Logger, cast_strdict_as_dtypedict, logit, chdir
@@ -40,7 +40,7 @@ def main():
             'NMEM_ENS', 'DO_JEDIATMVAR', 'DO_VRFY_OCEANDA', 'FHMAX_FITS', 'waveGRD',
             'IAUFHRS', 'DO_FIT2OBS', 'NET', 'FHOUT_HF_GFS', 'FHMAX_HF_GFS', 'REPLAY_ICS',
             'OFFSET_START_HOUR', 'ARCH_EXPDIR', 'EXPDIR', 'ARCH_EXPDIR_FREQ', 'ARCH_HASHES',
-            'ARCH_DIFFS', 'SDATE', 'EDATE', 'HOMEgfs', 'DONST']
+            'ARCH_DIFFS', 'SDATE', 'EDATE', 'HOMEgfs', 'DONST', 'DO_POST', 'DO_OMF']
 
     archive_dict = AttrDict()
     for key in keys:
@@ -59,8 +59,15 @@ def main():
         # Determine which archives to create
         arcdir_set, atardir_sets = archive.configure(archive_dict)
 
+        # Check if no file needs to be copied to ARCHDIR
+        copy_to_arcdir = True
+        for action, files in arcdir_set.items():
+            if 'copy' in action and files is None and archive_dict['MODE'] == "replay":
+                copy_to_arcdir = False 
+
         # Populate the product archive (ARCDIR)
-        archive.execute_store_products(arcdir_set)
+        if copy_to_arcdir:
+            archive.execute_store_products(arcdir_set)
 
         # Create the backup tarballs and store in ATARDIR
         for atardir_set in atardir_sets:

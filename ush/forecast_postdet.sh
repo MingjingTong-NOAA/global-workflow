@@ -356,7 +356,7 @@ EOF
   if [[ "${DO_CUBE2GAUS:-NO}" == "YES" ]]; then
     write_first_time_step=${write_first_time_step:-".false."}
     FHOUT_aux=${FHOUT_aux:-0}
-    FHDUR_aux=${FHDUR_aux:-0}
+    FHDUR_aux=${FHDUR_aux:-6}
     FDIAG=$FHOUT
     if [[ "${DOIAU:-NO}" == "YES" ]]; then
       FHMIN=$((IAU_DELTHRS/2+FHMIN))
@@ -367,7 +367,7 @@ EOF
       fi
     else
       iau_halfdelthrs=0
-      if (( FHMIN = 0 )); then
+      if (( FHMIN == 0 )); then
         write_first_time_step=".true."
       fi
     fi

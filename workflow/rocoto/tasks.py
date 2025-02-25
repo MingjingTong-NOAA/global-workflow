@@ -10,14 +10,14 @@ __all__ = ['Tasks']
 
 
 class Tasks:
-    SERVICE_TASKS = ['getic', 'eget', 'getfcst', 'arch', 'earc', 'stage_ic', 'cleanup']
+    SERVICE_TASKS = ['getic', 'eget', 'getfcst', 'arch', 'archomg', 'earc', 'ergarc', 'stage_ic', 'cleanup']
     VALID_TASKS = ['aerosol_init', 'stage_ic', 'getic', 'init', 'getfcst',
-                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'analinc', 'gomg', 'arch', "cleanup", 
+                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'analinc', 'gomg', 'arch', 'archomg', "cleanup", 
                    'prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal',
                    'prepoceanobs',
                    'marineanlinit', 'marineanlletkf', 'marinebmat', 'marineanlvar', 'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
                    'eget', 'earc', 'ecen', 'echgres', 'ediag', 'efcs',
-                   'eobs', 'eomg', 'epos', 'esfc', 'eupd', 'eupp', 'ergpos',
+                   'eobs', 'eomg', 'epos', 'esfc', 'eupd', 'eupp', 'ergpos', 'ergarc',
                    'atmensanlinit', 'atmensanlobs', 'atmensanlsol', 'atmensanlletkf', 'atmensanlfv3inc', 'atmensanlfinal',
                    'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb',
                    'snowanl', 'esnowanl',
@@ -62,6 +62,7 @@ class Tasks:
             self.nmem = int(self._base['NMEM_ENS'])
         self._base['interval_gdas'] = to_timedelta(f'{self._base["assim_freq"]}H')
         self._base['interval_gfs'] = to_timedelta(f'{self._base["INTERVAL_GFS"]}H')
+        self._base['interval_omf'] = to_timedelta(f'{self._base["FHOMF"]}H')
 
         self.n_tiles = 6  # TODO - this needs to be elsewhere
 

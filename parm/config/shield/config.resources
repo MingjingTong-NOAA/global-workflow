@@ -20,8 +20,8 @@ if (( $# != 1 )); then
     echo "anal sfcanl analinc analcalc analdiag fcst echgres"
     echo "upp atmos_products"
     echo "tracker genesis genesis_fsu"
-    echo "verfozn verfrad vminmon fit2obs metp arch cleanup"
-    echo "eobs ediag eomg eupd ecen esfc efcs epos earc"
+    echo "verfozn verfrad vminmon fit2obs metp arch archomg cleanup"
+    echo "eobs ediag eomg eupd ecen esfc efcs epos earc ergarc"
     echo "init_chem mom6ic oceanice_products"
     echo "waveinit waveprep wavepostsbs wavepostbndpnt wavepostbndpntbll wavepostpnt"
     echo "wavegempak waveawipsbulls waveawipsgridded"
@@ -712,7 +712,7 @@ case ${step} in
 
   "analcalc")
     walltime="00:15:00"
-    ntasks=127
+    ntasks=91
     export ntasks_calcanl="${ntasks}"
     threads_per_task=1
     tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
@@ -933,7 +933,7 @@ case ${step} in
     export is_exclusive=True
     ;;
 
-  "arch" | "earc" | "getic" | "eget" | "getfcst")
+  "arch" | "archomg" | "earc" | "ergarc" | "getic" | "eget" | "getfcst")
     walltime="06:00:00"
     ntasks=1
     tasks_per_node=1
@@ -1074,7 +1074,7 @@ case ${step} in
         threads_per_task=8
         ;;
       "C192" | "C96" | "C48")
-        ntasks=42
+        ntasks=40
         threads_per_task=2
         ;;
       *)
@@ -1377,5 +1377,14 @@ for resource_var in threads_per_task ntasks tasks_per_node NTASKS memory walltim
       export "${resource_var?}"
    fi
 done
+
+if [[ -n ${ntasks+0} ]]; then
+  nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
+  if [[ $nodes -gt 0 ]]; then
+     export tasks_per_node=$(( (ntasks + nodes - 1) / nodes ))
+  else
+     export tasks_per_node=$ntasks
+  fi
+fi
 
 echo "END: config.resources"

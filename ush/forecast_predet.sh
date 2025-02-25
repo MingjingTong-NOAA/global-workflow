@@ -446,6 +446,14 @@ FV3_predet(){
     n_var_lndp=$(echo "${lndp_var_list}" | wc -w)
   fi
 
+  if [[ "${dedmfens:-"NO"}" == "YES" && ${MEMBER} -ne 0 ]]; then
+    if [[ ${MEMBER} -le $((NMEM_ENS / 2)) ]]; then
+      export isatmedmf=1
+    else
+      export isatmedmf=0
+    fi
+  fi
+
   #--------------------------------------------------------------------------
 
   # Fix files

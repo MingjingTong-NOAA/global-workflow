@@ -11,8 +11,12 @@ gfsa:
         {% endif %}
         {% endfor %}
 
+        {% if NET == "gfs" %}
         # UFS configuration
         - "{{ COMIN_CONF | relpath(ROTDIR) }}/ufs.input.nml"
+        {% else %}
+        - "{{ COMIN_CONF | relpath(ROTDIR) }}/shield.input.nml"
+        {% endif %}
 
         {% if MODE == "cycled" %}
         # Analysis GRIB2 (gridded) data

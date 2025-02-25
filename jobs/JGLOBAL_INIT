@@ -31,7 +31,7 @@ fi
 
 ROTDIR=${ICSDIR}/output/${CASE} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
 	COMOUT_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL 
-ROTDIR=${ICSDIR}/output/${CASE} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+ROTDIR=${ICSDIR}/output RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
         COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
 ROTDIR=${ICSDIR}/output/${CASE} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
         COMOUT_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL

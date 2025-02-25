@@ -251,7 +251,7 @@ else
 fi
 
 # The following (restart_interval) are for GFS
-if [[ "${RUN}" == "gdas" ]] ; then # GDAS cycle specific parameters
+if [[ "${RUN}" =~ "gdas" ]] ; then # GDAS cycle specific parameters
 
     # Write gfs restart files to rerun fcst from any break point
     export restart_interval=${restart_interval_gdas:-6}
@@ -268,11 +268,7 @@ elif [[ "${RUN}" =~ "gfs" ]] ; then # GFS cycle specific parameters
     export adjust_dry_mass=".false."
 fi
 
-if [[ "${RUN}" == "gdas" ]] ; then
-   export ntasks_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
-else
-   export ntasks_c2g=$(((FHMAX_GFS-FHMIN_GFS)/FHOUT_GFS+1))
-fi
+export ntasks_c2g=$(( (FHMAX-FHMIN)/FHOUT+1 ))
 
 # Global latlon NetCDF to nemsio utility parameters
 export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
@@ -305,7 +301,7 @@ export xkzm_ml=1.0
 export xkzm_hl=1.0
 export xkzm_mi=1.5
 export xkzm_hi=1.5
-if [[ $CASE == "C192" ]]; then
+if [[ ${CASE} == "C192" ]]; then
   export rlmx=300.0
 else
   export rlmx=500.0
