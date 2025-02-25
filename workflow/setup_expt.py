@@ -133,7 +133,7 @@ def edit_baseconfig(host, inputs, yaml_dict):
         "@NMEM_ENS@": getattr(inputs, 'nens', 0),
         "@ICSDIR@": inputs.icsdir
     }
-   
+
     if getattr(inputs, 'nens', 0) > 0:
         extend_dict['@CASEENS@'] = f'C{inputs.resensatmos}'
 
@@ -334,12 +334,12 @@ def input_args(*argv):
     shieldforecasts = shieldmodeparser.add_parser('forecast-only', help='arguments for forecast-only mode')
     shieldreplay = shieldmodeparser.add_parser('replay', help='arguments for replay mode')
     shieldomf = shieldmodeparser.add_parser('omf', help='arguments for OmF mode')
-    shieldensregrid = shieldmodeparser.add_parser('ensregrid', help='arguments for ensemble regrid mode') 
+    shieldensregrid = shieldmodeparser.add_parser('ensregrid', help='arguments for ensemble regrid mode')
 
     # Common arguments across all modes
     for subp in [gfscycled, gfsforecasts, gefsforecasts]:
         subp = _common_args(subp)
-    for subp in [shieldcycled,shieldreplay,shieldforecasts,shieldomf,shieldensregrid]:
+    for subp in [shieldcycled, shieldreplay, shieldforecasts, shieldomf, shieldensregrid]:
         subp = _common_args(subp)
 
     # GFS-only arguments
@@ -347,11 +347,11 @@ def input_args(*argv):
         subp = _gfs_args(subp)
 
     # SHiELD-only argumnets
-    for subp in [shieldcycled,shieldreplay,shieldforecasts,shieldomf,shieldensregrid]:
+    for subp in [shieldcycled, shieldreplay, shieldforecasts, shieldomf, shieldensregrid]:
         subp = _shield_args(subp)
 
     # ensemble-only arguments
-    for subp in [gfscycled, gefsforecasts,shieldcycled,shieldensregrid]:
+    for subp in [gfscycled, gefsforecasts, shieldcycled, shieldensregrid]:
         subp = _gfs_or_gefs_ensemble_args(subp)
 
     # GFS/GEFS forecast-only additional arguments
@@ -359,7 +359,7 @@ def input_args(*argv):
         subp = _gfs_or_gefs_forecast_args(subp)
 
     # SHiELD forecast-only additional arguments
-    for subp in [shieldreplay,shieldforecasts,shieldomf]:
+    for subp in [shieldreplay, shieldforecasts, shieldomf]:
         subp = _shield_forecast_args(subp)
 
     # cycled mode additional arguments

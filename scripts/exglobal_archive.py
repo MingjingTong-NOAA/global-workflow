@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, sys
+import os
 
 from pygfs.task.archive import Archive
 from wxflow import AttrDict, Logger, cast_strdict_as_dtypedict, logit, chdir
@@ -63,7 +63,7 @@ def main():
         copy_to_arcdir = True
         for action, files in arcdir_set.items():
             if 'copy' in action and files is None and archive_dict['MODE'] == "replay":
-                copy_to_arcdir = False 
+                copy_to_arcdir = False
 
         # Populate the product archive (ARCDIR)
         if copy_to_arcdir:

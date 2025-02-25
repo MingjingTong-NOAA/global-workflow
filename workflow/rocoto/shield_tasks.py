@@ -65,7 +65,7 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
             data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
-            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}",'']}
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -75,7 +75,7 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
             data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
-            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}",'']}
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
             if self._base['EXP_WARM_START']:
                 dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
@@ -100,7 +100,7 @@ class SHiELDTasks(Tasks):
         return task
 
     def init(self):
-   
+
         cycledef = 'gdas_half,gdas' if self.app_config.mode == "replay" else self.run
 
         deps = []
@@ -185,14 +185,14 @@ class SHiELDTasks(Tasks):
                 deps = rocoto.create_dependency(dep_condition='and', dep=deps)
                 dependencies.append(deps)
                 dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
- 
+
             cycledef = self.run
             if self.run in ['gfs'] and gfs_enkf and self._base['INTERVAL_GFS'] != 6:
                 cycledef = 'gdas'
         elif self.app_config.mode == "replay":
             deps = []
-            data = [atm_restart_path,'/@Y@m@d.@H0000.coupler.res']
-            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}",'']}
+            data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
             data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
@@ -398,7 +398,7 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-            
+
         resources = self.get_resource('sfcanl')
         task_name = f'{self.run}_sfcanl'
         task_dict = {'task_name': task_name,
@@ -456,7 +456,7 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
         else:
             deps = []
-            dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'} 
+            dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -518,18 +518,18 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        if self.app_config.mode == "forecast-only": 
+        if self.app_config.mode == "forecast-only":
             cycledef = 'gfs_omf'
         else:
-            cycledef = self.run.replace('enkf', '') 
-         
+            cycledef = self.run.replace('enkf', '')
+
         resources = self.get_resource('gomg')
         task_name = f'{self.run}_gomg'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': cycledef, 
+                     'cycledef': cycledef,
                      'command': f'{self.HOMEgfs}/jobs/rocoto/gomg.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -1243,7 +1243,7 @@ class SHiELDTasks(Tasks):
                     dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
                 else:
                     data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
-                    dep_dict = {'type':'data', 'data':data}
+                    dep_dict = {'type': 'data', 'data': data}
             else:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_analinc'}
         dep = rocoto.add_dependency(dep_dict)
@@ -2550,7 +2550,7 @@ class SHiELDTasks(Tasks):
 
     def arch(self):
         deps = []
-        dep_dict = {'type':'metatask', 'name':f'{self.run}_fcst'}
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:
@@ -2719,7 +2719,7 @@ class SHiELDTasks(Tasks):
     def eget(self):
 
         deps = []
-        if self.app_config.mode == "cycled": 
+        if self.app_config.mode == "cycled":
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
             if self._base['ANAL_START']:
@@ -2729,13 +2729,12 @@ class SHiELDTasks(Tasks):
         else:
             atmos_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': self.run, 'MEMDIR': 'mem001'})
             data = f'{atmos_hist_path}/{self.run}.t@Hz.atmf006.nc'
-            dep_dict = {'type':'data', 'data':data}
+            dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             data = f'{atmos_hist_path}/{self.run}.t@Hz.sfcf006.nc'
-            dep_dict = {'type':'data', 'data':data}
+            dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
-
 
         egetenvars = self.envars.copy()
         egetenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
@@ -3406,4 +3405,3 @@ class SHiELDTasks(Tasks):
         task = rocoto.create_task(task_dict)
 
         return task
-

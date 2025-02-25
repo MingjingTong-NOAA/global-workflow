@@ -19,8 +19,8 @@ class SHiELDEnsregridAppConfig(AppConfig):
 
         run_options = super()._get_run_options(conf)
 
-        base = conf.parse_config('config.base', RUN=self.run) 
-        
+        base = conf.parse_config('config.base', RUN=self.run)
+
         return run_options
 
     def _get_app_configs(self, run):

@@ -20,14 +20,14 @@ class SHiELDReplayAppConfig(AppConfig):
 
         run_options = super()._get_run_options(conf)
 
-        base = conf.parse_config('config.base', RUN=self.run) 
-        
+        base = conf.parse_config('config.base', RUN=self.run)
+
         run_options[self.run]['replay'] = base.get('replay', 1)
         run_options[self.run]['icfrom'] = base.get('ICFROM', 'gfs')
         run_options[self.run]['icres'] = base.get('ICRES', 'C768')
-        run_options[self.run]['shield_res'] = base.get('CASE','C768')
+        run_options[self.run]['shield_res'] = base.get('CASE', 'C768')
         run_options[self.run]['do_sfcanl'] = base.get('DO_SFCANL', False)
-        run_options[self.run]['do_tsfc_tile']  = base.get('DO_TSFC_TILE', False)
+        run_options[self.run]['do_tsfc_tile'] = base.get('DO_TSFC_TILE', False)
         run_options[self.run]['do_omf'] = base.get('DO_OMF', False)
         run_options[self.run]['do_post'] = base.get('DO_POST', False)
 
@@ -42,7 +42,7 @@ class SHiELDReplayAppConfig(AppConfig):
         configs = ['stage_ic', 'fcst', 'arch', 'cleanup']
 
         if options['icfrom'] == 'gfs' or options['icfrom'] == 'shield':
-            configs += ['getic', 'init'] 
+            configs += ['getic', 'init']
 
         if options['do_atm']:
 
@@ -53,7 +53,7 @@ class SHiELDReplayAppConfig(AppConfig):
                 configs += ['sfcanl']
 
             if options['do_omf']:
-                configs += ['prep','gomg','analdiag']
+                configs += ['prep', 'gomg', 'analdiag']
 
             if options['do_post']:
                 if options['do_upp']:
@@ -94,7 +94,7 @@ class SHiELDReplayAppConfig(AppConfig):
                 tasks += ['sfcanl']
 
             if options['do_omf']:
-                tasks += ['prep','gomg','analdiag']
+                tasks += ['prep', 'gomg', 'analdiag']
 
             if options['do_post']:
                 if options['do_upp']:

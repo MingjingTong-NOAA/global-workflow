@@ -14,4 +14,3 @@ rocoto_xml_factory.register('shield_forecast-only', GFSForecastOnlyRocotoXML)
 rocoto_xml_factory.register('shield_replay', GFSCycledRocotoXML)
 rocoto_xml_factory.register('shield_omf', SHiELDDiagRocotoXML)
 rocoto_xml_factory.register('shield_ensregrid', SHiELDDiagRocotoXML)
-

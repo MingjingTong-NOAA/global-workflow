@@ -12,7 +12,7 @@ __all__ = ['Tasks']
 class Tasks:
     SERVICE_TASKS = ['getic', 'eget', 'getfcst', 'arch', 'archomg', 'earc', 'ergarc', 'stage_ic', 'cleanup']
     VALID_TASKS = ['aerosol_init', 'stage_ic', 'getic', 'init', 'getfcst',
-                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'analinc', 'gomg', 'arch', 'archomg', "cleanup", 
+                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'analinc', 'gomg', 'arch', 'archomg', 'cleanup',
                    'prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal',
                    'prepoceanobs',
                    'marineanlinit', 'marineanlletkf', 'marinebmat', 'marineanlvar', 'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',

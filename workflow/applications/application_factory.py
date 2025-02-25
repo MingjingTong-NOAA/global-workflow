@@ -18,5 +18,3 @@ app_config_factory.register('shield_forecast-only', SHiELDForecastOnlyAppConfig)
 app_config_factory.register('shield_replay', SHiELDReplayAppConfig)
 app_config_factory.register('shield_omf', SHiELDOmfAppConfig)
 app_config_factory.register('shield_ensregrid', SHiELDEnsregridAppConfig)
-
-

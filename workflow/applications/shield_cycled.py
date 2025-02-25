@@ -41,7 +41,7 @@ class SHiELDCycledAppConfig(AppConfig):
             run_options[run]['do_hybvar'] = base.get('DOHYBVAR', False)
             run_options[run]['do_hybvar_ocn'] = base.get('DOHYBVAR_OCN', False)
             run_options[run]['nens'] = base.get('NMEM_ENS', 0)
-            run_options[run]['do_tsfc_tile']  = base.get('DO_TSFC_TILE', False)
+            run_options[run]['do_tsfc_tile'] = base.get('DO_TSFC_TILE', False)
             run_options[run]['shield_res'] = base.get('CASE', 'C768')
             run_options[run]['opr_res'] = base.get('OPS_RES', 'C768')
             run_options[run]['icfrom'] = base.get('ICFROM', 'gfs')
