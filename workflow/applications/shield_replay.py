@@ -39,7 +39,7 @@ class SHiELDReplayAppConfig(AppConfig):
         """
 
         options = self.run_options[run]
-        configs = ['stage_ic', 'fcst', 'arch', 'cleanup']
+        configs = ['stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
 
         if options['icfrom'] == 'gfs' or options['icfrom'] == 'shield':
             configs += ['getic', 'init']
@@ -101,6 +101,9 @@ class SHiELDReplayAppConfig(AppConfig):
                     tasks += ['atmupp']
                 tasks += ['atmos_prod']
 
-        tasks += ['arch', 'cleanup']  # arch and cleanup **must** be the last tasks
+        if options['do_archtar']:
+            tasks += ['arch_tars']
+
+        tasks += ['arch_vrfy', 'cleanup']  # arch_tar, arch_vrfy, and cleanup **must** be the last tasks
 
         return {f"{self.run}": tasks}

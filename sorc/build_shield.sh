@@ -50,6 +50,7 @@ while getopts ":che:j:t:" option; do
 done
 
 cd "${cwd}/shield.fd/SHiELD_build"
+git submodule update --init mkmf
 
 if [ ! -d ${cwd}/shield.fd/SHiELD_SRC ]; then
   ./CHECKOUT_code

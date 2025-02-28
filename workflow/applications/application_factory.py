@@ -7,6 +7,7 @@ from applications.shield_forecast_only import SHiELDForecastOnlyAppConfig
 from applications.shield_replay import SHiELDReplayAppConfig
 from applications.shield_omf import SHiELDOmfAppConfig
 from applications.shield_ensregrid import SHiELDEnsregridAppConfig
+from applications.sfs import SFSAppConfig
 
 
 app_config_factory = Factory('AppConfig')
@@ -18,3 +19,4 @@ app_config_factory.register('shield_forecast-only', SHiELDForecastOnlyAppConfig)
 app_config_factory.register('shield_replay', SHiELDReplayAppConfig)
 app_config_factory.register('shield_omf', SHiELDOmfAppConfig)
 app_config_factory.register('shield_ensregrid', SHiELDEnsregridAppConfig)
+app_config_factory.register('sfs_forecast-only', SFSAppConfig)
