@@ -42,7 +42,9 @@ class SHiELDReplayAppConfig(AppConfig):
         configs = ['stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
 
         if options['icfrom'] == 'gfs' or options['icfrom'] == 'shield':
-            configs += ['getic', 'init']
+            if options['do_fetch_hpss']:
+                configs += ['getic']
+            configs += ['init']
 
         if options['do_atm']:
 
@@ -81,7 +83,9 @@ class SHiELDReplayAppConfig(AppConfig):
         options = self.run_options[self.run]
 
         if options['icfrom'] == 'gfs' or options['icfrom'] == 'shield':
-            tasks += ['getic', 'init']
+            if options['do_fetch_hpss']:
+                tasks += ['getic']
+            tasks += ['init']
 
         tasks += ['fcst']
 

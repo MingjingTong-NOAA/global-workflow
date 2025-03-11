@@ -279,7 +279,9 @@ EOF
     mountain=".true."
 
     # restarts contain non-hydrostatic state
-    [[ "${TYPE}" == "nh" ]] && make_nh=".false."
+    if [[ "${TYPE}" == "nh" ]]; then
+        make_nh=".false."
+    fi
 
     # do not pre-condition the solution
     na_init=0
@@ -1017,7 +1019,9 @@ GOCART_rc() {
   if [[ -n "${AERO_INPUTS_DIR}" ]]; then
     ${NLN} "${AERO_INPUTS_DIR}" "${DATA}/ExtData"
     status=$?
-    [[ ${status} -ne 0 ]] && exit "${status}"
+    if [[ ${status} -ne 0 ]]; then
+        exit "${status}"
+    fi
   fi
 
   source "${USHgfs}/parsing_namelists_GOCART.sh"

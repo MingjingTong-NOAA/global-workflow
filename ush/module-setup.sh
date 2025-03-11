@@ -69,13 +69,12 @@ elif [[ ${MACHINE_ID} = stampede* ]] ; then
     fi
     module purge
 
-elif [[ ${MACHINE_ID} = gaea* ]] ; then
-    # We are on GAEA.
-    if ( ! eval module help > /dev/null 2>&1 ) ; then
-        source /usr/share/lmod/lmod/init/bash
-        source /etc/profile
-    fi
+elif [[ ${MACHINE_ID} = gaeac5 ]] ; then
+    # We are on GAEAC5.
+    source ${MODULESHOME}/init/bash
     module reset
+elif [[ ${MACHINE_ID} = gaeac6 ]] ; then
+    source /opt/cray/pe/lmod/8.7.31/init/bash
 
 elif [[ ${MACHINE_ID} = expanse* ]]; then
     # We are on SDSC Expanse

@@ -71,7 +71,8 @@ class SHiELDCycledAppConfig(AppConfig):
         configs = ['prep']
 
         if options['do_tsfc_tile']:
-            configs += ['getic']
+            if options['do_fetch_hpss']:
+                configs += ['getic']
             if options['shield_res'] != options['icres']:
                 configs += ['init']
 
@@ -194,7 +195,8 @@ class SHiELDCycledAppConfig(AppConfig):
                 task_names[run] += ['prep']
 
                 if run == 'gdas' and options['do_tsfc_tile']:
-                    task_names[run] += ['getic']
+                    if options['do_fetch_hpss']:
+                        task_names[run] += ['getic']
                     if options['shield_res'] != options['opr_res']:
                         task_names[run] += ['init']
 

@@ -32,9 +32,10 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         options = self.run_options[run]
 
         if options['do_fetch_hpss'] or options['do_fetch_local']:
-            configs += ['fetch']
+            #configs += ['fetch']
+            configs += ['getic']
 
-        configs += ['getic', 'init', 'stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
+        configs += ['init', 'stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
 
         if options['do_atm']:
 
@@ -111,9 +112,10 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         tasks = []
 
         if options['do_fetch_hpss'] or options['do_fetch_local']:
-            tasks += ['fetch']
+            #tasks += ['fetch']
+            tasks += ['getic']
 
-        tasks += ['getic', 'init', 'stage_ic']
+        tasks += ['init', 'stage_ic']
 
         if options['do_aero_fcst'] and not options['exp_warm_start']:
             tasks += ['aerosol_init']

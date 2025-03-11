@@ -91,7 +91,7 @@ else
    mem_offset=0
 fi
 INCREMENTS_TO_ZERO=${INCREMENTS_TO_ZERO:-"'NONE'"}
-GSI_SOILANAL=${GSI_SOILANAL:-"NO"}
+DO_GSISOILDA=${DO_GSISOILDA:-"NO"}
 
 ################################################################################
 
@@ -119,7 +119,9 @@ HYBENSINFO=${HYBENSINFO:-${FIXgfs}/gsi/global_hybens_info.l${LEVS_ENKF}.txt}
 ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS_ENKF}.txt}
 VLOCALEIG=${VLOCALEIG:-${FIXgfs}/gsi/vlocal_eig_l${LEVS_ENKF}.dat}
 ENKF_SUFFIX="s"
-[[ $SMOOTH_ENKF = "NO" ]] && ENKF_SUFFIX=""
+if [[ "${SMOOTH_ENKF}" == "NO" ]]; then
+    ENKF_SUFFIX=""
+fi
 
 ################################################################################
 # Preprocessing
@@ -149,9 +151,13 @@ ${NLN} "${COMIN_ATMOS_ANALYSIS_STAT}/${GBIASe}" "satbias_in"
 radassim_delay=$(( assim_freq * 2 ))
 SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
 if [ $USE_CFP = "YES" ]; then
-   [[ -f $DATA/untar.sh ]] && rm $DATA/untar.sh
-   [[ -f $DATA/mp_untar.sh ]] && rm $DATA/mp_untar.sh
-   cat > $DATA/untar.sh << EOFuntar
+   if [[ -f "${DATA}/untar.sh" ]]; then
+       rm "${DATA}/untar.sh"
+   fi
+   if [[ -f "${DATA}/mp_untar.sh" ]]; then
+       rm "${DATA}/mp_untar.sh"
+   fi
+   cat > "${DATA}/untar.sh" << EOFuntar
 #!/bin/sh
 memchar=\$1
 COM_ATMOS_ANALYSIS=\$2
@@ -222,7 +228,7 @@ for imem in $(seq 1 $NMEM_ENS); do
    for FHR in $nfhrs; do
       ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}atmf00${FHR}${ENKF_SUFFIX}.nc" \
          "sfg_${PDY}${cyc}_fhr0${FHR}_${memchar}"
-      if [ $GSI_SOILANAL = "YES" ]; then
+      if [[ "${DO_GSISOILDA}" = "YES" ]]; then
          ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}sfcf00${FHR}${ENKF_SUFFIX}.nc" \
              "bfg_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
@@ -247,7 +253,7 @@ for imem in $(seq 1 $NMEM_ENS); do
                "incr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
          fi
       fi
-      if [ $GSI_SOILANAL = "YES" ]; then
+      if [[ "${DO_GSISOILDA}" = "YES" ]]; then
           ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}sfci00${FHR}.nc" \
            "sfcincr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
@@ -262,6 +268,12 @@ for FHR in $nfhrs; do
    if [ $cnvw_option = ".true." ]; then
       ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}sfcf00${FHR}.ensmean.nc" \
          "sfgsfc_${PDY}${cyc}_fhr0${FHR}_ensmean"
+   fi
+   if [[ "${DO_GSISOILDA}" = "YES" ]]; then
+      ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}sfcf00${FHR}.ensmean.nc" \
+         "bfg_${PDY}${cyc}_fhr0${FHR}_ensmean"
+      ${NLN} "${COMIN_ATMOS_ANALYSIS_STAT}/${APREFIX}sfci00${FHR}.nc" \
+         "sfcincr_${PDY}${cyc}_fhr0${FHR}_ensmean"
    fi
 done
 
@@ -479,7 +491,9 @@ fi
 ################################################################################
 #  Postprocessing
 cd "$pwd"
-[[ $mkdata = "YES" ]] && rm -rf "${DATA}"
+if [[ "${mkdata}" == "YES" ]]; then
+    rm -rf "${DATA}"
+fi
 
 
 exit ${err}
