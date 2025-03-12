@@ -32,7 +32,7 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         options = self.run_options[run]
 
         if options['do_fetch_hpss'] or options['do_fetch_local']:
-            #configs += ['fetch']
+            # configs += ['fetch']
             configs += ['getic']
 
         configs += ['init', 'stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
@@ -112,7 +112,7 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
         tasks = []
 
         if options['do_fetch_hpss'] or options['do_fetch_local']:
-            #tasks += ['fetch']
+            # tasks += ['fetch']
             tasks += ['getic']
 
         tasks += ['init', 'stage_ic']
