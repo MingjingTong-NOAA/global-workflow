@@ -25,7 +25,5 @@ BUILD_JOBS=${BUILD_JOBS:-8} \
 BUILD_VERBOSE=${BUILD_VERBOSE:-} \
 ./ufs_utils.fd/build_all.sh
 
-./chgres_shield.fd/build_all.sh
-
 exit
 

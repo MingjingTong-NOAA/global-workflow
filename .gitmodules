@@ -32,10 +32,6 @@
 [submodule "sorc/upp.fd"]
 	path = sorc/upp.fd
 	url = https://github.com/NOAA-EMC/UPP.git
-[submodule "sorc/chgres_shield.fd"]
-	path = sorc/chgres_shield.fd
-	url = https://github.com/MingjingTong-NOAA/UFS_UTILS.git
-	branch = chgres_shield
 [submodule "sorc/gsi_enkf.fd"]
 	path = sorc/gsi_enkf.fd
 	url = https://github.com/MingjingTong-NOAA/GSI.git

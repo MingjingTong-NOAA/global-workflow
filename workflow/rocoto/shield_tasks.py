@@ -3363,7 +3363,7 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         data = f'{ic_path}/'
         data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
-        dep_dict = {'type': 'data', 'data': [data,data2], 'age': 30, 'offset': ['','-03:00:00']}
+        dep_dict = {'type': 'data', 'data': [data, data2], 'age': 30, 'offset': ['', '-03:00:00']}
         deps.append(rocoto.add_dependency(dep_dict))
         deps = rocoto.create_dependency(dep_condition='and', dep=deps)
 

@@ -46,7 +46,7 @@ class RocotoXML(ABC):
         self.footer = self._get_workflow_footer()
 
         # If we are running scrontab, check if the rocotorc file has the right entries
-        #if self.use_scrontab:
+        # if self.use_scrontab:
         #    self._check_rocotorc()
 
         # Construct the XML
