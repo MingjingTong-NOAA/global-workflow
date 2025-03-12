@@ -25,10 +25,6 @@
 	path = sorc/gsi_utils.fd
 	url = https://github.com/MingjingTong-NOAA/GSI-utils.git
 	branch = gfdl_shield
-[submodule "sorc/shield.fd/SHiELD_build"]
-	path = sorc/shield.fd/SHiELD_build
-	url = https://gitlab.gfdl.noaa.gov/Mingjing.Tong/SHiELD_build.git
-	branch = shield_da_2024
 [submodule "sorc/upp.fd"]
 	path = sorc/upp.fd
 	url = https://github.com/NOAA-EMC/UPP.git
@@ -36,3 +32,7 @@
 	path = sorc/gsi_enkf.fd
 	url = https://github.com/MingjingTong-NOAA/GSI.git
 	branch = gfdl_shield_2025
+[submodule "sorc/shield.fd/SHiELD_build"]
+	path = sorc/shield.fd/SHiELD_build
+	url = https://github.com/MingjingTong-NOAA/SHiELD_build.git
+	branch = shield_da
