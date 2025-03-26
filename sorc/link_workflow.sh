@@ -406,7 +406,7 @@ if [[ -s "upp.x" ]]; then
 fi
 ${LINK_OR_COPY} "${HOMEgfs}/sorc/upp.fd/exec/upp.x" .
 
-for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube fregrid; do
+for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube_shield fregrid; do
   if [[ -s "${ufs_utilsexe}" ]]; then
       rm -f "${ufs_utilsexe}"
   fi

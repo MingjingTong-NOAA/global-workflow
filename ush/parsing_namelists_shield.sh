@@ -84,6 +84,10 @@ cat > input.nml <<EOF
   ${fms_nml:-}
 /
 
+&fms_affinity_nml
+  affinity = .false.
+/
+
 &fv_core_nml
   layout = ${layout_x},${layout_y}
   io_layout = ${io_layout}

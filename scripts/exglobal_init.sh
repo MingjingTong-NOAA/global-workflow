@@ -45,6 +45,7 @@ export LEVS=$LEVS_INIT
 export RUNICSH=${RUNICSH:-${GDAS_INIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
+export CHGRESEXEC=${CHGRESEXEC:-${EXECgfs}/chgres_cube_shield}
 
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then

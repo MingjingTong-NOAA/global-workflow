@@ -7,6 +7,9 @@ unset "memory_${RUN}"
 export FI_CXI_RX_MATCH_MODE=hybrid
 
 case ${step} in
+  "init")
+    tasks_per_node=24
+  ;;
   "fcst" | "efcs")
     case "${CASE}" in
       "C768")
