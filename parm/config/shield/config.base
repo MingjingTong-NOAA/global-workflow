@@ -366,25 +366,26 @@ export IAUFHRS_ENKF="3,6,9"
 export IAU_DELTHRS_ENKF=6
 export IAU_FILTER_INCREMENTS=".false."
 # replay setup
-# 1 - compute increment inside model, 2 - read pre-computed increment
-export replay=2
-export replay_4DIAU="YES"
+export REPLAY_4DIAU=@REPLAY_4DIAU@
+export analysis_on_native_grid=".false."
 export IAU_FORCING_VAR="'ua','va','temp','delp','delz','sphum','o3mr'"
 if [[ "$MODE" == "replay" ]]; then
    if [[ "$ICFROM" == "ifs" ]]; then
-      export replay=1
-      export replay_4DIAU="NO"
+      export REPLAY_4DIAU="NO"
    fi
-   if [[ $replay_4DIAU == "NO" ]]; then
-      export replay=1
+   if [[ $REPLAY_4DIAU == "NO" ]]; then
+      export compute_iau_inc=".true."
       export IAUFHRS="6"
       export IAU_FILTER_INCREMENTS=".true."
    else
-      export replay=2
-      export IAUFHRS="3,6,9"
+      if [[ "$analysis_on_native_grid" == ".true." ]]; then
+         export compute_iau_inc=".true."
+      else
+         export compute_iau_inc=".false."
+      fi
    fi
 else
-   export replay=0
+   export compute_iau_inc=".false."
 fi
 
 # Use Jacobians in eupd and thereby remove need to run eomg
@@ -559,7 +560,7 @@ if [[ "${FHMAX_FITS}" -gt "${FHMAX_GFS}" ]]; then
 fi
 
 # User may choose to reset these at experiment setup time 
-export DO_FETCH_HPSS="NO"    # Copy from HPSS (on HPSS-accessible machines) onto COM
+export DO_FETCH_HPSS="@DO_FETCH_HPSS@"    # Copy from HPSS (on HPSS-accessible machines) onto COM
 export DO_FETCH_LOCAL="NO"   # Copy from local disk onto COM
 
 # Archiving options

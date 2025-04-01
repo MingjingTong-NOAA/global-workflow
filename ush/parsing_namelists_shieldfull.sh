@@ -44,6 +44,9 @@ curr_date="${sCDATE:0:4},${sCDATE:4:2},${sCDATE:6:2},${sCDATE:8:2},0,0"
 ${NCP} "${DATA_TABLE}" data_table
 ${NCP} "${FIELD_TABLE}" field_table
 
+restart_interval_nml="0,0,0,0,0,${FHOUT:-1}"
+restart_start="0,0,0,0,0,${restart_start_secs:-3600}"
+
 cat > input.nml <<EOF
 &amip_interp_nml
   interp_oi_sst = .true.
@@ -185,24 +188,19 @@ cat >> input.nml << EOF
   days = ${days:-$((FHMAX/24))}
   hours = ${hours:-$((FHMAX-24*(FHMAX/24)))}
   dt_atmos = ${DELTIM}
-  dt_ocean = ${DELTIM}
   current_date = ${curr_date}
   calendar = 'julian'
   atmos_nthreads = ${NTHREADS_FV3:-${nth_fv3:-1}}
   use_hyper_thread = ${hyperthread:-".false."}
-  restart_secs = ${restart_secs:-3600}
-  restart_start_secs = ${restart_start_secs:-10800}
-EOF
-
-if [ $restart_secs_aux -gt 0 ]; then
-  cat >> input.nml << EOF
-  restart_secs_aux = ${restart_secs_aux:-0}
-  restart_start_secs_aux = ${restart_start_secs_aux:-0}
-  restart_duration_secs_aux = ${restart_duration_secs_aux:-0}
-EOF
-fi
-
-cat >> input.nml << EOF
+  ice_npes = -1
+  land_npes = -1
+  do_ocean = .false.
+  dt_cpld = ${DELTIM}
+  do_flux = .false.
+  do_land = .false.
+  do_ice = .false.
+  restart_interval = ${restart_interval_nml}
+  restart_start = ${restart_start}
   iau_offset   = ${IAU_OFFSET}
   ${coupler_nml:-}
 /
@@ -291,7 +289,7 @@ if [[ "${DOIAU}" == "YES" && "${fcst_wo_da:-"NO"}" == "NO" ]]; then
 EOF
 fi
 
-if [[ ${MODE} == "replay" && ${compute_iau_inc:-".false."} == ".true." ]]; then
+if [[ ${MODE} == "replay" && ${compute_iau_inc:-"false"} == ".true." ]]; then
   cat >> input.nml << EOF
   iau_forcing_var = ${IAU_FORCING_VAR}
 EOF

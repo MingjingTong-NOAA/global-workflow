@@ -741,7 +741,7 @@ case ${step} in
 
   "analinc")
     walltime="00:15:00"
-    if [[ "$replay_4DIAU" == "YES" ]]; then
+    if [[ "$REPLAY_4DIAU" == "YES" ]]; then
        ntasks=3
     else
        ntasks=1

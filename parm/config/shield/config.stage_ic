@@ -7,7 +7,7 @@ echo "BEGIN: config.stage_ic"
 # Get task specific resources
 source "${EXPDIR}/config.resources" stage_ic
 
-if [[ "${DO_FETCH_HPSS^^}" =~ "Y" || "${DO_FETCH_LOCAL^^}" =~ "Y" ]]; then
+if [[ "${MODE}" == "cycled" && ("${DO_FETCH_HPSS^^}" =~ "Y" || "${DO_FETCH_LOCAL^^}" =~ "Y") ]]; then
     export ICSDIR="${DATAROOT}"  # fetch untars data into DATAROOT
 else
     export ICSDIR=${ICSDIR}/output/${CASE}

@@ -22,14 +22,15 @@ class SHiELDReplayAppConfig(AppConfig):
 
         base = conf.parse_config('config.base', RUN=self.run)
 
-        run_options[self.run]['replay'] = base.get('replay', 1)
+        run_options[self.run]['compute_iau_inc'] = base.get('compute_iau_inc', False)
+        run_options[self.run]['analysis_on_native_grid'] = base.get('analysis_on_native_grid', False)
+        run_options[self.run]['replay_4DIAU'] = base.get('REPLAY_4DIAU', False)
         run_options[self.run]['icfrom'] = base.get('ICFROM', 'gfs')
         run_options[self.run]['icres'] = base.get('ICRES', 'C768')
         run_options[self.run]['shield_res'] = base.get('CASE', 'C768')
         run_options[self.run]['do_sfcanl'] = base.get('DO_SFCANL', False)
         run_options[self.run]['do_tsfc_tile'] = base.get('DO_TSFC_TILE', False)
         run_options[self.run]['do_omf'] = base.get('DO_OMF', False)
-        run_options[self.run]['do_post'] = base.get('DO_POST', False)
 
         return run_options
 
@@ -48,7 +49,7 @@ class SHiELDReplayAppConfig(AppConfig):
 
         if options['do_atm']:
 
-            if options['replay'] == 2:
+            if not options['analysis_on_native_grid'] and options['replay_4DIAU']:
                 configs += ['analinc']
 
             if options['do_sfcanl']:
@@ -61,6 +62,9 @@ class SHiELDReplayAppConfig(AppConfig):
                 if options['do_upp']:
                     configs += ['upp']
                 configs += ['atmos_products']
+
+            if options['do_archtar']:
+                configs += ['arch_tars']
 
         return configs
 
@@ -91,7 +95,7 @@ class SHiELDReplayAppConfig(AppConfig):
 
         if options['do_atm']:
 
-            if options['replay'] == 2:
+            if not options['analysis_on_native_grid'] and options['replay_4DIAU']:
                 tasks += ['analinc']
 
             if options['do_sfcanl']:

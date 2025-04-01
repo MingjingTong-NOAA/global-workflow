@@ -99,7 +99,7 @@ fi
 # Regrid external analysis to forecast resolution
 if [[ $REGRID_ANALYSIS == "YES" ]]; then
   $NLN $ATMF06 fcst.06
-  if [ $replay_4DIAU = "YES" ]; then
+  if [ $REPLAY_4DIAU = "YES" ]; then
     # use GFS analysis at ensemble forecast resolution
     $NLN $ATMANLENS03 anal.03
     $NLN $ATMANLENS06 anal.06
@@ -172,7 +172,7 @@ fi
 $NLN $ATMF06 sigf06
 $NLN $ATMANLFRES06 siganl
 $NLN $ATMINC siginc.nc
-if [ $replay_4DIAU = "YES" ]; then
+if [ $REPLAY_4DIAU = "YES" ]; then
    $NLN $ATMF03 sigf03
    $NLN $ATMANLFRES03   siga03
    $NLN $ATMI03   sigi03.nc

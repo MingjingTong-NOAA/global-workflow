@@ -27,4 +27,5 @@ base:
   ENSREPLAY: "NO"
   DO_OMF: "YES"
   DO_POST: "NO"
-
+  DO_FETCH_HPSS: "YES"
+  REPLAY_4DIAU: "YES"

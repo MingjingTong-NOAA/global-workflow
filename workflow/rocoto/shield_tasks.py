@@ -39,16 +39,17 @@ class SHiELDTasks(Tasks):
     def stage_ic(self):
 
         dependencies = None
-        if self.options['do_fetch_hpss'] or self.options['do_fetch_local']:
+        
+        if self.app_config.mode != "cycled":
+            deps = []
+            dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps)
+        elif self.options['do_fetch_hpss'] or self.options['do_fetch_local']:
             deps = []
             dep_dict = {
                 'type': 'task', 'name': f'{self.run}_fetch',
             }
-            deps.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep=deps)
-        elif self.app_config.mode != "cycled":
-            deps = []
-            dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps)
 
@@ -1068,19 +1069,27 @@ class SHiELDTasks(Tasks):
 
     def _fcst_replay(self):
 
+        atm_restart_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'RUN': self.run})
         if self.options['do_sfcanl']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
         else:
-            if self.app_config.replay == 1:
-                if self.options['icfrom'] == 'gfs' or self.options['icfrom'] == 'shield':
-                    dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
-                else:
-                    data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
-                    dep_dict = {'type': 'data', 'data': data}
-            else:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_analinc'}
+            data = [atm_restart_path, '/@Y@m@d.@H0000.sfcanl_data.tile6.nc']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': ['','-03:00:00']}
         dep = rocoto.add_dependency(dep_dict)
         dependencies = rocoto.create_dependency(dep=dep)
+     
+        if self.options['compute_iau_inc']:
+            if self.options['icfrom'] == 'gfs' or self.options['icfrom'] == 'shield':
+                dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+            else:
+                data = '&ECICSDIR;/IFS_AN0_@Y@m@d.@HZ.nc'
+                dep_dict = {'type': 'data', 'data': data}
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analinc'}
+        dep = rocoto.add_dependency(dep_dict)
+        dependencies.append(rocoto.add_dependency(dep_dict))
+
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         if self.run in ['gdas']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
@@ -2425,10 +2434,9 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
             deps.append(rocoto.add_dependency(dep_dict))
         # Post job dependencies
-        if self.app_config.mode != 'cycled' and self.options['do_post']:
+        if self.options['do_post']:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
             deps.append(rocoto.add_dependency(dep_dict))
-        deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_ocean']:
             if self.run in ['gfs']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_ocean_prod'}
@@ -2504,7 +2512,7 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
             deps.append(rocoto.add_dependency(dep_dict))
         # Post job dependencies
-        if self.app_config.mode != 'cycled' and self.options['do_post']:
+        if self.options['do_post']:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_wave']:
@@ -2627,8 +2635,9 @@ class SHiELDTasks(Tasks):
                 dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
                 deps.append(rocoto.add_dependency(dep_dict))
             # Post job dependencies
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_post']:
+                dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
+                deps.append(rocoto.add_dependency(dep_dict))
             if self.options['do_wave']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavepostsbs'}
                 deps.append(rocoto.add_dependency(dep_dict))

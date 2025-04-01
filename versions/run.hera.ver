@@ -10,6 +10,7 @@ export gempak_ver=7.17.0
 export perl_ver=5.38.0
 
 source "${HOMEgfs:-}/versions/spack.ver"
+export esmf_ver=8.5.0 
 export spack_mod_path="/scratch1/NCEPDEV/nems/role.epic/spack-stack/spack-stack-${spack_stack_ver}/envs/${spack_env}/install/modulefiles/Core"
 
 export imagemagick_ver=7.1.1-11

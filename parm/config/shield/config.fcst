@@ -47,7 +47,7 @@ fi
 #######################################################################
 
 export FORECASTSH="${SCRgfs}/exglobal_forecast.sh"
-export NAMELISTSH="${USHgfs}/parsing_namelists_shield.sh"
+export NAMELISTSH="${USHgfs}/parsing_namelists_shieldfull.sh"
 export FCSTEXEC="shield_model.x"
 export subdir="INPUT/"
 

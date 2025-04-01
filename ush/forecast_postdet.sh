@@ -28,7 +28,6 @@ FV3_postdet() {
         || ( echo "FATAL ERROR: Unable to copy FV3 IC, ABORT!"; exit 1 )
       fi
     done
-    replay=0
     if [ "$ICFROM" = "ifs" ]; then
       ${NCP} "${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc" "$DATA/INPUT/gk03_CF0.nc" \
       || ( echo "FATAL ERROR: Unable to copy IFS IC, ABORT!"; exit 1 )
@@ -205,38 +204,45 @@ EOF
         fi
       fi
 
-      if (( replay == 1 )); then
+      if [[ "${MODE}" == "replay" && ${compute_iau_inc:-".false."} == ".true." ]]; then
         # compute increment inside model
         inc_files=()
         read_increment=".false."
-        IAU_INC_FILES=""
+        IAU_INC_FILES="''"
  
         # link analysis and restart files for replay
         mkdir -p $DATA/EXTIC
         mkdir -p $DATA/ATMINC
         mkdir -p $DATA/ATMANL
+        mkdir -p $DATA/ATMFCST
         # link external IC
         local file_list
         file_list=$(FV3_coldstarts)
         echo "Link FV3 cold start files for 'RUN=${RUN}' at '${current_cycle}' from '${COMIN_ATMOS_INPUT}'"
         local fv3_file
         for fv3_file in ${file_list}; do
-          if [[ "${fv3_file:0:3}" != "sfc" ]]; then
+          #if [[ "${fv3_file:0:3}" != "sfc" ]]; then
             ${NLN} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/EXTIC/${fv3_file}"
-          fi
+          #fi
         done
         if [[ "$ICFROM" == "ifs" ]]; then
           $NLN ${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc $DATA/EXTIC/gk03_CF0.nc
         fi
      
-        # Link restart background files
-        local file_list
+        # Determine the dates for restart files to be linked
+        local restart_date nfhrs fhr file_list
+        nfhrs=$(echo "${IAUFHRS}" | sed 's/,/ /g') 
         file_list=$(FV3_restarts)
-        echo "Link FV3 restarts for 'RUN=${RUN}' at '${restart_date}' from '${restart_dir}'"
-        local fv3_file restart_file
-        for fv3_file in ${file_list}; do
-          restart_file="${CDATE:0:8}.${CDATE:8:2}0000.${fv3_file}"
-          ${NLN} "${restart_dir}/${restart_file}" "${DATA}/INPUT/${fv3_file}"
+        for fhr in $nfhrs ; do
+           restart_date=$(date --utc -d "${previous_cycle:0:8} ${previous_cycle:8:2} + ${fhr} hours" +%Y%m%d%H)
+           if [ "$restart_date" != "$model_start_date_current_cycle" ]; then
+              echo "Link FV3 restarts for 'RUN=${RUN}' at '${restart_date}' from '${restart_dir}'"
+              local fv3_file restart_file
+              for fv3_file in ${file_list}; do
+                 restart_file="${restart_date:0:8}.${restart_date:8:2}0000.${fv3_file}"
+                 ${NLN} "${restart_dir}/${restart_file}" "${DATA}/ATMFCST/atmf00${fhr}.${fv3_file}"
+              done
+           fi
         done
       else
         local increment_file
@@ -286,11 +292,11 @@ EOF
     # do not pre-condition the solution
     na_init=0
 
-    if (( replay == 1 )); then
+    if [[ "${MODE}" == "replay" && ${compute_iau_inc:-".false."} == ".true." && ${analysis_on_native_grid:-".false."} == ".false." ]]; then
       if [[ "${ICFROM}" == "gfs" || "${ICFROM}" == "shield" ]]; then
-        nudge_qv=${nudge_qv:-".true."}
-        nggps_ic=${nggps_ic:-".true."}
-        ncep_ic=${ncep_ic:-".false."}
+        nudge_qv=".true."
+        nggps_ic=".true."
+        ncep_ic=".false."
         ecmwf_ic=".false."
         res_latlon_dynamics='""'
       else
@@ -356,6 +362,9 @@ EOF
         ${NLN} "${COMOUT_ATMOS_HISTORY}/tracer3d_4xdaily.tile${nn}.nc" "tracer3d_4xdaily.tile${nn}.nc"
       done
     fi
+  fi
+  if [[ ${NET:-"gfs"} == "shield" ]]; then
+    ${NLN} "${COMOUT_ATMOS_HISTORY}/tendency.dat"  "fort.555"
   fi
   #============================================================================
 
@@ -567,7 +576,7 @@ EOF
   fi
 
 # replay increment file
-  if [[ $replay -eq 1 && $warm_start = ".true." ]]; then
+  if [[ "${MODE}" == "replay" && ${compute_iau_inc:-".false."} == ".true." && ${write_iau_inc:-".false."} == ".true." ]]; then
      echo "s/_RHR/0/"            > changedate
      echo "s/_auxfhr/"NO"/"     >> changedate
      echo "s/_atminc/".true."/" >> changedate

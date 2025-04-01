@@ -102,6 +102,4 @@ export ntasks_c2g=$(((FHMAX-FHMIN)/FHOUT+1))
 # use TKE-EDMF scheme optin 0 and 1 in ensemble
 export dedmfens="YES"
 
-export replay=0
-
 echo "END: config.efcs"

@@ -47,7 +47,7 @@ export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
-export replay_4DIAU=${replay_4DIAU:-"NO"}
+export REPLAY_4DIAU=${REPLAY_4DIAU:-"NO"}
 
 if [ $CDATE -ge 2022062700 ]; then
   version="v16.2"
@@ -141,7 +141,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
            echo "will rerun surface analysis, skip pulling sfcanl data"
         fi
      fi 
-     if [[ $replay_4DIAU != "YES" || ($EXP_WARM_START != ".true." && "$CDATE" == "$SDATE") ]]; then 
+     if [[ $REPLAY_4DIAU != "YES" || ($EXP_WARM_START != ".true." && "$CDATE" == "$SDATE") ]]; then 
         # Run UFS_UTILS GETICSH
         atmanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.nc
         sfcanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.sfcanl.nc
@@ -155,18 +155,23 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
           pullanldata="NO"
         fi
      fi
-     if [[ $replay_4DIAU == "YES" && ( $EXP_WARM_START == ".true." || "$CDATE" != "$SDATE" ) ]]; then
+     if [[ $REPLAY_4DIAU == "YES" && ( $EXP_WARM_START == ".true." || "$CDATE" != "$SDATE" ) ]]; then
         cd $EXTRACT_DIR
         if [[ $ICFROM == "gfs" ]]; then
            # replay to operational GFS
            directory=${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}
-           tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
+           tarball="com_gfs_${gfssubver}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
         else
            # replay to SHiELD or GFS retro analysis
            directory=${HPSSEXPDIR}/${ICFROM}/${CDATE}
            tarball="${ICDUMP}.tar"
         fi
         if [ ! -s ${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
+           if [ -d ${ROTDIR}/logs/${CDATE} ]; then
+              echo ${ROTDIR}/logs/${CDATE}
+           else
+              echo 'not exist'
+           fi
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atma003.ensres.nc " >${ROTDIR}/logs/${CDATE}/list.txt
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atma009.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
            echo ".${ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc " >>${ROTDIR}/logs/${CDATE}/list.txt
@@ -216,7 +221,7 @@ if [[ $MODE = "replay" && $DO_SFCANL = "YES" && $DONST = "YES" && ! -s $dtfanl ]
       export tarball="${ICDUMP}_restarta.tar"
       htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
    else
-      export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+      export tarball="com_gfs_${gfssubver}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
       htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
    fi
    if [[ "${COMOUT_ATMOS_ANALYSIS}" != "${COMIN_ATMOS_ANALYSIS}" ]]; then
@@ -309,7 +314,7 @@ cd ${ICSDIR}
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else   
-          export tarball="com_gfs_${version}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
+          export tarball="com_gfs_${gfssubver}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
           htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt
           status=$?
           [[ $status -ne 0 ]] && exit $status

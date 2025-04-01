@@ -106,12 +106,12 @@ class AppConfig(ABC, metaclass=AppConfigInit):
             run_options[run]['do_gcycle'] = run_base.get('DO_GCYCLE', False)
             run_options[run]['do_tref'] = run_base.get('DO_TSFC_TILE', False)
             run_options[run]['do_omf'] = run_base.get('DO_OMF', False)
-            run_options[run]['replay'] = run_base.get('replay', 0)
             run_options[run]['icdump'] = run_base.get('ICDUMP', 'gdas')
             run_options[run]['icstyp'] = run_base.get('ICSTYP', 'gfs')
 
             run_options[run]['do_fetch_hpss'] = run_base.get('DO_FETCH_HPSS', False)
             run_options[run]['do_fetch_local'] = run_base.get('DO_FETCH_LOCAL', False)
+            run_options[run]['do_post'] = run_base.get('DO_POST', False)
 
             if not AppConfig.is_monotonic(run_options[run]['fcst_segments']):
                 raise ValueError(f'Forecast segments do not increase monotonically: {",".join(self.fcst_segments)}')

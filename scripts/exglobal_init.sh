@@ -45,16 +45,15 @@ export LEVS=$LEVS_INIT
 export RUNICSH=${RUNICSH:-${GDAS_INIT_DIR}/run_v16.chgres.sh}
 export RUNSFCANLSH=${RUNSFCANLSH:-$HOMEgfs/ush/run_sfcanl_chgres.sh}
 export DOGCYCLE=${DOGCYCLE:-"YES"}
-export CHGRESEXEC=${CHGRESEXEC:-${EXECgfs}/chgres_cube_shield}
 
 # Check if init is needed and run if so
 if [[ $gfs_ver = "v16" && $EXP_WARM_START = ".true." && $CASE = $OPS_RES ]]; then
   echo "Detected v16 $OPS_RES warm starts, will not run init. Exiting..."
-elif [[ $MODE = "forecast-only" && $EXP_WARM_START = ".true." ]]; then
+elif [[ "${MODE}" == "forecast-only" && "${EXP_WARM_START}" == ".true." ]]; then
   echo "warm-start forecast only, will not run init. Exiting..."  
 else
   # Run chgres_cube for atmanl and sfcanl on gaussian grid
-  if [[ $MODE = "forecast-only" || $replay == 1 || ( $MODE = "replay" && "$CDATE" = "$SDATE" && "$EXP_WARM_START" != ".true." ) ]]; then
+  if [[ "${MODE}" == "forecast-only" || "${compute_iau_inc:-".false."}" == ".true." || ( "${MODE}" == "replay" && "${CDATE}" == "$SDATE" && "${EXP_WARM_START}" != ".true." ) ]]; then
     if [[ ! -d $OUTDIR ]]; then
       mkdir -p $OUTDIR
     fi
@@ -76,20 +75,20 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ $MODE != "forecast-only" && ($DO_TSFC_TILE == "YES" || $DO_SFCANL != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START = ".true.") ]]; then
+  if [[ "${MODE}" != "forecast-only" && ("${DO_TSFC_TILE}" == "YES" || "${DO_SFCANL}" != "YES" ) && ("${CDATE}" != "$SDATE" || "${EXP_WARM_START}" == ".true.") ]]; then
     if [[ $CASE != $OPS_RES && ! -s ${COMOUT_ATMOS_ANALYSIS_RESTART}/${iPDY}.${icyc}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP} ${IAUSDATE} ${CASE} ${COMOUT_ATMOS_ANALYSIS_RESTART} 
       status=$?
       [[ $status -ne 0 ]] && exit $status 
     fi
-    if [[ $MODE = "cycled" ]]; then
+    if [[ "${MODE}" == "cycled" ]]; then
       if [[ ! -s ${COMOUT_ATMOS_ANALYSIS_RESTART_ENS}/${iPDY}.${icyc}0000.sfcanl_data.tile6.nc && $DOHYBVAR = "YES" ]]; then
         sh ${RUNSFCANLSH} ${ICDUMP} ${IAUSDATE} ${CASE_ENS} ${COMOUT_ATMOS_ANALYSIS_RESTART_ENS}
         status=$?
         [[ $status -ne 0 ]] && exit $status
       fi
     fi
-    if [[ $CASE != $OPS_RES && ($MODE = "cycled" || $DO_SFCANL == "YES") ]]; then
+    if [[ "${CASE}" != "${OPS_RES}" && ("${MODE}" == "cycled" || "${DO_SFCANL}" == "YES") ]]; then
       if [[ ! -s ${COMOUT_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile6.nc ]]; then
         sh ${RUNSFCANLSH} ${ICDUMP} ${CDATE} ${CASE} ${COMOUT_ATMOS_ANALYSIS_RESTART}
         status=$?
@@ -97,10 +96,10 @@ else
       fi
     fi
   fi
-  if [[ $MODE = "replay" && $DO_SFCANL != "YES" ]]; then
+  if [[ "${MODE}" == "replay" && "${DO_SFCANL}" != "YES" ]]; then
     [[ ! -d ${COM_ATMOS_RESTART_TMPL} ]] && mkdir -p ${COM_ATMOS_RESTART_TMPL}
     #cd ${COMOUT_ATMOS_ANALYSIS_RESTART}
-    if [ $CASE = $OPS_RES ]; then
+    if [[ "${CASE}" == "${OPS_RES}" ]]; then
       #for file in $(ls ${iPDY}.${icyc}0000.sfcanl_data.tile*.nc); do
       #   $NLN $file ${COM_ATMOS_RESTART_TMPL}/
       #done

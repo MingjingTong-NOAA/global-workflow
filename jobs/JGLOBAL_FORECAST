@@ -35,8 +35,8 @@ declare -rx gPDY="${GDATE:0:8}"
 declare -rx gcyc="${GDATE:8:2}"
 
 # Construct COM variables from templates (see config.com)
-if [[ $RUN == "gfs" ]]; then
-  RUN="${ICDUMP}" YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
+if [[ "$MODE" != "cycled" ]]; then
+  ROTDIR="${ICSDIR}" RUN="${ICDUMP}" YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
     COMIN_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL
 else
   YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \

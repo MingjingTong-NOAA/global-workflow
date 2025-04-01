@@ -272,7 +272,7 @@ FV3_predet(){
   # <0 means older adiabatic pre-conditioning
   na_init=${na_init:-1}
 
-  if [[ ${model} == gfs* ]]; then
+  if [[ ${model,,} == gfs* ]]; then
 
   local suite_file="${HOMEgfs}/sorc/ufs_model.fd/FV3/ccpp/suites/suite_${CCPP_SUITE}.xml"
   if [[ ! -f "${suite_file}" ]]; then
@@ -465,7 +465,7 @@ FV3_predet(){
   FNTSFC=${FNTSFC:-"${FIXgfs}/am/RTGSST.1982.2012.monthly.clim.grb"}
   FNSNOC=${FNSNOC:-"${FIXgfs}/am/global_snoclim.1.875.grb"}
   FNZORC=${FNZORC:-"igbp"}
-  if [[ ${model} == gfs* ]]; then
+  if [[ ${model,,} == gfs* ]]; then
   FNAISC=${FNAISC:-"${FIXgfs}/am/IMS-NIC.blended.ice.monthly.clim.grb"}
   else
   FNAISC=${FNAISC:-"${FIXgfs}/am/CFSR.SEAICE.1982.2012.monthly.clim.grb"}
@@ -528,7 +528,7 @@ FV3_predet(){
   fi
 
   
-  if [[ ${model} == gfs* ]]; then
+  if [[ ${model,,} == gfs* ]]; then
   # NoahMP table
   local noahmptablefile="${PARMgfs}/ufs/noahmptable.tbl"
   if [[ ! -f "${noahmptablefile}" ]]; then
@@ -612,7 +612,7 @@ FV3_predet(){
     done
   fi
 
-  if [[ ${model} == shield* ]]; then
+  if [[ ${model,,} == shield* ]]; then
   # SHiELD aerosol data
   if [[ ${io_layout} == "1,1" ]]; then
     ${NLN} ${FIXaer}/${CASE}/*.nc $DATA/INPUT/

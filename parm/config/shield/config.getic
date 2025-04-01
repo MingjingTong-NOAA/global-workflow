@@ -82,7 +82,7 @@ if [[ "$ICFROM" == "gfs" ]]; then
    fi
 fi
 
-if [[ "$MODE" = "replay" && $replay_4DIAU = "NO" ]]; then 
+if [[ "$MODE" = "replay" && $REPLAY_4DIAU = "NO" ]]; then 
    export IAUFHRS="6"
 fi
 
