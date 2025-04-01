@@ -39,7 +39,7 @@ class SHiELDTasks(Tasks):
     def stage_ic(self):
 
         dependencies = None
-        
+
         if self.app_config.mode != "cycled":
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
@@ -1074,10 +1074,10 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
         else:
             data = [atm_restart_path, '/@Y@m@d.@H0000.sfcanl_data.tile6.nc']
-            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': ['','-03:00:00']}
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': ['', '-03:00:00']}
         dep = rocoto.add_dependency(dep_dict)
         dependencies = rocoto.create_dependency(dep=dep)
-     
+
         if self.options['compute_iau_inc']:
             if self.options['icfrom'] == 'gfs' or self.options['icfrom'] == 'shield':
                 dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
