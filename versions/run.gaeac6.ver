@@ -8,6 +8,8 @@ export hsi_mod_path="/usw/hpss/modulefiles"
 export hsi_ver=9.3
 
 source "${HOMEgfs:-}/versions/spack.ver"
+export esmf_ver=8.6.0
+export mapl_ver=2.40.3-esmf-8.6.0
 
 # Gaea uses a newer version of Fit2Obs
 export fit2obs_ver=1.1.5

@@ -54,6 +54,10 @@ export subdir="INPUT/"
 #######################################################################
 
 # External IC configuration
+if [[ "${MODE}" != "cycled" ]]; then
+  export ICSDIR=${ICSDIR}/output/${CASE}
+fi
+
 if [ ${gfs_ver:-"v16"} = "v16" ]; then
   export ncep_levs=${ncep_levs:-128}
 else

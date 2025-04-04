@@ -44,8 +44,8 @@ curr_date="${sCDATE:0:4},${sCDATE:4:2},${sCDATE:6:2},${sCDATE:8:2},0,0"
 ${NCP} "${DATA_TABLE}" data_table
 ${NCP} "${FIELD_TABLE}" field_table
 
-restart_interval_nml="0,0,0,0,0,${FHOUT:-1}"
-restart_start="0,0,0,0,0,${restart_start_secs:-3600}"
+restart_interval_nml="0,0,0,0,0,${restart_secs:-3600}"
+restart_start="0,0,0,0,0,${restart_start_secs:-10800}"
 
 cat > input.nml <<EOF
 &amip_interp_nml

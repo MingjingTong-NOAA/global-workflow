@@ -186,6 +186,7 @@ class RocotoXML(ABC):
                 f'#SCRON --mail-user={replyto}',
                 f'#SCRON --job-name={self.pslot}_scron',
                 f'#SCRON --output={self.expdir}/logs/scron.log',
+                '#SCRON --mem=16G',
                 '#SCRON --time=00:10:00',
                 '#SCRON --dependency=singleton'
             ])

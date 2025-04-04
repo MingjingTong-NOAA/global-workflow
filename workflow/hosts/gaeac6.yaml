@@ -23,7 +23,7 @@ CLUSTERS_DTN: 'es'
 CHGRP_RSTPROD: 'NO'
 CHGRP_CMD: 'chgrp rstprod'
 # TODO enable HPSS archiving by default when DTN/f6 sluggishness is resolved
-HPSSARCH: 'NO'
+HPSSARCH: 'YES'
 HPSS_PROJECT: emc-da
 LOCALARCH: 'NO'
 ATARDIR: '${NOSCRUB}/archive_rotdir/${PSLOT}'

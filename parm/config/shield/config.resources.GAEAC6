@@ -1,1 +1,27 @@
-../gfs/config.resources.GAEAC6
+#! /usr/bin/env bash
+
+# GaeaC6-specific job resources
+
+unset memory
+unset "memory_${RUN}"
+export FI_CXI_RX_MATCH_MODE=hybrid
+
+case ${step} in
+  "init")
+    tasks_per_node=24
+  ;;
+  "eupd")
+    # update ntasks to 80 and threads_per_task to 20
+    case ${CASE} in
+      "C768")
+        export ntasks=80
+        export threads_per_task=20
+        ;;
+      *)
+        ;;
+    esac
+  export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+  ;;
+  *)
+  ;;
+esac
