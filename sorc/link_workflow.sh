@@ -180,6 +180,7 @@ if [[ "${MODEL}" == "shield" ]]; then
     fix_ver="${dir}_ver"
     ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
   done
+  ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/ref_fcst" "ref_fcst"
   rm -f orog
   fix_ver="orog_ver"
   ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/orog/${!fix_ver}" "orog"

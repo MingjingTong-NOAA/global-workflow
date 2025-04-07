@@ -270,7 +270,8 @@ FV3_predet(){
   # =0 implies no pre-conditioning
   # >0 means new adiabatic pre-conditioning
   # <0 means older adiabatic pre-conditioning
-  na_init=${na_init:-1}
+  # only set to 1 when using gfsv14 and older version of GFS or IFS IC
+  na_init=${na_init:-0}
 
   if [[ ${model,,} == gfs* ]]; then
 

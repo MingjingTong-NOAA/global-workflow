@@ -66,6 +66,13 @@ ATMANLFRES03=${ATMANL03_CHGRES:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma03_fcstre
 ATMANLFRES06=${ATMANL06_CHGRES:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma06_fcstres.nc}
 ATMANLFRES09=${ATMANL09_CHGRES:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma09_fcstres.nc}
 
+# chgres forecast
+ATMF03ENS=${ATMF03ENS:-${COM_ATMOS_HISTORY_PREV}/${APREFIX}atmf003.ensres.nc}
+ATMF06ENS=${ATMF06ENS:-${COM_ATMOS_HISTORY_PREV}/${APREFIX}atmf006.ensres.nc}
+ATMF09ENS=${ATMF09ENS:-${COM_ATMOS_HISTORY_PREV}/${APREFIX}atmf009.ensres.nc}
+ENSRES=$(( ${OPS_RES:1}/2 ))
+ATMFCST_ENSRES=${ATMFCST_ENSRES:-${FIXgfs}/ref_fcst/shield.C${ENSRES}.atmf006.nc}
+
 # analysis increment
 ATMINC=${ATMINC:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atminc.nc}
 ATMI03=${ATMI03:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atmi003.nc}
@@ -91,41 +98,57 @@ LONB_ANAL=${LONB_ANAL:-$($NCLEN $ATMANLENS06 grid_xt)} # get LONB_ANAL
 LATB_ANAL=${LATB_ANAL:-$($NCLEN $ATMANLENS06 grid_yt)} # get LATB_ANAL
 LEVS_ANAL=${LEVS_ANAL:-$($NCLEN $ATMANLENS06 pfull)} # get LEVS_ANAL
 
+# reference forecast resolution
+LONB_FREF=${LONB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_xt)} # get LONB_FREF
+LATB_FREF=${LATB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_yt)} # get LATB_FREF
+
 REGRID_ANALYSIS="NO"
+REGRID_FORECAST="NO"
 if [[ $LONB_FCST -ne $LONB_ANAL || $LATB_FCST -ne $LATB_ANAL || $LEVS_FCST -eq $LEVS_ANAL ]]; then
   REGRID_ANALYSIS="YES"
+  if [[ $LONB_FCST -gt $LONB_ANAL || $LATB_FCST -gt $LATB_ANAL ]]; then
+    REGRID_FORECAST="YES"
+  fi
 fi
 ##############################################################
-# Regrid external analysis to forecast resolution
+# Regrid external analysis or/and forecast 
+
+export OMP_NUM_THREADS=$NTHREADS_CHGRES
 if [[ $REGRID_ANALYSIS == "YES" ]]; then
-  $NLN $ATMF06 fcst.06
+  if [[ $REGRID_FORECAST == "YES" ]]; then
+    if [[ $LONB_FREF -ne $LONB_ANAL || $LATB_FREF -ne $LATB_ANAL ]]; then
+      echo "FATAL ERROR: resolution of reference forecast is wrong, ABORT!"
+      exit 2
+    fi
+    $NLN $ATMFCST_ENSRES fcst.06
+    LONB_OUT=$LONB_ANAL
+    LATB_OUT=$LATB_ANAL 
+  else
+    $NLN $ATMF06 fcst.06
+    LONB_OUT=$LONB_FCST
+    LATB_OUT=$LATB_FCST
+  fi
+  $NLN $ATMANLENS06 anal.06
+  $NLN $ATMANLFRES06 anal.fcstres.06
   if [ $REPLAY_4DIAU = "YES" ]; then
-    # use GFS analysis at ensemble forecast resolution
     $NLN $ATMANLENS03 anal.03
-    $NLN $ATMANLENS06 anal.06
     $NLN $ATMANLENS09 anal.09
     $NLN $ATMANLFRES03 anal.fcstres.03
-    $NLN $ATMANLFRES06 anal.fcstres.06
     $NLN $ATMANLFRES09 anal.fcstres.09
-  else
-    $NLN $ATMANLENS06 anal.06
-    $NLN $ATMANLFRES06 anal.fcstres.06
-    export IAUFHRS="6"
   fi
-  export OMP_NUM_THREADS=$NTHREADS_CHGRES
 
-   if [ $USE_CFP = "YES" ]; then
-      [[ -f $DATA/mp_chgres.sh ]] && rm $DATA/mp_chgres.sh
-   fi
-
-   nfhrs=$(echo $IAUFHRS | sed 's/,/ /g')
-   for FHR in $nfhrs; do
+  if [ $USE_CFP = "YES" ]; then
+     [[ -f $DATA/mp_chgres.sh ]] && rm $DATA/mp_chgres.sh
+  fi
+  
+  nfhrs=$(echo $IAUFHRS | sed 's/,/ /g')
+  for FHR in $nfhrs; do
      echo "Regridding deterministic forecast for forecast hour $FHR"
      rm -f chgres_nc_gauss0$FHR.nml
-cat > chgres_nc_gauss0$FHR.nml << EOF
+     cat > chgres_nc_gauss0$FHR.nml << EOF
 &chgres_setup
-i_output=$LONB_FCST
-j_output=$LATB_FCST
+i_output=$LONB_OUT
+j_output=$LATB_OUT
 input_file="anal.0$FHR"
 output_file="anal.fcstres.0$FHR"
 terrain_file="fcst.06"
@@ -134,18 +157,79 @@ ${chgres_setup:-}
 /
 EOF
      if [ $USE_CFP = "YES" ]; then
-          echo "$nm $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml" | tee -a $DATA/mp_chgres.sh
-          if [ ${CFP_MP:-"NO"} = "YES" ]; then
-              nm=$((nm+1))
-          fi
+        echo "$nm $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml" | tee -a $DATA/mp_chgres.sh
+        if [ ${CFP_MP:-"NO"} = "YES" ]; then
+          nm=$((nm+1))
+        fi
      else
-
-         export pgm=$CHGRESNCEXEC
-         . prep_step
-
-         $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml
-         export err=$?; err_chk
+        export pgm=$CHGRESNCEXEC
+        . prep_step
+        $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml
+        export err=$?; err_chk
      fi
+  done
+
+  if [ $USE_CFP = "YES" ]; then
+     chmod 755 $DATA/mp_chgres.sh
+     ncmd=$(cat $DATA/mp_chgres.sh | wc -l)
+     if [ $ncmd -gt 0 ]; then
+        ncmd_max=$((ncmd < max_tasks_per_node ? ncmd : max_tasks_per_node))
+        APRUNCFP_CHGRES=$(eval echo $APRUNCFP)
+
+        export pgm=$CHGRESNCEXEC
+        . prep_step
+
+        $APRUNCFP_CHGRES $DATA/mp_chgres.sh
+        export err=$?; err_chk
+     fi
+  fi
+fi
+
+if [[ $REGRID_FORECAST == "YES" ]]; then
+   $NLN $ATMF06 fcst.06
+   $NLN $ATMF06ENS fcst.ensres.06
+   $NLN $ATMFCST_ENSRES ref.06
+   if [ $REPLAY_4DIAU = "YES" ]; then
+      $NLN $ATMF03     fcst.03
+      $NLN $ATMF03ENS  fcst.ensres.03
+      $NLN $ATMF09     fcst.09
+      $NLN $ATMF09ENS  fcst.ensres.09
+   fi
+
+   if [ $USE_CFP = "YES" ]; then
+      [[ -f $DATA/mp_chgres.sh ]] && rm $DATA/mp_chgres.sh
+   fi
+
+   if [ $CFP_MP = "YES" ]; then
+       nm=0
+   fi
+
+   nfhrs=$(echo $IAUFHRS | sed 's/,/ /g')
+   for FHR in $nfhrs; do
+      echo "Regridding deterministic forecast for forecast hour $FHR"
+      rm -f chgres_nc_gauss0$FHR.nml
+      cat > chgres_nc_gauss0$FHR.nml << EOF
+&chgres_setup
+i_output=$LONB_ANAL
+j_output=$LATB_ANAL
+input_file="fcst.0$FHR"
+output_file="fcst.ensres.0$FHR"
+terrain_file="ref.06"
+ref_file="ref.06"
+${chgres_setup:-}
+/
+EOF
+      if [ $USE_CFP = "YES" ]; then
+        echo "$nm $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml" | tee -a $DATA/mp_chgres.sh
+        if [ ${CFP_MP:-"NO"} = "YES" ]; then
+          nm=$((nm+1))
+        fi
+      else
+        export pgm=$CHGRESNCEXEC
+        . prep_step
+        $APRUN_CHGRES $CHGRESNCEXEC chgres_nc_gauss0$FHR.nml
+        export err=$?; err_chk
+      fi
    done
 
    if [ $USE_CFP = "YES" ]; then
@@ -162,22 +246,41 @@ EOF
          export err=$?; err_chk
       fi
    fi
-
-else
-   echo "REGRID_ANALYSIS != YES, doing nothing"
 fi
 
 ##############################################################
 # calculate increment
-$NLN $ATMF06 sigf06
-$NLN $ATMANLFRES06 siganl
+if [[ $REGRID_ANALYSIS == "YES" ]]; then
+  $NLN $ATMANLFRES06 siganl
+  if [ $REPLAY_4DIAU = "YES" ]; then
+     $NLN $ATMANLFRES03   siga03
+     $NLN $ATMANLFRES09   siga09
+  fi
+else
+  $NLN $ATMANLENS06 siganl
+    if [ $REPLAY_4DIAU = "YES" ]; then
+     $NLN $ATMANLENS03   siga03
+     $NLN $ATMANLENS09   siga09
+  fi
+fi
+
+if [[ $REGRID_FORECAST == "YES" ]]; then
+  $NLN $ATMF06ENS sigf06
+  if [ $REPLAY_4DIAU = "YES" ]; then
+     $NLN $ATMF03ENS sigf03
+     $NLN $ATMF09ENS sigf09
+  fi
+else
+  $NLN $ATMF06 sigf06
+  if [ $REPLAY_4DIAU = "YES" ]; then
+     $NLN $ATMF03 sigf03
+     $NLN $ATMF09 sigf09
+  fi
+fi
+
 $NLN $ATMINC siginc.nc
 if [ $REPLAY_4DIAU = "YES" ]; then
-   $NLN $ATMF03 sigf03
-   $NLN $ATMANLFRES03   siga03
    $NLN $ATMI03   sigi03.nc
-   $NLN $ATMF09 sigf09
-   $NLN $ATMANLFRES09   siga09
    $NLN $ATMI09   sigi09.nc
 fi
 

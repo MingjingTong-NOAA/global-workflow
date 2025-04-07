@@ -121,7 +121,7 @@ cat > input.nml <<EOF
   k_split = ${k_split}
   n_split = ${n_split}
   nwat = ${nwat:-6}
-  na_init = ${na_init}
+  na_init = ${na_init:-0}
   d_ext = 0.
   dnats = ${dnats}
   fv_sg_adj = ${fv_sg_adj:-"450"}
@@ -188,7 +188,7 @@ cat >> input.nml << EOF
   dt_ocean = ${DELTIM}
   current_date = ${curr_date}
   calendar = 'julian'
-  atmos_nthreads = ${NTHREADS_FV3:-${nth_fv3:-1}}
+  atmos_nthreads = ${nth_fv3:-1}
   use_hyper_thread = ${hyperthread:-".false."}
   restart_secs = ${restart_secs:-3600}
   restart_start_secs = ${restart_start_secs:-10800}

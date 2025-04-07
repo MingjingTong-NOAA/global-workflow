@@ -305,6 +305,7 @@ EOF
         ncep_ic=".false."
         ecmwf_ic=".true."
         res_latlon_dynamics='"EXTIC/gk03_CF0.nc"'
+        na_init=1
       fi
     else
       nudge_qv=${nudge_qv:-".true."}
