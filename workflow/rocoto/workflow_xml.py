@@ -8,10 +8,13 @@ from collections import OrderedDict
 from typing import Dict
 from applications.applications import AppConfig
 from rocoto.workflow_tasks import get_wf_tasks
-from wxflow import which, to_timedelta, mkdir
+from wxflow import to_timedelta, which, ProcessError, mkdir
 import rocoto.rocoto as rocoto
 from abc import ABC, abstractmethod
 from hosts import Host
+from logging import getLogger
+
+logger = getLogger(__name__.split('.')[-1])
 
 
 class RocotoXML(ABC):
@@ -30,7 +33,7 @@ class RocotoXML(ABC):
         # Collect info needed to write an scrontab file
         self.host_info = Host().info
         self.use_scrontab = self.host_info.get("USE_SCRONTAB", False)
-        # Replace ACCOUNT with whatever is in config.base
+        # Add ACCOUNT to host_info, with that from config.base
         self.host_info.ACCOUNT = self._base['ACCOUNT']
         self.HOMEgfs = self._base['HOMEgfs']
         self.expdir = self._base['EXPDIR']
@@ -142,6 +145,8 @@ class RocotoXML(ABC):
     def write(self, xml_file: str = None, crontab_file: str = None):
         self._write_xml(xml_file=xml_file)
         self._write_crontab(crontab_file=crontab_file)
+        if self._base["DO_ARCHCOM"] and self._base["ARCHCOM_TO"] == "globus_hpss":
+            self._write_server_crontab()
 
     def _write_xml(self, xml_file: str = None) -> None:
 
@@ -207,6 +212,7 @@ class RocotoXML(ABC):
         else:
             cron_cmd = rocotorunstr
             crontab_strings.extend([
+                'SHELL="/bin/bash"',
                 f'MAILTO="{replyto}"'
             ])
 
@@ -216,13 +222,6 @@ class RocotoXML(ABC):
             ''
         ])
 
-        # AWS need 'SHELL', and 'BASH_ENV' defined, or, the crontab job won't start.
-        if os.environ.get('PW_CSP', None) in ['aws', 'azure', 'google']:
-            crontab_strings.extend([
-                'SHELL="/bin/bash"',
-                'BASH_ENV="/etc/bashrc"'
-            ])
-
         if crontab_file is None:
             crontab_file = f"{self.expdir}/{self.pslot}.crontab"
 
@@ -231,6 +230,66 @@ class RocotoXML(ABC):
             fh.write('\n'.join(crontab_strings))
 
         return
+
+    def _write_server_crontab(self, cronint: int = 1):
+        # This method generates a script and a cron entry to run it.
+        # It is the user's responsibility to add the cron entry to the server's crontab.
+
+        globus_conf = self._app_config.configs[next(iter(self._app_config.configs))]['globus']
+
+        expdir = globus_conf["EXPDIR"]
+        pslot = globus_conf["PSLOT"]
+        server = globus_conf["SERVER_NAME"]
+        server_home = globus_conf["SERVER_HOME"]
+
+        # Get the server username from ~/.ssh/config
+        # TODO move this to an earlier point and actually amend config.globus with the username
+        ssh = which("ssh")
+        if ssh is None:
+            raise ProcessError("Failed to locate the ssh command!")
+
+        try:
+            ssh_output = ssh("-G", server, output=str).split("\n")
+        except ProcessError:
+            logger.warning(f"Failed to automatically determine the username for {server}.")
+            ssh_output = ""
+
+        server_username = None
+        for line in ssh_output:
+            if line.startswith("user "):
+                server_username = line.split()[1]
+
+        # If ssh -G failed or the username could not be determined, ask for it
+        if not server_username:
+            server_username = input(f"Please provide your username for {server} (this is required to use globus): ")
+            if server_username == "":
+                raise ValueError("A valid username must be provided!")
+
+        server_home = server_home.replace(
+            "{{SERVER_USERNAME}}", server_username
+        )
+
+        try:
+            replyto = os.environ['REPLYTO']
+        except KeyError:
+            replyto = ''
+
+        crontab_file = os.path.join(expdir, f"{pslot}.{server}.crontab")
+
+        init_script = f"{server_home}/init_xfer_{pslot}.sh"
+        strings = ['',
+                   f'#################### {pslot} ####################',
+                   f'MAILTO="{replyto}"',
+                   f'*/{cronint} * * * * [[ -f {init_script} ]] && chmod +x {init_script} && {init_script} || true',
+                   ""
+                   ]
+
+        with open(crontab_file, 'w') as fh:
+            fh.write('\n'.join(strings))
+
+        print("*******************************************************")
+        print(f"Please add the contents of \n{crontab_file}\nto your {server} crontab.")
+        print("*******************************************************")
 
     def _check_rocotorc(self):
 
@@ -248,7 +307,7 @@ class RocotoXML(ABC):
             raise FileNotFoundError(
                 "Could not find the rocotorc file!\n"
                 f"Please create '{rocotorc_file}' following the documentation at" "\n"
-                "https://global-workflow.readthedocs.io/en/latest/configure.html"
+                "https://global-workflow.readthedocs.io/en/latest/start.html#set-up-your-experiment-cron-or-scron"
             )
 
         with open(rocotorc_file) as rc_f:
@@ -256,5 +315,5 @@ class RocotoXML(ABC):
                 raise ValueError(
                     f"':BatchQueueServer: false' should be written to {rocotorc_file}, but it is not!" "\n"
                     "Please follow the documentation guide here:\n"
-                    "https://global-workflow.readthedocs.io/en/latest/configure.html"
+                    "https://global-workflow.readthedocs.io/en/latest/start.html#set-up-your-experiment-cron-or-scron"
                 )

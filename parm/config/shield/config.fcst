@@ -104,6 +104,11 @@ export isatmedmf=0
 tbf=""
 if [[ "${satmedmf}" == ".true." ]]; then tbf="_satmedmf" ; fi
 
+#Convection schemes
+export progsigma=".true."
+tbp=""
+if [[ "${progsigma}" == ".true." ]]; then tbp="_progsigma" ; fi
+
 # Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T) (not for SHiELD)
 export lsm=1
 if [ $lsm -eq 2 ]; then
@@ -157,6 +162,7 @@ case ${imp_physics} in
 
         export hord_mt_nh_nonmono=5
         export hord_xx_nh_nonmono=5
+        export hord_dp_nh_nonmono=-5
         export vtdm4_nh_nonmono=0.02
         export nord=2
         export dddmp=0.1

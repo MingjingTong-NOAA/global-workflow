@@ -39,7 +39,6 @@ class SHiELDTasks(Tasks):
     def stage_ic(self):
 
         dependencies = None
-
         if self.app_config.mode != "cycled":
             deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
@@ -213,7 +212,8 @@ class SHiELDTasks(Tasks):
 
         deps = []
         # Files from current cycle
-        files = ['gfs_ctrl.nc'] + [f'gfs_data.tile{tile}.nc' for tile in range(1, self.n_tiles + 1)]
+        ntiles = self._base['ntiles']
+        files = ['gfs_ctrl.nc'] + [f'gfs_data.tile{tile}.nc' for tile in range(1, ntiles + 1)]
         for file in files:
             data = f'{input_path}/{file}'
             dep_dict = {'type': 'data', 'data': data}
@@ -335,10 +335,7 @@ class SHiELDTasks(Tasks):
     def analcalc(self):
 
         deps = []
-        if self.options['do_jediatmvar']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
-        else:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -611,7 +608,7 @@ class SHiELDTasks(Tasks):
 
         deps = []
         dep_dict = {
-            'type': 'task', 'name': f'gdas_aeroanlgenb',
+            'type': 'task', 'name': 'gdas_aeroanlgenb',
             'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}",
         }
         deps.append(rocoto.add_dependency(dep_dict))
@@ -1305,7 +1302,9 @@ class SHiELDTasks(Tasks):
         data = f'{history_path}/{history_file_tmpl}'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
 
         cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
 
@@ -1333,10 +1332,10 @@ class SHiELDTasks(Tasks):
 
         wave_grid = self._configs['base']['waveGRD']
         history_path = self._template_to_rocoto_cycstring(self._base['COM_WAVE_HISTORY_TMPL'])
-        history_file = f'/{self.run}wave.out_grd.{wave_grid}.@Y@m@d.@H@M@S'
+        history_file = f'/{self.run}.wave.t@Hz.{wave_grid}.f#fhr3_next#.bin'
 
         deps = []
-        dep_dict = {'type': 'data', 'data': [history_path, history_file], 'offset': [None, '#fhr3_next#:00:00']}
+        dep_dict = {'type': 'data', 'data': f'{history_path}/{history_file}'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_fcst_#seg_dep#'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -1402,12 +1401,10 @@ class SHiELDTasks(Tasks):
     def wavepostbndpntbll(self):
 
         # The wavepostbndpntbll job runs on forecast hours up to FHMAX_WAV_IBP
-        last_fhr = self._configs['wave']['FHMAX_WAV_IBP']
+        last_fhr = self._configs['wavepostbndpntbll']['FHMAX_WAV_IBP']
 
         deps = []
-        atmos_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"])
-        data = f'{atmos_hist_path}/{self.run}.t@Hz.atm.logf{last_fhr:03d}.txt'
-        dep_dict = {'type': 'data', 'data': data}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
@@ -1456,16 +1453,30 @@ class SHiELDTasks(Tasks):
 
     def wavegempak(self):
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavepostsbs'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostsbs_#fhr_label#'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
+        # Hour groupings need to match gridded post for dependencies to be correct
+        fhrs = self._get_forecast_hours(self.run, self._configs['wavepostsbs'], 'wave')
+        max_tasks = self._configs['wavepostsbs']['MAX_TASKS']
+        fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
+
+        wave_post_envars = self.envars.copy()
+        postenvar_dict = {'FHR_LIST': '#fhr_list#'}
+        for key, value in postenvar_dict.items():
+            wave_post_envars.append(rocoto.create_envar(name=key, value=str(value)))
+
         resources = self.get_resource('wavegempak')
-        task_name = f'{self.run}_wavegempak'
+        # Adjust walltime based on the largest group
+        largest_group = max([len(grp.split(',')) for grp in fhr_var_dict['fhr_list'].split(' ')])
+        resources['walltime'] = Tasks.multiply_HMS(resources['walltime'], largest_group)
+
+        task_name = f'{self.run}_wavegempak_#fhr_label#'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
-                     'envars': self.envars,
+                     'envars': wave_post_envars,
                      'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEgfs}/jobs/rocoto/wavegempak.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
@@ -1473,7 +1484,11 @@ class SHiELDTasks(Tasks):
                      'maxtries': '&MAXTRIES;'
                      }
 
-        task = rocoto.create_task(task_dict)
+        metatask_dict = {'task_name': f'{self.run}_wavegempak',
+                         'task_dict': task_dict,
+                         'var_dict': fhr_var_dict}
+
+        task = rocoto.create_task(metatask_dict)
 
         return task
 
@@ -2592,15 +2607,80 @@ class SHiELDTasks(Tasks):
 
         return task
 
-# cleanup
+    # Globus transfer for HPSS archiving
+    def globus_arch(self):
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        resources = self.get_resource('globus')
+        task_name = f'{self.run}_globus_arch'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEgfs}/jobs/rocoto/globus_arch.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    # Ensemble globus transfer for HPSS archiving
+    def globus_earc(self):
+        deps = []
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        earcenvars = self.envars.copy()
+        earcenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
+
+        # Integer division is floor division, but we need ceiling division
+        n_groups = -(self.nmem // -self._configs['earc_groups']['NMEM_EARCGRP'])
+        groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
+
+        resources = self.get_resource('globus')
+        var_dict = {'grp': groups}
+
+        task_name = f'{self.run}_globus_earc_#grp#'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': earcenvars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEgfs}/jobs/rocoto/globus_earc.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        metatask_dict = {'task_name': f'{self.run}_globus_earc',
+                         'var_dict': var_dict,
+                         'task_dict': task_dict
+                         }
+
+        task = rocoto.create_task(metatask_dict)
+
+        return task
+
+    # Cleanup
     def cleanup(self):
         deps = []
         if 'enkf' in self.run:
             dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
             deps.append(rocoto.add_dependency(dep_dict))
-            if self.options['do_archtar']:
-                dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
-                deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_archcom']:
+                if self.options['do_globusarch']:
+                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_globus_arch'}
+                else:
+                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
+                    deps.append(rocoto.add_dependency(dep_dict))
 
         else:
             if self.app_config.mode in ['cycled']:
@@ -2679,6 +2759,9 @@ class SHiELDTasks(Tasks):
                             deps.append(rocoto.add_dependency(dep_dict))
                             dep_dict = {'type': 'metatask', 'name': f'{self.run}_gempakgrb2spec'}
                             deps.append(rocoto.add_dependency(dep_dict))
+                    if self.options['do_wave']:
+                        dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavegempak'}
+                        deps.append(rocoto.add_dependency(dep_dict))
 
             if self.options['do_metp'] and self.run in ['gfs']:
                 deps2 = []
@@ -2689,10 +2772,27 @@ class SHiELDTasks(Tasks):
                 deps2.append(rocoto.add_dependency(dep_dict))
                 deps.append(rocoto.create_dependency(dep_condition='or', dep=deps2))
 
+            if self.options['do_awips'] and self.run in ['gfs']:
+
+                dep_dict = {'type': 'metatask', 'name': f'{self.run}_awips_20km_1p0deg'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_fbwind'}
+                deps.append(rocoto.add_dependency(dep_dict))
+
+                if self.options['do_wave']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsbulls'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsgridded'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+
             dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
             deps.append(rocoto.add_dependency(dep_dict))
-            if self.options['do_archtar']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+            if self.options['do_archcom']:
+                if self.options['do_globusarch']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_globus_arch'}
+                else:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+
                 deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -2740,42 +2840,6 @@ class SHiELDTasks(Tasks):
 
         return task
 
-    def eomg(self):
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_eobs'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
-
-        eomgenvars = self.envars.copy()
-        eomgenvars_dict = {'ENSMEM': '#member#',
-                           'MEMDIR': 'mem#member#'
-                           }
-        for key, value in eomgenvars_dict.items():
-            eomgenvars.append(rocoto.create_envar(name=key, value=str(value)))
-
-        resources = self.get_resource('eomg')
-        task_name = f'{self.run}_eomg_mem#member#'
-        task_dict = {'task_name': task_name,
-                     'resources': resources,
-                     'dependency': dependencies,
-                     'envars': eomgenvars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/jobs/rocoto/eomg.sh',
-                     'job_name': f'{self.pslot}_{task_name}_@H',
-                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
-                     'maxtries': '&MAXTRIES;'
-                     }
-
-        member_var_dict = {'member': ' '.join([str(mem).zfill(3) for mem in range(1, self.nmem + 1)])}
-        metatask_dict = {'task_name': f'{self.run}_eomg',
-                         'var_dict': member_var_dict,
-                         'task_dict': task_dict,
-                         }
-
-        task = rocoto.create_task(metatask_dict)
-
-        return task
-
     def ediag(self):
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run}_eobs'}
@@ -2801,10 +2865,7 @@ class SHiELDTasks(Tasks):
 
     def eupd(self):
         deps = []
-        if self.options['lobsdiag_forenkf']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_ediag'}
-        else:
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_eomg'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_ediag'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
@@ -3010,10 +3071,7 @@ class SHiELDTasks(Tasks):
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_analcalc'}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_jediatmens']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
-        else:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -3049,16 +3107,73 @@ class SHiELDTasks(Tasks):
         task = rocoto.create_task(metatask_dict)
         return task
 
+    def ecen_fv3jedi(self):
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf','')}_atmanlfinal"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        resources = self.get_resource('ecen_fv3jedi')
+        task_name = f'{self.run}_ecen_fv3jedi'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEgfs}/jobs/rocoto/ecen_fv3jedi.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    def analcalc_fv3jedi(self):
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f"{self.run}_atmanlfinal"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['do_aero_anl']:
+            dep_dict = {'type': 'task', 'name': f"{self.run}_aeroanlfinal"}
+            deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['do_jedisnowda']:
+            dep_dict = {'type': 'task', 'name': f"{self.run}_snowanl"}
+            deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        resources = self.get_resource('analcalc_fv3jedi')
+        task_name = f'{self.run}_analcalc_fv3jedi'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEgfs}/jobs/rocoto/analcalc_fv3jedi.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
     def esfc(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_analcalc'}
-        deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_jediatmens']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
+            deps.append(rocoto.add_dependency(dep_dict))
         else:
+            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_analcalc'}
+            deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
-        deps.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_jedisnowda']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_esnowanl'}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -3084,8 +3199,12 @@ class SHiELDTasks(Tasks):
     def efcs(self):
 
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_ecmn'}
-        deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['do_jediatmens']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_ecen_fv3jedi'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        else:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_ecmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_hybvar_ocn']:
@@ -3227,11 +3346,13 @@ class SHiELDTasks(Tasks):
         deps = []
         if 'enkfgdas' in self.run:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            if not self.options['do_jediatmvar']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+                deps.append(rocoto.add_dependency(dep_dict))
         else:
             dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
-        deps.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         earcenvars = self.envars.copy()
@@ -3261,8 +3382,9 @@ class SHiELDTasks(Tasks):
         if 'enkfgdas' in self.run:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
             deps.append(rocoto.add_dependency(dep_dict))
-            dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if not self.options['do_jediatmvar']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+                deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         else:  # early cycle enkf run (enkfgfs)
             dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
@@ -3273,10 +3395,10 @@ class SHiELDTasks(Tasks):
         earcenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
 
         # Integer division is floor division, but we need ceiling division
-        n_groups = -(self.nmem // -self._configs['earc_tars']['NMEM_EARCGRP'])
+        n_groups = -(self.nmem // -self._configs['earc_groups']['NMEM_EARCGRP'])
         groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
 
-        resources = self.get_resource('earc_tars')
+        resources = self.get_resource('arch_tars')
 
         var_dict = {'grp': groups}
 

@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-source "${HOMEgfs}/ush/preamble.sh"
+set -x
 
 ###############################################################
 # Source FV3GFS workflow modules
@@ -20,7 +20,7 @@ export jobid="${job}.$$"
 
 ###############################################################
 # Execute the JJOB
-"${HOMEgfs}/jobs/JGDAS_ENKF_ARCHIVE_TARS"
+"${HOMEgfs}/jobs/JGLOBAL_ENS_ARCHIVE_TARS"
 status=$?
 
 exit "${status}"

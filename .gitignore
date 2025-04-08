@@ -10,6 +10,8 @@ __pycache__
 #nohup.out - some users do not want this to be a part of .gitignore.  TODO: review against best practices
 .idea/
 .vscode/
+.venv/
+venv/
 nohup.out
 
 # Ignore editor generated backup files
@@ -177,6 +179,8 @@ ush/gaussian_sfcfcst.sh
 ush/gaussian_c2g_atms.sh
 ush/cube2gaussian.sh
 ush/run_sfcanl_chgres.sh
+# ush log file
+ush/fetch-fix-data.log
 
 # version files
 versions/build.ver

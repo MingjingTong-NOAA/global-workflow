@@ -63,7 +63,7 @@ class SHiELDReplayAppConfig(AppConfig):
                     configs += ['upp']
                 configs += ['atmos_products']
 
-            if options['do_archtar']:
+            if options['do_archcom']:
                 configs += ['arch_tars']
 
         return configs
@@ -109,7 +109,7 @@ class SHiELDReplayAppConfig(AppConfig):
                     tasks += ['atmupp']
                 tasks += ['atmos_prod']
 
-        if options['do_archtar']:
+        if options['do_archcom']:
             tasks += ['arch_tars']
 
         tasks += ['arch_vrfy', 'cleanup']  # arch_tar, arch_vrfy, and cleanup **must** be the last tasks
