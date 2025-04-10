@@ -46,10 +46,10 @@ export AMSR2BF=${AMSR2BF:-/dev/null}
 
 # Set default values for info files and observation error
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
-export CONVINFO=${FIXgfs}/gsi/global_convinfo_shield.txt
-export OZINFO=${FIXgfs}/gsi/global_ozinfo_shield.txt
+export CONVINFO=${FIXgfs}/gsi/global_convinfo.txt
+export OZINFO=${FIXgfs}/gsi/global_ozinfo.txt
 export SATINFO=${FIXgfs}/gsi/global_satinfo_shield.txt
-export OBERROR=${FIXgfs}/gsi/prepobs_errtable.global.shield
+export OBERROR=${FIXgfs}/gsi/prepobs_errtable.global
 
 if [[ ${DO_GSISOILDA} = "YES" ]]; then
     export hofx_2m_sfcfile=".true."
@@ -165,8 +165,8 @@ export hydrotable_format="binary"
 #export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
 #export hydrotable_format="netcdf"
 
-if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
-   export lcalc_gfdl_cfrac=".true."
+if [[ ${full_hydro:-"NO"} == "YES" ]]; then
+   export lcalc_gfdl_cfrac=".false."
    export allsky_gfdl=".false."
    export crtm_overlap=4
    export cnvw_option=".false."

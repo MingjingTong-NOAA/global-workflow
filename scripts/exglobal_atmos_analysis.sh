@@ -117,7 +117,7 @@ ESIASI=${ESIASI:-${COMIN_OBS}/${OPREFIX}esiasi.tm00.bufr_d${OSUFFIX}}
 IASIDB=${IASIDB:-${COMIN_OBS}/${OPREFIX}iasidb.tm00.bufr_d${OSUFFIX}}
 AMSREBF=${AMSREBF:-${COMIN_OBS}/${OPREFIX}amsre.tm00.bufr_d${OSUFFIX}}
 AMSR2BF=${AMSR2BF:-${COMIN_OBS}/${OPREFIX}amsr2.tm00.bufr_d${OSUFFIX}}
-GMI1CRBF=${GMI1CRBF:-${COMIN_OBS}/${OPREFIX}gmi1cr.tm00.bufr_d${OSUFFIX}} # GMI temporarily disabled due to array overflow.
+#GMI1CRBF=${GMI1CRBF:-${COMIN_OBS}/${OPREFIX}gmi1cr.tm00.bufr_d${OSUFFIX}} # GMI temporarily disabled due to array overflow.
 SAPHIRBF=${SAPHIRBF:-${COMIN_OBS}/${OPREFIX}saphir.tm00.bufr_d${OSUFFIX}}
 SEVIRIBF=${SEVIRIBF:-${COMIN_OBS}/${OPREFIX}sevcsr.tm00.bufr_d${OSUFFIX}}
 AHIBF=${AHIBF:-${COMIN_OBS}/${OPREFIX}ahicsr.tm00.bufr_d${OSUFFIX}}
@@ -293,7 +293,11 @@ SATANGL=${SATANGL:-${FIXgfs}/gsi/global_satangbias.txt}
 SATINFO=${SATINFO:-${FIXgfs}/gsi/global_satinfo.txt}
 RADCLOUDINFO=${RADCLOUDINFO:-${FIXgfs}/gsi/cloudy_radiance_info.txt}
 ATMSFILTER=${ATMSFILTER:-${FIXgfs}/gsi/atms_beamwidth.txt}
-ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS}.txt}
+if [ ${full_hydro:-"NO"} = "YES" ]; then
+  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS}.allhydro.txt}
+else
+  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS}.txt}
+fi
 CONVINFO=${CONVINFO:-${FIXgfs}/gsi/global_convinfo.txt}
 vqcdat=${vqcdat:-${FIXgfs}/gsi/vqctp001.dat}
 INSITUINFO=${INSITUINFO:-${FIXgfs}/gsi/global_insituinfo.txt}
@@ -436,7 +440,11 @@ if (( imp_physics == 8 )); then
    ${NLN} "${CRTM_FIX}/CloudCoeff.Thompson08.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
 elif (( imp_physics == 11 )); then
    echo "using CRTM GFDL cloud optical table"
-   ${NLN} "${CRTM_FIX}/CloudCoeff.GFDLFV3.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
+   if [ ${full_hydro:-"NO"} = "YES" ]; then
+      ${NLN} "${CRTM_FIX}/CloudCoeff.GFDLFV3.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
+   else
+      ${NLN} "${CRTM_FIX}/CloudCoeff.bin ./crtm_coeffs/CloudCoeff.bin
+   fi
 else
    echo "INVALID imp_physics = ${imp_physics}"
    echo "FATAL ERROR: No valid CRTM cloud optical table found for imp_physics =  ${imp_physics}"
@@ -726,9 +734,9 @@ if [ ${DONST} = "YES" ]; then
 fi
 
 # GSI namelist options for all-sky radiance assimilation
-if [[ ${full_hydro_gfdl:-"NO"} == "YES" ]]; then
+if [[ ${full_hydro:-"NO"} == "YES" ]]; then
    ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
-   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".true."}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
    ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
    ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
    FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
@@ -932,9 +940,7 @@ OBS_INPUT::
   l_hyb_ens=${l_hyb_ens},
   generate_ens=.false.,
   beta_s0=0.125,readin_beta=.false.,
-  s_ens_h=1000.0,300.0,150.0,685.0,219.2,s_ens_v=-0.5,-0.5,-0.5,0.0,0.0,
-  readin_localization=.false.,global_spectral_filter_sd=.false.,
-  r_ensloccov4scl=1,nsclgrp=3,naensloc=5,
+  s_ens_h=800.,s_ens_v=-0.8,readin_localization=.true.,
   aniso_a_en=.false.,oz_univ_static=.false.,uv_hyb_ens=.true.,
   ensemble_path='./ensemble_data/',
   ens_fast_read=.true.,

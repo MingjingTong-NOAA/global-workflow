@@ -65,7 +65,7 @@ corrlength=${corrlength:-1250}
 lnsigcutoff=${lnsigcutoff:-2.5}
 analpertwt=${analpertwt:-0.85}
 readin_localization_enkf=${readin_localization_enkf:-".true."}
-reducedgrid=${reducedgrid:-".false."}
+reducedgrid=${reducedgrid:-".true."}
 letkf_flag=${letkf_flag:-".false."}
 getkf=${getkf:-".false."}
 denkf=${denkf:-".false."}
@@ -279,7 +279,7 @@ cat > enkf.nml << EOFnml
 &nam_enkf
    datestring="${PDY}${cyc}",datapath="$DATA/",
    analpertwtnh=${analpertwt},analpertwtsh=${analpertwt},analpertwttr=${analpertwt},
-   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=.false.,iassim_order=0,
+   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=.true.,iassim_order=0,
    corrlengthnh=${corrlength},corrlengthsh=${corrlength},corrlengthtr=${corrlength},
    lnsigcutoffnh=${lnsigcutoff},lnsigcutoffsh=${lnsigcutoff},lnsigcutofftr=${lnsigcutoff},
    lnsigcutoffpsnh=${lnsigcutoff},lnsigcutoffpssh=${lnsigcutoff},lnsigcutoffpstr=${lnsigcutoff},
