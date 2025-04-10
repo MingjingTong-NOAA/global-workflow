@@ -302,7 +302,7 @@ fi
 # if these variables are re-defined there.
 # Otherwise, the ensemble forecast will inherit from config.fcst
 
-export isatmedmf=0
+export isatmedmf=1
 export xkgdx=25000.0
 export xkzminv=0.0
 export xkzm_m=1.5

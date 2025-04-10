@@ -2469,7 +2469,7 @@ class SHiELDTasks(Tasks):
                 dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
                 deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode == 'replay' and self.options['do_omf']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_gdas_analdiag'}
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
             deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -2547,7 +2547,7 @@ class SHiELDTasks(Tasks):
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_ice_prod'}
                 deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode == 'replay' and self.options['do_omf']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_gdas_analdiag'}
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
             deps.append(rocoto.add_dependency(dep_dict))
 
         # MOS job dependencies

@@ -808,8 +808,8 @@ case ${step} in
     else
        ntasks=1
     fi
-    threads_per_task=40
-    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    threads_per_task=$max_tasks_per_node
+    tasks_per_node=1
     ;;
 
   "sfcanl")
@@ -1501,13 +1501,13 @@ for resource_var in threads_per_task ntasks tasks_per_node NTASKS memory walltim
    fi
 done
 
-if [[ -n ${ntasks+0} ]]; then
-  nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
-  if [[ $nodes -gt 0 ]]; then
-     export tasks_per_node=$(( (ntasks + nodes - 1) / nodes ))
-  else
-     export tasks_per_node=$ntasks
-  fi
-fi
+#if [[ -n ${ntasks+0} ]]; then
+#  nodes=$(( (ntasks + tasks_per_node - 1) / tasks_per_node ))
+#  if [[ $nodes -gt 0 ]]; then
+#     export tasks_per_node=$(( (ntasks + nodes - 1) / nodes ))
+#  else
+#     export tasks_per_node=$ntasks
+#  fi
+#fi
 
 echo "END: config.resources"

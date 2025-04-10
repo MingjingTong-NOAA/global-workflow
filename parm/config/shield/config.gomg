@@ -12,13 +12,8 @@ if [[ ${DONST} = "YES" ]]; then
   . ${EXPDIR}/config.nsst
 fi
 
-# Get GSI specific configuration
-. ${EXPDIR}/config.anal
-
 # GSI namelist options
 export DOHYBVAR="NO"
-export DO_CALC_INCREMENT="NO"
-export DO_CALC_ANALYSIS="NO"
 export USE_CORRELATED_OBERRS="NO"
 export write_fv3_increment=".false."
 

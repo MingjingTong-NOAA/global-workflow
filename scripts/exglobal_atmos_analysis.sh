@@ -443,7 +443,7 @@ elif (( imp_physics == 11 )); then
    if [ ${full_hydro:-"NO"} = "YES" ]; then
       ${NLN} "${CRTM_FIX}/CloudCoeff.GFDLFV3.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
    else
-      ${NLN} "${CRTM_FIX}/CloudCoeff.bin ./crtm_coeffs/CloudCoeff.bin
+      ${NLN} "${CRTM_FIX}/CloudCoeff.bin" ./crtm_coeffs/CloudCoeff.bin
    fi
 else
    echo "INVALID imp_physics = ${imp_physics}"
