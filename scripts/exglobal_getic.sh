@@ -322,6 +322,10 @@ cd ${ICSDIR}
      else
        echo "sfcanl exist, skip pulling data"
      fi
+     if [ ! -d ${COMOUT_ATMOS_ANALYSIS_RESTART} ]; then
+        mkdir -p ${COMOUT_ATMOS_ANALYSIS_RESTART}
+        $NLN ${COMIN_ATMOS_ANALYSIS_RESTART}/* ${COMOUT_ATMOS_ANALYSIS_RESTART}/  
+     fi
   else
      echo "sfcanl exist, skip pulling data"
   fi

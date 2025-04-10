@@ -43,6 +43,8 @@ ROTDIR=${ICSDIR}/output RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx
       COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
 ROTDIR=${ICSDIR}/output RUN=${ICDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
       COMOUT_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+ROTDIR=${ICSDIR} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+      COMOUT_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
 
 ###############################################################
 # Run getic script
