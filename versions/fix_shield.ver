@@ -7,4 +7,4 @@ export sfc_climo_ver=20220805
 export verif_ver=20220805
 export shield_ver=20240515
 export aer_ver=20240213
-export gsi_ver=20240515
+export gsi_ver=20250409

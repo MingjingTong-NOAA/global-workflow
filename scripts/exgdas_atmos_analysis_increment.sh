@@ -98,17 +98,19 @@ LONB_ANAL=${LONB_ANAL:-$($NCLEN $ATMANLENS06 grid_xt)} # get LONB_ANAL
 LATB_ANAL=${LATB_ANAL:-$($NCLEN $ATMANLENS06 grid_yt)} # get LATB_ANAL
 LEVS_ANAL=${LEVS_ANAL:-$($NCLEN $ATMANLENS06 pfull)} # get LEVS_ANAL
 
-# reference forecast resolution
-LONB_FREF=${LONB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_xt)} # get LONB_FREF
-LATB_FREF=${LATB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_yt)} # get LATB_FREF
-
 REGRID_ANALYSIS="NO"
 REGRID_FORECAST="NO"
-if [[ $LONB_FCST -ne $LONB_ANAL || $LATB_FCST -ne $LATB_ANAL || $LEVS_FCST -eq $LEVS_ANAL ]]; then
+if [[ $LONB_FCST -ne $LONB_ANAL || $LATB_FCST -ne $LATB_ANAL || $LEVS_FCST -ne $LEVS_ANAL ]]; then
   REGRID_ANALYSIS="YES"
   if [[ $LONB_FCST -gt $LONB_ANAL || $LATB_FCST -gt $LATB_ANAL ]]; then
     REGRID_FORECAST="YES"
   fi
+fi
+
+if [[ $REGRID_FORECAST == "YES" ]]; then
+  # reference forecast resolution
+  LONB_FREF=${LONB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_xt)}
+  LATB_FREF=${LATB_FREF:-$($NCLEN $ATMFCST_ENSRES grid_yt)}
 fi
 ##############################################################
 # Regrid external analysis or/and forecast 
