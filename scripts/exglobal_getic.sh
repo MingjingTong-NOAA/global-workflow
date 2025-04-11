@@ -210,7 +210,8 @@ fi
 
 [[ ! -d ${COMOUT_ATMOS_ANALYSIS} ]] && mkdir -p ${COMOUT_ATMOS_ANALYSIS}
 # Move extracted data to ICSDIR
-if [[ $MODE != "cycled" && $pullanldata == "YES" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
+#if [[ $MODE != "cycled" && $pullanldata == "YES" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
+if [[ $MODE != "cycled" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
   $NLN ${COMIN_ATMOS_ANALYSIS}/* ${COMOUT_ATMOS_ANALYSIS}/
 fi
 
