@@ -808,8 +808,11 @@ case ${step} in
     else
        ntasks=1
     fi
-    threads_per_task=$max_tasks_per_node
-    tasks_per_node=1
+    threads_per_task=64
+    if (( threads_per_task > max_tasks_per_node )); then
+      threads_per_task=${max_tasks_per_node}
+    fi
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     ;;
 
   "sfcanl")
@@ -854,10 +857,10 @@ case ${step} in
         "C48" | "C96" | "C192")
           declare -x "walltime"="00:20:00"
           ;;
-        "C384")
+        "C384" | "C768")
           declare -x "walltime"="00:30:00"
           ;;
-        "C768" | "C1152")
+        "C1152")
           # Not valid resolutions for ensembles
           declare -x "walltime"="01:20:00"
           ;;
@@ -926,7 +929,9 @@ case ${step} in
       ;;
     esac
     tasks_per_node=${ntasks}
-    if [[ "${CASE}" == "C1152" ]]; then
+    if [[ "${CASE}" == "C768" ]]; then
+        tasks_per_node=60
+    elif [[ "${CASE}" == "C1152" ]]; then
         tasks_per_node=40
     fi
 
