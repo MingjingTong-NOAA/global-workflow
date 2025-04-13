@@ -1299,12 +1299,17 @@ class SHiELDTasks(Tasks):
 
         history_path = self._template_to_rocoto_cycstring(self._base[history_path_tmpl])
         deps = []
-        data = f'{history_path}/{history_file_tmpl}'
-        dep_dict = {'type': 'data', 'data': data, 'age': 120}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
+        if self.options['do_upp']:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmupp'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps)
+        else:
+            data = f'{history_path}/{history_file_tmpl}'
+            dep_dict = {'type': 'data', 'data': data, 'age': 120}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
 
         cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
 
