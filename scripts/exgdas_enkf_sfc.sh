@@ -205,7 +205,7 @@ if [ $DOIAU = "YES" ]; then
 
         done # ensembles
 
-        CDATE="${PDY}${cyc}" ${CYCLESH}
+        CDATE="${PDY}${cyc}" "${CYCLESH}" && true
         export err=$?; err_chk
 
         # Copy outputs from DATA to COMOUT
@@ -280,7 +280,7 @@ if [[ "${DOSFCANL_ENKF}" == "YES" ]]; then
             fi
         done
 
-        CDATE="${PDY}${cyc}" ${CYCLESH}
+        CDATE="${PDY}${cyc}" "${CYCLESH}" && true
         export err=$?; err_chk
 
         # Copy outputs from DATA to COMOUT

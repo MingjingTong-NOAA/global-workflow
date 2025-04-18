@@ -25,7 +25,7 @@ def main():
             'DO_JEDIOCNVAR', 'DO_STARTMEM_FROM_JEDIICE',
             'REPLAY_ICS', 'DO_WAVE', 'DO_OCN', 'DO_ICE', 'DO_NEST', 'DO_CA',
             'USE_ATM_ENS_PERTURB_FILES', 'USE_OCN_ENS_PERTURB_FILES',
-            'ICDUMP']
+            'ICDUMP','ICSANL']
 
     stage_dict = AttrDict()
     for key in keys:

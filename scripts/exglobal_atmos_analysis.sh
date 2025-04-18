@@ -733,15 +733,6 @@ if [ ${DONST} = "YES" ]; then
    NST="nstinfo=${NSTINFO},fac_dtl=${FAC_DTL},fac_tsl=${FAC_TSL},zsea1=${ZSEA1},zsea2=${ZSEA2},${NST}"
 fi
 
-# GSI namelist options for all-sky radiance assimilation
-if [[ ${full_hydro:-"NO"} == "YES" ]]; then
-   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
-   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
-   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
-   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
-   FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
-fi
-
 ##############################################################
 # Create global_gsi namelist
 cat > gsiparm.anl << EOF

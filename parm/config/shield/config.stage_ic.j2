@@ -10,8 +10,10 @@ source "${EXPDIR}/config.resources" stage_ic
 if [[ "${MODE}" == "cycled" && ("${DO_FETCH_HPSS^^}" =~ "Y" || "${DO_FETCH_LOCAL^^}" =~ "Y") ]]; then
     export ICSDIR="${DATAROOT}"  # fetch untars data into DATAROOT
 else
-    export ICSDIR=${ICSDIR}/output/${CASE}
+    export ICSDIR=${ICSROOT}/output/${CASE}
 fi
+
+export ICSANL=${ICSROOT}/output
 
 export BASE_IC="{{ BASE_IC }}" # Platform home for staged ICs
 

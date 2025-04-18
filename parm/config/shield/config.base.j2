@@ -63,6 +63,7 @@ export HOMEDIR="{{ HOMEDIR }}"
 export STMP="{{ STMP }}"
 export PTMP="{{ PTMP }}"
 export NOSCRUB="{{ NOSCRUB }}"
+export ICSROOT="{{ ICSROOT }}"
 
 # Base directories for various builds
 export BASE_GIT="{{ BASE_GIT }}"
@@ -79,9 +80,10 @@ export DO_NPOESS="{{ DO_NPOESS }}"           # NPOESS products
 export DO_TRACKER="{{ DO_TRACKER }}"         # Hurricane track verification
 export DO_GENESIS="{{ DO_GENESIS }}"         # Cyclone genesis verification
 export DO_GENESIS_FSU="{{ DO_GENESIS_FSU }}" # Cyclone genesis verification (FSU)
-export DO_VERFOZN="NO"                   # Ozone data assimilation monitoring
-export DO_VERFRAD="NO"                   # Radiance data assimilation monitoring
-export DO_VMINMON="NO"                   # GSI minimization monitoring
+export DO_VERFOZN="YES"                  # Ozone data assimilation monitoring
+export DO_VERFRAD="YES"                  # Radiance data assimilation monitoring
+export DO_VMINMON="YES"                  # GSI minimization monitoring
+export DO_ANLSTAT="NO"                   # JEDI-based analysis statistics
 export DO_MOS="NO"                       # GFS Model Output Statistics - Only supported on WCOSS2
 
 # NO for retrospective parallel; YES for real-time parallel
@@ -120,7 +122,6 @@ export NCLEN="${HOMEgfs}/ush/getncdimlen"
 
 # Machine environment, jobs, and other utility scripts
 export BASE_ENV="${HOMEgfs}/env"
-export BASE_JOB="${HOMEgfs}/jobs/rocoto"
 
 # EXPERIMENT specific environment parameters
 export SDATE="{{ SDATE }}"
@@ -140,7 +141,6 @@ fi
 export ARCDIR="${NOSCRUB}/archive/${PSLOT}"
 export ATARDIR="{{ ATARDIR }}"
 export FETCHDIR="{{ FETCHDIR }}"
-export ICSDIR="{{ ICSDIR }}"
 
 # Commonly defined parameters in JJOBS
 export envir=${envir:-"prod"}
@@ -511,7 +511,7 @@ export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
 export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
 # full hydrometeors assimilation
-export full_hydro="NO"
+export full_hydro="YES"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -584,6 +584,11 @@ if [[ "${DO_JEDIATMVAR}" = "YES" ]]; then
    export DO_VERFOZN="NO"     # Ozone data assimilation monitoring
    export DO_VERFRAD="NO"     # Radiance data assimilation monitoring
    export DO_VMINMON="NO"     # GSI minimization monitoring
+   export DO_ANLSTAT="YES"    # JEDI-based analysis statistics
+else
+   if [[ ${DO_AERO} = "YES" || ${DO_JEDIOCNVAR} = "YES" || ${DO_JEDISNOWDA} = "YES " ]]; then
+     export DO_ANLSTAT="YES"  # JEDI-based analysis statistics
+   fi
 fi
 
 # If starting ICs that are not at cycle hour

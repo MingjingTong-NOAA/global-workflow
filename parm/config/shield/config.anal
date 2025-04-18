@@ -166,15 +166,23 @@ export hydrotable_format="binary"
 #export hydrotable_format="netcdf"
 
 if [[ ${full_hydro:-"NO"} == "YES" ]]; then
-   export lcalc_gfdl_cfrac=".false."
-   export allsky_gfdl=".false."
-   export crtm_overlap=4
-   export cnvw_option=".false."
-   export allsky_verbose=".false."
-   export cloud_mask_option=1
-   export mask_threshold=0.000001
-   export write_ens_sprd=".false."
-   export bkgv_write=".false."
+   lcalc_gfdl_cfrac=".false."
+   allsky_gfdl=".false."
+   crtm_overlap=4
+   cnvw_option=".false."
+   allsky_verbose=".false."
+   cloud_mask_option=1
+   mask_threshold=0.000001
+   write_ens_sprd=".false."
+   bkgv_write=".false."
+
+   FULL_HYDRO=""
+   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
+   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
+   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
+   ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
+   export FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
+   export FULL_HYDRO=""
 fi
 
 export USE_CORRELATED_OBERRS="NO"

@@ -56,6 +56,6 @@ else
    export ncep_levs=65
 fi
 
-export EXTRACT_DIR=$ICSDIR
+export EXTRACT_DIR=$ICSROOT
 
 echo "END: config.init"

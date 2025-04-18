@@ -81,8 +81,6 @@ case "${machine}" in
 "hera") FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix" ;;
 "orion") FIX_DIR="/work2/noaa/global/role-global/fix" ;;
 "hercules") FIX_DIR="/work2/noaa/global/role-global/fix" ;;
-"jet") FIX_DIR="/lfs5/HFIP/hfv3gfs/glopara/FIX/fix" ;;
-"s4") FIX_DIR="/data/prod/glopara/fix" ;;
 "gaeac5") FIX_DIR="/gpfs/f5/ufs-ard/world-shared/global/glopara/data/fix" ;;
 "gaeac6") FIX_DIR="/gpfs/f6/drsa-precip3/world-shared/role.glopara/fix" ;;
 "noaacloud") FIX_DIR="/contrib/global-workflow-shared-data/fix" ;;
@@ -281,7 +279,7 @@ fi
 #------------------------------
 if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
   cd "${HOMEgfs}/parm/gdas" || exit 1
-  declare -a gdasapp_comps=("aero" "atm" "io" "ioda" "snow" "soca" "jcb-gdas" "jcb-algorithms")
+  declare -a gdasapp_comps=("aero" "atm" "io" "ioda" "snow" "soca" "jcb-gdas" "jcb-algorithms" "stat")
   for comp in "${gdasapp_comps[@]}"; do
     if [[ -d "${comp}" ]]; then
         rm -rf "${comp}"

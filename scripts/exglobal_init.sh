@@ -35,9 +35,9 @@ export iPDY=$(echo $IAUSDATE | cut -c1-8)
 export icyc=$(echo $IAUSDATE | cut -c9-10)
 
 export DATA=${DATA:-${DATAROOT}/init}
-export EXTRACT_DIR=${EXTRACT_DIR:-$ICSDIR}
+export EXTRACT_DIR=${EXTRACT_DIR:-${ICSROOT}}
 export WORKDIR=${WORKDIR:-$DATA}
-export OUTDIR=${OUTDIR:-${ICSDIR}/output}
+export OUTDIR=${OUTDIR:-${ICSROOT}/output}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}

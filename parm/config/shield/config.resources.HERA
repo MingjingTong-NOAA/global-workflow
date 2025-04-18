@@ -30,7 +30,6 @@ case ${step} in
         export ntasks=80
         ;;
       "C192" | "C96" | "C48")
-        export ntasks=40
         export threads_per_task=4
         ;;
       *)
@@ -49,6 +48,10 @@ case ${step} in
        # Run fewer tasks per node for memory
        tasks_per_node=20
     fi
+    ;;
+
+  "epos")
+    tasks_per_node=20
     ;;
 
   "analinc")

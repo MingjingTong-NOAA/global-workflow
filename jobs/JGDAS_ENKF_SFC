@@ -45,12 +45,9 @@ ROTDIR=${ICSDIR}/output/${CASE} RUN="gdas" YMD=${PDY} HH=${cyc} declare_from_tmp
 ###############################################################
 # Run relevant script
 
-${ENKFRESFCSH:-${SCRgfs}/exgdas_enkf_sfc.sh}
-err=$?
-if [[ ${err} -ne 0 ]]; then
-    exit "${err}"
-fi
-
+${ENKFRESFCSH:-${SCRgfs}/exgdas_enkf_sfc.sh} && true
+export err=$?
+err_chk
 
 ##############################################
 # End JOB SPECIFIC work

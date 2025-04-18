@@ -40,7 +40,7 @@ export idd=$(echo $IAUSDATE | cut -c7-8)
 export ihh=$(echo $IAUSDATE | cut -c9-10)
 
 export DATA=${DATA:-${DATAROOT}/getic}
-export EXTRACT_DIR=${EXTRACT_DIR:-$ICSDIR}
+export EXTRACT_DIR=${EXTRACT_DIR:-$ICSROOT}
 export PRODHPSSDIR=${PRODHPSSDIR:-/NCEPPROD/hpssprod/runhistory}
 export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
@@ -209,7 +209,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
 fi
 
 [[ ! -d ${COMOUT_ATMOS_ANALYSIS} ]] && mkdir -p ${COMOUT_ATMOS_ANALYSIS}
-# Move extracted data to ICSDIR
+# Move extracted data to ICSROOT
 #if [[ $MODE != "cycled" && $pullanldata == "YES" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
 if [[ $MODE != "cycled" && ${COMIN_ATMOS_ANALYSIS} != ${COMOUT_ATMOS_ANALYSIS} ]]; then
   $NLN ${COMIN_ATMOS_ANALYSIS}/* ${COMOUT_ATMOS_ANALYSIS}/
@@ -233,7 +233,7 @@ if [[ $MODE = "replay" && $DO_SFCANL = "YES" && $DONST = "YES" && ! -s $dtfanl ]
 fi
 
 # Pull sfcanl restart file to get SST for replay and DA cycle
-cd ${ICSDIR}
+cd ${ICSROOT}
 # need to check the condition below, always use operational surface analysis for now
 #if [[ $gfs_ver == "v16" ]]; then
   getsfcanl="NO"
