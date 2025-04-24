@@ -127,6 +127,19 @@ gdas:
         - "{{ COMIN_ATMOS_MINMON | relpath(ROTDIR) }}/gnorm_data.txt"
         - "logs/{{ cycle_YMDH }}/{{ RUN }}_vminmon.log"
             {% endif %}
+
+        {% elif MODE == "replay" %}
+        # OmF state
+            {% if DO_JEDIATMVAR %}
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}atmanlvar.yaml"
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}atmanlfv3inc.yaml"
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}atmstat"
+            {% else %}
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}gsistat"
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}cnvstat"
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}oznstat"
+        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}radstat"
+            {% endif %}
         {% endif %}  # End of cycled data
 
         # Forecast and post logs
@@ -150,6 +163,10 @@ gdas:
             {% endif %} 
         # FV3 log
         - "{{ COMIN_ATMOS_HISTORY | relpath(ROTDIR) }}/{{ head }}atm.logf{{ fhr3 }}.txt"
+        {% endfor %}
+
+        {% for fhr in range(FHMIN, FHMAX + 1, FHNCOUT) %}
+           {% set fhr3 = '%03d' % fhr %}
         # Raw netCDF forecasts
         - "{{ COMIN_ATMOS_HISTORY | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.nc"
         - "{{ COMIN_ATMOS_HISTORY | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.nc"

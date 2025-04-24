@@ -35,9 +35,18 @@ case ${step} in
         export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
     fi
     ;;
+
   "analinc")
     export threads_per_task=64
     export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    ;;
+
+  "gomg")
+    if [[ "${CASE}" == "C768" || "${CASE}" == "C1152" ]]; then
+        export threads_per_task=4
+        export ntasks=240
+        export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    fi
     ;;
   *)
 
