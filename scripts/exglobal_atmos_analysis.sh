@@ -556,6 +556,10 @@ if [[ -f "${SFCG08}" ]]; then
     ${NLN} "${SFCG08}" sfcf08
 fi
 
+if [ -f ${ATMG04} -a -f ${ATMG05} -a -f ${ATMG07} -a -f ${ATMG08} ]; then
+   nhr_obsbin=1
+fi
+
 if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ]]; then
 
    # Link ensemble members
@@ -569,7 +573,6 @@ if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ]]; then
    fhrs="06"
    if [ ${l4densvar} = ".true." ]; then
       fhrs="03 04 05 06 07 08 09"
-      nhr_obsbin=1
    fi
 
    for imem in $(seq 1 ${NMEM_ENS}); do

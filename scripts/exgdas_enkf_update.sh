@@ -113,7 +113,11 @@ CONVINFO=${CONVINFO:-${FIXgfs}/gsi/global_convinfo.txt}
 OZINFO=${OZINFO:-${FIXgfs}/gsi/global_ozinfo.txt}
 SCANINFO=${SCANINFO:-${FIXgfs}/gsi/global_scaninfo.txt}
 HYBENSINFO=${HYBENSINFO:-${FIXgfs}/gsi/global_hybens_info.l${LEVS_ENKF}.txt}
-ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS_ENKF}.txt}
+if [ ${full_hydro:-"NO"} = "YES" ]; then
+  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS_ENKF}.allhydro.txt}
+else
+  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS_ENKF}.txt}
+fi
 VLOCALEIG=${VLOCALEIG:-${FIXgfs}/gsi/vlocal_eig_l${LEVS_ENKF}.dat}
 ENKF_SUFFIX="s"
 if [[ "${SMOOTH_ENKF}" == "NO" ]]; then

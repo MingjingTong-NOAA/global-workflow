@@ -39,7 +39,7 @@ RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
   COMIN_OBS_PREV:COM_OBS_TMPL \
   COMIN_ATMOS_ANALYSIS_DET_PREV:COM_ATMOS_ANALYSIS_TMPL
 
-ROTDIR=${ICSDIR}/output/${CASE} RUN="gdas" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+ROTDIR=${ICSROOT}/output/${CASE} RUN="gdas" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
       COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
 
 ###############################################################
