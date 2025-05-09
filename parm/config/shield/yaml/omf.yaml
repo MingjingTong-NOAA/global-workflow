@@ -1,5 +1,5 @@
 base:
-  DOIAU: "YES"
+  DOIAU: "NO"
   DO_JEDIATMVAR: "NO"
   DO_JEDIATMENS: "NO"
   DO_JEDIOCNVAR: "NO"
@@ -26,4 +26,5 @@ base:
   DO_OMF: "YES"
   DO_POST: "NO"
   DO_FETCH_HPSS: "YES"
-  REPLAY_4DIAU: "YES"
+  DIAG_INTERVAL: 6
+  RESTARTEXP: "shield_cycled_C384"

@@ -12,7 +12,7 @@ class SHiELDOmfAppConfig(AppConfig):
         super().__init__(conf)
 
         base = conf.parse_config('config.base')
-        self.run = base.get('RUN', 'gdas')
+        self.run = "gdas"
         self.runs = [self.run]
 
     def _get_run_options(self, conf: Configuration) -> Dict[str, Any]:
@@ -29,7 +29,7 @@ class SHiELDOmfAppConfig(AppConfig):
         """
 
         options = self.run_options[run]
-        configs = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch', 'cleanup']
+        configs = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return configs
 
@@ -48,6 +48,6 @@ class SHiELDOmfAppConfig(AppConfig):
         This is the place where that order is set.
         """
 
-        tasks = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch', 'cleanup']
+        tasks = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return {f"{self.run}": tasks}

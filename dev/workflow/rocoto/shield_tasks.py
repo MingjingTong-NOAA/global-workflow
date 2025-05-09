@@ -2466,7 +2466,12 @@ class SHiELDTasks(Tasks):
 
     def arch_vrfy(self):
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
+        if self.app_config.mode in ['omf']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
+        elif self.app_config.mode in ['ergpos']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
+        else:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_analdiag'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:
@@ -2532,7 +2537,12 @@ class SHiELDTasks(Tasks):
 
     def arch_tars(self):
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
+        if self.app_config.mode in ['omf']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
+        elif self.app_config.mode in ['ergpos']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
+        else:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:
@@ -3571,7 +3581,7 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
 
         resources = self.get_resource('getfcst')
-        task_name = f'{self.run}_getic'
+        task_name = f'{self.run}_getfcst'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,

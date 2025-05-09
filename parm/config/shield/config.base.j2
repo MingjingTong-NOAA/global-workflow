@@ -92,8 +92,8 @@ export DO_MOS="NO"                       # GFS Model Output Statistics - Only su
 #  use RUNMOS flag
 export REALTIME="YES"
 
-# Experiment mode (cycled or forecast-only)
-export MODE="{{ MODE }}" # cycled/forecast-only
+# Experiment mode (cycled/forecast-only/replay/omf/ensregrid)
+export MODE="{{ MODE }}" # cycled/forecast-only/replay/omf/ensregrid
 export DO_TEST_MODE="{{ DO_TEST_MODE }}" # option to change configuration for automated testing
 
 ####################################################
@@ -128,7 +128,7 @@ export SDATE="{{ SDATE }}"
 export EDATE="{{ EDATE }}"
 export EXP_WARM_START="{{ EXP_WARM_START }}"
 export ANAL_START="{{ ANAL_START }}"
-export RESTARTEXP="{{ shield_cycled_exp_name }}"
+export RESTARTEXP="{{ RESTARTEXP }}"
 export assim_freq=6
 export PSLOT="{{ PSLOT }}"
 export EXPDIR="{{ EXPDIR }}/${PSLOT}"
@@ -283,7 +283,7 @@ fi
 # Initial condition setup (for forecast-only and replay)
 export ICFROM="gfs"   # could be gfs, shield, ifs or experiment name
 export gfs_ver="v16"  # gfs version
-export exp_ver="2025" # experiment version
+export exp_ver="2025" # experiment version (>= 2025 new COM directory structure)
 export ICDUMP="gdas"
 export ICRES="C768"
 export ECICSDIR="/scratch2/GFDL/gfdlscr/Mingjing.Tong/scrub/ECIFS_ICS"
@@ -535,7 +535,7 @@ export DO_CA="NO"
 
 # ensemble replay
 export ENSREPLAY="{{ ENSREPLAY }}"
-export ENSFROM="s2022_C192_v2p5_edmf1ens0"
+export ENSFROMEXP="{{ ENSFROMEXP }}"
 export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${ENSFROM}"
 
 export DO_OMF="{{ DO_OMF }}"

@@ -56,12 +56,12 @@ class SHiELDReplayAppConfig(AppConfig):
                 configs += ['sfcanl']
 
             if options['do_omf']:
-                configs += ['prep', 'gomg', 'analdiag']
+                configs += ['prep', 'gomg', 'analdiag', 'arch_vrfy']
 
             if options['do_post']:
                 if options['do_upp']:
                     configs += ['upp']
-                configs += ['atmos_products', 'arch_vrfy']
+                configs += ['atmos_products']
 
             if options['do_archcom']:
                 configs += ['arch_tars']

@@ -29,7 +29,7 @@ class AppConfigInit(ABCMeta):
 
 class AppConfig(ABC, metaclass=AppConfigInit):
 
-    VALID_MODES = ['cycled', 'forecast-only', 'replay', 'gomg', 'ensreplay', 'ensregrid']
+    VALID_MODES = ['cycled', 'forecast-only', 'replay', 'omf', 'ensreplay', 'ensregrid']
 
     def __init__(self, conf: Configuration) -> None:
 
@@ -124,8 +124,9 @@ class AppConfig(ABC, metaclass=AppConfigInit):
             run_options[run]['do_fetch_local'] = run_base.get('DO_FETCH_LOCAL', False)
             run_options[run]['do_post'] = run_base.get('DO_POST', False)
 
-            if not AppConfig.is_monotonic(run_options[run]['fcst_segments']):
-                raise ValueError(f'Forecast segments do not increase monotonically: {",".join(self.fcst_segments)}')
+            if self.mode == 'cycled' or self.mode == 'forecast-only' or self.mode == 'replay':
+                if not AppConfig.is_monotonic(run_options[run]['fcst_segments']):
+                    raise ValueError(f'Forecast segments do not increase monotonically: {",".join(self.fcst_segments)}')
 
             if run_options[run]['do_globusarch'] and not globus_checked:
                 self._check_globus(conf)
