@@ -26,4 +26,6 @@ if [[ "${ARCHCOM_TO}" == "globus_hpss" ]]; then
     export ARCHCOM_TO="local"
 fi
 
+export FHNCOUT=1
+
 echo "END: config.arch_tars"

@@ -2471,7 +2471,7 @@ class SHiELDTasks(Tasks):
         elif self.app_config.mode in ['ergpos']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
         else:
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_analdiag'}
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:

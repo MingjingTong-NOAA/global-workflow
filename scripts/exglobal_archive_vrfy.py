@@ -29,7 +29,7 @@ def main():
             'ARCDIR', 'MODE', 'DO_JEDIATMENS', 'DO_FIT2OBS', 'DO_JEDIATMVAR', 'FHMIN_GFS',
             'DO_JEDISNOWDA', 'DO_AERO_ANL', 'DO_PREP_OBS_AERO', 'NET', 'MODE', 'FHOUT_GFS',
             'FHMAX_HF_GFS', 'FHOUT_GFS', 'FHMAX_FITS', 'FHMIN', 'FHMAX', 'FHOUT', 'FHMAX_GFS',
-            'DO_POST']
+            'DO_POST','DO_OMF']
 
     archive_dict = AttrDict()
     for key in keys:
