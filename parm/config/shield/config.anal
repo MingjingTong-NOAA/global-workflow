@@ -157,32 +157,18 @@ export AIRS_CADS=".false."
 export CRIS_CADS=".false."
 export IASI_CADS=".false."
 
-# Set all-sky radiance assimilation options
-export hydrotable="${CRTM_FIX}/CloudCoeff.bin"
-export hydrotable_format="binary"
-#export hydrotable="$RTMFIX/CloudCoeff.GFDLFV3.-109z-1.bin"
-#export hydrotable="$RTMFIX/CloudCoeff_DDA_ARTS.nc4"
-#export hydrotable="$RTMFIX/CloudCoeff_DDA_GFDL.nc4"
-#export hydrotable_format="netcdf"
+#CRTM_FIX_local="/scratch2/GFDL/gfdlscr/proj-shared/fix_shield/crtm-fix-3.1.1"
+export CRTM_FIX=${CRTM_FIX_local:-${CRTM_FIX}}
 
 if [[ ${full_hydro:-"NO"} == "YES" ]]; then
-   lcalc_gfdl_cfrac=".false."
-   allsky_gfdl=".false."
-   crtm_overlap=4
-   cnvw_option=".false."
-   allsky_verbose=".false."
-   cloud_mask_option=1
-   mask_threshold=0.000001
-   write_ens_sprd=".false."
-   bkgv_write=".false."
+   export hydrotable_format="binary"
+   export hydrotable_path=${CRTM_FIX}
+   export hydrotable="CloudCoeff.GFDLFV3.-109z-1.bin"
 
-   FULL_HYDRO=""
-   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},crtm_overlap=${crtm_overlap:-4}"
-   ALLSKYOPT="${ALLSKYOPT},lcalc_gfdl_cfrac=${lcalc_gfdl_cfrac:-".false."}"
-   ALLSKYOPT="${ALLSKYOPT},cnvw_option=${cnvw_option:-".false."}"
+   FULL_HYDRO="hydrotable_format=${hydrotable_format:-"binary"}"
+   ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},cnvw_option=${cnvw_option:-".false."}"
    ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
    export FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
-   export FULL_HYDRO=""
 fi
 
 export USE_CORRELATED_OBERRS="NO"

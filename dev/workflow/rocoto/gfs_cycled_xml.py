@@ -18,11 +18,15 @@ class GFSCycledRocotoXML(RocotoXML):
         sdate_str = sdate.strftime("%Y%m%d%H%M")
         edate_str = edate.strftime("%Y%m%d%H%M")
         interval_str = timedelta_to_HMS(interval)
+        anal_start = self._base['ANAL_START']
         strings = []
-        strings.append(f'\t<cycledef group="gdas_half">{sdate_str} {sdate_str} {interval_str}</cycledef>')
-        sdate = sdate + interval
-        sdate_str = sdate.strftime("%Y%m%d%H%M")
-        strings.append(f'\t<cycledef group="gdas">{sdate_str} {edate_str} {interval_str}</cycledef>')
+        if anal_start:
+            strings.append(f'\t<cycledef group="gdas">{sdate_str} {edate_str} {interval_str}</cycledef>')
+        else:
+            strings.append(f'\t<cycledef group="gdas_half">{sdate_str} {sdate_str} {interval_str}</cycledef>')
+            sdate = sdate + interval
+            sdate_str = sdate.strftime("%Y%m%d%H%M")
+            strings.append(f'\t<cycledef group="gdas">{sdate_str} {edate_str} {interval_str}</cycledef>')
 
         interval_gfs = self._base['interval_gfs']
 

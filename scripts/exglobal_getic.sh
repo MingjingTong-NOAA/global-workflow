@@ -64,30 +64,24 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
   # Pull RESTART files off HPSS
   cd $EXTRACT_DIR
   RESTARTEXP=${RESTARTEXP:-${PSLOT}}
-  if [[ $ANAL_START == ".true." ]]; then
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas.tar
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
-     # VarBC coefficient
-     htar -tvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restarta.tar > ${ROTDIR}/logs/${CDATE}/list1 
-     >>${ROTDIR}/logs/${CDATE}/list2
-     grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restarta.tar -L ${ROTDIR}/logs/${CDATE}/list2
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
+  if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
+    echo "previous cycle history data directory exists, skip pulling data"
   else
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
-     htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas.tar
-     status=$?
-     [[ $status -ne 0 ]] && exit $status
+    if [[ ${ANAL_START} == "YES" && ! -d ${ROTDIR}/gdas.${gyy}${gmm}${gdd}/${ghh} ]]; then
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas.tar
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+    else
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+      status=$?
+      [[ $status -ne 0 ]] && exit $status
+    fi
   fi 
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
   pullanldata="NO"

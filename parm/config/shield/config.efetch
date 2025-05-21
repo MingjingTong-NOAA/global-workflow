@@ -1,0 +1,19 @@
+#! /usr/bin/env bash
+
+########## config.efetch ##########
+# Ensemble fetch specific
+
+echo "BEGIN: config.efetch"
+
+# Get task specific resources
+. $EXPDIR/config.resources fetch
+
+if [[ ${MODE} == "ensregrid" ]]; then
+   export EFHMIN=6
+   export EFHMAX=7
+else
+   export EFHMIN=3
+   export EFHMAX=10
+fi
+
+echo "END: config.efetch"

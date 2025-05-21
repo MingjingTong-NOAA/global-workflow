@@ -177,6 +177,13 @@ if [[ "${MODEL}" == "shield" ]]; then
     fi
     fix_ver="${dir}_ver"
     ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
+    if [ ${dir} = "gsi" ]; then
+       fix_ver="gsi_v2_ver"
+       ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "gsi_v2"
+    elif [ ${dir} = "aer" ]; then
+       fix_ver="aer_shield2022_ver"
+       ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "aer_shield2022"
+    fi
   done
   ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/ref_fcst" "ref_fcst"
   rm -f orog

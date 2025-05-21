@@ -1,0 +1,19 @@
+enkf_regrid_grp:
+    name: "ENKF_REGRID_GRP"
+    target: "{{ FETCHDIR }}/{{ cycle_YMDH }}/{{ RUN }}_grp{{ ENSGRP }}.tar"
+    required:
+        {% for mem in range(first_group_mem, last_group_mem + 1) %}
+        {% set imem = mem - first_group_mem %}
+        # Construct member COM directories
+        {% set COMIN_ATMOS_HISTORY_MEM = COMIN_ATMOS_HISTORY_MEM_list[imem] %}
+
+        # Forecast data
+        {% if RUN == 'enkfgdas' %}
+        {% for fhr in range(EFHMIN, EFHMAX, 1) %}
+        - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atmf{{ "%03d" % fhr }}.nc"
+        {% endfor %}
+
+        {% for fhr in range(EFHMIN, EFHMAX, 1) %}
+        - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}sfcf{{ "%03d" % fhr }}.nc"
+        {% endfor %}
+        {% endif %}

@@ -33,7 +33,7 @@ export NAM_ENKF="smoothparm=35,"
 
 export SATINFO=${FIXgfs}/gsi/global_satinfo_shield.txt
 
-export write_spread_diag=".true."
+export write_spread_diag=".false."
 if [ "$write_spread_diag" == ".true." ]; then
    export numiter=1
 fi

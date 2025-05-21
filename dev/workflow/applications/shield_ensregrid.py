@@ -28,7 +28,7 @@ class SHiELDEnsregridAppConfig(AppConfig):
         Returns the config_files that are involved in the ensemble regrid app
         """
 
-        configs = ['eget', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
+        configs = ['efetch', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
 
         return configs
 
@@ -47,6 +47,6 @@ class SHiELDEnsregridAppConfig(AppConfig):
         This is the place where that order is set.
         """
 
-        tasks = ['eget', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
+        tasks = ['efetch', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
 
         return {f"{self.run}": tasks}

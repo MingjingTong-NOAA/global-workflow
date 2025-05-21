@@ -44,9 +44,6 @@ curr_date="${sCDATE:0:4},${sCDATE:4:2},${sCDATE:6:2},${sCDATE:8:2},0,0"
 ${NCP} "${DATA_TABLE}" data_table
 ${NCP} "${FIELD_TABLE}" field_table
 
-restart_interval_nml="0,0,0,0,0,${restart_secs:-3600}"
-restart_start="0,0,0,0,0,${restart_start_secs:-10800}"
-
 cat > input.nml <<EOF
 &amip_interp_nml
   interp_oi_sst = .true.
@@ -63,7 +60,7 @@ cat > input.nml <<EOF
   chksum_debug = ${chksum_debug}
   dycore_only = ${dycore_only}
   fdiag = ${FDIAG}
-  write_first_time_step = ${write_first_time_step}
+  first_time_step = ${write_first_time_step}
   fprint = .false.
   ${atmos_model_nml:-}
 /
@@ -85,10 +82,6 @@ cat > input.nml <<EOF
   domains_stack_size = ${domains_stack_size:-3000000}
   print_memory_usage = ${print_memory_usage:-".false."}
   ${fms_nml:-}
-/
-
-&fms_affinity_nml
-  affinity = .false.
 /
 
 &fv_core_nml
@@ -152,6 +145,7 @@ cat > input.nml <<EOF
   adjust_dry_mass = ${adjust_dry_mass:-".false."}
   dry_mass=${dry_mass:-98320.0}
   consv_te = ${consv_te}
+  do_sat_adj = ${do_sat_adj:-".false."}
   consv_am = .false.
   fill = .true.
   dwind_2d = .false.
@@ -159,6 +153,8 @@ cat > input.nml <<EOF
   warm_start = ${warm_start}
   no_dycore = ${no_dycore}
   z_tracer = .true.
+  do_inline_mp = ${do_inline_mp:-".true."}
+  do_aerosol = ${do_aerosol:-".true."}
   agrid_vel_rst = ${agrid_vel_rst:-".true."}
   read_increment = ${read_increment}
   res_latlon_dynamics = ${res_latlon_dynamics}
@@ -166,9 +162,9 @@ EOF
 
 if [[ ${MODE} == "replay" ]]; then
   cat >> input.nml << EOF
-  compute_iau_inc = ${compute_iau_inc:-".false."}
-  analysis_on_native_grid =${analysis_on_native_grid:-".false."}
-  write_iau_inc = ${write_iau_inc:-".false."}
+  replay = ${replay}
+  nrestartbg = ${nrestartbg:-1}
+  write_replay_ic = ${write_replay_ic:-".true."}
 EOF
 fi
 
@@ -176,31 +172,30 @@ cat >> input.nml << EOF
   ${fv_core_nml:-}
 /
 
-&integ_phys_nml
-  do_sat_adj = ${do_sat_adj:-".false."}
-  do_inline_mp = ${do_inline_mp:-".true."}
-  do_aerosol = ${do_aerosol:-".true."}
-  ${integ_phys_nml:-}
-/
-
 &coupler_nml
   months = ${months:-0}
   days = ${days:-$((FHMAX/24))}
   hours = ${hours:-$((FHMAX-24*(FHMAX/24)))}
   dt_atmos = ${DELTIM}
+  dt_ocean = ${DELTIM}
   current_date = ${curr_date}
   calendar = 'julian'
+  memuse_verbose = .false.
   atmos_nthreads = ${nth_fv3:-1}
   use_hyper_thread = ${hyperthread:-".false."}
-  ice_npes = -1
-  land_npes = -1
-  do_ocean = .false.
-  dt_cpld = ${DELTIM}
-  do_flux = .false.
-  do_land = .false.
-  do_ice = .false.
-  restart_interval = ${restart_interval_nml}
-  restart_start = ${restart_start}
+  restart_secs = ${restart_secs:-3600}
+  restart_start_secs = ${restart_start_secs:-10800}
+EOF
+
+if [ $restart_secs_aux -gt 0 ]; then
+  cat >> input.nml << EOF
+  restart_secs_aux = ${restart_secs_aux:-0}
+  restart_start_secs_aux = ${restart_start_secs_aux:-0}
+  restart_duration_secs_aux = ${restart_duration_secs_aux:-0}
+EOF
+fi
+
+cat >> input.nml << EOF
   iau_offset   = ${IAU_OFFSET}
   ${coupler_nml:-}
 /
@@ -269,7 +264,7 @@ cat >> input.nml << EOF
   dspfac       = ${dspfac:-"1.0"}
   cap_k0_land  = .false.
   cloud_gfdl   = .true.
-  do_sat_adj   = .false.
+  do_inline_mp = ${do_inline_mp:-".true."}
   do_ocean     = ${DOMLO:-".true."}
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
@@ -328,7 +323,6 @@ cat >> input.nml << EOF
   vg_max = 12.
   vr_max = 12.
   prog_ccn = ${prog_ccn:-".true."}
-  prog_cin = ${prog_cin:-".true."}
   tau_l2v = 225.
   dw_land = 0.16
   dw_ocean = 0.10
@@ -336,6 +330,7 @@ cat >> input.nml << EOF
   qi0_crt = 8.0e-5
   rh_inc = 0.30
   rh_inr = 0.30
+  rh_ins = 0.30
   c_paut = 0.5
   rthresh = 8.0e-6
   do_cld_adj = .true.
@@ -438,7 +433,6 @@ if [[ "${DO_SPPT}" = "YES" || "${DO_SHUM}" = "YES" || "${DO_SKEB}" = "YES" || "$
 
     cat >> input.nml << EOF
 &nam_stochy
-  stochini=${stochini:-".false."}
 EOF
 
   if [[ ${DO_SKEB} = "YES" ]]; then

@@ -1,0 +1,27 @@
+enkf_restartb_grp:
+    name: "ENKF_RESTARTB_GRP"
+    target:
+        tarball: "{{ FETCHDIR }}/{{ pcycle_YMDH }}/{{ RUN }}_restartb_grp{{ ENSGRP }}.tar"
+        on_hpss: True
+        contents:
+            {% for mem in range(first_group_mem, last_group_mem + 1) %}
+            {% set imem = mem - first_group_mem %}
+            {% set COMIN_ATMOS_RESTART_PREV_MEM = COMIN_ATMOS_RESTART_PREV_MEM_list[imem] %}
+
+            # Get the restart files.
+            {% if DOIAU_ENKF %}
+            {% set anl_delta = "-3H" | to_timedelta %}
+            {% else %}
+            {% set anl_delta = "0H" | to_timedelta %}
+            {% endif %}
+            {% set anl_time = current_cycle | add_to_datetime(anl_delta) %}
+            {% set a_prefix = anl_time | to_YMD + '.' + anl_time | strftime("%H") + "0000" %}
+            {% for itile in range(1, 7) %}
+            {% for datatype in ["fv_core.res", "fv_srf_wnd.res", "fv_tracer.res", "phy_data", "sfc_data"] %}
+            - "{{ COMIN_ATMOS_RESTART_PREV_MEM | relpath(ROTDIR) }}/{{ a_prefix }}.{{datatype}}.tile{{ itile }}.nc"
+            {% endfor %}
+            {% endfor %}
+            - "{{ COMIN_ATMOS_RESTART_PREV_MEM | relpath(ROTDIR) }}/{{ a_prefix }}.coupler.res"
+            - "{{ COMIN_ATMOS_RESTART_PREV_MEM | relpath(ROTDIR) }}/{{ a_prefix }}.fv_core.res.nc"
+            {% endfor %}
+        destination: "{{ ROTDIR }}"

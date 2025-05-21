@@ -69,13 +69,13 @@ class SHiELDCycledAppConfig(AppConfig):
 
         configs = ['prep']
 
+        if not options['warm_start']:
+            configs += ['stage_ic']
+
         if options['do_tsfc_tile']:
             configs += ['getic']
             if options['shield_res'] != options['icres']:
                 configs += ['init']
-
-        if options['ensreplay']:
-            configs += ['eget']
 
         if options['do_jediatmvar']:
             configs += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
@@ -93,10 +93,13 @@ class SHiELDCycledAppConfig(AppConfig):
         if options['do_ocean'] or options['do_ice']:
             configs += ['oceanice_products']
 
-        configs += ['stage_ic', 'sfcanl', 'fcst', 'upp', 'atmos_products', 'arch_vrfy', 'cleanup']
+        configs += ['sfcanl', 'fcst', 'upp', 'atmos_products', 'arch_vrfy', 'cleanup']
 
         if options['do_archcom']:
             configs += ['arch_tars']
+
+        if options['ensreplay'] or (options['do_hybvar'] and options['warm_start']):
+            configs += ['efetch']
 
         if options['do_hybvar'] and not options['ensreplay']:
             if options['do_jediatmens']:
@@ -206,9 +209,6 @@ class SHiELDCycledAppConfig(AppConfig):
                     if options['shield_res'] != options['opr_res']:
                         task_names[run] += ['init']
 
-                if run == 'gdas' and options['ensreplay']:
-                    task_names[run] += ['eget']
-
                 if options['do_jediatmvar']:
                     task_names[run] += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
                 else:
@@ -253,7 +253,7 @@ class SHiELDCycledAppConfig(AppConfig):
                         task_names[run] += ['prepobsaero']
 
                 # Staging is gdas-specific
-                if run == 'gdas':
+                if run == 'gdas' and not options['warm_start']:
                     task_names[run] += ['stage_ic']
 
                 task_names[run] += ['atmanlupp', 'atmanlprod', 'fcst']
@@ -349,7 +349,12 @@ class SHiELDCycledAppConfig(AppConfig):
             # Ensemble tasks
             elif 'enkf' in run:
 
-                task_names[run] += ['stage_ic']
+                if not options['warm_start']:
+                    task_names[run] += ['stage_ic']
+
+                if options['ensreplay'] or (options['do_hybvar'] and options['warm_start']):
+                    task_names[run] += ['efetch']
+
                 if options['do_jediatmens']:
                     task_names[run] += ['atmensanlinit', 'atmensanlfv3inc', 'atmensanlfinal', 'ecen_fv3jedi']
                     if options['lobsdiag_forenkf']:

@@ -326,7 +326,7 @@ RAPIDREFRESH_CLDSURF=${RAPIDREFRESH_CLDSURF:-""}
 CHEM=${CHEM:-""}
 NST=${NST:-""}
 
-#uGSI Namelist parameters
+#GSI Namelist parameters
 lrun_subdirs=${lrun_subdirs:-".true."}
 if [ ${DOHYBVAR} = "YES" ]; then
    l_hyb_ens=.true.
@@ -382,9 +382,9 @@ ${NLN} ${SCANINFO}     scaninfo
 ${NLN} ${HYBENSINFO}   hybens_info
 ${NLN} ${OBERROR}      errtable
 
-${NLN} ${FIXgfs}/gsi/AIRS_CLDDET.NL   AIRS_CLDDET.NL
-${NLN} ${FIXgfs}/gsi/CRIS_CLDDET.NL   CRIS_CLDDET.NL
-${NLN} ${FIXgfs}/gsi/IASI_CLDDET.NL   IASI_CLDDET.NL
+#${NLN} ${FIXgfs}/gsi/AIRS_CLDDET.NL   AIRS_CLDDET.NL
+#${NLN} ${FIXgfs}/gsi/CRIS_CLDDET.NL   CRIS_CLDDET.NL
+#${NLN} ${FIXgfs}/gsi/IASI_CLDDET.NL   IASI_CLDDET.NL
 
 #If using correlated error, link to the covariance files
 if [ ${USE_CORRELATED_OBERRS} == "YES" ];  then
@@ -441,7 +441,11 @@ if (( imp_physics == 8 )); then
 elif (( imp_physics == 11 )); then
    echo "using CRTM GFDL cloud optical table"
    if [ ${full_hydro:-"NO"} = "YES" ]; then
-      ${NLN} "${CRTM_FIX}/CloudCoeff.GFDLFV3.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
+      if [ ${hydrotable_format:-"netcdf"} = "netcdf" ]; then
+        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.nc4"} ./crtm_coeffs/CloudCoeff.nc4
+      else
+        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.bin"} ./crtm_coeffs/CloudCoeff.bin
+      fi
    else
       ${NLN} "${CRTM_FIX}/CloudCoeff.bin" ./crtm_coeffs/CloudCoeff.bin
    fi
@@ -798,7 +802,7 @@ cat > gsiparm.anl << EOF
 /
 &OBSQC
   dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=.false.,c_varqc=0.02,
-  use_poq7=.true.,qc_noirjaco3_pole=.false.,vqc=.false.,nvqc=.true.,
+  use_poq7=.true.,qc_noirjaco3_pole=.true.,vqc=.false.,nvqc=.true.,
   aircraft_t_bc=.true.,biaspredt=1.0e5,upd_aircraft=.true.,cleanup_tail=.true.,
   tcp_width=70.0,tcp_ermax=7.35,airs_cads=${AIRS_CADS},cris_cads=${CRIS_CADS},
   iasi_cads=${IASI_CADS},

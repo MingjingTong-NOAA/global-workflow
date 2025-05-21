@@ -93,7 +93,7 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-            if self._base["ANAL_START"]:
+            if self.options["anal_start"]:
                 deps = []
                 dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
@@ -259,14 +259,18 @@ class SHiELDTasks(Tasks):
 
     def anal(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
-        deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_hybvar']:
             dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.options['ensreplay']:
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_egmn'}
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
             deps.append(rocoto.add_dependency(dep_dict))
+        dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        deps = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
+        deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('anal')
@@ -339,7 +343,7 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_hybvar'] and self.run in ['gdas']:
+        if self.options['do_hybvar'] and self.run in ['gdas'] and not self.options['anal_start']:
             dep_dict = {'type': 'task', 'name': 'enkfgdas_echgres', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -947,7 +951,7 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_{wave_job}'}
             dependencies.append(rocoto.add_dependency(dep_dict))
 
-        if self.options['do_aero_fcst'] and not self._base['EXP_WARM_START']:
+        if self.options['do_aero_fcst'] and not self.options['warm_start']:
             # Calculate offset based on RUN = gfs | gdas
             interval = None
             if self.run in ['gfs']:
@@ -1024,11 +1028,23 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         if self.run in ['gdas']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            if self.options['warm_start']:
+                deps = []
+                dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                deps = rocoto.create_dependency(dep_condition='and', dep=deps)
+                dependencies.append(deps)
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+                dependencies.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
-        cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        if not self.options['anal_start']:
+            cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        else:
+            cycledef = self.run
 
         if self.run in ['gfs']:
             num_fcst_segments = len(self.options['fcst_segments']) - 1
@@ -1088,7 +1104,7 @@ class SHiELDTasks(Tasks):
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
-        if self.run in ['gdas']:
+        if self.run in ['gdas'] and not self.options['warm_start']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
             dependencies.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
@@ -2866,9 +2882,13 @@ class SHiELDTasks(Tasks):
     # Start of ensemble tasks
     def eobs(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_prep'}
+        dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        deps = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_prep'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -3260,7 +3280,10 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_ocnanalecen'}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-        dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+        if not self.options['warm_start']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+        else:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
         dependencies.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
@@ -3271,7 +3294,10 @@ class SHiELDTasks(Tasks):
         for key, value in efcsenvars_dict.items():
             efcsenvars.append(rocoto.create_envar(name=key, value=str(value)))
 
-        cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run.replace('enkf', '')
+        if not self.options['anal_start']:
+            cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run.replace('enkf', '')
+        else:
+            cycledef = self.run.replace('enkf', '')
         resources = self.get_resource('efcs')
 
         task_name = f'{self.run}_fcst_mem#member#'
@@ -3307,7 +3333,10 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run
+        if not self.options['anal_start']:
+            cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run
+        else:
+            cycledef = 'gdas' if self.run in ['enkfgdas'] else self.run
 
         resources = self.get_resource('echgres')
         task_name = f'{self.run}_echgres'
@@ -3365,7 +3394,10 @@ class SHiELDTasks(Tasks):
         varval1, varval2, varval3 = _get_eposgroups(self._configs['epos'])
         var_dict = {varname1: varval1, varname2: varval2, varname3: varval3}
 
-        cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run.replace('enkf', '')
+        if not self.options['anal_start']:
+            cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run.replace('enkf', '')
+        else:
+            cycledef = self.run.replace('enkf', '')
 
         resources = self.get_resource('epos')
 
@@ -3499,13 +3531,15 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
         else:
+            if self.options['warm_start']:
+                cycledef = 'gdas_half,gdas'
             deps = []
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
             data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
             dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
-            if self._base['EXP_WARM_START']:
+            if self.options['warm_start']:
                 dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
                 deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
@@ -3690,16 +3724,17 @@ class SHiELDTasks(Tasks):
         return task
 
     # Start of ensemble tasks
-    def eget(self):
+    def efetch(self):
+        """ used in warm-start cycled mode, ensemble replay mode, ensemble regrid mode """
 
         deps = []
         if self.app_config.mode == "cycled":
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
-            if self._base['ANAL_START']:
+            if self.options['warm_start']:
                 dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
         else:
             atmos_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': self.run, 'MEMDIR': 'mem001'})
             data = f'{atmos_hist_path}/{self.run}.t@Hz.atmf006.nc'
@@ -3710,30 +3745,38 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
 
-        egetenvars = self.envars.copy()
-        egetenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
+        efetchenvars = self.envars.copy()
+        efetchenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
 
         # Integer division is floor division, but we need ceiling division
-        n_groups = -(self.nmem // -self._configs['eget']['NMEM_EARCGRP'])
-        groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
+        n_groups = -(self.nmem // -self._configs['earc_groups']['NMEM_EARCGRP'])
+        if self.app_config.mode == "cycled" and self.options['ensreplay']: 
+            groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
+        else:
+            groups = ' '.join([f'{grp:02d}' for grp in range(1, n_groups + 1)])
 
-        resources = self.get_resource('eget')
+        resources = self.get_resource('efetch')
 
         var_dict = {'grp': groups}
 
-        task_name = f'{self.run}_eget#grp#'
+        if self.app_config.mode == "ensregrid" or self.options['ensreplay'] or self.options['anal_start']:
+            cycledef = self.run.replace('enkf', '')
+        else:
+            cycledef = 'gdas_half'
+
+        task_name = f'{self.run}_efetch#grp#'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
-                     'envars': egetenvars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/eget.sh',
+                     'envars': efetchenvars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEgfs}/dev/jobs/efetch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
                      }
 
-        metatask_dict = {'task_name': f'{self.run}_egmn',
+        metatask_dict = {'task_name': f'{self.run}_efmn',
                          'var_dict': var_dict,
                          'task_dict': task_dict
                          }
@@ -3745,7 +3788,7 @@ class SHiELDTasks(Tasks):
     def eupp(self):
 
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_egmn'}
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 

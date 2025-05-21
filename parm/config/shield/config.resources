@@ -17,11 +17,11 @@ if (( $# != 1 )); then
     echo "atmensanlinit atmensanlobs atmensanlsol atmensanlletkf atmensanlfv3inc atmensanlfinal"
     echo "snowanl esnowanl"
     echo "prepobsaero aeroanlinit aeroanlvar aeroanlfinal aeroanlgenb"
-    echo "anal sfcanl analcalc analdiag fcst echgres analinc"
+    echo "anal sfcanl analcalc analdiag anlstat fcst echgres analinc"
     echo "upp atmos_products"
     echo "tracker genesis genesis_fsu"
     echo "verfozn verfrad vminmon fit2obs metp arc_vrfy arc_tars cleanup"
-    echo "eobs ediag eupd ecen esfc efcs epos earc_vrfy earc_tars ergarc eomg"
+    echo "eobs ediag eupd ecen esfc efcs epos earc_vrfy earc_tars ergarc"
     echo "init_chem mom6ic oceanice_products"
     echo "waveinit waveprep wavepostsbs wavepostbndpnt wavepostbndpntbll wavepostpnt"
     echo "wavegempak waveawipsbulls waveawipsgridded"
@@ -894,9 +894,7 @@ case ${step} in
       ;;
     esac
     tasks_per_node=${ntasks}
-    if [[ "${CASE}" == "C768" ]]; then
-        tasks_per_node=60
-    elif [[ "${CASE}" == "C1152" ]]; then
+    if [[ "${CASE}" == "C1152" ]]; then
         tasks_per_node=40
     fi
 
@@ -1018,7 +1016,7 @@ case ${step} in
     export is_exclusive=True
     ;;
 
-  "arch_tars" | "earc_tars" | "ergarc" | "getic" | "eget" | "getfcst" | "fetch")
+  "arch_tars" | "getic" | "fetch" | "globus" | "globus_earc" )
     walltime="06:00:00"
     ntasks=1
     tasks_per_node=1
@@ -1117,7 +1115,7 @@ case ${step} in
     export is_exclusive=True
     ;;
 
-  "eobs" | "eomg" | "gomg")
+  "eobs" | "gomg")
     if [[ "${step}" == "eobs" ]]; then
       walltime="00:15:00"
     else

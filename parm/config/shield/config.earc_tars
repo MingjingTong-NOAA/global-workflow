@@ -12,13 +12,17 @@ echo "BEGIN: config.earc_tars"
 export RMOLDSTD_ENKF=144
 export RMOLDEND_ENKF=24
 
-export ARCH4ENSREPLAY="YES"
-
 # If we are running globus archiving, create tarballs in a temporary location
 if [[ "${ARCHCOM_TO}" == "globus_hpss" ]]; then
     export ENSGRP="${ENSGRP:-0}"
     export ATARDIR="${DATAROOT}/archive_rotdir/${PSLOT}/${RUN}/${ENSGRP}"
     export LOCALARCH="YES"
+fi
+
+if [[ "${ARCH4ENSREPLAY:-"NO"}" == "YES" ]]; then
+    export atmf_interval=1
+else
+    export atmf_interval=3
 fi
 
 echo "END: config.earc_tars"

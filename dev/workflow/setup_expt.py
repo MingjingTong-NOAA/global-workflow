@@ -92,7 +92,8 @@ def update_configs(host, inputs):
 # @logit(logger)
 def map_inputs_to_configs(inputs):
 
-    warm_start_map = {'warm': '.true.', 'cold': '.false.'}
+    warm_start_map = {'warm': '.true.', 'cold': '.false.', 'anal': '.true.'}
+    anal_start_map = {'warm': 'NO', 'cold': 'NO', 'anal': 'YES'}
 
     # Construct a dictionary from user inputs
     try:
@@ -105,6 +106,7 @@ def map_inputs_to_configs(inputs):
             "EXPDIR": inputs.expdir,
             "COMROOT": inputs.comroot,
             "EXP_WARM_START": warm_start_map[inputs.start],
+            "ANAL_START": anal_start_map[inputs.start],
             "MODE": inputs.mode,
             "INTERVAL_GFS": inputs.interval,
             "SDATE_GFS": to_YMDH(inputs.sdate_gfs),
@@ -180,8 +182,8 @@ def input_args(*argv):
         return parser
 
     def _shield_args(parser):
-        parser.add_argument('--start', help='restart mode: warm or cold', type=str,
-                            choices=['warm', 'cold'], required=False, default='cold')
+        parser.add_argument('--start', help='restart mode: warm or cold or anal', type=str,
+                            choices=['warm', 'cold', 'anal'], required=False, default='cold')
         parser.add_argument('--run', help='RUN to start the experiment',
                             type=str, required=False, default='gdas')
         # --configdir is hidden from help

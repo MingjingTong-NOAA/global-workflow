@@ -1,0 +1,57 @@
+#! /usr/bin/env bash
+
+source "${HOMEgfs}/ush/jjob_header.sh" -e "efetch" -c "base efetch earc_groups"
+
+##############################################
+# Set variables used in the script
+##############################################
+export previous_cycle=$(${NDATE} -"${assim_freq}" "${PDY}${cyc}")
+# shellcheck disable=
+export gPDY=${previous_cycle:0:8}
+export gcyc=${previous_cycle:8:2}
+
+MEMDIR="ensstat" YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+  COMIN_ATMOS_HISTORY_ENSSTAT:COM_ATMOS_HISTORY_TMPL \
+
+if [[ ! -d ${ENSDIR} ]]; then mkdir -p "${ENSDIR}"; fi
+
+if [[ -d ${COMIN_ATMOS_HISTORY_ENSSTAT} && ${MODE} == "cycled" ]]; then
+   echo "${COMIN_ATMOS_HISTORY_ENSSTAT} exists"
+   echo "skip pulling data"
+fi
+
+###############################################################
+# Run efetch script
+###############################################################
+
+# Calls an external bash command; do not fail on unassigned/error
+set +eu
+"${SCRgfs}/exgdas_efetch.py"
+export err=$?
+set +x
+err_chk "FATAL ERROR Failed to archive the ensemble COM structure"
+set_trace
+set_strict
+
+###############################################################
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]] ; then
+  cat "${pgmout}"
+fi
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || (echo "${DATAROOT} does not exist. ABORT!"; exit 1)
+if [[ "${KEEPDATA}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

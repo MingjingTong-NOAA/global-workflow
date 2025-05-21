@@ -1,0 +1,10 @@
+enkf:
+    name: "ENKF"
+    target:
+        tarball: "{{ FETCHDIR }}/{{ pcycle_YMDH }}/{{ RUN }}.tar"
+        on_hpss: True
+        contents:
+            # Ensemble mean
+            - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}atmf006.ensmean.nc"
+            - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}sfcf006.ensmean.nc"
+        destination: "{{ ENSDIR }}"

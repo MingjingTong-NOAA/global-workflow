@@ -11,7 +11,7 @@ enkf_grp:
 
         # Forecast data
         {% if RUN == 'enkfgdas' %}
-        {% for fhr in range(3, 10, 3) %}
+        {% for fhr in range(3, 10, atmf_interval) %}
         - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atmf{{ "%03d" % fhr }}.nc"
         {% endfor %}
 
