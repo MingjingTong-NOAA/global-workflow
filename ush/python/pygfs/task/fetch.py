@@ -124,7 +124,7 @@ class Fetch(Task):
                 f_names_new.append(f_name)
 
         if len(f_names_new) <= 0:
-            print  ('all required files exist, skip pulling data')
+            print ("all required files exist, skip pulling data")
             return
 
         # Select action whether no_hpss is True or not, and pull these

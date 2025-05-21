@@ -20,7 +20,7 @@ def main():
     # Pull out all the configuration keys needed to run the rest of archive steps
     keys = ['FETCHDIR', 'current_cycle', 'previous_cycle', 'RUN', 'PDY', 'gPDY',
             'PSLOT', 'ROTDIR', 'ENSDIR', 'PARMgfs', 'MODE', 'RUN',
-            'ENSGRP', 'NMEM_EARCGRP', 'NMEM_ENS', 'DO_JEDIATMENS', 
+            'ENSGRP', 'NMEM_EARCGRP', 'NMEM_ENS', 'DO_JEDIATMENS',
             'DO_CALC_INCREMENT', 'DOIAU_ENKF', 'IAUFHRS',
             'lobsdiag_forenkf', 'assim_freq',
             'ENSREPLAY', 'EXP_WARM_START', 'ANAL_START',
@@ -45,6 +45,7 @@ def main():
         # Create the backup tarballs and store in ATARDIR
         for fetchdir_set in fetchdir_sets:
             fetch.execute_pull_data(fetchdir_set)
+
 
 if __name__ == '__main__':
     main()
