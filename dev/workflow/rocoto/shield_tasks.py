@@ -3750,7 +3750,7 @@ class SHiELDTasks(Tasks):
 
         # Integer division is floor division, but we need ceiling division
         n_groups = -(self.nmem // -self._configs['earc_groups']['NMEM_EARCGRP'])
-        if self.app_config.mode == "cycled" and self.options['ensreplay']: 
+        if self.app_config.mode == "cycled" and self.options['ensreplay']:
             groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
         else:
             groups = ' '.join([f'{grp:02d}' for grp in range(1, n_groups + 1)])
