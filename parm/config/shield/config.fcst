@@ -48,11 +48,11 @@ fi
 
 export FORECASTSH="${SCRgfs}/exglobal_forecast.sh"
 
-SHiELD_VERSION="2024"
+SHiELD_VERSION="2022"
 if [ ${SHiELD_VERSION} = "2022" ]; then
   export NAMELISTSH="${USHgfs}/parsing_namelists_shield2022.sh"
   export FCSTEXEC="shield_model_2022.x"
-  export FIXaer="${FIXgfs}/aer_2022"
+  export FIXaer="${FIXgfs}/aer_shield2022"
 else 
   export NAMELISTSH="${USHgfs}/parsing_namelists_shieldfull.sh"
   export FCSTEXEC="shield_model.x"

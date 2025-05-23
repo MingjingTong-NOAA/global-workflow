@@ -176,10 +176,17 @@ export APREFIX=${APREFIX:-""}
 SFCANL=${SFCANL:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}sfcanl.nc}
 DTFANL=${DTFANL:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}dtfanl.nc}
 ATMANL=${ATMANL:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atmanl.nc}
-ABIAS=${ABIAS:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias}
-ABIASPC=${ABIASPC:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_pc}
-ABIASAIR=${ABIASAIR:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_air}
-ABIASe=${ABIASe:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_int}
+if [[ "$MODE" == "cycled" ]]; then
+  ABIAS=${ABIAS:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias}
+  ABIASPC=${ABIASPC:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_pc}
+  ABIASAIR=${ABIASAIR:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_air}
+  ABIASe=${ABIASe:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_int}
+else
+  ABIAS=${ABIAS:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_out}
+  ABIASPC=${ABIASPC:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_pc_out}
+  ABIASAIR=${ABIASAIR:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_air_out}
+  ABIASe=${ABIASe:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}abias_int_out}
+fi
 RADSTAT=${RADSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}radstat}
 GSISTAT=${GSISTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}gsistat}
 PCPSTAT=${PCPSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}pcpstat}
@@ -241,7 +248,7 @@ JCAP=${JCAP:--9999} # there is no jcap in these files
 [ ${LONB} -eq -9999 -o ${LATB} -eq -9999 -o ${LEVS} -eq -9999 -o ${JCAP} -eq -9999 ] && exit -9999
 
 # Get header information from Ensemble Guess files
-if [ ${DOHYBVAR} = "YES" ]; then
+if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY:-"NO"} == "YES" ]]; then
    SFCGES_ENSMEAN=${SFCGES_ENSMEAN:-${COMIN_ATMOS_HISTORY_ENS_PREV}/${GPREFIX_ENS}sfcf006.ensmean.nc}
    export ATMGES_ENSMEAN=${ATMGES_ENSMEAN:-${COMIN_ATMOS_HISTORY_ENS_PREV}/${GPREFIX_ENS}atmf006.ensmean.nc}
    LONB_ENKF=${LONB_ENKF:-$(${NCLEN} ${ATMGES_ENSMEAN} grid_xt)} # get LONB_ENKF
@@ -263,7 +270,7 @@ LATB_CASE=$((res*2))
 LONB_CASE=$((res*4))
 
 # Set analysis resolution information
-if [ ${DOHYBVAR} = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || ${ENSREPLAY:-"NO"} == "YES" ]]; then
    JCAP_A=${JCAP_A:-${JCAP_ENKF:-${JCAP}}}
    LONA=${LONA:-${LONB_ENKF:-${LONB}}}
    LATA=${LATA:-${LATB_ENKF:-${LATB}}}
@@ -328,7 +335,7 @@ NST=${NST:-""}
 
 #GSI Namelist parameters
 lrun_subdirs=${lrun_subdirs:-".true."}
-if [ ${DOHYBVAR} = "YES" ]; then
+if [[ $DOHYBVAR == "YES" || ${ENSREPLAY:-"NO"} == "YES" ]]; then
    l_hyb_ens=.true.
    export l4densvar=${l4densvar:-".false."}
    export lwrite4danl=${lwrite4danl:-".false."}
@@ -339,7 +346,7 @@ else
 fi
 
 # Set 4D-EnVar specific variables
-if [ ${DOHYBVAR} = "YES" -a ${l4densvar} = ".true." -a ${lwrite4danl} = ".true." ]; then
+if [[ (${DOHYBVAR} = "YES" || ${ENSREPLAY:-"NO"} == "YES") && ${l4densvar} = ".true." && ${lwrite4danl} = ".true." ]]; then
    ATMA03=${ATMA03:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma003.nc}
    ATMI03=${ATMI03:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atmi003.nc}
    ATMA04=${ATMA04:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma004.nc}
@@ -564,7 +571,7 @@ if [ -f ${ATMG04} -a -f ${ATMG05} -a -f ${ATMG07} -a -f ${ATMG08} ]; then
    nhr_obsbin=1
 fi
 
-if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ]]; then
+if [[ ${DOHYBVAR} = "YES" || ${ENSREPLAY:-"NO"} = "YES" ]]; then
 
    # Link ensemble members
    mkdir -p ensemble_data
@@ -598,7 +605,7 @@ fi
 # Handle inconsistent surface mask between background, ensemble and analysis grids
 # This needs re-visiting in the context of NSST; especially references to JCAP*
 if [ ${JCAP} -ne ${JCAP_A} ] || [ ${MODE} != "cycled" ]; then
-   if [ ${DOHYBVAR} = "YES" -a ${JCAP_A} = ${JCAP_ENKF:--9999} ] || [ ${MODE} != "cycled" ] ; then
+   if [[ (${DOHYBVAR} = "YES" || ${ENSREPLAY:-"NO"} == "YES" ) && ${JCAP_A} = ${JCAP_ENKF:--9999} ]]; then
       if [ -e ${SFCGES_ENSMEAN:-${COMIN_ATMOS_HISTORY_ENS_PREV}/${GPREFIX_ENS}sfcf006.ensmean.nc} ]; then
          USE_READIN_ANL_SFCMASK=.true.
          ${NLN} ${SFCGES_ENSMEAN} sfcf06_anlgrid
@@ -633,7 +640,7 @@ fi
 # Output files
 ${NLN} ${ATMANL} siganl
 ${NLN} ${ATMINC} siginc.nc
-if [[ ( ${DOHYBVAR} = "YES" || ${ENSREPLAY} = "YES" ) && ${l4densvar} = ".true." && ${lwrite4danl} = ".true." ]]; then
+if [[ ( ${DOHYBVAR} = "YES" || ${ENSREPLAY:-"NO"} = "YES" ) && ${l4densvar} = ".true." && ${lwrite4danl} = ".true." ]]; then
    ${NLN} ${ATMA03}   siga03
    ${NLN} ${ATMI03}   sigi03.nc
    ${NLN} ${ATMA04}   siga04
@@ -726,7 +733,7 @@ fi # if [ $USE_RADSTAT = "YES" ]
 
 ##############################################################
 # GSI Namelist options
-if [ ${DOHYBVAR} = "YES" ]; then
+if [[ ${DOHYBVAR} == "YES" || ${ENSREPLAY:-"NO"} == "YES" ]]; then
    HYBRID_ENSEMBLE="n_ens=${NMEM_ENS},jcap_ens=${JCAP_ENKF},nlat_ens=${NLAT_ENKF},nlon_ens=${NLON_ENKF},jcap_ens_test=${JCAP_ENKF},${HYBRID_ENSEMBLE}"
    if [ ${l4densvar} = ".true." ]; then
       SETUP="niter(1)=50,niter(2)=150,niter_no_qc(1)=25,niter_no_qc(2)=0,thin4d=.true.,ens_nstarthr=3,l4densvar=${l4densvar},lwrite4danl=${lwrite4danl},${SETUP}"

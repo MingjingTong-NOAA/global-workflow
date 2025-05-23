@@ -270,29 +270,18 @@ LONB_CASE=$((res*4))
 
 # Set analysis resolution information
 if [[ $DOHYBVAR == "YES" || ${ENSREPLAY:-"NO"} == "YES" ]]; then
-   JCAP_A=${JCAP_A:-${JCAP_ENKF:-$JCAP}}
-   LONA=${LONA:-${LONB_ENKF:-$LONB}}
-   LATA=${LATA:-${LATB_ENKF:-$LATB}}
+   JCAP_A=${JCAP_A:-${JCAP_ENKF:-${JCAP}}}
+   LONA=${LONA:-${LONB_ENKF:-${LONB}}}
+   LATA=${LATA:-${LATB_ENKF:-${LATB}}}
 else
-   JCAP_A=${JCAP_A:-$JCAP}
-   LONA=${LONA:-$LONB}
-   LATA=${LATA:-$LATB}
+   JCAP_A=${JCAP_A:-${JCAP}}
+   LONA=${LONA:-${LONB}}
+   LATA=${LATA:-${LATB}}
 fi
-NLON_A=${NLON_A:-$LONA}
-NLAT_A=${NLAT_A:-$(($LATA+2))}
+NLON_A=${NLON_A:-${LONA}}
+NLAT_A=${NLAT_A:-$((${LATA}+2))}
 
-DELTIM=${DELTIM:-$((3600/($JCAP_A/20)))}
-
-# logic for netCDF I/O
-if [ ${SUFFIX} = ".nc" ]; then
-  # GSI namelist options to use netCDF background
-  use_gfs_nemsio=".false."
-  use_gfs_ncio=".true."
-else
-  # GSI namelist options to use NEMSIO background
-  use_gfs_nemsio=".true."
-  use_gfs_ncio=".false."
-fi
+DELTIM=${DELTIM:-$((3600/(${JCAP_A}/20)))}
 
 # determine if writing or calculating increment
 if [ ${DO_CALC_INCREMENT} = "YES" ]; then
@@ -458,7 +447,11 @@ if (( imp_physics == 8 )); then
 elif (( imp_physics == 11 )); then
    echo "using CRTM GFDL cloud optical table"
    if [ ${full_hydro:-"NO"} = "YES" ]; then
-      ${NLN} "${CRTM_FIX}/CloudCoeff.GFDLFV3.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
+      if [ ${hydrotable_format:-"netcdf"} = "netcdf" ]; then
+        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.nc4"} ./crtm_coeffs/CloudCoeff.nc4
+      else
+        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.bin"} ./crtm_coeffs/CloudCoeff.bin
+      fi
    else
       ${NLN} "${CRTM_FIX}/CloudCoeff.bin" ./crtm_coeffs/CloudCoeff.bin
    fi
