@@ -8,6 +8,17 @@ echo "BEGIN: config.eupd"
 # Get task specific resources
 . $EXPDIR/config.resources eupd
 
+GSIVER="v2"
+if [[ $GSIVER == "v2" ]]; then
+  export GSIEXEC=${EXECgfs}/enkf.x_crtm2.3
+  export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update_v2.sh
+  export FIXgsi=${FIXgfs}/gsi_v2
+else
+  export GSIEXEC=${EXECgfs}/enkf.x
+  export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update.sh
+  export FIXgsi=${FIXgfs}/gsi
+fi
+
 export ntasks_enkf=${ntasks}
 
 # Use NAM_ENKF below for serial EnKF
@@ -30,8 +41,6 @@ export lnsigcutoff=2.75          # ignored if modelspace_vloc=.true.
 export lobsdiag_forenkf=".true." # use jacobian.  must be .true. if modelspace_vloc=".true."
                                  # need to specify .true. setting since config.anal sets to .false.
 export NAM_ENKF="smoothparm=35,"
-
-export SATINFO=${FIXgfs}/gsi/global_satinfo_shield.txt
 
 export write_spread_diag=".false."
 if [ "$write_spread_diag" == ".true." ]; then
