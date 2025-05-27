@@ -10,11 +10,11 @@ echo "BEGIN: config.eupd"
 
 GSIVER="v2"
 if [[ $GSIVER == "v2" ]]; then
-  export GSIEXEC=${EXECgfs}/enkf.x_crtm2.3
+  export ENKFEXEC=${EXECgfs}/enkf.x_crtm2.3
   export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update_v2.sh
   export FIXgsi=${FIXgfs}/gsi_v2
 else
-  export GSIEXEC=${EXECgfs}/enkf.x
+  export ENKFEXEC=${EXECgfs}/enkf.x
   export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update.sh
   export FIXgsi=${FIXgfs}/gsi
 fi

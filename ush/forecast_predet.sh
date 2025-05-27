@@ -278,6 +278,9 @@ FV3_predet(){
   # <0 means older adiabatic pre-conditioning
   # only set to 1 when using gfsv14 and older version of GFS or IFS IC
   na_init=${na_init:-0}
+  if [[ "${ICFROM}" == "ifs" ]]; then
+    na_init=1
+  fi
 
   if [[ ${model,,} == gfs* ]]; then
 
@@ -424,6 +427,9 @@ FV3_predet(){
   ISEED=0
   local imem=${MEMBER#0}
   local base_seed=$((current_cycle*10000 + imem*100))
+  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022" ]]; then
+    local base_seed=$((current_cycle*1000 + imem*10))
+  fi
 
   if [[ "${DO_SKEB:-}" == "YES" ]]; then
     do_skeb=".true."
@@ -475,10 +481,11 @@ FV3_predet(){
   FNSNOC=${FNSNOC:-"${FIXgfs}/am/global_snoclim.1.875.grb"}
   FNZORC=${FNZORC:-"igbp"}
   if [[ ${model,,} == gfs* ]]; then
-  FNAISC=${FNAISC:-"${FIXgfs}/am/IMS-NIC.blended.ice.monthly.clim.grb"}
+    FNAISC=${FNAISC:-"${FIXgfs}/am/IMS-NIC.blended.ice.monthly.clim.grb"}
   else
-  FNAISC=${FNAISC:-"${FIXgfs}/am/CFSR.SEAICE.1982.2012.monthly.clim.grb"}
+    FNAISC=${FNAISC:-"${FIXgfs}/am/CFSR.SEAICE.1982.2012.monthly.clim.grb"}
   fi
+
   FNALBC2=${FNALBC2:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.facsf.tileX.nc"}
   FNTG3C=${FNTG3C:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.substrate_temperature.tileX.nc"}
   FNVEGC=${FNVEGC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc"}
@@ -493,11 +500,26 @@ FV3_predet(){
   FNABSC=${FNABSC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.maximum_snow_albedo.tileX.nc"}
   FNSMCC=${FNSMCC:-"${FIXgfs}/am/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"}
 
-  [[ ! -f $FNALBC ]] && FNALBC="$FIXam/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNVETC ]] && FNVETC="$FIXam/global_vegtype.igbp.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNSOTC ]] && FNSOTC="$FIXam/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNABSC ]] && FNABSC="$FIXam/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNSMCC ]] && FNSMCC="$FIXam/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022" ]]; then
+    FNALBC2="${FIXam}/global_albedo4.1x1.grb"
+    FNTG3C="${FIXam}/global_tg3clim.2.6x1.5.grb"
+    FNVEGC="${FIXam}/global_vegfrac.0.144.decpercent.grb"
+    FNMSKH="${FIXam}/global_slmask.t1534.3072.1536.grb"
+    FNVMNC="${FIXam}/global_shdmin.0.144x0.144.grb"
+    FNVMXC="${FIXam}/global_shdmax.0.144x0.144.grb"
+    FNSLPC="${FIXam}/global_slope.1x1.grb"
+    FNALBC="${FIXam}/global_snowfree_albedo.bosu.t${JCAP}.${LONB}.${LATB}.rg.grb"
+    FNVETC="${FIXam}/global_vegtype.igbp.t${JCAP}.${LONB}.${LATB}.rg.grb"
+    FNSOTC="${FIXam}/global_soiltype.statsgo.t${JCAP}.${LONB}.${LATB}.rg.grb"
+    FNABSC="${FIXam}/global_mxsnoalb.uariz.t${JCAP}.${LONB}.${LATB}.rg.grb"
+    FNSMCC="${FIXam}/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"
+  fi
+
+  [[ ! -f $FNALBC ]] && FNALBC="${FIXam}/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNVETC ]] && FNVETC="${FIXam}/global_vegtype.igbp.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNSOTC ]] && FNSOTC="${FIXam}/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNABSC ]] && FNABSC="${FIXam}/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
+  [[ ! -f $FNSMCC ]] && FNSMCC="${FIXam}/global_soilmgldas.statsgo.t1534.3072.1536.grb"
 
   if [[ "$DONST" == "NO" && "${DOMLO}" == ".true." ]]; then
     FNMLDC=${FNMLDC:-"${FIXshield}/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
