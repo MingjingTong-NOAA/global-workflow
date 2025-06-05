@@ -175,13 +175,11 @@ if [[ "${MODEL}" == "shield" ]]; then
       [[ "${RUN_ENVIR}" == "nco" ]] && chmod -R 755 "${dir}"
       rm -rf "${dir}"
     fi
+    fix_ver="${dir}_ver"
+    ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
     if [ ${dir} = "gsi" ]; then
-      ${LINK_OR_COPY} "${HOMEgfs}/sorc/gsi_enkf.fd/fix" "${dir}"
       fix_ver="gsi_v2_ver"
       ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "gsi_v2"
-    else
-      fix_ver="${dir}_ver"
-      ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/${dir}/${!fix_ver}" "${dir}"
     fi
     if [ ${dir} = "aer" ]; then
        fix_ver="aer_shield2022_ver"

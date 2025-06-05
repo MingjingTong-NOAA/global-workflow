@@ -295,25 +295,22 @@ else
 fi
 
 # GSI Fix files
-BERROR=${BERROR:-${FIXgfs}/gsi/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77}
-SATANGL=${SATANGL:-${FIXgfs}/gsi/global_satangbias.txt}
-SATINFO=${SATINFO:-${FIXgfs}/gsi/global_satinfo.txt}
-RADCLOUDINFO=${RADCLOUDINFO:-${FIXgfs}/gsi/cloudy_radiance_info.txt}
-ATMSFILTER=${ATMSFILTER:-${FIXgfs}/gsi/atms_beamwidth.txt}
-if [ ${full_hydro:-"NO"} = "YES" ]; then
-  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS}.allhydro.txt}
-else
-  ANAVINFO=${ANAVINFO:-${FIXgfs}/gsi/global_anavinfo.l${LEVS}.txt}
-fi
-CONVINFO=${CONVINFO:-${FIXgfs}/gsi/global_convinfo.txt}
-vqcdat=${vqcdat:-${FIXgfs}/gsi/vqctp001.dat}
-INSITUINFO=${INSITUINFO:-${FIXgfs}/gsi/global_insituinfo.txt}
-OZINFO=${OZINFO:-${FIXgfs}/gsi/global_ozinfo.txt}
-PCPINFO=${PCPINFO:-${FIXgfs}/gsi/global_pcpinfo.txt}
-AEROINFO=${AEROINFO:-${FIXgfs}/gsi/global_aeroinfo.txt}
-SCANINFO=${SCANINFO:-${FIXgfs}/gsi/global_scaninfo.txt}
-HYBENSINFO=${HYBENSINFO:-${FIXgfs}/gsi/global_hybens_info.l${LEVS}.txt}
-OBERROR=${OBERROR:-${FIXgfs}/gsi/prepobs_errtable.global}
+FIXgsi=${FIXgsi:-${FIXgfs}/gsi}
+BERROR=${BERROR:-${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77}
+SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
+SATINFO=${SATINFO:-${FIXgsi}/global_satinfo.txt}
+RADCLOUDINFO=${RADCLOUDINFO:-${FIXgsi}/cloudy_radiance_info.txt}
+ATMSFILTER=${ATMSFILTER:-${FIXgsi}/atms_beamwidth.txt}
+ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.txt}
+CONVINFO=${CONVINFO:-${FIXgsi}/global_convinfo.txt}
+vqcdat=${vqcdat:-${FIXgsi}/vqctp001.dat}
+INSITUINFO=${INSITUINFO:-${FIXgsi}/global_insituinfo.txt}
+OZINFO=${OZINFO:-${FIXgsi}/global_ozinfo.txt}
+PCPINFO=${PCPINFO:-${FIXgsi}/global_pcpinfo.txt}
+AEROINFO=${AEROINFO:-${FIXgsi}/global_aeroinfo.txt}
+SCANINFO=${SCANINFO:-${FIXgsi}/global_scaninfo.txt}
+HYBENSINFO=${HYBENSINFO:-${FIXgsi}/global_hybens_info.l${LEVS}.txt}
+OBERROR=${OBERROR:-${FIXgsi}/prepobs_errtable.global}
 
 # GSI namelist
 SETUP=${SETUP:-""}
@@ -389,15 +386,15 @@ ${NLN} ${SCANINFO}     scaninfo
 ${NLN} ${HYBENSINFO}   hybens_info
 ${NLN} ${OBERROR}      errtable
 
-#${NLN} ${FIXgfs}/gsi/AIRS_CLDDET.NL   AIRS_CLDDET.NL
-#${NLN} ${FIXgfs}/gsi/CRIS_CLDDET.NL   CRIS_CLDDET.NL
-#${NLN} ${FIXgfs}/gsi/IASI_CLDDET.NL   IASI_CLDDET.NL
+#${NLN} ${FIXgsi}/AIRS_CLDDET.NL   AIRS_CLDDET.NL
+#${NLN} ${FIXgsi}/CRIS_CLDDET.NL   CRIS_CLDDET.NL
+#${NLN} ${FIXgsi}/IASI_CLDDET.NL   IASI_CLDDET.NL
 
 #If using correlated error, link to the covariance files
 if [ ${USE_CORRELATED_OBERRS} == "YES" ];  then
   if grep -q "Rcov" ${ANAVINFO} ;  then
      # shellcheck disable=SC2312
-     mapfile -t covfile_array < <(find "${FIXgfs}/gsi/" -name "Rcov*")
+     mapfile -t covfile_array < <(find "${FIXgsi}/" -name "Rcov*")
      if (( ${#covfile_array[@]} > 0 )); then
        for covfile in "${covfile_array[@]}"; do
          covfile_base=$(basename "${covfile}")
