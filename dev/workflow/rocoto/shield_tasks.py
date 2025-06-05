@@ -95,7 +95,7 @@ class SHiELDTasks(Tasks):
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
             if self.options["anal_start"]:
                 deps = []
-                dep_dict = {'type': 'task', 'name': f'{self.run}_getic', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"} 
+                dep_dict = {'type': 'task', 'name': f'{self.run}_getic', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'metatask', 'name': 'enkfgdas_efmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
@@ -1243,7 +1243,7 @@ class SHiELDTasks(Tasks):
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
-        if not self.options["anal_start"]: 
+        if not self.options["anal_start"]:
             cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
         else:
             cycledef = 'gdas' if self.run in ['gdas'] else self.run
