@@ -95,10 +95,9 @@ class SHiELDTasks(Tasks):
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
             if self.options["anal_start"]:
                 deps = []
-                dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                dep_dict = {'type': 'task', 'name': f'{self.run}_getic', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"} 
                 deps.append(rocoto.add_dependency(dep_dict))
-                data = f'{atm_hist_path}/gdas.t@Hz.atmf009.nc'
-                dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                dep_dict = {'type': 'metatask', 'name': 'enkfgdas_efmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
                 deps = rocoto.create_dependency(dep_condition='and', dep=deps)
                 dependencies.append(deps)
@@ -263,7 +262,10 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.options['ensreplay']:
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
+            dep_dict = {'type': 'metatask', 'name': 'enkfgdas_efmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['anal_start']:
+            dep_dict = {'type': 'metatask', 'name': 'enkfgdas_efmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -1028,7 +1030,7 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
         if self.run in ['gdas']:
-            if self.options['warm_start']:
+            if self.options['warm_start'] and not self.options['anal_start']:
                 deps = []
                 dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))
@@ -1036,10 +1038,11 @@ class SHiELDTasks(Tasks):
                 deps.append(rocoto.add_dependency(dep_dict))
                 deps = rocoto.create_dependency(dep_condition='and', dep=deps)
                 dependencies.append(deps)
+                dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
             else:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
                 dependencies.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+                dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
         if not self.options['anal_start']:
             cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
@@ -1240,7 +1243,10 @@ class SHiELDTasks(Tasks):
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
-        cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        if not self.options["anal_start"]: 
+            cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        else:
+            cycledef = 'gdas' if self.run in ['gdas'] else self.run
         resources = self.get_resource('upp')
 
         task_name = f'{self.run}_{task_id}_f#fhr#'
@@ -1327,7 +1333,10 @@ class SHiELDTasks(Tasks):
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
 
-        cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        if not self.options["anal_start"]:
+            cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+        else:
+            cycledef = 'gdas' if self.run in ['gdas'] else self.run
 
         task_name = f'{self.run}_{component}_prod_#fhr_label#'
         task_dict = {'task_name': task_name,
@@ -2886,6 +2895,9 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['anal_start']:
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
         deps = rocoto.create_dependency(dep_condition='or', dep=deps)
 
         dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_prep'}
@@ -3282,10 +3294,12 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         if not self.options['warm_start']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
-        else:
+            dependencies.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+        elif not self.options['anal_start']:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
-        dependencies.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+            dependencies.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
         efcsenvars = self.envars.copy()
         efcsenvars_dict = {'ENSMEM': '#member#',
@@ -3332,11 +3346,17 @@ class SHiELDTasks(Tasks):
         dep_dict = {'type': 'task', 'name': f'{self.run}_fcst_mem001'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        if self.options['anal_start']:
+            deps = []
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            deps = rocoto.create_dependency(dep_condition='and', dep=deps)
+            dependencies.append(deps)
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
-        if not self.options['anal_start']:
-            cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run
-        else:
-            cycledef = 'gdas' if self.run in ['enkfgdas'] else self.run
+        cycledef = 'gdas_half,gdas' if self.run in ['enkfgdas'] else self.run
 
         resources = self.get_resource('echgres')
         task_name = f'{self.run}_echgres'
@@ -3750,7 +3770,7 @@ class SHiELDTasks(Tasks):
 
         # Integer division is floor division, but we need ceiling division
         n_groups = -(self.nmem // -self._configs['earc_groups']['NMEM_EARCGRP'])
-        if self.app_config.mode == "cycled" and self.options['ensreplay']:
+        if self.app_config.mode == "cycled" and (self.options['ensreplay'] or self.options['anal_start']):
             groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
         else:
             groups = ' '.join([f'{grp:02d}' for grp in range(1, n_groups + 1)])
@@ -3759,7 +3779,7 @@ class SHiELDTasks(Tasks):
 
         var_dict = {'grp': groups}
 
-        if self.app_config.mode == "ensregrid" or self.options['ensreplay'] or self.options['anal_start']:
+        if self.app_config.mode == "ensregrid" or self.options['ensreplay']:
             cycledef = self.run.replace('enkf', '')
         else:
             cycledef = 'gdas_half'

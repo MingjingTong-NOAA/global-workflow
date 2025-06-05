@@ -24,6 +24,7 @@ def main():
             'DO_CALC_INCREMENT', 'DOIAU_ENKF', 'IAUFHRS',
             'lobsdiag_forenkf', 'assim_freq',
             'ENSREPLAY', 'EXP_WARM_START', 'ANAL_START',
+            'FHMIN_ENKF', 'FHMAX_ENKF', 'FHOUT_ENKF',
             'EFHMIN', 'EFHMAX']
 
     fetch_dict = AttrDict()

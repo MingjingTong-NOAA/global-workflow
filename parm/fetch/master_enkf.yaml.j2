@@ -12,8 +12,23 @@
 # Determine which data to fetch
 datasets:
 {% if ENSGRP == 0 %}
+    {% set tmpl_dict = ({ '${ROTDIR}':ROTDIR,
+                          '${RUN}':RUN,
+                          '${YMD}':cycle_YMD,
+                          '${HH}':cycle_HH,
+                          '${MEMDIR}': "ensstat" }) %}
+
+    {% set ptmpl_dict = ({ '${ROTDIR}':ROTDIR,
+                           '${RUN}':RUN,
+                           '${YMD}':pcycle_YMD,
+                           '${HH}':pcycle_HH,
+                           '${MEMDIR}': "ensstat" }) %}
+
+    {% set COMIN_ATMOS_HISTORY_ENSSTAT = COM_ATMOS_HISTORY_TMPL | replace_tmpl(tmpl_dict) %}
+    {% set COMIN_ATMOS_HISTORY_PREV_ENSSTAT = COM_ATMOS_HISTORY_TMPL | replace_tmpl(ptmpl_dict) %}
+
     {% filter indent(width=4) %}
-        # fetch the ensemble means and spreads
+        # fetch the ensemble means
 {% include "enkf.yaml.j2" %}
     {% endfilter %}
 {% else %}
@@ -80,9 +95,9 @@ datasets:
         # Determine if restarts should be fetched
         {% if not ENSREPLAY and EXP_WARM_START %}
             {% if not ANAL_START %}
-            {% filter indent(width=4) %}
+                {% filter indent(width=4) %}
 {% include "enkf_restarta_grp.yaml.j2" %}
-            {% endfilter %}
+                {% endfilter %}
             {% endif %}
 
             {% filter indent(width=4) %}

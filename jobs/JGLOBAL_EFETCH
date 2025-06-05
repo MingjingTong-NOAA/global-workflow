@@ -10,15 +10,7 @@ export previous_cycle=$(${NDATE} -"${assim_freq}" "${PDY}${cyc}")
 export gPDY=${previous_cycle:0:8}
 export gcyc=${previous_cycle:8:2}
 
-MEMDIR="ensstat" YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-  COMIN_ATMOS_HISTORY_ENSSTAT:COM_ATMOS_HISTORY_TMPL \
-
 if [[ ! -d ${ENSDIR} ]]; then mkdir -p "${ENSDIR}"; fi
-
-if [[ -d ${COMIN_ATMOS_HISTORY_ENSSTAT} && ${MODE} == "cycled" ]]; then
-   echo "${COMIN_ATMOS_HISTORY_ENSSTAT} exists"
-   echo "skip pulling data"
-fi
 
 ###############################################################
 # Run efetch script

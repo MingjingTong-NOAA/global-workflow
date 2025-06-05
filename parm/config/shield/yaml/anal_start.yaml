@@ -26,7 +26,7 @@ base:
   DO_TEST_MODE: "NO"
   NMEM_ENS_GFS: 30
   NMEM_ENS_GFS_OFFSET: 20
-  RESTARTEXP: "shield2024_cycled_C192_v3_shieldda_restart"
+  RESTARTEXP: "shield2022v2_cycled_C192"
   ENSREPLAY: "NO"
   DO_OMF: "NO"
   DO_POST: "YES"

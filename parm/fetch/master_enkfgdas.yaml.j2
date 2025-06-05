@@ -1,4 +1,5 @@
 # Set variables specific to gdasenkf runs then parse the master_enkf template
+{% set (fhmin, fhmax, fhout) = (FHMIN_ENKF, FHMAX_ENKF, FHOUT_ENKF) %}
 {% set do_calc_increment = DO_CALC_INCREMENT %}
 {% set nmem_ens = NMEM_ENS %}
 {% include "master_enkf.yaml.j2" %}

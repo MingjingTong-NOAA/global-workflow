@@ -67,13 +67,15 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
   if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
     echo "previous cycle history data directory exists, skip pulling data"
   else
-    if [[ ${ANAL_START} == "YES" && ! -d ${ROTDIR}/gdas.${gyy}${gmm}${gdd}/${ghh} ]]; then
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
-      status=$?
-      [[ $status -ne 0 ]] && exit $status
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas.tar
-      status=$?
-      [[ $status -ne 0 ]] && exit $status
+    if [[ ${ANAL_START} == "YES" ]]; then
+      if [ ! -d ${ROTDIR}/gdas.${yy}${mm}${dd}/${hh} ]; then
+        htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+        htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas.tar
+        status=$?
+        [[ $status -ne 0 ]] && exit $status
+      fi
     else
       htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
       status=$?
@@ -83,6 +85,7 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
       [[ $status -ne 0 ]] && exit $status
     fi
   fi 
+  exit 0
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
   pullanldata="NO"
   if [[ $MODE == "forecast-only" ]]; then

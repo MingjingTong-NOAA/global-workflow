@@ -9,11 +9,11 @@ enkf_regrid_grp:
 
         # Forecast data
         {% if RUN == 'enkfgdas' %}
-        {% for fhr in range(EFHMIN, EFHMAX, 1) %}
+        {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
         - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atmf{{ "%03d" % fhr }}.nc"
         {% endfor %}
 
-        {% for fhr in range(EFHMIN, EFHMAX, 1) %}
+        {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
         - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}sfcf{{ "%03d" % fhr }}.nc"
         {% endfor %}
         {% endif %}

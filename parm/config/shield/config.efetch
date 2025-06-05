@@ -10,10 +10,10 @@ echo "BEGIN: config.efetch"
 
 if [[ ${MODE} == "ensregrid" ]]; then
    export EFHMIN=6
-   export EFHMAX=7
+   export EFHMAX=6
 else
    export EFHMIN=3
-   export EFHMAX=10
+   export EFHMAX=9
 fi
 
 echo "END: config.efetch"

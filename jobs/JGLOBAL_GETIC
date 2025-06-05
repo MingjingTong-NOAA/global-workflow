@@ -9,6 +9,7 @@ source "${HOMEgfs}/ush/jjob_header.sh" -e "getic" -c "base getic"
 ##############################################
 # Ignore possible spelling error (nothing is misspelled)
 # shellcheck disable=SC2153
+export CDATE=${PDY}${cyc}
 export GDATE=$(${NDATE} -"${assim_freq}" "${PDY}${cyc}")
 # shellcheck disable=
 export gPDY=${GDATE:0:8}
