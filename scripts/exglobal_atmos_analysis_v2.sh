@@ -300,7 +300,11 @@ SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
 SATINFO=${SATINFO:-${FIXgsi}/global_satinfo.txt}
 RADCLOUDINFO=${RADCLOUDINFO:-${FIXgsi}/cloudy_radiance_info.txt}
 ATMSFILTER=${ATMSFILTER:-${FIXgsi}/atms_beamwidth.txt}
-ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.txt}
+if [ ${full_hydro:-"NO"} = "YES" ]; then
+  ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.fullhydro.txt}
+else
+  ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.txt}
+fi
 CONVINFO=${CONVINFO:-${FIXgsi}/global_convinfo.txt}
 vqcdat=${vqcdat:-${FIXgsi}/vqctp001.dat}
 INSITUINFO=${INSITUINFO:-${FIXgsi}/global_insituinfo.txt}
