@@ -663,7 +663,7 @@ case ${step} in
 
   "anal")
     if [[ "${RUN}" = *gdas ]]; then
-      walltime="01:20:00"
+      walltime="00:50:00"
       case ${CASE} in
         "C1152" | "C768")
           ntasks=780
@@ -1156,7 +1156,7 @@ case ${step} in
     ;;
 
   "eupd")
-    walltime="00:30:00"
+    walltime="00:45:00"
     case "${CASE}" in
       "C1152" | "C768")
         ntasks=480

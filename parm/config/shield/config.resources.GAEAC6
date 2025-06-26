@@ -14,13 +14,14 @@ case ${step} in
     # update ntasks to 80 and threads_per_task to 20
     case ${CASE} in
       "C768")
-        export ntasks=80
+        export ntasks=240
         export threads_per_task=20
         ;;
       *)
         ;;
     esac
-  export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+  #export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+  export tasks_per_node=8
   ;;
 
   "anal")

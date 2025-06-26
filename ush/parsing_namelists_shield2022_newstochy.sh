@@ -84,6 +84,10 @@ cat > input.nml <<EOF
   ${fms_nml:-}
 /
 
+&fms_affinity_nml
+  affinity = .false.
+/
+
 &fv_core_nml
   layout = ${layout_x},${layout_y}
   io_layout = ${io_layout}
@@ -162,7 +166,7 @@ EOF
 
 if [[ ${MODE} == "replay" ]]; then
   cat >> input.nml << EOF
-  replay = ${replay}
+  replay = ${replay:-2}
   nrestartbg = ${nrestartbg:-1}
   write_replay_ic = ${write_replay_ic:-".true."}
 EOF

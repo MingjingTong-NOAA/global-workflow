@@ -74,8 +74,7 @@ class SHiELDCycledAppConfig(AppConfig):
 
         if options['do_tsfc_tile']:
             configs += ['getic']
-            if options['shield_res'] != options['icres']:
-                configs += ['init']
+            configs += ['init']
 
         if options['do_jediatmvar']:
             configs += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
@@ -206,8 +205,7 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 if run == 'gdas' and options['do_tsfc_tile']:
                     task_names[run] += ['getic']
-                    if options['shield_res'] != options['opr_res']:
-                        task_names[run] += ['init']
+                    task_names[run] += ['init']
 
                 if options['do_jediatmvar']:
                     task_names[run] += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']

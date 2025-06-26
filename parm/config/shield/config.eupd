@@ -8,7 +8,7 @@ echo "BEGIN: config.eupd"
 # Get task specific resources
 . $EXPDIR/config.resources eupd
 
-GSIVER="v2fullhydro"
+GSIVER="v3"
 if [[ $GSIVER == "v2" ]]; then
   export ENKFEXEC=${EXECgfs}/enkf.x_crtm2.3
   export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update_v2.sh

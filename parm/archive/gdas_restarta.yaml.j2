@@ -47,10 +47,10 @@ gdas_restarta:
         {% endif %}
 
         # Input BUFR files
-        {% if DONST %}
+        {% if DONST and ARCH_RSTPROD %}
         - "{{ COMIN_OBS | relpath(ROTDIR) }}/{{ head }}nsstbufr"
         {% endif %}
-        {% if MODE == "cycled" %}
+        {% if MODE == "cycled" and ARCH_RSTPROD %}
         - "{{ COMIN_OBS | relpath(ROTDIR) }}/{{ head }}prepbufr"
         - "{{ COMIN_OBS | relpath(ROTDIR) }}/{{ head }}prepbufr.acft_profiles"
         {% endif %}

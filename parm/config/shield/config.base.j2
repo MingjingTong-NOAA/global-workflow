@@ -96,6 +96,12 @@ export REALTIME="YES"
 export MODE="{{ MODE }}" # cycled/forecast-only/replay/omf/ensregrid
 export DO_TEST_MODE="{{ DO_TEST_MODE }}" # option to change configuration for automated testing
 
+if [[ ${MODE} == "replay" ]]; then
+  export DO_VERFOZN="NO"                  # Ozone data assimilation monitoring
+  export DO_VERFRAD="NO"                  # Radiance data assimilation monitoring
+  export DO_VMINMON="NO"                  # GSI minimization monitoring
+fi
+
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
 # IF YOU HAVE TO MAKE MACHINE SPECIFIC CHANGES BELOW
@@ -511,7 +517,7 @@ export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
 export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
 # full hydrometeors assimilation
-export full_hydro="NO"
+export full_hydro="YES"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC

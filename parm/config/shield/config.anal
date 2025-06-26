@@ -43,7 +43,7 @@ export AMSREBF=${AMSREBF:-/dev/null}
 export SSMITBF=${SSMITBF:-/dev/null}
 export AMSR2BF=${AMSR2BF:-/dev/null}
 
-GSIVER="v2fullhydro"
+GSIVER="v3"
 if [[ $GSIVER == "v2" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x_crtm2.3
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
@@ -182,7 +182,8 @@ if [[ ${full_hydro:-"NO"} == "YES" ]]; then
    FULL_HYDRO="hydrotable_format=${hydrotable_format:-"binary"}"
    ALLSKYOPT="allsky_gfdl=${allsky_gfdl:-".false."},cnvw_option=${cnvw_option:-".false."}"
    ALLSKYDIAG="allsky_verbose=${allsky_verbose:-".false."},cloud_mask_option=${cloud_mask_option:-1},mask_threshold=${mask_threshold:-0.000001}"
-   export FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
+   #export FULL_HYDRO="$ALLSKYOPT,$ALLSKYDIAG,$FULL_HYDRO"
+   export FULL_HYDRO=""
 fi
 
 export USE_CORRELATED_OBERRS="NO"

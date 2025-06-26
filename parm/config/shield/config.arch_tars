@@ -26,6 +26,8 @@ if [[ "${ARCHCOM_TO}" == "globus_hpss" ]]; then
     export ARCHCOM_TO="local"
 fi
 
+export ARCH_RSTPROD='NO'
+
 # Time interval to archive forecast output on gaussian grid (*atmf* and *sfcf*)
 export FHNCOUT=1
 
