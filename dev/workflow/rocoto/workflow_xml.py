@@ -28,7 +28,6 @@ class RocotoXML(ABC):
         self._base = self._app_config.configs[next(iter(self._app_config.configs))]['base']
         self._base['interval_gdas'] = to_timedelta(f'{self._base["assim_freq"]}H')
         self._base['interval_gfs'] = to_timedelta(f'{self._base["INTERVAL_GFS"]}H')
-        self._base['interval_omf'] = to_timedelta(f'{self._base["FHOMF"]}H')
 
         # Collect info needed to write an scrontab file
         self.host_info = Host().info

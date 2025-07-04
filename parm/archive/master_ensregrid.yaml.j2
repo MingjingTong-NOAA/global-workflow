@@ -1,0 +1,21 @@
+# Set variables/lists needed to parse the enkf templates
+{% set cycle_HH = current_cycle | strftime("%H") %}
+{% set cycle_YMD = current_cycle | to_YMD %}
+{% set cycle_YMDH = current_cycle | to_YMDH %}
+{% set head = RUN + ".t" + cycle_HH + "z." %}
+
+# Determine which data to archive
+datasets:
+    {% set COMIN_ATMOS_GRIB_STAT_list = [] %}
+    {% for grid in ["1p00", "0p50", "0p25"] %}
+        {% set tmpl_dict = ({ '${GRID}':grid,
+                              '${YMD}':cycle_YMD,
+                              '${HH}':cycle_HH,
+                              '${MEMDIR}': "ensstat" }) %}
+        {% set COMIN_ATMOS_GRIB_STAT = COM_ATMOS_GRIB_GRID_TMPL | replace_tmpl(tmpl_dict) %}
+        {% do COMIN_ATMOS_GRIB_STAT_list.append(COMIN_ATMOS_GRIB_STAT)%}
+    {% endfor %}
+    {% filter indent(width=4) %}
+        # Archive the ensemble means and spreads
+{% include "ensregrid.yaml.j2" %}
+    {% endfilter %}

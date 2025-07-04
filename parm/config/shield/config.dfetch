@@ -1,0 +1,27 @@
+#! /usr/bin/env bash
+
+########## config.dfetch ##########
+# Deterministic fetch specific
+
+echo "BEGIN: config.dfetch"
+
+# Get task specific resources
+. $EXPDIR/config.resources fetch
+
+# Forecast data can come from "cycled" or "forecast-only" experiment
+export FCSTMODE="cycled"
+
+# where to put forecast data pulled from HPSS
+export SAVEDIR=$OMFCOMINPREV
+
+# Get abias from experiment or operational GFS
+export GFSFETCHDIR="/NCEPDEV/NCEPPROD/hpssprod/runhistory"
+if [[ $CDATE -ge 2022112900 ]]; then
+  export gfssubver="v16.3"
+elif [[ $CDATE -ge 2022062700 ]]; then
+  export gfssubver="v16.2"
+else
+  export gfssubver="prod"
+fi
+
+echo "END: config.dfetch"

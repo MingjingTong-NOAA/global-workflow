@@ -16,4 +16,6 @@ else
    export EFHMAX=9
 fi
 
+export SAVEDIR=${ENSDIR}
+
 echo "END: config.efetch"

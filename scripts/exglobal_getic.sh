@@ -89,6 +89,7 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
 elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC generation
   pullanldata="NO"
   if [[ $MODE == "forecast-only" ]]; then
+     cd ${ROTDIR}
      if [[ $EXP_WARM_START == ".true." ]]; then
         # warm start from experiment
         gdasb=${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar

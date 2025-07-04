@@ -19,13 +19,9 @@ def main():
 
     # Pull out all the configuration keys needed to run the rest of archive steps
     keys = ['FETCHDIR', 'current_cycle', 'previous_cycle', 'RUN', 'PDY', 'gPDY',
-            'PSLOT', 'ROTDIR', 'ENSDIR', 'PARMgfs', 'MODE', 'RUN',
-            'ENSGRP', 'NMEM_EARCGRP', 'NMEM_ENS', 'DO_JEDIATMENS',
-            'DO_CALC_INCREMENT', 'DOIAU_ENKF', 'IAUFHRS',
-            'lobsdiag_forenkf', 'assim_freq',
-            'ENSREPLAY', 'EXP_WARM_START', 'ANAL_START',
-            'FHMIN_ENKF', 'FHMAX_ENKF', 'FHOUT_ENKF',
-            'EFHMIN', 'EFHMAX']
+            'PSLOT', 'ROTDIR', 'SAVEDIR', 'ICSROOT', 'PARMgfs', 'FCSTMODE',
+            'assim_freq', 'FHMIN', 'FHMAX', 'FHOUT', 'EXPABIAS', 'GFSFETCHDIR',
+            'gfssubver'] 
 
     fetch_dict = AttrDict()
     for key in keys:
@@ -38,10 +34,10 @@ def main():
         if key.startswith(("COM_", "COMIN_")):
             fetch_dict[key] = fetch.task_config.get(key)
 
-    with chdir(config.ENSDIR):
+    with chdir(config.SAVEDIR):
 
         # Determine which fetchs to create
-        fetchdir_sets = fetch.configure_efetch(fetch_dict)
+        fetchdir_sets = fetch.configure_fetch(fetch_dict)
 
         # Create the backup tarballs and store in ATARDIR
         for fetchdir_set in fetchdir_sets:

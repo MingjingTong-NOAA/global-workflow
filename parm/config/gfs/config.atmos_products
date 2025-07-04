@@ -15,7 +15,7 @@ export MAX_TASKS=25
 export INTERP_ATMOS_MASTERSH="${USHgfs}/interp_atmos_master.sh"
 export INTERP_ATMOS_SFLUXSH="${USHgfs}/interp_atmos_sflux.sh"
 
-if [[ "${RUN:-}" == "gdas" ]]; then
+if [[ "${RUN:-}" == "gdas" || "${RUN:-}" == "enkfgdas" ]]; then
   export downset=1
   export FHOUT_PGBS=${FHOUT:-1}  # Output frequency of supplemental gfs pgb file at 1.0 and 0.5 deg
   export FLXGF="NO"  # Create interpolated sflux.1p00 file

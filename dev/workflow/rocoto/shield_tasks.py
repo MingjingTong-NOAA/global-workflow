@@ -945,8 +945,12 @@ class SHiELDTasks(Tasks):
     def _fcst_forecast_only(self):
         dependencies = []
 
-        dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
-        dependencies.append(rocoto.add_dependency(dep_dict))
+        if self._base['NET'] == 'shield':
+            dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+            dependencies.append(rocoto.add_dependency(dep_dict))
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+            dependencies.append(rocoto.add_dependency(dep_dict))
 
         if self.options['do_wave']:
             wave_job = 'waveprep' if self.options['app'] in ['ATMW'] else 'waveinit'
@@ -2493,7 +2497,7 @@ class SHiELDTasks(Tasks):
         deps = []
         if self.app_config.mode in ['omf']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
-        elif self.app_config.mode in ['ergpos']:
+        elif self.app_config.mode in ['ensregrid']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
         else:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
@@ -2564,7 +2568,7 @@ class SHiELDTasks(Tasks):
         deps = []
         if self.app_config.mode in ['omf']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
-        elif self.app_config.mode in ['ergpos']:
+        elif self.app_config.mode in ['ensregrid']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
         else:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
@@ -2747,15 +2751,20 @@ class SHiELDTasks(Tasks):
     def cleanup(self):
         deps = []
         if 'enkf' in self.run:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
-            deps.append(rocoto.add_dependency(dep_dict))
-            if self.options['do_archcom']:
-                if self.options['do_globusarch']:
-                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_globus_arch'}
-                else:
-                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
-                    deps.append(rocoto.add_dependency(dep_dict))
-
+            if self.app_config.mode in ['ensregrid']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                if self.options['do_archcom']:
+                    if self.options['do_globusarch']:
+                        dep_dict = {'type': 'metatask', 'name': f'{self.run}_globus_arch'}
+                    else:
+                        dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
+                        deps.append(rocoto.add_dependency(dep_dict))
         else:
             if self.app_config.mode in ['cycled']:
                 if self.run in ['gfs']:
@@ -3480,15 +3489,20 @@ class SHiELDTasks(Tasks):
     def earc_tars(self):
 
         deps = []
-        if 'enkfgdas' in self.run:
-            dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
-            deps.append(rocoto.add_dependency(dep_dict))
-            if not self.options['do_jediatmvar']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+        if self.app_config.mode == "cycled":
+            if 'enkfgdas' in self.run:
+                dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
                 deps.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-        else:  # early cycle enkf run (enkfgfs)
-            dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
+                if not self.options['do_jediatmvar']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+                dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            else:  # early cycle enkf run (enkfgfs)
+                dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                dependencies = rocoto.create_dependency(dep=deps)
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_ergpos'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps)
 
@@ -3813,30 +3827,69 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep=deps)
 
         euppenvars = self.envars.copy()
-        euppenvars.append(rocoto.create_envar(name='ENSGRP', value='#grp#'))
-
-        # Integer division is floor division, but we need ceiling division
-        n_groups = -(self.nmem // -self._configs['eupp']['NMEM_EARCGRP'])
-        groups = ' '.join([f'{grp:02d}' for grp in range(0, n_groups + 1)])
+        euppenvars_dict = {'FHR3': "006",
+                           'ENSMEM': '#member#',
+                           'MEMDIR': 'mem#member#',
+                           'UPP_RUN': 'forecast'
+                           }
+        for key, value in euppenvars_dict.items():
+            euppenvars.append(rocoto.create_envar(name=key, value=str(value)))
 
         resources = self.get_resource('eupp')
 
-        var_dict = {'grp': groups}
-
-        task_name = f'{self.run}_eupp#grp#'
+        task_name = f'{self.run}_eupp_mem#member#'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': euppenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/eupp.sh',
+                     'command': f'{self.HOMEgfs}/dev/jobs/upp.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
                      }
 
-        metatask_dict = {'task_name': f'{self.run}_ermn',
-                         'var_dict': var_dict,
+        member_var_dict = {'member': ' '.join([str(mem).zfill(3) for mem in range(1, self.nmem + 1)])}
+        metatask_dict = {'task_name': f'{self.run}_eumn',
+                         'var_dict': member_var_dict,
+                         'task_dict': task_dict
+                         }
+
+        task = rocoto.create_task(metatask_dict)
+
+        return task
+
+    def eprod(self):
+
+        deps = []
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_eumn'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        eprodenvars = self.envars.copy()
+        eprodenvar_dict = {'FHR_LIST': '6',
+                           'ENSMEM': '#member#',
+                           'MEMDIR': 'mem#member#',
+                          }
+        for key, value in eprodenvar_dict.items():
+            eprodenvars.append(rocoto.create_envar(name=key, value=str(value)))
+
+        resources = self.get_resource('atmos_products')
+        task_name = f'{self.run}_eprod_mem#member#'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': eprodenvars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEgfs}/dev/jobs/atmos_products.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        member_var_dict = {'member': ' '.join([str(mem).zfill(3) for mem in range(1, self.nmem + 1)])}
+        metatask_dict = {'task_name': f'{self.run}_epmn',
+                         'var_dict': member_var_dict,
                          'task_dict': task_dict
                          }
 
@@ -3847,7 +3900,7 @@ class SHiELDTasks(Tasks):
     def ergpos(self):
 
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_ermn'}
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
@@ -3859,30 +3912,6 @@ class SHiELDTasks(Tasks):
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEgfs}/dev/jobs/ergpos.sh',
-                     'job_name': f'{self.pslot}_{task_name}_@H',
-                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
-                     'maxtries': '&MAXTRIES;'
-                     }
-
-        task = rocoto.create_task(task_dict)
-
-        return task
-
-    def ergarc(self):
-
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.cdump}_ergpos'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
-
-        resources = self.get_resource('ergarc')
-        task_name = f'{self.run}_ergarc'
-        task_dict = {'task_name': task_name,
-                     'resources': resources,
-                     'dependency': dependencies,
-                     'envars': self.envars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ergarc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'

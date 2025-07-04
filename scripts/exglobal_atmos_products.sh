@@ -2,6 +2,7 @@
 
 # Programs used
 export WGRIB2=${WGRIB2:-${wgrib2_ROOT}/bin/wgrib2}
+export GRIBBIN=${GRIBBIN:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/miniconda3/envs/myxenv/bin}
 
 # Scripts used
 INTERP_ATMOS_MASTERSH=${INTERP_ATMOS_MASTERSH:-"${USHgfs}/interp_atmos_master.sh"}
@@ -259,5 +260,32 @@ if [[ "${SENDDBN:-}" == "YES" ]]; then
   fi  # end if fhr3=anl
 
 fi  # end if SENDDBN=YES
+
+# grid to netcdf
+if [[ ${MODE} == "ensregrid" ]]; then
+  ${GRIBBIN}/grib_copy -w levtype=pl ${COMOUT_ATMOS_GRIB_1p00}/${PREFIX}pgrb2.1p00.${fhr3} ./atm.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_1p00_nc}/${PREFIX}atm${fhr3}.grib2.nc ./atm.grib
+  rm ./atm.grib
+  ${GRIBBIN}/grib_copy -w typeOfLevel=heightAboveGround -B'level:i asc' ${COMOUT_ATMOS_GRIB_1p00}/${PREFIX}pgrb2.1p00.${fhr3} ./tmp.grib
+  ${GRIBBIN}/grib_copy -w count=1/2/3/7/8/9 ./tmp.grib ./sfc.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_1p00_nc}/${PREFIX}sfc${fhr3}.grib2.nc ./sfc.grib
+  rm ./sfc.grib
+
+  ${GRIBBIN}/grib_copy -w levtype=pl ${COMOUT_ATMOS_GRIB_0p50}/${PREFIX}pgrb2.0p50.${fhr3} ./atm.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_0p50_nc}/${PREFIX}atm${fhr3}.grib2.nc ./atm.grib
+  rm ./atm.grib
+  ${GRIBBIN}/grib_copy -w typeOfLevel=heightAboveGround -B'level:i asc' ${COMOUT_ATMOS_GRIB_0p50}/${PREFIX}pgrb2.0p50.${fhr3} ./tmp.grib
+  ${GRIBBIN}/grib_copy -w count=1/2/3/7/8/9 ./tmp.grib ./sfc.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_0p50_nc}/${PREFIX}sfc${fhr3}.grib2.nc ./sfc.grib
+  rm ./sfc.grib
+
+  ${GRIBBIN}/grib_copy -w levtype=pl ${COMOUT_ATMOS_GRIB_0p25}/${PREFIX}pgrb2.0p25.${fhr3} ./atm.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_0p25_nc}/${PREFIX}atm${fhr3}.grib2.nc ./atm.grib
+  rm ./atm.grib
+  ${GRIBBIN}/grib_copy -w typeOfLevel=heightAboveGround -B'level:i asc' ${COMOUT_ATMOS_GRIB_0p25}/${PREFIX}pgrb2.0p25.${fhr3} ./tmp.grib
+  ${GRIBBIN}/grib_copy -w count=1/2/3/7/8/9 ./tmp.grib ./sfc.grib
+  ${GRIBBIN}/grib_to_netcdf -D NC_FLOAT -o ${COMOUT_ATMOS_GRIB_0p25_nc}/${PREFIX}sfc${fhr3}.grib2.nc ./sfc.grib
+  rm ./sfc.grib
+fi
 
 exit 0

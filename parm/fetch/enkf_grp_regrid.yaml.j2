@@ -1,30 +1,18 @@
-enkf_grp:
+enkf_grp_regrid:
     name: "ENKF_GRP"
     target:
         tarball:
-            {% if ANAL_START %}
             "{{ FETCHDIR }}/{{ cycle_YMDH }}/{{ RUN }}_grp{{ ENSGRP }}.tar"
-            {% else %}
-            "{{ FETCHDIR }}/{{ pcycle_YMDH }}/{{ RUN }}_grp{{ ENSGRP }}.tar"
-            {% endif %}
         on_hpss: True
         contents:
             {% for mem in range(first_group_mem, last_group_mem + 1) %}
             {% set imem = mem - first_group_mem %}
-            {% if ANAL_START %}
             # Construct member COM directories
             {% set COMIN_ATMOS_HISTORY_MEM = COMIN_ATMOS_HISTORY_MEM_list[imem] %}
 
             {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
             - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atmf{{ "%03d" % fhr }}.nc"
+            - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}sfcf{{ "%03d" % fhr }}.nc"
             {% endfor %}
-            {% else %}
-            # Construct member COM directories
-            {% set COMIN_ATMOS_HISTORY_PREV_MEM = COMIN_ATMOS_HISTORY_PREV_MEM_list[imem] %}
-
-            {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
-            - "{{ COMIN_ATMOS_HISTORY_PREV_MEM | relpath(ROTDIR) }}/{{ phead }}atmf{{ "%03d" % fhr }}.nc"
-            {% endfor %}
-            {% endif %}
             {% endfor %}  # first_group_mem to last_group_mem
         destination: "{{ SAVEDIR }}"

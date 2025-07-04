@@ -35,7 +35,10 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
             # configs += ['fetch']
             configs += ['getic']
 
-        configs += ['init', 'stage_ic', 'fcst', 'arch_vrfy', 'cleanup']
+        if not options['exp_warm_start']:
+            configs += ['init']
+
+        configs += ['fcst', 'arch_vrfy', 'cleanup']
 
         if options['do_atm']:
 
@@ -117,7 +120,8 @@ class SHiELDForecastOnlyAppConfig(AppConfig):
             # tasks += ['fetch']
             tasks += ['getic']
 
-        tasks += ['init', 'stage_ic']
+        if not options['exp_warm_start']:
+            tasks += ['init']
 
         if options['do_aero_fcst'] and not options['exp_warm_start']:
             tasks += ['aerosol_init']

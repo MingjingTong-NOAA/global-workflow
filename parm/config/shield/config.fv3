@@ -106,6 +106,5 @@ esac
 
 export sfcfix="fix_sfc"
 export orogfix="${case_in}"
-export export fv_sg_adj=900
 
 echo "END: config.fv3"

@@ -12,7 +12,7 @@ class SHiELDEnsregridAppConfig(AppConfig):
         super().__init__(conf)
 
         base = conf.parse_config('config.base')
-        self.run = base.get('RUN', 'enkfgdas')
+        self.run = "enkfgdas"
         self.runs = [self.run]
 
     def _get_run_options(self, conf: Configuration) -> Dict[str, Any]:
@@ -27,8 +27,9 @@ class SHiELDEnsregridAppConfig(AppConfig):
         """
         Returns the config_files that are involved in the ensemble regrid app
         """
+        options = self.run_options[run]
 
-        configs = ['efetch', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
+        configs = ['efetch', 'earc_groups', 'eupp', 'atmos_products', 'ergpos', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return configs
 
@@ -46,7 +47,8 @@ class SHiELDEnsregridAppConfig(AppConfig):
         Note that the order of the task names matters in the XML.
         This is the place where that order is set.
         """
+        options = self.run_options[self.run]
 
-        tasks = ['efetch', 'ensupp', 'ergpos', 'ergarc', 'cleanup']
+        tasks = ['efetch', 'eupp', 'eprod', 'ergpos', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return {f"{self.run}": tasks}

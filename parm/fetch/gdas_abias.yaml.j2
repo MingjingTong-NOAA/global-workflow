@@ -1,0 +1,10 @@
+gdas_abias:
+    name: "GDAS_ABIAS"
+    target:
+        tarball: "{{ GFSFETCHDIR }}/rh{{ pcycle_YYYY }}/{{ pcycle_YM }}/{{ pcycle_YMD }}/com_gfs_{{ gfssubver }}_gdas.{{ pcycle_YMD }}_{{ pcycle_HH }}.gdas.tar"
+        on_hpss: True
+        contents:
+            - "./gdas.{{ pcycle_YMD }}/{{ pcycle_HH }}/atmos/gdas.t{{ pcycle_HH }}z.abias"
+            - "./gdas.{{ pcycle_YMD }}/{{ pcycle_HH }}/atmos/gdas.t{{ pcycle_HH }}z.abias_air"
+            - "./gdas.{{ pcycle_YMD }}/{{ pcycle_HH }}/atmos/gdas.t{{ pcycle_HH }}z.abias_pc"
+        destination: "{{ ICSROOT }}"

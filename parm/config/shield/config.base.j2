@@ -96,12 +96,6 @@ export REALTIME="YES"
 export MODE="{{ MODE }}" # cycled/forecast-only/replay/omf/ensregrid
 export DO_TEST_MODE="{{ DO_TEST_MODE }}" # option to change configuration for automated testing
 
-if [[ ${MODE} == "replay" ]]; then
-  export DO_VERFOZN="NO"                  # Ozone data assimilation monitoring
-  export DO_VERFRAD="NO"                  # Radiance data assimilation monitoring
-  export DO_VMINMON="NO"                  # GSI minimization monitoring
-fi
-
 ####################################################
 # DO NOT ADD MACHINE DEPENDENT STUFF BELOW THIS LINE
 # IF YOU HAVE TO MAKE MACHINE SPECIFIC CHANGES BELOW
@@ -517,7 +511,7 @@ export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
 export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
 # full hydrometeors assimilation
-export full_hydro="YES"
+export full_hydro="NO"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
@@ -544,26 +538,33 @@ export ENSREPLAY="{{ ENSREPLAY }}"
 export ENSFROMEXP="{{ ENSFROMEXP }}"
 export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${ENSFROMEXP}"
 
+# forecast-only and replay mode
 export DO_OMF="{{ DO_OMF }}"
+export DO_POST="{{ DO_POST }}"
+
+# diagnostic mode (omf or ensregrid)
+export diag_interval="{{ DIAG_INTERVAL }}"
+
+# omf environment parameters
+export OMFCOMINPREV="/scratch1/NCEPDEV/stmp4/Mingjing.Tong/GDASFCST/${RESTARTEXP}"
+EXPABIAS="NO"
 export FHOMF=6
-if [[ ${DO_OMF} == "YES" ]]; then
+if [[ ${MODE} == "omf" || ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))
   export FHMAX=$(( FHOMF + 3 ))
   export FHOUT=1
 fi
 
-# OmF and ensemble regrid environment parameters
-export diag_interval="{{ DIAG_INTERVAL }}"
+# ensemble regrid environment parameters
 if [[ ${MODE} == "ensregrid" ]]; then
-  export ENSFROM=$PSLOT
+  export FHMIN=6
+  export FHMAX=6
+  export FHOUT=1
 fi
 
 if [[ ${MODE} == "ensregrid" || ${EXP_WARM_START} == ".true." ]]; then
   export ENSDIR=$ROTDIR
 fi
-
-# Run GFS post-process for forecast and replay mode
-export DO_POST="{{ DO_POST }}"
 
 # Verification options
 export DO_METP="{{ DO_METP }}"   # Run METPLUS jobs - set METPLUS settings in config.metp

@@ -131,7 +131,7 @@ gdas:
         - "logs/{{ cycle_YMDH }}/{{ RUN }}_vminmon.log"
             {% endif %}
 
-        {% elif MODE == "replay" %}
+        {% elif DO_OMF %}
         # OmF state
             {% if DO_JEDIATMVAR %}
         - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}atmanlvar.yaml"
@@ -145,6 +145,7 @@ gdas:
             {% endif %}
         {% endif %}  # End of cycled data
 
+        {% if MODE != "omf" and MODE != "ensregrid" %} 
         # Forecast and post logs
         - "logs/{{ cycle_YMDH }}/{{ RUN }}_fcst_seg0.log"
 
@@ -174,6 +175,7 @@ gdas:
         - "{{ COMIN_ATMOS_HISTORY | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.nc"
         - "{{ COMIN_ATMOS_HISTORY | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.nc"
         {% endfor %}
+        {% endif %}  # End of non-diagnose (omf or ensregrid) mode
     optional:
         {% if MODE == "cycled" %}
             # Radiance verification (only created if there are problems)

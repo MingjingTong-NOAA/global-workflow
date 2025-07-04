@@ -8,12 +8,6 @@ echo "BEGIN: config.ergpos"
 # Get task specific resources
 . $EXPDIR/config.resources ergpos
 
-# No. of concurrent ergpos jobs [1 implies sequential]
-export NEPOSGRP=1
-
-# Generate ensemble spread files
-export ENKF_SPREAD="YES"
-
-export SUFFIX=".grib.nc"
+export grids="1p00 0p50 0p25"
 
 echo "END: config.ergpos"

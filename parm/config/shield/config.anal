@@ -48,14 +48,38 @@ if [[ $GSIVER == "v2" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x_crtm2.3
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
   export FIXgsi=${FIXgfs}/gsi_v2
+  export full_hydro="NO"
 elif [[ $GSIVER == "v2fullhydro" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2fullhydro.sh
+  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
   export FIXgsi=${FIXgfs}/gsi_v2
-else
+  export full_hydro="YES"
+  export cao_check=".true."
+  export ta2tb=".true."
+elif [[ $GSIVER == "v3" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis.sh
   export FIXgsi=${FIXgfs}/gsi
+  export full_hydro="YES"
+  export cao_check=".true."
+  export ta2tb=".false."
+else
+  OMFTEST="test1"
+  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
+  export export GSIEXEC=${EXECgfs}/gsi.x
+  export FIXgsi=${FIXgfs}/gsi_v2
+  export full_hydro="NO"
+  if [[ $OMFTEST == "test1" ]]; then
+    export GSIEXEC=${EXECgfs}/gsi.x_crtm2.3_new
+  elif [[ $OMFTEST == "test3" ]]; then
+    export full_hydro="YES"
+  elif [[ $OMFTEST == "test4" ]]; then
+    export full_hydro="YES"
+    export cao_check=".true."
+  elif [[ $OMFTEST == "test5" ]]; then
+    export full_hydro="YES"
+    export ta2tb=".true."
+  fi
 fi
 
 # Set default values for info files and observation error

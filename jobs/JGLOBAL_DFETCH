@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-source "${HOMEgfs}/ush/jjob_header.sh" -e "efetch" -c "base efetch earc_groups"
+source "${HOMEgfs}/ush/jjob_header.sh" -e "dfetch" -c "base dfetch"
 
 ##############################################
 # Set variables used in the script
@@ -13,12 +13,12 @@ export gcyc=${previous_cycle:8:2}
 if [[ ! -d ${SAVEDIR} ]]; then mkdir -p "${SAVEDIR}"; fi
 
 ###############################################################
-# Run efetch script
+# Run dfetch script
 ###############################################################
 
 # Calls an external bash command; do not fail on unassigned/error
 set +eu
-"${SCRgfs}/exglobal_efetch.py"
+"${SCRgfs}/exglobal_dfetch.py"
 export err=$?
 set +x
 err_chk "FATAL ERROR Failed to archive the ensemble COM structure"

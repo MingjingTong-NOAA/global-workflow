@@ -17,10 +17,12 @@ elif [[ $GSIVER == "v2fullhydro" ]]; then
   export ENKFEXEC=${EXECgfs}/enkf.x
   export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update_v2.sh
   export FIXgsi=${FIXgfs}/gsi_v2
+  export full_hydro="YES"
 else
   export ENKFEXEC=${EXECgfs}/enkf.x
   export ENKFUPDSH=${SCRgfs}/exgdas_enkf_update.sh
   export FIXgsi=${FIXgfs}/gsi
+  export full_hydro="YES"
 fi
 
 export ntasks_enkf=${ntasks}

@@ -12,14 +12,14 @@ __all__ = ['Tasks']
 
 class Tasks:
     SERVICE_TASKS = ['arch_vrfy', 'earc_vrfy', 'stage_ic', 'cleanup', 'globus', 'ens_globus']
-    DTN_TASKS = ['arch_tars', 'earc_tars', 'fetch', 'getic', 'efetch', 'getfcst']
+    DTN_TASKS = ['arch_tars', 'earc_tars', 'fetch', 'getic', 'efetch', 'dfetch']
     VALID_TASKS = ['aerosol_init', 'stage_ic', 'fetch', 'globus', 'ens_globus',
                    'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'arch_vrfy', 'arch_tars', "cleanup",
-                   'ecen_fv3jedi', 'analcalc_fv3jedi', 'getic', 'init', 'efetch', 'getfcst', 'analinc', 'gomg',
+                   'ecen_fv3jedi', 'analcalc_fv3jedi', 'getic', 'init', 'efetch', 'dfetch', 'analinc', 'gomg',
                    'prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal',
                    'prep_emissions', 'prepoceanobs',
                    'marineanlinit', 'marineanlletkf', 'marinebmat', 'marineanlvar', 'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
-                   'eobs', 'epos', 'esfc', 'eupd', 'eomg', 'efetch', 'eupp', 'ergpos', 'ergarc',
+                   'eobs', 'epos', 'esfc', 'eupd', 'eomg', 'efetch', 'eupp', 'eprod', 'ergpos',
                    'earc_vrfy', 'earc_tars', 'ecen', 'echgres', 'ediag', 'efcs',
                    'atmensanlinit', 'atmensanlobs', 'atmensanlsol', 'atmensanlletkf', 'atmensanlfv3inc', 'atmensanlfinal', 'atmos_ensstat',
                    'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb',
@@ -65,7 +65,6 @@ class Tasks:
             self.nmem = int(self._base['NMEM_ENS'])
         self._base['interval_gdas'] = to_timedelta(f'{self._base["assim_freq"]}H')
         self._base['interval_gfs'] = to_timedelta(f'{self._base["INTERVAL_GFS"]}H')
-        self._base['interval_omf'] = to_timedelta(f'{self._base["FHOMF"]}H')
 
         # DATAROOT is set by prod_envir in ops.  Here, we use `STMP` to construct DATAROOT
         dataroot_str = f"{self._base.get('STMP')}/RUNDIRS/{self._base.get('PSLOT')}/{self.run}.<cyclestr>@Y@m@d@H</cyclestr>"

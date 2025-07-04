@@ -1,0 +1,41 @@
+{% set pcycle_HH = previous_cycle | strftime("%H") %}
+{% set pcycle_YMD = previous_cycle | to_YMD %}
+{% set pcycle_YMDH = previous_cycle | to_YMDH %}
+{% set pcycle_YYYY = previous_cycle | strftime("%Y") %}
+{% set pcycle_YM = previous_cycle | strftime("%Y%m") %}
+{% set phead = RUN + ".t" + pcycle_HH + "z." %}
+{% set ephead = "enkfgdas.t" + pcycle_HH + "z." %}
+
+datasets:
+{% set tmpl_dict = ({ '${ROTDIR}':ROTDIR,
+                      '${RUN}':RUN,
+                      '${YMD}':pcycle_YMD,
+                      '${HH}':pcycle_HH,
+                      '${MEMDIR}':'' }) %}
+
+{% set ptmpl_dict = ({ '${ROTDIR}':ROTDIR,
+                       '${RUN}':"enkfgdas",
+                       '${YMD}':pcycle_YMD,
+                       '${HH}':pcycle_HH,
+                       '${MEMDIR}':"ensstat" }) %}
+
+{% set COMIN_ATMOS_ANALYSIS_PREV = COM_ATMOS_ANALYSIS_TMPL | replace_tmpl(tmpl_dict) %}
+{% set COMIN_ATMOS_HISTORY_PREV = COM_ATMOS_HISTORY_TMPL | replace_tmpl(tmpl_dict) %}
+{% set COMIN_ATMOS_HISTORY_PREV_ENSSTAT = COM_ATMOS_HISTORY_TMPL | replace_tmpl(ptmpl_dict) %}
+
+# Always fetch atmosphere forecast/analysis data
+{% filter indent(width=4) %}
+{% include "gdas.yaml.j2" %}
+{% endfilter %}
+
+{% if not EXPABIAS %}
+{% filter indent(width=4) %}
+{% include "gdas_abias.yaml.j2" %}
+{% endfilter %}
+{% endif %}
+
+{% if FCSTMODE == "cycled" %}
+{% filter indent(width=4) %}
+{% include "enkf.yaml.j2" %}
+{% endfilter %}
+{% endif %}

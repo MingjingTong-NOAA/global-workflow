@@ -1,0 +1,21 @@
+gdas:
+    name: "GDAS"
+    target:
+        tarball: "{{ FETCHDIR }}/{{ pcycle_YMDH }}/{{ RUN }}.tar"
+        on_hpss: True
+        contents:
+            # Analysis state
+            - "{{ COMIN_ATMOS_ANALYSIS_PREV | relpath(ROTDIR) }}/{{ phead }}radstat"
+            {% if EXPABIAS %}
+            - "{{ COMIN_ATMOS_ANALYSIS_PREV | relpath(ROTDIR) }}/{{ phead }}abias"
+            - "{{ COMIN_ATMOS_ANALYSIS_PREV | relpath(ROTDIR) }}/{{ phead }}abias_air"
+            - "{{ COMIN_ATMOS_ANALYSIS_PREV | relpath(ROTDIR) }}/{{ phead }}abias_pc"
+            {% endif %}
+
+            {% for fhr in range(FHMIN, FHMAX + 1, FHOUT) %}
+               {% set fhr3 = '%03d' % fhr %}
+            # Raw netCDF forecasts
+            - "{{ COMIN_ATMOS_HISTORY_PREV | relpath(ROTDIR) }}/{{ phead }}atmf{{ fhr3 }}.nc"
+            - "{{ COMIN_ATMOS_HISTORY_PREV | relpath(ROTDIR) }}/{{ phead }}sfcf{{ fhr3 }}.nc"
+            {% endfor %}
+        destination: "{{ SAVEDIR }}"

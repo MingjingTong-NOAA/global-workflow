@@ -12,8 +12,8 @@ NOSCRUB: '${HOMEDIR}'
 COMINsyn: '/gpfs/f6/drsa-precip3/world-shared/role.glopara/com/syndat'
 # BQS properties
 SCHEDULER: slurm
-QUEUE: windfall
-QUEUE_SERVICE: windfall
+QUEUE: normal
+QUEUE_SERVICE: normal
 QUEUE_DTN: 'hpss'
 PARTITION_BUILD: eslogin_c6
 PARTITION_BATCH: batch

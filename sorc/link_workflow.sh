@@ -433,7 +433,7 @@ fi
 # GSI Utils
 if [[ -d "${HOMEgfs}/sorc/gsi_utils.fd/install" ]]; then
   for exe in calc_analysis.x calc_increment_ens_ncio.x calc_increment_ens.x \
-    getsfcensmeanp.x getsigensmeanp_smooth.x getsigensstatp.x \
+    getsfcensmeanp.x getsigensmeanp_smooth.x getsigensstatp.x getgribncensmeanp.x \
     interp_inc.x recentersigp.x zero_biascoeff.x; do
     if [[ -s "${exe}" ]]; then
         rm -f "${exe}"

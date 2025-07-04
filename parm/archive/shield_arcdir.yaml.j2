@@ -133,6 +133,25 @@
         {% set file_set = file_set + gdas_files %}
     {% endif %}
 
+{% elif MODE == "ensregrid" %}
+
+    # ensemble regrid mean ans spread
+    {% set ensregrid_files = [] %}
+    {% for fhr in range(FHMIN, FHMAX + 1, 3) %}
+        {% do ensregrid_files.append([COMIN_ATMOS_GRIB_STATS_1p00 ~ "/" ~ head ~ "atmf" ~ '%03d'|format(fhr) ~ ".ensspread.grib2.nc",
+                                      ARCDIR ~ "/" ~ head ~ "atmf" ~ '%03d'|format(fhr) ~ ".ensspread.grib2.nc"]) %}
+        {% do ensregrid_files.append([COMIN_ATMOS_GRIB_STATS_1p00 ~ "/" ~ head ~ "atmf" ~ '%03d'|format(fhr) ~ ".ensmean.grib2.nc",
+                                      ARCDIR ~ "/" ~ head ~ "atmf" ~ '%03d'|format(fhr) ~ ".ensmean.grib2.nc"]) %}
+        {% do ensregrid_files.append([COMIN_ATMOS_GRIB_STATS_1p00 ~ "/" ~ head ~ "sfcf" ~ '%03d'|format(fhr) ~ ".ensspread.grib2.nc",
+                                      ARCDIR ~ "/" ~ head ~ "sfcf" ~ '%03d'|format(fhr) ~ ".ensspread.grib2.nc"]) %}
+        {% do ensregrid_files.append([COMIN_ATMOS_GRIB_STATS_1p00 ~ "/" ~ head ~ "sfcf" ~ '%03d'|format(fhr) ~ ".ensmean.grib2.nc",
+                                      ARCDIR ~ "/" ~ head ~ "sfcf" ~ '%03d'|format(fhr) ~ ".ensmean.grib2.nc"]) %}
+
+    {% endfor %}
+
+    # Construct the file set
+    {% set file_set = file_set + ensregrid_files %}
+
 {% else %}  # End of deterministic files
 
     # Ensemble analysis files

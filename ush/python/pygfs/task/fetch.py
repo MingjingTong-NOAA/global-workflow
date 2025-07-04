@@ -57,7 +57,7 @@ class Fetch(Task):
         return parsed_fetch
 
     @logit(logger)
-    def configure_efetch(self, fetch_dict: Dict[str, Any]) -> (List[Dict[str, Any]]):
+    def configure_fetch(self, fetch_dict: Dict[str, Any]) -> (List[Dict[str, Any]]):
         """Determine which tarballs will need to be created.
 
         Parameters
@@ -67,12 +67,12 @@ class Fetch(Task):
 
         Return
         ------
-        efetch_sets : List[Dict[str, Any]]
+        fetch_sets : List[Dict[str, Any]]
             List of tarballs and instructions for fetch data from them via htar
         """
 
-        if not os.path.isdir(fetch_dict.ENSDIR):
-            mkdir_p(fetch_dict.ENSDIR)
+        if not os.path.isdir(fetch_dict.SAVEDIR):
+            mkdir_p(fetch_dict.SAVEDIR)
 
         if not os.path.isdir(fetch_dict.ROTDIR):
             raise FileNotFoundError(f"FATAL ERROR: The ROTDIR ({fetch_dict.ROTDIR}) does not exist!")
@@ -89,12 +89,12 @@ class Fetch(Task):
                                    fetch_dict,
                                    allow_missing=False)
 
-        efetch_sets = []
+        fetch_sets = []
         for dataset in parsed_sets.datasets.values():
             dataset["fileset"] = Fetch._create_fileset(dataset)
-            efetch_sets.append(dataset)
+            fetch_sets.append(dataset)
 
-        return efetch_sets
+        return fetch_sets
 
     @logit(logger)
     def execute_pull_data(self, fetchdir_set: Dict[str, Any]) -> None:

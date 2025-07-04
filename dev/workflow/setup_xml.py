@@ -3,7 +3,7 @@
 Entry point for setting up Rocoto XML for all applications in global-workflow
 """
 
-import os
+import os, sys
 from logging import getLogger
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 

@@ -156,7 +156,10 @@ class Archive(Task):
                 if arch_dict.ARCH_HASHES or arch_dict.ARCH_DIFFS:
                     self._pop_git_info(arch_dict)
 
-        master_yaml = "master_" + arch_dict.RUN + ".yaml.j2"
+        if arch_dict.MODE != "ensregrid":
+            master_yaml = "master_" + arch_dict.RUN + ".yaml.j2"
+        else:
+            master_yaml = "master_ensregrid.yaml.j2"
 
         parsed_sets = parse_j2yaml(os.path.join(archive_parm, master_yaml),
                                    arch_dict,

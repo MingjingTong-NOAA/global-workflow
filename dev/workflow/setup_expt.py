@@ -241,6 +241,11 @@ def input_args(*argv):
                             default=os.path.join(_top, 'parm/config/sfs/yaml/defaults.yaml'))
         return parser
 
+    def _shield_diagnose_args(parser):
+        parser.add_argument('--app', help='SHiELD application', type=str,
+                            choices=shield_apps, required=False, default='ATM')
+        return parser
+
     description = """
         Setup files and directories to start a GFS parallel.\n
         Create EXPDIR, copy config files.\n
@@ -296,9 +301,13 @@ def input_args(*argv):
     for subp in [gfsforecasts, gefsforecasts, sfsforecasts]:
         subp = _any_forecast_args(subp)
 
-    # SHiELD forecast-only additional arguments
-    for subp in [shieldreplay, shieldforecasts, shieldomf]:
+    # SHiELD forecast additional arguments
+    for subp in [shieldreplay, shieldforecasts]:
         subp = _shield_forecast_args(subp)
+
+    # SHiELD diagnose additional arguments
+    for subp in [shieldomf, shieldensregrid]:
+        subp = _shield_diagnose_args(subp)
 
     # cycled mode additional arguments
     for subp in [gfscycled]:

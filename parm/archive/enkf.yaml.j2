@@ -55,7 +55,10 @@ enkf:
         {% set da_files = ["enkfstat",
                            "gsistat.ensmean",
                            "cnvstat.ensmean",
-                           "oznstat.ensmean"] %}
+                           "oznstat.ensmean",
+                           "cnvsprd",
+                           "oznsprd",
+                           "radsprd"] %}
         {% if ARCHRADSTAT %}
         {% set da_files = da_files + ["radstat.ensmean"] %}
         {% endif %}
