@@ -302,6 +302,7 @@ EOF
       FILENAME_GESMEANIN="atmges_ensmean"     # EnKF ensemble mean guess
       FILENAME_GSIDET="atmanl_gsi_ensres" # recenter around GSI analysis at ensemble resolution
       FILENAMEOUT="ratminc"
+      FILENAME_GESIN="atmges"
 
       export OMP_NUM_THREADS=$NTHREADS_ECEN
 
@@ -313,6 +314,7 @@ EOF
       cat > recenter.nml << EOF
 &recenter
   incvars_to_zero = $INCREMENTS_TO_ZERO
+  clip_tracer = ${clip_tracer:-".false."}
 /
 EOF
 cat recenter.nml
@@ -321,7 +323,7 @@ cat recenter.nml
       . prep_step
 
       $NCP $RECENATMEXEC $DATA
-      $APRUN_ECEN ${DATA}/$(basename $RECENATMEXEC) $FILENAMEIN $FILENAME_INCMEANIN $FILENAME_GSIDET $FILENAMEOUT $NMEM_ENS $FILENAME_GESMEANIN
+      $APRUN_ECEN ${DATA}/$(basename $RECENATMEXEC) $FILENAMEIN $FILENAME_INCMEANIN $FILENAME_GSIDET $FILENAMEOUT $NMEM_ENS $FILENAME_GESMEANIN $FILENAME_GESIN
       export err=$?; err_chk
    fi
 fi

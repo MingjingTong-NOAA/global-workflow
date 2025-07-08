@@ -21,7 +21,7 @@ def main():
     keys = ['FETCHDIR', 'current_cycle', 'previous_cycle', 'RUN', 'PDY', 'gPDY',
             'PSLOT', 'ROTDIR', 'SAVEDIR', 'ICSROOT', 'PARMgfs', 'FCSTMODE',
             'assim_freq', 'FHMIN', 'FHMAX', 'FHOUT', 'EXPABIAS', 'GFSFETCHDIR',
-            'gfssubver'] 
+            'gfssubver']
 
     fetch_dict = AttrDict()
     for key in keys:

@@ -266,10 +266,15 @@ EOF
       else
         local increment_file
         for inc_file in "${inc_files[@]}"; do
-          if [[ "${DO_JEDIATMVAR:-NO}" == "YES" ]]; then
-            increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.cubed_sphere_grid_${PREFIX_ATMINC}${inc_file}"
+          if [[ ${MODE} == "forecast-only" ]]; then
+             incdump=${ICDUMP}
           else
-            increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${PREFIX_ATMINC}${inc_file}"
+             incdump=${RUN} 
+          fi
+          if [[ "${DO_JEDIATMVAR:-NO}" == "YES" ]]; then
+            increment_file="${COMIN_ATMOS_ANALYSIS}/${incdump}.t${cyc}z.cubed_sphere_grid_${PREFIX_ATMINC}${inc_file}"
+          else
+            increment_file="${COMIN_ATMOS_ANALYSIS}/${incdump}.t${cyc}z.${PREFIX_ATMINC}${inc_file}"
           fi
           cpreq "${increment_file}" "${DATA}/INPUT/${inc_file}"
         done
@@ -485,7 +490,7 @@ FV3_out() {
       done
       ;;
     gfs|gefs|sfs) # Copy restarts at the end of the forecast segment for RUN=gfs|gefs|sfs
-      if [[ "${COPY_FINAL_RESTARTS}" == "YES" ]]; then
+      if [[ "${COPY_FINAL_RESTARTS:-"NO"}" == "YES" ]]; then
         restart_dates+=("${forecast_end_cycle:0:8}.${forecast_end_cycle:8:2}0000")
       fi
       ;;

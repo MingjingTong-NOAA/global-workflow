@@ -14,7 +14,7 @@ gfs_restarta:
         {% for i_tile in range(1, 7) %}
         - "{{ COMIN_ATMOS_RESTART | relpath(ROTDIR) }}/{{ anl_time | to_YMD }}.{{ anl_time | strftime("%H") }}0000.sfcanl_data.tile{{ i_tile }}.nc"
         {% endfor %}
-        {% elif MODE == "forecast-only" %}
+        {% elif MODE == "forecast-only" and not EXP_WARM_START %}
         - "{{ COMIN_ATMOS_INPUT | relpath(ROTDIR) }}/gfs_ctrl.nc"
         {% for i_tile in range(1, 7) %}
         - "{{ COMIN_ATMOS_INPUT | relpath(ROTDIR) }}/gfs_data.tile{{ i_tile }}.nc"

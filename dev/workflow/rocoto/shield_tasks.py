@@ -946,7 +946,10 @@ class SHiELDTasks(Tasks):
         dependencies = []
 
         if self._base['NET'] == 'shield':
-            dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+            if self.options['warm_start']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
             dependencies.append(rocoto.add_dependency(dep_dict))
         else:
             dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
@@ -3870,7 +3873,7 @@ class SHiELDTasks(Tasks):
         eprodenvar_dict = {'FHR_LIST': '6',
                            'ENSMEM': '#member#',
                            'MEMDIR': 'mem#member#',
-                          }
+                           }
         for key, value in eprodenvar_dict.items():
             eprodenvars.append(rocoto.create_envar(name=key, value=str(value)))
 
