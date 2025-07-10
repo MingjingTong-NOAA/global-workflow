@@ -50,6 +50,11 @@ case "${MACHINE_ID}" in
       export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/cray/pe/mpich/8.1.19/ofi/intel/19.0/lib"
     fi
     module load "${MODS}/${MACHINE_ID}"
+    export err=$?
+    if [[ ${err} -ne 0 ]]; then
+      echo "FATAL ERROR: Failed to load ${MODS}/${MACHINE_ID}"
+      exit 1
+    fi
     ncdump=$( command -v ncdump )
     NETCDF=$( echo "${ncdump}" | cut -d " " -f 3 )
     export NETCDF
@@ -93,8 +98,7 @@ fi
 # TODO: a better solution should be created for setting paths to package python scripts
 # shellcheck disable=SC2311
 pyiodaPATH="${HOMEgfs}/sorc/gdas.cd/build/lib/python${PYTHON_VERSION}/"
-gdasappPATH="${HOMEgfs}/sorc/gdas.cd/sorc/iodaconv/src:${pyiodaPATH}"
-PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}:${gdasappPATH}"
+PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}:${pyiodaPATH}"
 export PYTHONPATH
 
 # Restore stack soft limit:

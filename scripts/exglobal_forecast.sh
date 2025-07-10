@@ -170,7 +170,7 @@ echo "MAIN: Name lists and model configuration written"
 #------------------------------------------------------------------
 # run the executable
 
-if [[ "${esmf_profile:-}" = ".true." ]]; then
+if [[ "${esmf_profile:-}" == ".true." ]]; then
   export ESMF_RUNTIME_PROFILE=ON
   export ESMF_RUNTIME_PROFILE_OUTPUT=SUMMARY
 fi
@@ -183,14 +183,16 @@ fi
 
 [[ ${DO_CUBE2GAUS:-"NO"} = "YES" ]] && export OMP_NUM_THREADS=${NTHREADS_FV3:-1}
 
-${NCP} "${EXECgfs}/${FCSTEXEC}" "${DATA}/"
+cpreq "${EXECgfs}/${FCSTEXEC}" "${DATA}/"
 if [[ ${NET:-"gfs"} != "shield" ]]; then
 ${APRUN_UFS} "${DATA}/${FCSTEXEC}" 1>&1 2>&2 && true
 else
 ${APRUN_FV3} "${DATA}/${FCSTEXEC}" 1>&1 2>&2
 fi      
 export err=$?
-err_chk
+if [[ ${err} -ne 0 ]]; then
+   err_exit "The forecast failed to run to completion!"
+fi
 
 FV3_out
 if [[ ${DO_CUBE2GAUS:-"NO"} = "YES" ]]; then
@@ -218,4 +220,4 @@ echo "MAIN: Output copied to ROTDIR"
 
 #------------------------------------------------------------------
 
-exit "${err}"
+exit 0

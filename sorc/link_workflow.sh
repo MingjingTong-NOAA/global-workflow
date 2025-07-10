@@ -209,12 +209,11 @@ for dir in gfs gefs sfs
 do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/upp.fd/parm/${dir}" .
 done
-for file in ice.csv ocean.csv ocnicepost.nml.jinja2; do
+for file in ice_gfs.csv ice_gefs.csv ocean_gfs.csv ocean_gefs.csv ocnicepost.nml.jinja2; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gfs_utils.fd/parm/ocnicepost/${file}" .
 done
 
 cd "${HOMEgfs}/scripts" || exit 8
-${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/scripts/exemcsfc_global_sfc_prep.sh" .
 if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
   declare -a gdas_scripts=(exglobal_prep_ocean_obs.py
     exgdas_global_marine_analysis_ecen.py
@@ -224,7 +223,7 @@ if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
   done
 fi
 cd "${HOMEgfs}/ush" || exit 8
-for file in emcsfc_ice_blend.sh global_cycle_driver.sh emcsfc_snow.sh global_cycle.sh; do
+for file in global_cycle_driver.sh global_cycle.sh; do
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/${file}" .
 done
 if [[ "${MODEL}" == "shield" ]]; then
@@ -249,7 +248,8 @@ declare -a ufs_templates=("model_configure.IN" "input_global_nest.nml.IN"
   "ufs.configure.s2swa.IN"
   "ufs.configure.leapfrog_atm_wav.IN"
   "ww3_shel.nml.IN"
-  "post_itag_gfs")
+  "post_itag_gfs"
+  "global_control.nml.IN")
 for file in "${ufs_templates[@]}"; do
   if [[ -s "${file}" ]]; then
       rm -f "${file}"
@@ -263,6 +263,14 @@ if [[ -s "atparse.bash" ]]; then
     rm -f "atparse.bash"
 fi
 ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_model.fd/tests/atparse.bash" .
+
+# add ufs_utils parm dir
+if [[ -d "${HOMEgfs}/sorc/ufs_utils.fd" ]]; then
+  cd "${HOMEgfs}/parm" || exit 1
+  mkdir -p regrid_sfc
+  cd regrid_sfc || exit 1
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/parm/regrid_sfc/regrid.nml_tmpl" .
+fi
 
 #------------------------------
 #--add GDASApp fix directory
@@ -376,7 +384,7 @@ if [[ "${MODEL}" == "shield" ]]; then
   done
 fi
 
-declare -a model_systems=("gfs" "gefs" "sfs")
+declare -a model_systems=("gfs" "gefs" "sfs" "gcafs")
 for sys in "${model_systems[@]}"; do
   model_exe="${sys}_model.x"
   if [[ -s "${model_exe}" ]]; then
@@ -413,7 +421,7 @@ if [[ -s "upp.x" ]]; then
 fi
 ${LINK_OR_COPY} "${HOMEgfs}/sorc/upp.fd/exec/upp.x" .
 
-for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube_shield fregrid; do
+for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube_shield fregrid regridStates.x; do
   if [[ -s "${ufs_utilsexe}" ]]; then
       rm -f "${ufs_utilsexe}"
   fi
@@ -453,35 +461,19 @@ if [[ -d "${HOMEgfs}/sorc/gsi_monitor.fd/install" ]]; then
   done
 fi
 
-# GDASApp
-if [[ -d "${HOMEgfs}/sorc/gdas.cd/build" ]]; then
-  declare -a JEDI_EXE=("gdas.x"
-    "gdas_soca_gridgen.x"
-    "gdas_soca_error_covariance_toolbox.x"
-    "gdas_fv3jedi_error_covariance_toolbox.x"
-    "gdas_soca_setcorscales.x"
-    "gdas_soca_diagb.x"
-    "fv3jedi_plot_field.x"
-    "gdasapp_chem_diagb.x"
-    "fv3jedi_fv3inc.x"
-    "fv3jedi_correction_increment.x"
-    "fv3jedi_ensemble_add_increment.x"
-    "gdas_ens_handler.x"
-    "gdas_incr_handler.x"
-    "gdas_obsprovider2ioda.x"
-    "gdas_socahybridweights.x"
-    "gdassoca_obsstats.x"
-    "gdasapp_land_ensrecenter.x"
-    "bufr2ioda.x"
-    "calcfIMS.exe"
-    "apply_incr.exe"
-    "regridStates.x")
-  for gdasexe in "${JEDI_EXE[@]}"; do
-    if [[ -s "${gdasexe}" ]]; then
-        rm -f "${gdasexe}"
-    fi
-    ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/build/bin/${gdasexe}" .
-  done
+# GDASApp executables
+if [[ -d "${HOMEgfs}/sorc/gdas.cd/install" ]]; then
+  cp -f "${HOMEgfs}/sorc/gdas.cd/install/bin"/gdas*           ./
+  cp -f "${HOMEgfs}/sorc/gdas.cd/install/bin/bufr2ioda.x"     ./gdas_bufr2ioda.x
+  cp -f  "${HOMEgfs}/sorc/gdas.cd/install/bin/calcfIMS.exe"   ./gdas_calcfIMS.x
+  cp -f "${HOMEgfs}/sorc/gdas.cd/install/bin/apply_incr.exe"  ./gdas_apply_incr.x
+fi
+
+# GDASApp libraries
+if [[ -d "${HOMEgfs}/sorc/gdas.cd/install" ]]; then
+  if [[ ! -d "${HOMEgfs}/lib" ]]; then mkdir "${HOMEgfs}/lib" || exit 1; fi
+  cd "${HOMEgfs}/lib" || exit 1
+  cp -af "${HOMEgfs}/sorc/gdas.cd/install/lib/." ./
 fi
 
 #------------------------------

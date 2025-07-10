@@ -10,10 +10,8 @@ source "${HOMEgfs}/ush/jjob_header.sh" -e "esfc" -c "base esfc"
 ##############################################
 # Begin JOB SPECIFIC work
 ##############################################
-# Ignore possible spelling error (nothing is misspelled)
 # shellcheck disable=SC2153
-GDATE=$(${NDATE} -"${assim_freq}" "${PDY}${cyc}")
-# shellcheck disable=
+GDATE=$(date --utc +%Y%m%d%H -d "${PDY} ${cyc} - ${assim_freq} hours")
 export gPDY=${GDATE:0:8}
 export gcyc=${GDATE:8:2}
 export GDUMP="gdas"
@@ -47,7 +45,9 @@ ROTDIR=${ICSROOT}/output/${CASE} RUN="gdas" YMD=${PDY} HH=${cyc} declare_from_tm
 
 ${ENKFRESFCSH:-${SCRgfs}/exgdas_enkf_sfc.sh} && true
 export err=$?
-err_chk
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
 
 ##############################################
 # End JOB SPECIFIC work

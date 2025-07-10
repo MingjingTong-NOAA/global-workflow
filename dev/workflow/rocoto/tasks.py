@@ -13,31 +13,29 @@ __all__ = ['Tasks']
 class Tasks:
     SERVICE_TASKS = ['arch_vrfy', 'earc_vrfy', 'stage_ic', 'cleanup', 'globus', 'ens_globus']
     DTN_TASKS = ['arch_tars', 'earc_tars', 'fetch', 'getic', 'efetch', 'dfetch']
-    VALID_TASKS = ['aerosol_init', 'stage_ic', 'fetch', 'globus', 'ens_globus',
-                   'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'arch_vrfy', 'arch_tars', "cleanup",
-                   'ecen_fv3jedi', 'analcalc_fv3jedi', 'getic', 'init', 'efetch', 'dfetch', 'analinc', 'gomg',
+    VALID_TASKS = ['aerosol_init', 'stage_ic', 'gen_control_ic', 'fetch', 'globus', 'ens_globus',
+                   'prep_sfc', 'prep', 'anal', 'sfcanl', 'analcalc', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup',
+                   'ecen_fv3jedi', 'analcalc_fv3jedi', 'getic', 'init', 'dfetch', 'analinc', 'gomg',
                    'prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal',
                    'prep_emissions', 'prepoceanobs',
-                   'marineanlinit', 'marineanlletkf', 'marinebmat', 'marineanlvar', 'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
-                   'eobs', 'epos', 'esfc', 'eupd', 'eomg', 'efetch', 'eupp', 'eprod', 'ergpos',
+                   'marineanlinit', 'marineanlletkf', 'marinebmatinit', 'marinebmat', 'marineanlvar',
+                   'ocnanalecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
+                   'eobs', 'epos', 'esfc', 'eupd', 'efetch', 'eupp', 'eprod', 'ergpos',
                    'earc_vrfy', 'earc_tars', 'ecen', 'echgres', 'ediag', 'efcs',
                    'atmensanlinit', 'atmensanlobs', 'atmensanlsol', 'atmensanlletkf', 'atmensanlfv3inc', 'atmensanlfinal', 'atmos_ensstat',
-                   'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb',
+                   'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb', 'prepobsaero',
                    'snowanl', 'esnowanl',
+                   'offlineanl',
                    'fcst',
                    'upp', 'atmanlprod', 'atmupp', 'goesupp',
                    'atmos_products', 'oceanice_products',
                    'verfozn', 'verfrad', 'vminmon', 'anlstat',
                    'metp', 'fit2obs', 'extractvars',
                    'tracker', 'genesis', 'genesis_fsu',
-                   'postsnd', 'awips', 'awips_20km_1p0deg', 'fbwind',
+                   'postsnd', 'awips', 'awips_20km_1p0deg', 'fbwind', 'npoess',
                    'gempak', 'gempakmeta', 'gempakmetancdc', 'gempakncdcupapgif', 'gempakpgrb2spec', 'npoess_pgrb2_0p5deg',
                    'waveawipsbulls', 'waveawipsgridded', 'wavegempak', 'waveinit',
-                   'wavepostbndpnt', 'wavepostbndpntbll', 'wavepostpnt', 'wavepostsbs', 'waveprep',
-                   'npoess',
-                   'mos_stn_prep', 'mos_grd_prep', 'mos_ext_stn_prep', 'mos_ext_grd_prep',
-                   'mos_stn_fcst', 'mos_grd_fcst', 'mos_ext_stn_fcst', 'mos_ext_grd_fcst',
-                   'mos_stn_prdgen', 'mos_grd_prdgen', 'mos_ext_stn_prdgen', 'mos_ext_grd_prdgen', 'mos_wx_prdgen', 'mos_wx_ext_prdgen']
+                   'wavepostbndpnt', 'wavepostbndpntbll', 'wavepostpnt', 'wavepostsbs', 'waveprep']
 
     def __init__(self, app_config: AppConfig, run: str) -> None:
 
@@ -191,20 +189,20 @@ class Tasks:
             local_config['FHOUT'] = config['FHOUT_ICE']
 
         if component in ['wave']:
-            local_config['FHOUT_HF_GFS'] = config['FHOUT_HF_WAV']
             local_config['FHMAX_HF_GFS'] = config['FHMAX_HF_WAV']
-            local_config['FHOUT_GFS'] = config['FHOUT_WAV']
+            local_config['FHOUT_HF_GFS'] = config['FHOUT_HF_WAV']
+            local_config['FHOUT_GFS'] = config['FHOUT_WAV_GFS']
             local_config['FHOUT'] = config['FHOUT_WAV']
 
         fhmin = local_config['FHMIN']
 
         # Get a list of all forecast hours
         fhrs = []
-        if run in ['gdas']:
+        if run in ['gdas', 'gcdas']:
             fhmax = local_config['FHMAX']
             fhout = local_config['FHOUT']
             fhrs = list(range(fhmin, fhmax + fhout, fhout))
-        elif run in ['gfs', 'gefs', 'sfs']:
+        elif run in ['gfs', 'gefs', 'sfs', 'gcafs']:
             fhmax = local_config['FHMAX_GFS']
             fhout = local_config['FHOUT_GFS']
             fhout_hf = local_config['FHOUT_HF_GFS']

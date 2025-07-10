@@ -1,9 +1,8 @@
 experiment:
-  system: gfs
+  net: gfs
   mode: cycled
 
 arguments:
-  account: {{ 'HPC_ACCOUNT' | getenv }}
   pslot: {{ 'pslot' | getenv }}
   app: ATM
   resdetatmos: 96
@@ -24,5 +23,3 @@ skip_ci_on_hosts:
   - orion
   - hercules
   - awsepicglobalworkflow
-  - hera
-  - wcoss2

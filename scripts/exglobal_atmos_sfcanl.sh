@@ -107,15 +107,15 @@ export MAX_TASKS_CY=${ntiles}
 # Copy fix files required by global_cycle to DATA just once
 orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 for (( nn=1; nn <= ntiles; nn++ )); do
-  ${NCP} "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${nn}.nc"                 "${DATA}/fngrid.00${nn}"
-  ${NCP} "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${nn}.nc" "${DATA}/fnorog.00${nn}"
+  cpreq "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${nn}.nc"                 "${DATA}/fngrid.00${nn}"
+  cpreq "${FIXgfs}/orog/${CASE}/${orogfix}_oro_data.tile${nn}.nc" "${DATA}/fnorog.00${nn}"
 done
 
 # Copy the NSST analysis file for global_cycle
 # There is only a single NSST analysis at the middle of the window
 # For now use/assume it is the same at the beginning of the window if doing IAU
 if [[ "${DONST}" == "YES" ]]; then
-  ${NCP} "${COMIN_ATMOS_ANALYSIS}/${APREFIX}dtfanl.nc" "${DATA}/dtfanl"
+  cpreq "${COMIN_ATMOS_ANALYSIS}/${APREFIX}dtfanl.nc" "${DATA}/dtfanl"
   export NST_FILE="dtfanl"
 else
   export NST_FILE="NULL"
@@ -135,15 +135,19 @@ fi
 
 # if doing GSI soil anaysis, copy increment file and re-grid it to native model resolution
 if [[ "${DO_GSISOILDA}" = "YES" ]]; then
- 
+
     export COMIN_SOIL_ANALYSIS_MEM="${COMIN_ATMOS_ENKF_ANALYSIS_STAT}"
     export COMOUT_ATMOS_ANALYSIS_MEM="${COMIN_ATMOS_ANALYSIS}"
     export CASE_IN="${CASE_ENS}"
     export CASE_OUT="${CASE}"
     export OCNRES_OUT="${OCNRES}"
     export LFHR
- 
+
     "${REGRIDSH}"
+    export err=$?
+    if [[ ${err} -ne 0 ]]; then
+       err_exit "Soil increment file was not regridded correctly!"
+    fi
 
 fi
 
@@ -156,17 +160,17 @@ for hr in "${!gcycle_dates[@]}"; do
 
   datestr="${gcycle_date:0:8}.${gcycle_date:8:2}0000"
 
-  if [[ "${DO_GSISOILDA}" = "YES" ]]; then
+  if [[ "${DO_GSISOILDA}" == "YES" ]]; then
         for (( nn=1; nn <= ntiles; nn++ )); do
-        ${NCP} "${COMIN_ATMOS_ANALYSIS}/sfci00${FHR}.tile${nn}.nc" \
-           "${DATA}/soil_xainc.00${nn}" 
+        cpreq "${COMIN_ATMOS_ANALYSIS}/sfci00${FHR}.tile${nn}.nc" \
+           "${DATA}/soil_xainc.00${nn}"
         done
   fi
 
   # Copy inputs from COMIN to DATA
   for (( nn=1; nn <= ntiles; nn++ )); do
-    ${NCP} "${sfcdata_dir}/${datestr}.sfc_data.tile${nn}.nc" "${DATA}/fnbgsi.00${nn}"
-    ${NCP} "${DATA}/fnbgsi.00${nn}"                       "${DATA}/fnbgso.00${nn}"
+    cpreq "${sfcdata_dir}/${datestr}.sfc_data.tile${nn}.nc" "${DATA}/fnbgsi.00${nn}"
+    cpreq "${DATA}/fnbgsi.00${nn}"                       "${DATA}/fnbgso.00${nn}"
   done
 
   if [[ $DO_TSFC_TILE == "YES" ]]; then
@@ -176,11 +180,14 @@ for hr in "${!gcycle_dates[@]}"; do
   fi
 
   CDATE="${PDY}${cyc}" ${CYCLESH}
-  export err=$?; err_chk
+  export err=$?
+  if [[ ${err} -ne 0 ]]; then
+     err_exit "Unable to update surface data from guess and analysis!"
+  fi
 
   # Copy outputs from DATA to COMOUT
   for (( nn=1; nn <= ntiles; nn++ )); do
-    ${NCP} "${DATA}/fnbgso.00${nn}" "${COMOUT_ATMOS_RESTART}/${datestr}.sfcanl_data.tile${nn}.nc"
+    cpfs "${DATA}/fnbgso.00${nn}" "${COMOUT_ATMOS_RESTART}/${datestr}.sfcanl_data.tile${nn}.nc"
   done
 
 done
