@@ -29,7 +29,7 @@ def main():
             'DO_CALC_INCREMENT', 'assim_freq', 'ARCH_CYC', 'DO_JEDISNOWDA',
             'ARCH_WARMICFREQ', 'ARCH_FCSTICFREQ', 'DOHYBVAR_OCN',
             'DOLETKF_OCN', 'IAUFHRS_ENKF', 'NET', 'NMEM_ENS_GFS',
-            'atmf_interval', 'ARCHRADSTAT']
+            'atmf_interval', 'ARCHRADSTAT', 'write_spread_diag']
 
     archive_dict = AttrDict()
     for key in keys:
