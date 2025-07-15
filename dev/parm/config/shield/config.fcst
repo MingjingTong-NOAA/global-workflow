@@ -9,7 +9,7 @@ export USE_ESMF_THREADING="YES"  # Toggle to use ESMF-managed threading or tradi
 export COPY_FINAL_RESTARTS="NO" # Toggle to copy restarts from the end of GFS/GEFS Run (GDAS is handled seperately)
 
 # Source model specific information that is resolution dependent
-source $EXPDIR/config.fv3 ${CASE}
+source ${EXPDIR}/config.fv3 ${CASE}
 
 # Forecast length for GFS forecast
 case ${RUN} in

@@ -2,7 +2,7 @@
 
 # Programs used
 export WGRIB2=${WGRIB2:-${wgrib2_ROOT}/bin/wgrib2}
-export GRIBBIN=${GRIBBIN:-/scratch2/GFDL/gfdlscr/Mingjing.Tong/miniconda3/envs/myxenv/bin}
+export GRIBBIN=${GRIBBIN:-${HOME}/miniconda/envs/myxenv/bin}
 
 # Scripts used
 INTERP_ATMOS_MASTERSH=${INTERP_ATMOS_MASTERSH:-"${USHgfs}/interp_atmos_master.sh"}

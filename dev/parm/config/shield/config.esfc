@@ -6,7 +6,7 @@
 echo "BEGIN: config.esfc"
 
 # Get task specific resources
-. $EXPDIR/config.resources esfc
+source "${EXPDIR}/config.resources" esfc
 
 # With IAU only need surface analysis at start of IAU window.
 # Set DOSFCANL_ENKF=NO to prevent creation of sfcanl at 
@@ -28,10 +28,13 @@ fi
 
 # set up soil analysis
 if [[ ${DO_GSISOILDA} == "YES" ]]; then
-    export GCYCLE_DO_SOILINCR=".true."
+    if [[ "${DO_LAND_IAU}" = ".true." ]]; then 
+        export GCYCLE_DO_SOILINCR=".false."
+    else
+        export GCYCLE_DO_SOILINCR=".true."
+    fi
     export GCYCLE_INTERP_LANDINCR=".false."
-    export LSOIL_INCR=2
-    export REGRID_EXEC="${HOMEgfs}/sorc/gdas.cd/build/bin/regridStates.x"
+    export REGRID_EXEC="${HOMEgfs}/exec/regridStates.x"
 fi
 
 # SHiELD setup

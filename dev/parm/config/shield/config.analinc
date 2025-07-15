@@ -6,6 +6,6 @@
 echo "BEGIN: config.analinc"
 
 # Get task specific resources
-. ${EXPDIR}/config.resources analinc
+source "${EXPDIR}/config.resources" analinc
 
 echo "END: config.analinc"

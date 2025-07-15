@@ -1,0 +1,5 @@
+# gwrc
+user:
+   ACCOUNT: "bil-coastal-gfdl"
+   HPSS_PROJECT: "emc-da"
+   STMP: "/gpfs/f6/bil-coastal-gfdl/scratch/Mingjing.Tong/scrub/stmp"

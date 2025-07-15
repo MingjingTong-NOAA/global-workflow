@@ -6,10 +6,10 @@
 echo "BEGIN: config.gomg"
 
 # Get task specific resources
-. ${EXPDIR}/config.resources gomg
+source "${EXPDIR}/config.resources" gomg
 
 if [[ ${DONST} = "YES" ]]; then
-  . ${EXPDIR}/config.nsst
+  source "${EXPDIR}/config.nsst"
 fi
 
 # GSI namelist options

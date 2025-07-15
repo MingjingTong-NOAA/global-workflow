@@ -5,22 +5,22 @@ ensregrid:
         # ensregrid ensemble mean and spread
         {% for fhr in range(FHMIN, FHMAX + 1, 3) %}
             {% set fhr3 = '%03d' % fhr %}
-        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_1p00 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib2.nc"
         {% endfor %}
 
     optional:
         {% for fhr in range(FHMIN, FHMAX + 1, 3) %}
             {% set fhr3 = '%03d' % fhr %}
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p50 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib2.nc"
 
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib.nc"
-        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}atmf{{ fhr3 }}.ensmean.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensspread.grib2.nc"
+        - "{{ COMIN_ATMOS_GRIB_STATS_0p25 | relpath(ROTDIR) }}/{{ head }}sfcf{{ fhr3 }}.ensmean.grib2.nc"
         {% endfor %}

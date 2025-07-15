@@ -41,8 +41,8 @@ sCDATE=${model_start_date_current_cycle}
 curr_date="${sCDATE:0:4},${sCDATE:4:2},${sCDATE:6:2},${sCDATE:8:2},0,0"
 
 # copy data table
-${NCP} "${DATA_TABLE}" data_table
-${NCP} "${FIELD_TABLE}" field_table
+cpreq "${DATA_TABLE}" data_table
+cpreq "${FIELD_TABLE}" field_table
 
 cat > input.nml <<EOF
 &amip_interp_nml
@@ -210,7 +210,7 @@ cat >> input.nml << EOF
 /
 
 &gfs_physics_nml
-  fhzero       = ${FHZER}
+  fhzero       = ${FHZERO}
   ldiag3d      = ${ldiag3d:-".false."}
   lssav        = ${lssav:-".false."}
   fhcyc        = ${FHCYC}

@@ -38,6 +38,7 @@ RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
     COMOUT_OBS_PREV:COM_OBS_TMPL \
     COMINobsproc_PREV:COM_OBSPROC_TMPL
 
+export MAKE_PREPBUFR=${MAKE_PREPBUFR:-"NO"}
 mkdir -p "${COMOUT_OBS}"
 
 ###############################################################
@@ -99,6 +100,7 @@ fi
 
 ###############################################################
 # Generate prepbufr files from dumps and prior gdas guess
+if [[ ${MAKE_PREPBUFR} == "YES" ]]; then
 rm -f "${COMOUT_OBS}/${OPREFIX}prepbufr"
 rm -f "${COMOUT_OBS}/${OPREFIX}prepbufr.acft_profiles"
 rm -f "${COMOUT_OBS}/${OPREFIX}nsstbufr"
@@ -140,6 +142,13 @@ if [[ ${MAKE_NSSTBUFR:-"NO"} = "NO" ]]; then
     if [[ ${DONST} = "YES" ]]; then
        cpfs "${COMINobsproc}/${OPREFIX}nsstbufr" "${COMOUT_OBS}/${OPREFIX}nsstbufr"
     fi
+fi
+else
+  cpfs "${COMINobsproc}/${OPREFIX}prepbufr"               "${COMOUT_OBS}/${OPREFIX}prepbufr"
+  cpfs "${COMINobsproc}/${OPREFIX}prepbufr.acft_profiles" "${COMOUT_OBS}/${OPREFIX}prepbufr.acft_profile"
+  if [[ ${DONST} = "YES" ]]; then 
+     cpfs "${COMINobsproc}/${OPREFIX}nsstbufr" "${COMOUT_OBS}/${OPREFIX}nsstbufr"
+  fi
 fi
 
 ################################################################################

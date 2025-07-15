@@ -6,7 +6,7 @@
 echo "BEGIN: config.getic"
 
 # Get task specific resources
-. $EXPDIR/config.resources getic
+source "$EXPDIR/config.resources" getic
 
 export REDUCEDRES="NO" # YES = Pull gfs reduced resolution parallel run
 export ICFROM=${ICFROM:-"gfs"}

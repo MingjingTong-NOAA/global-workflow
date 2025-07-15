@@ -6,7 +6,7 @@
 echo "BEGIN: config.efetch"
 
 # Get task specific resources
-. $EXPDIR/config.resources fetch
+source "${EXPDIR}/config.resources" fetch
 
 if [[ ${MODE} == "ensregrid" ]]; then
    export EFHMIN=6

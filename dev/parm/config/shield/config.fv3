@@ -52,7 +52,8 @@ case $case_in in
         export nth_fv3_gdas=2
         export nth_fv3_gfs=2
         export cdmbgwd="0.2,2.5"  # mountain blocking, ogwd, cgwd, cgwd src scaling
-        export fv_sg_adj=1800
+        #export fv_sg_adj=1800
+        export fv_sg_adj=900
         ;;
     "C384")
         export DELTIM=300

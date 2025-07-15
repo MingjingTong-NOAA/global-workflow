@@ -6,10 +6,10 @@
 echo "BEGIN: config.anal"
 
 # Get task specific resources
-. ${EXPDIR}/config.resources anal
+source "${EXPDIR}/config.resources" anal
 
 if [[ ${DONST} = "YES" ]]; then
-  . ${EXPDIR}/config.nsst
+  source "${EXPDIR}/config.nsst"
 fi
 
 if [[ "${RUN}" == "gfs" ]] ; then
@@ -62,7 +62,7 @@ elif [[ $GSIVER == "v3" ]]; then
   export FIXgsi=${FIXgfs}/gsi
   export full_hydro="YES"
   export cao_check=".true."
-  export ta2tb=".false."
+  export ta2tb=".true."
 else
   OMFTEST="test1"
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
@@ -211,7 +211,7 @@ if [[ ${full_hydro:-"NO"} == "YES" ]]; then
 fi
 
 export USE_CORRELATED_OBERRS="NO"
-if [[ $USE_CORRELATED_OBERRS == "YES" ]]; then
+if [[ ${USE_CORRELATED_OBERRS} == "YES" ]]; then
   export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.txt_Rcov_Rinf
   export SETUP="lupdqc=".false.",${SETUP:-}"
 fi

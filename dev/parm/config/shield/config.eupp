@@ -6,7 +6,7 @@
 echo "BEGIN: config.eupp"
 
 # Get task specific resources
-. "${EXPDIR}/config.resources" eupp
+source "${EXPDIR}/config.resources" eupp
 
 export UPP_CONFIG="${PARMgfs}/post/upp.yaml"
 export NET="gfs"

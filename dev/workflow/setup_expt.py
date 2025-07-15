@@ -283,9 +283,10 @@ def input_args(*argv):
         parser.add_argument('--run', help='RUN to start the experiment',
                             type=str, required=False, default='gdas')
         # --configdir is hidden from help
-        parser.add_argument('--configdir', help=SUPPRESS, type=str, required=False, default=os.path.join(_top, 'parm/config/shield'))
-        parser.add_argument('--yaml', help='Defaults to substitute from', type=str,
-                            required=False, default=os.path.join(_top, 'parm/config/shield/yaml/defaults.yaml'))
+        parser.add_argument('--configdir', help=SUPPRESS, type=str, required=False, 
+                            default=os.path.join(_top, 'dev/parm/config/shield'))
+        parser.add_argument('--yaml', help='Defaults to substitute from', type=str, required=False,
+                            default=os.path.join(_top, 'dev/parm/config/shield/yaml/defaults.yaml'))
         return parser
 
     def _gfs_cycled_args(parser):

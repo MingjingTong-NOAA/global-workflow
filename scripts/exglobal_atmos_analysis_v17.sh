@@ -15,7 +15,7 @@
 # Attributes:
 #   Language: POSIX shell
 #
-################################################################################
+#################################################################################
 
 #  Set environment.
 
@@ -48,8 +48,12 @@ lupp=${lupp:-".true."}
 cnvw_option=${cnvw_option:-".false."}
 
 # Observation usage options
-cao_check=${cao_check:-".false."}
-ta2tb=${ta2tb:-".false."}
+cao_check=${cao_check:-".true."}
+ta2tb=${ta2tb:-".true."}
+optconv=${optconv:-0.0}
+AIRS_CADS=${AIRS_CADS:-".false."}
+IASI_CADS=${IASI_CADS:-".false."}
+CRIS_CADS=${CRIS_CADS:-".false."}
 
 # Diagnostic files options
 netcdf_diag=${netcdf_diag:-".true."}
@@ -81,6 +85,7 @@ SENDECF=${SENDECF:-"NO"}
 SENDDBN=${SENDDBN:-"NO"}
 export gesenvir=${gesenvir:-${envir}}
 
+export hofx_2m_sfcfile=${hofx_2m_sfcfile:-".false."}
 
 # Observations
 OPREFIX=${OPREFIX:-""}
@@ -114,7 +119,7 @@ ESIASI=${ESIASI:-${COMIN_OBS}/${OPREFIX}esiasi.tm00.bufr_d${OSUFFIX}}
 IASIDB=${IASIDB:-${COMIN_OBS}/${OPREFIX}iasidb.tm00.bufr_d${OSUFFIX}}
 AMSREBF=${AMSREBF:-${COMIN_OBS}/${OPREFIX}amsre.tm00.bufr_d${OSUFFIX}}
 AMSR2BF=${AMSR2BF:-${COMIN_OBS}/${OPREFIX}amsr2.tm00.bufr_d${OSUFFIX}}
-#GMI1CRBF=${GMI1CRBF:-${COMIN_OBS}/${OPREFIX}gmi1cr.tm00.bufr_d${OSUFFIX}} # GMI temporarily disabled due to array overflow.
+GMI1CRBF=${GMI1CRBF:-${COMIN_OBS}/${OPREFIX}gmi1cr.tm00.bufr_d${OSUFFIX}} 
 SAPHIRBF=${SAPHIRBF:-${COMIN_OBS}/${OPREFIX}saphir.tm00.bufr_d${OSUFFIX}}
 SEVIRIBF=${SEVIRIBF:-${COMIN_OBS}/${OPREFIX}sevcsr.tm00.bufr_d${OSUFFIX}}
 AHIBF=${AHIBF:-${COMIN_OBS}/${OPREFIX}ahicsr.tm00.bufr_d${OSUFFIX}}
@@ -145,6 +150,8 @@ TCVITL=${TCVITL:-${COMIN_OBS}/${OPREFIX}syndata.tcvitals.tm00}
 B1AVHAM=${B1AVHAM:-${COMIN_OBS}/${OPREFIX}avcsam.tm00.bufr_d${OSUFFIX}}
 B1AVHPM=${B1AVHPM:-${COMIN_OBS}/${OPREFIX}avcspm.tm00.bufr_d${OSUFFIX}}
 HDOB=${HDOB:-${COMIN_OBS}/${OPREFIX}hdob.tm00.bufr_d${OSUFFIX}}
+SAILDRONE=${SAILDRONE:-${COMIN_OBS}/${OPREFIX}saldrn.tm00.bufr_d${OSUFFIX}}
+GSBBF=${GSBBF:-${COMIN_OBS}/${OPREFIX}gsbprf.tm00.bufr_d${OSUFFIX}}
 
 # Guess files
 GPREFIX=${GPREFIX:-""}
@@ -301,17 +308,13 @@ else
 fi
 
 # GSI Fix files
-FIXgsi=${FIXgsi:-${FIXgfs}/gsi_v2}
+FIXgsi=${FIXgsi:-${FIXgfs}/gsi}
 BERROR=${BERROR:-${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77}
 SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
 SATINFO=${SATINFO:-${FIXgsi}/global_satinfo.txt}
 RADCLOUDINFO=${RADCLOUDINFO:-${FIXgsi}/cloudy_radiance_info.txt}
 ATMSFILTER=${ATMSFILTER:-${FIXgsi}/atms_beamwidth.txt}
-if [ ${full_hydro:-"NO"} = "YES" ]; then
-  ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.fullhydro.txt}
-else
-  ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.txt}
-fi
+ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS}.txt}
 CONVINFO=${CONVINFO:-${FIXgsi}/global_convinfo.txt}
 vqcdat=${vqcdat:-${FIXgsi}/vqctp001.dat}
 INSITUINFO=${INSITUINFO:-${FIXgsi}/global_insituinfo.txt}
@@ -321,6 +324,7 @@ AEROINFO=${AEROINFO:-${FIXgsi}/global_aeroinfo.txt}
 SCANINFO=${SCANINFO:-${FIXgsi}/global_scaninfo.txt}
 HYBENSINFO=${HYBENSINFO:-${FIXgsi}/global_hybens_info.l${LEVS}.txt}
 OBERROR=${OBERROR:-${FIXgsi}/prepobs_errtable.global}
+BLACKLST=${BLACKLST:-${FIXgsi}/rejectlist_global.txt}
 
 # GSI namelist
 SETUP=${SETUP:-""}
@@ -385,6 +389,11 @@ ${NLN} ${AEROINFO}     aeroinfo
 ${NLN} ${SCANINFO}     scaninfo
 ${NLN} ${HYBENSINFO}   hybens_info
 ${NLN} ${OBERROR}      errtable
+${NLN} ${BLACKLST}     blacklist
+
+${NLN} ${FIXgsi}/AIRS_CLDDET.NL   AIRS_CLDDET.NL
+${NLN} ${FIXgsi}/CRIS_CLDDET.NL   CRIS_CLDDET.NL
+${NLN} ${FIXgsi}/IASI_CLDDET.NL   IASI_CLDDET.NL
 
 #If using correlated error, link to the covariance files
 if [[ ${USE_CORRELATED_OBERRS} == "YES" ]];  then
@@ -423,7 +432,7 @@ for file in $(awk '{if($1!~"!"){print $1}}' satinfo | sort | uniq); do
    ${NLN} ${CRTM_FIX}/${file}.SpcCoeff.bin ./crtm_coeffs/${file}.SpcCoeff.bin
    ${NLN} ${CRTM_FIX}/${file}.TauCoeff.bin ./crtm_coeffs/${file}.TauCoeff.bin
 done
-#${NLN} ${CRTM_FIX}/amsua_metop-a_v2.SpcCoeff.bin ./crtm_coeffs/amsua_metop-a_v2.SpcCoeff.bin
+${NLN} ${CRTM_FIX}/amsua_metop-a_v2.SpcCoeff.bin ./crtm_coeffs/amsua_metop-a_v2.SpcCoeff.bin
 
 ${NLN} ${CRTM_FIX}/Nalli.IRwater.EmisCoeff.bin   ./crtm_coeffs/Nalli.IRwater.EmisCoeff.bin
 ${NLN} ${CRTM_FIX}/NPOESS.IRice.EmisCoeff.bin    ./crtm_coeffs/NPOESS.IRice.EmisCoeff.bin
@@ -471,13 +480,13 @@ ${NLN} ${B1AMUB}           amsubbufr
 ${NLN} ${B1MHS}            mhsbufr
 ${NLN} ${ESAMUA}           amsuabufrears
 ${NLN} ${ESAMUB}           amsubbufrears
-#$NLN $ESMHS            mhsbufrears
+#$NLN  $ESMHS              mhsbufrears
 ${NLN} ${AMUADB}           amsuabufr_db
 ${NLN} ${AMUBDB}           amsubbufr_db
-#$NLN $MHSDB            mhsbufr_db
+#$NLN  $MHSDB              mhsbufr_db
 ${NLN} ${SBUVBF}           sbuvbufr
 ${NLN} ${OMPSNPBF}         ompsnpbufr
-#${NLN} ${OMPSLPBF}         ompslpbufr
+${NLN} ${OMPSLPBF}         ompslpbufr
 ${NLN} ${OMPSTCBF}         ompstcbufr
 ${NLN} ${GOMEBF}           gomebufr
 ${NLN} ${OMIBF}            omibufr
@@ -490,7 +499,7 @@ ${NLN} ${ESIASI}           iasibufrears
 ${NLN} ${IASIDB}           iasibufr_db
 ${NLN} ${AMSREBF}          amsrebufr
 ${NLN} ${AMSR2BF}          amsr2bufr
-#${NLN} ${GMI1CRBF}         gmibufr # GMI temporarily disabled due to array overflow.
+${NLN} ${GMI1CRBF}         gmibufr
 ${NLN} ${SAPHIRBF}         saphirbufr
 ${NLN} ${SEVIRIBF}         seviribufr
 ${NLN} ${CRISBF}           crisbufr
@@ -511,7 +520,9 @@ ${NLN} ${B1AVHPM}          avhpmbufr
 ${NLN} ${AHIBF}            ahibufr
 ${NLN} ${ABIBF}            abibufr
 ${NLN} ${HDOB}             hdobbufr
-#${NLN} ${SSTVIIRS}         sstviirs
+${NLN} ${SSTVIIRS}         sstviirs
+${NLN} ${SAILDRONE}        sdbufr
+${NLN} ${GSBBF}            wbbufr
 
 if [[ "${DONST}" == "YES" ]]; then
     ${NLN} "${NSSTBF}" nsstbufr
@@ -774,7 +785,7 @@ cat > gsiparm.anl << EOF
   lobsdiag_forenkf=${lobsdiag_forenkf},lwrite_peakwt=${lwrite_peakwt:-".false."},
   write_fv3_incr=${write_fv3_increment},
   nhr_anal=${IAUFHRS},
-  ta2tb=${ta2tb},
+  ta2tb=${ta2tb},optconv=${optconv},
   ${WRITE_INCR_ZERO}
   ${WRITE_ZERO_STRAT}
   ${WRITE_STRAT_EFOLD}
@@ -812,11 +823,13 @@ cat > gsiparm.anl << EOF
   dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=.false.,c_varqc=0.02,
   use_poq7=.true.,qc_noirjaco3_pole=.true.,vqc=.false.,nvqc=.true.,
   aircraft_t_bc=.true.,biaspredt=1.0e5,upd_aircraft=.true.,cleanup_tail=.true.,
-  tcp_width=70.0,tcp_ermax=7.35,
+  tcp_width=70.0,tcp_ermax=7.35,airs_cads=${AIRS_CADS},cris_cads=${CRIS_CADS},
+  iasi_cads=${IASI_CADS},blacklst=${blacklst:-.false.},
   ${OBSQC}
 /
 &OBS_INPUT
-  dmesh(1)=145.0,dmesh(2)=150.0,dmesh(3)=100.0,time_window_max=3.0,
+  dmesh(1)=145.0,dmesh(2)=150.0,dmesh(3)=100.0,dmesh(4)=50.0,time_window_max=3.0,
+  hofx_2m_sfcfile=${hofx_2m_sfcfile},
   ${OBSINPUT}
 /
 OBS_INPUT::
@@ -831,6 +844,13 @@ OBS_INPUT::
    prepbufr       pw          null        pw                  0.0     0     0
    prepbufr       uv          null        uv                  0.0     0     0
    prepbufr_profl uv          null        uv                  0.0     0     0
+   wbbufr         t           null        t                   0.0     0     0
+   wbbufr         q           null        q                   0.0     0     0
+   wbbufr         uv          null        uv                  0.0     0     0
+   sdbufr         ps          null        ps                  0.0     0     0
+   sdbufr         t           null        t                   0.0     0     0
+   sdbufr         q           null        q                   0.0     0     0
+   sdbufr         uv          null        uv                  0.0     0     0
    satwndbufr     uv          null        uv                  0.0     0     0
    hdobbufr       uv          null        uv                  0.0     0     0
    prepbufr       spd         null        spd                 0.0     0     0
@@ -890,9 +910,11 @@ OBS_INPUT::
    gomebufr       gome        metop-b     gome_metop-b        0.0     2     0
    atmsbufr       atms        npp         atms_npp            0.0     1     1
    atmsbufr       atms        n20         atms_n20            0.0     1     1
+   atmsbufr       atms        n21         atms_n21            0.0     1     1
    crisbufr       cris        npp         cris_npp            0.0     1     0
    crisfsbufr     cris-fsr    npp         cris-fsr_npp        0.0     1     0
    crisfsbufr     cris-fsr    n20         cris-fsr_n20        0.0     1     0
+   crisfsbufr     cris-fsr    n21         cris-fsr_n21        0.0     1     0
    gsnd1bufr      sndrd1      g14         sndrD1_g14          0.0     1     0
    gsnd1bufr      sndrd2      g14         sndrD2_g14          0.0     1     0
    gsnd1bufr      sndrd3      g14         sndrD3_g14          0.0     1     0
@@ -903,22 +925,35 @@ OBS_INPUT::
    gsnd1bufr      sndrd4      g15         sndrD4_g15          0.0     1     0
    oscatbufr      uv          null        uv                  0.0     0     0
    mlsbufr        mls30       aura        mls30_aura          0.0     0     0
-   avhambufr      avhrr       metop-a     avhrr3_metop-a      0.0     1     0
-   avhpmbufr      avhrr       n18         avhrr3_n18          0.0     1     0
-   avhambufr      avhrr       metop-b     avhrr3_metop-b      0.0     1     0
-   avhpmbufr      avhrr       n19         avhrr3_n19          0.0     1     0
+   avhambufr      avhrr       metop-a     avhrr3_metop-a      0.0     4     0
+   avhpmbufr      avhrr       n18         avhrr3_n18          0.0     4     0
+   avhambufr      avhrr       metop-b     avhrr3_metop-b      0.0     4     0
+   avhambufr      avhrr       metop-c     avhrr3_metop-c      0.0     4     0
+   avhpmbufr      avhrr       n19         avhrr3_n19          0.0     4     0
    amsr2bufr      amsr2       gcom-w1     amsr2_gcom-w1       0.0     3     0
-   gmibufr        gmi         gpm         gmi_gpm             0.0     3     0
+   gmibufr        gmi         gpm         gmi_gpm             0.0     1     0
    saphirbufr     saphir      meghat      saphir_meghat       0.0     3     0
    ahibufr        ahi         himawari8   ahi_himawari8       0.0     1     0
    abibufr        abi         g16         abi_g16             0.0     1     0
    abibufr        abi         g17         abi_g17             0.0     1     0
+   abibufr        abi         g18         abi_g18             0.0     1     0
+   abibufr        abi         g19         abi_g19             0.0     1     0
    rapidscatbufr  uv          null        uv                  0.0     0     0
    ompsnpbufr     ompsnp      npp         ompsnp_npp          0.0     0     0
+   ompslpbufr     ompslp      npp         ompslp_npp          0.0     0     0
    ompstcbufr     ompstc8     npp         ompstc8_npp         0.0     2     0
+   ompsnpbufr     ompsnp      n20         ompsnp_n20          0.0     0     0
+   ompstcbufr     ompstc8     n20         ompstc8_n20         0.0     2     0
    amsuabufr      amsua       metop-c     amsua_metop-c       0.0     1     1
    mhsbufr        mhs         metop-c     mhs_metop-c         0.0     1     1
    iasibufr       iasi        metop-c     iasi_metop-c        0.0     1     1
+   sstviirs       viirs-m     npp         viirs-m_npp         0.0     4     0
+   sstviirs       viirs-m     j1          viirs-m_j1          0.0     4     0
+   ahibufr        ahi         himawari9   ahi_himawari9       0.0     1     0
+   sstviirs       viirs-m     j2          viirs-m_j2          0.0     4     0
+   ompsnpbufr     ompsnp      n21         ompsnp_n21          0.0     0     0
+   ompstcbufr     ompstc8     n21         ompstc8_n21         0.0     2     0
+   gomebufr       gome        metop-c     gome_metop-c        0.0     2     0
 ::
 &SUPEROB_RADAR
   ${SUPERRAD}
@@ -933,7 +968,7 @@ OBS_INPUT::
   s_ens_h=800.,s_ens_v=-0.8,readin_localization=.true.,
   aniso_a_en=.false.,oz_univ_static=.false.,uv_hyb_ens=.true.,
   ensemble_path='./ensemble_data/',
-  ens_fast_read=.true.,write_ens_sprd=${write_ens_sprd:-".false."},
+  ens_fast_read=.true.,
   ${HYBRID_ENSEMBLE}
 /
 &RAPIDREFRESH_CLDSURF

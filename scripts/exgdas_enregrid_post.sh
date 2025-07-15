@@ -42,7 +42,7 @@ SUFFIX=${SUFFIX:-".grib2.nc"}
 
 ################################################################################
 # Copy executables to working directory
-$NCP $GETENSMEANEXEC $DATA
+cpreq $GETENSMEANEXEC $DATA
 
 export OMP_NUM_THREADS=$NTHREADS_EPOS
 

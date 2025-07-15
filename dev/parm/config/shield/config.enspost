@@ -6,7 +6,7 @@
 echo "BEGIN: config.enspost"
 
 # Get task specific resources
-. $EXPDIR/config.resources enspost
+source "$EXPDIR/config.resources" enspost
 
 # Convert nemsio files to grib files using post job
 #-------------------------------------------

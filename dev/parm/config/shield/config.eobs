@@ -1,16 +1,13 @@
 #! /usr/bin/env bash
 
-########## config.eobs config.eomg ##########
+########## config.eobs ##########
 # Ensemble innovation specific, dependency config.anal
 
 echo "BEGIN: config.eobs"
 
 # Get task specific resources
-. $EXPDIR/config.resources eobs
+source "${EXPDIR}/config.resources" eobs
 
-# Number of enkf members per innovation job
-export NMEM_EOMGGRP=8  
-export RERUN_EOMGGRP="YES"
 
 # GSI namelist options related to observer for EnKF
 export OBSINPUT_INVOBS="dmesh(1)=225.0,dmesh(2)=225.0,dmesh(3)=225.0,dmesh(4)=100.0"

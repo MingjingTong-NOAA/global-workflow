@@ -28,7 +28,7 @@ FV3_postdet() {
       fi
     done
     if [ "$ICFROM" = "ifs" ]; then
-      ${NCP} "${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc" "$DATA/INPUT/gk03_CF0.nc" \
+      cpreq "${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc" "$DATA/INPUT/gk03_CF0.nc" \
       || ( echo "FATAL ERROR: Unable to copy IFS IC, ABORT!"; exit 1 )
     fi
   # warm start case
@@ -308,7 +308,6 @@ EOF
 
   #============================================================================
   # If doing IAU, change forecast hours
-
   if [[ "${DOIAU:-NO}" == "YES" && "${DO_CUBE2GAUS:-NO}" == "NO" ]]; then
     FHMAX=$((FHMAX + 6))
     if (( FHMAX_HF > 0 )); then
@@ -568,13 +567,13 @@ EOF
   export pseudo_ps=${pseudo_ps:-".false."}
   export phy_data=${phy_data=:-""}
   export sCDATE=${model_start_date_current_cycle}
-  export FHMIN=$FHMIN
-  export FHMAX=$FHMAX
-  export DELTIM=$DELTIM
+  export FHMIN=${FHMIN}
+  export FHMAX=${FHMAX}
+  export DELTIM=${DELTIM}
   export iau_halfdelthrs=$iau_halfdelthrs
-  export FHZER=$FHZER
+  export FHZERO=${FHZERO}
 
-  RHR=$FHMIN
+  RHR=${FHMIN}
   mc=0
   while [[ $RHR -le $FHMAX ]] ; do
      echo "s/_RHR/$RHR/"          > changedate
@@ -636,10 +635,11 @@ EOF
   APRUN_C2G="$launcher -n $npe_c2g --tasks-per-node=$tasks_per_node_c2g --cpus-per-task=${threads_per_task_c2g} -l --multi-prog"
 
   $APRUN_C2G serial-tasks.config 1>&1 2>&2
-  rc=$?
-  export ERR=$rc
-  export err=$ERR
-  $ERRSCRIPT || exit 11
+  export err=$?
+  if [[ ${err} -ne 0 ]]; then
+     echo "FATAL ERROR: ${pgm} returned non-zero status: ${err}; exiting!"
+     exit "${err}"
+  fi
 
   echo "SUB ${FUNCNAME[0]}: done cube2gaus"
 }

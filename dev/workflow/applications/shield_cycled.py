@@ -4,9 +4,24 @@ from wxflow import Configuration
 
 
 class SHiELDCycledAppConfig(AppConfig):
-    '''
-    Class to define GFS cycled configurations
-    '''
+    """
+    Class to define SHiELD cycled configurations.
+
+    This class handles the configuration specific to running SHiELD in cycled mode
+    with data assimilation, including ensemble configurations.
+
+    Parameters
+    ----------
+    conf : Configuration
+        The configuration object containing all settings
+
+    Attributes
+    ----------
+    runs : list
+        List of all available runs (gfs, enkfgfs, gdas, enkfgdas)
+    ens_runs : list
+        List of runs that include ensemble configurations
+    """
 
     def __init__(self, conf: Configuration):
         super().__init__(conf)
@@ -31,7 +46,19 @@ class SHiELDCycledAppConfig(AppConfig):
         self.runs.append('enkfgdas') if 'gdas' in self.ens_runs else 0
 
     def _get_run_options(self, conf: Configuration) -> Dict[str, Any]:
+        """
+        Get run-specific options for SHiELD cycled mode.
 
+        Parameters
+        ----------
+        conf : Configuration
+            Configuration object containing run settings
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary containing run options for each configured run
+        """
         run_options = super()._get_run_options(conf)
 
         for run in self.runs:
@@ -63,11 +90,24 @@ class SHiELDCycledAppConfig(AppConfig):
 
     def _get_app_configs(self, run):
         """
-        Returns the config files that are involved in the cycled app
+        Returns the config files that are involved in the cycled app.
+
+        Parameters
+        ----------
+        run : str
+            Name of the run configuration to process
+
+        Returns
+        -------
+        list
+            List of configuration file names needed for the specified run
         """
         options = self.run_options[run]
 
         configs = ['prep']
+
+        if options['do_prep_sfc']:
+            configs += ['prep_sfc']
 
         if not options['warm_start']:
             configs += ['stage_ic']
@@ -82,7 +122,7 @@ class SHiELDCycledAppConfig(AppConfig):
             configs += ['anal', 'analdiag', 'analcalc']
 
         if options['do_jediocnvar']:
-            configs += ['prepoceanobs', 'marineanlinit', 'marinebmat', 'marineanlvar']
+            configs += ['prepoceanobs', 'marineanlinit', 'marinebmatinit', 'marinebmat', 'marineanlvar']
             if options['do_letkf_ocn']:
                 configs += ['marineanlletkf']
             if options['do_hybvar']:
@@ -170,12 +210,6 @@ class SHiELDCycledAppConfig(AppConfig):
             if options['do_hybvar']:
                 configs += ['esnowanl']
 
-        if options['do_mos']:
-            configs += ['mos_stn_prep', 'mos_grd_prep', 'mos_ext_stn_prep', 'mos_ext_grd_prep',
-                        'mos_stn_fcst', 'mos_grd_fcst', 'mos_ext_stn_fcst', 'mos_ext_grd_fcst',
-                        'mos_stn_prdgen', 'mos_grd_prdgen', 'mos_ext_stn_prdgen', 'mos_ext_grd_prdgen',
-                        'mos_wx_prdgen', 'mos_wx_ext_prdgen']
-
         if options['do_globusarch']:
             configs += ['globus']
 
@@ -183,16 +217,37 @@ class SHiELDCycledAppConfig(AppConfig):
 
     @staticmethod
     def _update_base(base_in):
+        """
+        Update base configuration for cycled mode.
 
+        Parameters
+        ----------
+        base_in : dict
+            Input base configuration dictionary
+
+        Returns
+        -------
+        dict
+            Updated base configuration
+        """
         return base_in
 
     def get_task_names(self):
         """
         Get the task names for each valid run in this cycled configuration.
-        NOTE: The order of the task names matters in the XML.
-              This is the place where that order is set.
-        """
 
+        This method determines which tasks should be run for each configured run.
+        The order of the tasks is important for XML configuration generation.
+
+        Returns
+        -------
+        dict
+            Dictionary with run names as keys and ordered lists of task names as values
+
+        Notes
+        -----
+        The order of the task names matters in the XML generation.
+        """
         # Start with a dictionary of empty task lists for each valid run
         task_names = {run: [] for run in self.runs}
 
@@ -202,6 +257,8 @@ class SHiELDCycledAppConfig(AppConfig):
             # Common gdas and gfs tasks before fcst
             if run in ['gdas', 'gfs']:
                 task_names[run] += ['prep']
+                if options['do_prep_sfc']:
+                    task_names[run] += ['prep_sfc']
 
                 if run == 'gdas' and options['do_tsfc_tile']:
                     task_names[run] += ['getic']
@@ -213,7 +270,7 @@ class SHiELDCycledAppConfig(AppConfig):
                     task_names[run] += ['anal', 'analcalc']
 
                 if options['do_jediocnvar']:
-                    task_names[run] += ['prepoceanobs', 'marineanlinit', 'marinebmat', 'marineanlvar']
+                    task_names[run] += ['prepoceanobs', 'marineanlinit', 'marinebmatinit', 'marinebmat', 'marineanlvar']
                     if options['do_letkf_ocn']:
                         task_names[run] += ['marineanlletkf']
                     if options['do_hybvar']:
@@ -328,12 +385,6 @@ class SHiELDCycledAppConfig(AppConfig):
 
                     if options['do_awips']:
                         task_names[run] += ['awips_20km_1p0deg', 'fbwind']
-
-                    if options['do_mos']:
-                        task_names[run] += ['mos_stn_prep', 'mos_grd_prep', 'mos_ext_stn_prep', 'mos_ext_grd_prep',
-                                            'mos_stn_fcst', 'mos_grd_fcst', 'mos_ext_stn_fcst', 'mos_ext_grd_fcst',
-                                            'mos_stn_prdgen', 'mos_grd_prdgen', 'mos_ext_stn_prdgen',
-                                            'mos_ext_grd_prdgen', 'mos_wx_prdgen', 'mos_wx_ext_prdgen']
 
                 # Last items
                 task_names[run] += ['arch_vrfy']

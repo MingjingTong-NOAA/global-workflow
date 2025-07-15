@@ -38,12 +38,9 @@ declare -rx gcyc="${GDATE:8:2}"
 if [[ "$MODE" != "cycled" ]]; then
   ROTDIR="${ICSDIR}" RUN="${ICDUMP}" YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
     COMIN_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL
-  RUN="${ICDUMP}" YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
-    COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
 else
   YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
-    COMIN_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL \
-    COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
+    COMIN_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL
 fi
 
 YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
@@ -62,8 +59,13 @@ if [[ "${RUN}" =~ "gcafs" ]] || [[ "${RUN}" =~ "gcdas" ]]; then
     COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
 else
   # other runs use their own atmospheric analysis
-  YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
-    COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
+  if [[ "$MODE" == "cycled" ]]; then
+    YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
+      COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
+  else
+    RUN="${ICDUMP}" YMD="${PDY}" HH="${cyc}" declare_from_tmpl -rx \
+      COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
+  fi
 fi
 
 if [[ "${DO_WAVE}" == "YES" ]]; then

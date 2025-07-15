@@ -6,7 +6,7 @@
 echo "BEGIN: config.ergpos"
 
 # Get task specific resources
-. $EXPDIR/config.resources ergpos
+source "$EXPDIR/config.resources" ergpos
 
 export grids="1p00 0p50 0p25"
 
