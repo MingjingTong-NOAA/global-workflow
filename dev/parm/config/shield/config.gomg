@@ -19,10 +19,10 @@ export write_fv3_increment=".false."
 
 export USE_RADSTAT="NO" # This can be only used when bias correction is not-zero.
 export GENDIAG="YES"
-export SETUP='diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.'
+export SETUP="diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.,${SETUP:-}"
 
 # GSI Namelist options for observation operator only
-export SETUP="miter=0,niter=1,thin4d=.true.,${SETUP}"
+export SETUP="miter=0,niter=1,thin4d=.true.,l4densvar=.true.,${SETUP}"
 export BKGVERR="bkgv_flowdep=.false."
 export STRONGOPTS="tlnmc_option=0,nstrong=0,nvmodes_keep=0,baldiag_full=.false.,baldiag_inc=.false.,"
 

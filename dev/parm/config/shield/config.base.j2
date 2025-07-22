@@ -535,7 +535,7 @@ export DO_CA="NO"
 # ensemble replay
 export ENSREPLAY="{{ ENSREPLAY }}"
 export ENSFROMEXP="{{ ENSFROMEXP }}"
-export ENSDIR="/scratch2/GFDL/gfdlscr/${USER}/share/ENSFCST/${ENSFROMEXP}"
+export ENSDIR=${ROTDIR}
 
 # forecast-only and replay mode
 export DO_OMF="{{ DO_OMF }}"
@@ -545,8 +545,8 @@ export DO_POST="{{ DO_POST }}"
 export diag_interval="{{ DIAG_INTERVAL }}"
 
 # omf environment parameters
-export OMFCOMINPREV="/scratch1/NCEPDEV/stmp4/Mingjing.Tong/GDASFCST/${RESTARTEXP}"
-EXPABIAS="NO"
+export OMFCOMINPREV=${ROTDIR}
+export EXPABIAS="NO"
 export FHOMF=6
 if [[ ${MODE} == "omf" || ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))

@@ -29,7 +29,7 @@ class SHiELDOmfAppConfig(AppConfig):
         """
 
         options = self.run_options[run]
-        configs = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
+        configs = ['dfetch', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return configs
 
@@ -48,6 +48,6 @@ class SHiELDOmfAppConfig(AppConfig):
         This is the place where that order is set.
         """
 
-        tasks = ['getfcst', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
+        tasks = ['dfetch', 'prep', 'gomg', 'analdiag', 'arch_vrfy', 'arch_tars', 'cleanup']
 
         return {f"{self.run}": tasks}

@@ -27,4 +27,4 @@ base:
   DO_POST: "NO"
   DO_FETCH_HPSS: "YES"
   DIAG_INTERVAL: 6
-  RESTARTEXP: "shield_cycled_C384"
+  RESTARTEXP: "shield2022_replay_C768b"

@@ -148,7 +148,7 @@ class SHiELDTasks(Tasks):
             cycledef = self.run
         elif self.app_config.mode == "omf":
             deps = []
-            dep_dict = {'type': 'task', 'name': f'{self.run}_getfcst'}
+            dep_dict = {'type': 'task', 'name': f'{self.run}_dfetch'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps)
             cycledef = self.run
@@ -3355,7 +3355,7 @@ class SHiELDTasks(Tasks):
 
         return task
 
-    def getfcst(self):
+    def dfetch(self):
 
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': 'gdas'})
         deps = []
@@ -3367,14 +3367,14 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
 
-        resources = self.get_resource('getfcst')
-        task_name = f'{self.run}_getfcst'
+        resources = self.get_resource('dfetch')
+        task_name = f'{self.run}_dfetch'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run,
-                     'command': f'{self.HOMEgfs}/dev/jobs/getfcst.sh',
+                     'command': f'{self.HOMEgfs}/dev/jobs/dfetch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3489,7 +3489,7 @@ class SHiELDTasks(Tasks):
                 deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
         else:
-            atmos_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': self.run, 'MEMDIR': 'mem001'})
+            atmos_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': self.run, 'MEMDIR': 'mem080'})
             data = f'{atmos_hist_path}/{self.run}.t@Hz.atmf006.nc'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
