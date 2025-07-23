@@ -10,20 +10,6 @@ case ${step} in
   "init")
     tasks_per_node=24
   ;;
-  "fcst" | "efcs")
-    case "${CASE}" in
-      "C768")
-        export tasks_per_node=144
-        ;;
-      "C1152")
-        export tasks_per_node=144
-        ;;
-      *)
-        # Nothing to do for other resolutions
-        true
-        ;;
-    esac
-  ;;
   "eupd")
     # update ntasks to 80 and threads_per_task to 20
     case ${CASE} in

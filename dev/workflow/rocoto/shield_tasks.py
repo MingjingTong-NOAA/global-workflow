@@ -2340,17 +2340,6 @@ class SHiELDTasks(Tasks):
         if self.app_config.mode == 'replay' and self.options['do_omf']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
             deps.append(rocoto.add_dependency(dep_dict))
-
-        # MOS job dependencies
-        if self.run in ['gfs'] and self.options['do_mos']:
-            mos_jobs = ["stn_prep", "grd_prep", "ext_stn_prep", "ext_grd_prep",
-                        "stn_fcst", "grd_fcst", "ext_stn_fcst", "ext_grd_fcst",
-                        "stn_prdgen", "grd_prdgen", "ext_stn_prdgen", "ext_grd_prdgen",
-                        "wx_prdgen", "wx_ext_prdgen"]
-            for job in mos_jobs:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_mos_{job}'}
-                deps.append(rocoto.add_dependency(dep_dict))
-
         if self.options['do_gempak']:
             if self.run in ['gdas']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_gempakmetancdc'}
@@ -2530,16 +2519,6 @@ class SHiELDTasks(Tasks):
                 if self.run in ['gfs']:
                     dep_dict = {'type': 'metatask', 'name': f'{self.run}_ice_prod'}
                     deps.append(rocoto.add_dependency(dep_dict))
-            # MOS job dependencies
-            if self.run in ['gfs'] and self.options['do_mos']:
-                mos_jobs = ["stn_prep", "grd_prep", "ext_stn_prep", "ext_grd_prep",
-                            "stn_fcst", "grd_fcst", "ext_stn_fcst", "ext_grd_fcst",
-                            "stn_prdgen", "grd_prdgen", "ext_stn_prdgen", "ext_grd_prdgen",
-                            "wx_prdgen", "wx_ext_prdgen"]
-                for job in mos_jobs:
-                    dep_dict = {'type': 'task', 'name': f'{self.run}_mos_{job}'}
-                    deps.append(rocoto.add_dependency(dep_dict))
-
             if self.options['do_gempak']:
                 if self.run in ['gdas']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_gempakmetancdc'}
