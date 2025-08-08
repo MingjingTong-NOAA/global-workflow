@@ -50,10 +50,6 @@ cnvw_option=${cnvw_option:-".false."}
 # Observation usage options
 cao_check=${cao_check:-".true."}
 ta2tb=${ta2tb:-".true."}
-optconv=${optconv:-0.0}
-AIRS_CADS=${AIRS_CADS:-".false."}
-IASI_CADS=${IASI_CADS:-".false."}
-CRIS_CADS=${CRIS_CADS:-".false."}
 
 # Diagnostic files options
 netcdf_diag=${netcdf_diag:-".true."}
@@ -84,8 +80,6 @@ RUN=${RUN:-""}
 SENDECF=${SENDECF:-"NO"}
 SENDDBN=${SENDDBN:-"NO"}
 export gesenvir=${gesenvir:-${envir}}
-
-export hofx_2m_sfcfile=${hofx_2m_sfcfile:-".false."}
 
 # Observations
 OPREFIX=${OPREFIX:-""}
@@ -322,7 +316,6 @@ AEROINFO=${AEROINFO:-${FIXgsi}/global_aeroinfo.txt}
 SCANINFO=${SCANINFO:-${FIXgsi}/global_scaninfo.txt}
 HYBENSINFO=${HYBENSINFO:-${FIXgsi}/global_hybens_info.l${LEVS}.txt}
 OBERROR=${OBERROR:-${FIXgsi}/prepobs_errtable.global}
-BLACKLST=${BLACKLST:-${FIXgsi}/rejectlist_global.txt}
 
 # GSI namelist
 SETUP=${SETUP:-""}
@@ -387,10 +380,6 @@ ${NLN} ${AEROINFO}     aeroinfo
 ${NLN} ${SCANINFO}     scaninfo
 ${NLN} ${HYBENSINFO}   hybens_info
 ${NLN} ${OBERROR}      errtable
-
-#${NLN} ${FIXgsi}/AIRS_CLDDET.NL   AIRS_CLDDET.NL
-#${NLN} ${FIXgsi}/CRIS_CLDDET.NL   CRIS_CLDDET.NL
-#${NLN} ${FIXgsi}/IASI_CLDDET.NL   IASI_CLDDET.NL
 
 #If using correlated error, link to the covariance files
 if [[ ${USE_CORRELATED_OBERRS} == "YES" ]];  then
@@ -818,13 +807,11 @@ cat > gsiparm.anl << EOF
   dfact=0.75,dfact1=3.0,noiqc=.true.,oberrflg=.false.,c_varqc=0.02,
   use_poq7=.true.,qc_noirjaco3_pole=.true.,vqc=.false.,nvqc=.true.,
   aircraft_t_bc=.true.,biaspredt=1.0e5,upd_aircraft=.true.,cleanup_tail=.true.,
-  tcp_width=70.0,tcp_ermax=7.35,airs_cads=${AIRS_CADS},cris_cads=${CRIS_CADS},
-  iasi_cads=${IASI_CADS},
+  tcp_width=70.0,tcp_ermax=7.35,
   ${OBSQC}
 /
 &OBS_INPUT
   dmesh(1)=145.0,dmesh(2)=150.0,dmesh(3)=100.0,dmesh(4)=50.0,time_window_max=3.0,
-  hofx_2m_sfcfile=${hofx_2m_sfcfile},
   ${OBSINPUT}
 /
 OBS_INPUT::
