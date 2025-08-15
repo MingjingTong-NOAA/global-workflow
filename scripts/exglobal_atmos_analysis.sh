@@ -435,14 +435,10 @@ if (( imp_physics == 8 )); then
    ${NLN} "${CRTM_FIX}/CloudCoeff.Thompson08.-109z-1.bin" ./crtm_coeffs/CloudCoeff.bin
 elif (( imp_physics == 11 )); then
    echo "using CRTM GFDL cloud optical table"
-   if [[ ${full_hydro:-"NO"} == "YES" ]]; then
-      if [[ ${hydrotable_format:-"netcdf"} == "netcdf" ]]; then
-        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.nc4"} ./crtm_coeffs/CloudCoeff.nc4
-      else
-        ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.bin"} ./crtm_coeffs/CloudCoeff.bin
-      fi
+   if [[ ${hydrotable_format:-"netcdf"} == "netcdf" ]]; then
+      ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.nc4"} ./crtm_coeffs/CloudCoeff.nc4
    else
-      ${NLN} "${CRTM_FIX}/CloudCoeff.bin" ./crtm_coeffs/CloudCoeff.bin
+      ${NLN} ${hydrotable_path:-${CRTM_FIX}}/${hydrotable:-"CloudCoeff.GFDLFV3.-109z-1.bin"} ./crtm_coeffs/CloudCoeff.bin
    fi
 else
    echo "FATAL ERROR: INVALID imp_physics = ${imp_physics}"

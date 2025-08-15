@@ -43,7 +43,6 @@ export AMSREBF=${AMSREBF:-/dev/null}
 export SSMITBF=${SSMITBF:-/dev/null}
 export AMSR2BF=${AMSR2BF:-/dev/null}
 
-GSIVER="v3"
 if [[ $GSIVER == "v2" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x_crtm2.3
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
@@ -55,7 +54,7 @@ elif [[ $GSIVER == "v2fullhydro" ]]; then
   export FIXgsi=${FIXgfs}/gsi_v2
   export full_hydro="YES"
   export cao_check=".true."
-  export ta2tb=".true."
+  export ta2tb=".false."
 elif [[ $GSIVER == "v3" ]]; then
   export GSIEXEC=${EXECgfs}/gsi.x
   export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis.sh

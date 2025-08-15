@@ -509,12 +509,13 @@ export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
 # Make the aircraft prepbufr file on the fly or use the GDA version
 export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
-# full hydrometeors assimilation
-export full_hydro="YES"
+# SHiELD (2022, 2024) and GSI analysis (v2, v2fullhydro, v3) versions
+export SHiELD_VERSION="2024"
+export GSIVER="v3"
 export update_hydro="NO"
 
 # Analysis increments to zero in CALCINCEXEC
-if [ $update_hydro != "YES" ]; then
+if [ ${update_hydro:-"NO"} != "YES" ]; then
    export INCREMENTS_TO_ZERO="'liq_wat_inc','icmr_inc','rwmr_inc','snmr_inc','grle_inc'"
 fi
 
