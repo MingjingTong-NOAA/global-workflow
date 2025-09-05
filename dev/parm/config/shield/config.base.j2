@@ -510,7 +510,7 @@ export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
 export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
 # SHiELD (2022, 2024) and GSI analysis (v2, v2fullhydro, v3) versions
-export SHiELD_VERSION="2024"
+export SHiELD_VERSION="2022"
 export GSIVER="v3"
 export update_hydro="NO"
 
@@ -549,9 +549,13 @@ export diag_interval="{{ DIAG_INTERVAL }}"
 export OMFCOMINPREV=${ROTDIR}
 export EXPABIAS="NO"
 export FHOMF=6
-if [[ ${MODE} == "omf" || ${DO_OMF} == "YES" ]]; then
+if [[ ${MODE} == "omf" ]]; then
   export FHMIN=$(( FHOMF - 3 ))
   export FHMAX=$(( FHOMF + 3 ))
+  export FHOUT=1
+fi
+
+if [[ ${DO_OMF} == "YES" ]]; then
   export FHOUT=1
 fi
 

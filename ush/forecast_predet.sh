@@ -522,13 +522,13 @@ FV3_predet(){
     FNSOTC="${FIXam}/global_soiltype.statsgo.t${JCAP}.${LONB}.${LATB}.rg.grb"
     FNABSC="${FIXam}/global_mxsnoalb.uariz.t${JCAP}.${LONB}.${LATB}.rg.grb"
     FNSMCC="${FIXam}/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"
-  fi
 
-  [[ ! -f $FNALBC ]] && FNALBC="${FIXam}/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNVETC ]] && FNVETC="${FIXam}/global_vegtype.igbp.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNSOTC ]] && FNSOTC="${FIXam}/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNABSC ]] && FNABSC="${FIXam}/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
-  [[ ! -f $FNSMCC ]] && FNSMCC="${FIXam}/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+    [[ ! -f $FNALBC ]] && FNALBC="${FIXam}/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
+    [[ ! -f $FNVETC ]] && FNVETC="${FIXam}/global_vegtype.igbp.t1534.3072.1536.rg.grb"
+    [[ ! -f $FNSOTC ]] && FNSOTC="${FIXam}/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
+    [[ ! -f $FNABSC ]] && FNABSC="${FIXam}/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
+    [[ ! -f $FNSMCC ]] && FNSMCC="${FIXam}/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+  fi
 
   if [[ "$DONST" == "NO" && "${DOMLO}" == ".true." ]]; then
     FNMLDC=${FNMLDC:-"${FIXshield}/climo_data.v201807/mld/mld_DR003_c1m_reg2.0.grb"}
