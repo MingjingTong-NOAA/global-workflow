@@ -3,8 +3,8 @@
 set -x
 
 ###############################################################
-# Source FV3GFS workflow modules
-source "${HOMEgfs}/ush/load_fv3gfs_modules.sh"
+# Source GSI workflow modules
+source "${HOMEgfs}/dev/ush/load_modules.sh" gsi
 status=$?
 if [[ ${status} -ne 0 ]]; then
     exit "${status}"
@@ -33,6 +33,5 @@ done
 
 ###############################################################
 # Exit out cleanly
-
 
 exit 0

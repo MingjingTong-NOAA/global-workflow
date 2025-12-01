@@ -9,20 +9,20 @@ Status
 ======
 
 * State of develop (HEAD) branch: GFSv17+ development
-* State of operations (dev/gfs.v16 branch): GFS v16.3.24 `tag: [gfs.v16.3.24] <https://github.com/NOAA-EMC/global-workflow/releases/tag/gfs.v16.3.24>`_
+* State of operations (dev/gfs.v16 branch): GFS v16.3.28 `tag: [gfs.v16.3.28] <https://github.com/NOAA-EMC/global-workflow/releases/tag/gfs.v16.3.28>`_
 
 =============
 Code managers
 =============
 
-* Kate Friedman - @KateFriedman-NOAA / kate.friedman@noaa.gov
 * David Huber - @DavidHuber-NOAA / david.huber@noaa.gov
+* Rahul Mahajan - @aerorahul / rahul.mahajan@noaa.gov
 
 =============
 Announcements
 =============
 
-General updates: NOAA employees and affiliates can join the gfs-announce distribution list to get updates on the GFS and global-workflow. Contact Kate Friedman (kate.friedman@noaa.gov) to get added to the list or removed from it.
+General updates: NOAA employees and affiliates can join the gfs-announce distribution list to get updates on the GFS and global-workflow. Contact a code manager to get added to the list or removed from it.
 
 GitHub updates: Users should adjust their "Watch" settings for this repo so they receive notifications as they'd like to. Find the "Watch" or "Unwatch" button towards the top right of the `authoritative global-workflow repository page <https://github.com/NOAA-EMC/global-workflow>`_ and click it to adjust how you watch the repo.
 
@@ -35,6 +35,7 @@ Table of Contents
    :maxdepth: 3
 
    development.rst
+   testing.rst
    components.rst
    jobs.rst
    hpc.rst
@@ -44,5 +45,4 @@ Table of Contents
    noaa_csp.rst
    errors_faq.rst
    globus_arch.rst
-   configure.rst
    gcafs.rst

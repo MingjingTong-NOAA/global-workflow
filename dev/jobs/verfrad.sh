@@ -3,10 +3,12 @@
 set -x
 
 ###############################################################
-# Source FV3GFS workflow modules
-source "${HOMEgfs}/ush/load_fv3gfs_modules.sh"
+# Source GSI workflow modules
+source "${HOMEgfs}/dev/ush/load_modules.sh" gsi
 status=$?
-(( status != 0 )) && exit "${status}"
+if [[ status -ne 0 ]]; then
+    exit "${status}"
+fi
 
 export job="verfrad"
 export jobid="${job}.$$"

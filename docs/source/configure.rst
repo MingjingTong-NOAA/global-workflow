@@ -2,7 +2,7 @@
 Configure Run
 =============
 
-The global-workflow configs contain switches that change how the system runs. Many defaults are set initially. Users wishing to run with different settings should adjust their $EXPDIR configs and then rerun the ``setup_xml.py`` script since some configuration settings/switches change the workflow/xml ("Adjusts XML" column value is "YES").
+The global-workflow configs contain switches that change how the system runs. Many defaults are set initially. Users wishing to run with different settings should adjust their $EXPDIR configs and then rerun the ``setup_workflow.py`` script since some configuration settings/switches change the workflow/xml ("Adjusts XML" column value is "YES").
 
 +------------------+----------------------------------+---------------+-------------+---------------------------------------------------+
 | Switch           | What                             | Default       | Adjusts XML | More Details                                      |
@@ -69,4 +69,9 @@ The global-workflow configs contain switches that change how the system runs. Ma
 +------------------+----------------------------------+---------------+-------------+---------------------------------------------------+
 | WRITE_DOPOST     | Run inline post                  | .true.        | NO          | If .true. produces master post output in forecast |
 |                  |                                  |               |             | job                                               |
++------------------+----------------------------------+---------------+-------------+---------------------------------------------------+
+| USE_BUILD_GSINFO | Build the GSI info files         | YES           | NO          | If YES, the GSI analysis jobs will build the      |
+|                  |                                  |               |             | satinfo, cnvinfo, and ozinfo files dynamically.   |
+|                  |                                  |               |             | If NO, static versions located in the GSI FIX     |
+|                  |                                  |               |             | directory will be used.                           |
 +------------------+----------------------------------+---------------+-------------+---------------------------------------------------+

@@ -52,12 +52,12 @@ def prep_input_nml(task_config: AttrDict,
     """Prepare the mom_input.nml file
     """
     # stage input.nml.j2
-    mom_input_nml_tmpl_src = os.path.join(task_config.PARMsoca, 'fms', 'input.nml.j2')
+    mom_input_nml_tmpl_src = os.path.join(task_config.PARMmarine, 'fms', 'input.nml.j2')
     mom_input_nml_tmpl = os.path.join(task_config.DATA, 'mom_input.nml.tmpl')
     FileHandler({'copy': [[mom_input_nml_tmpl_src, mom_input_nml_tmpl]]}).sync()
 
     # swap date and stacksize
-    date_init = [int(s) for s in task_config.MARINE_WINDOW_END.strftime('%Y,%m,%d,%H,%M,%S').split(',')]
+    date_init = [int(s) for s in task_config.WINDOW_END.strftime('%Y,%m,%d,%H,%M,%S').split(',')]
     input_nml_config = {'domain_stack_size': task_config.DOMAIN_STACK_SIZE,
                         'date_init': date_init,
                         'simple_geom': simple_geom,

@@ -1,20 +1,18 @@
 #! /usr/bin/env bash
 
 export WIPE_DATA="NO"
-export DATAjob="${DATAROOT}/${RUN}marineanalysis.${PDY:-}${cyc}"
+export DATAjob="${DATAROOT}/marineanalysis.${PDY:-}${cyc}"
 export DATAens="${DATAjob}/ensdata"
-export DATA="${DATAjob}/marinevariational"
+export DATA="${DATAjob}/marineanlvar"
 source "${HOMEgfs}/ush/jjob_header.sh" -e "marineanlvar" -c "base marineanl marineanlvar"
 
 ##############################################
 # Set variables used in the script
 ##############################################
 
-
 ##############################################
 # Begin JOB SPECIFIC work
 ##############################################
-
 
 ###############################################################
 # Run relevant script
@@ -33,8 +31,8 @@ fi
 ##############################################
 # Final processing
 ##############################################
-if [[ -e "${pgmout}" ]] ; then
-  cat "${pgmout}"
+if [[ -e "${pgmout}" ]]; then
+    cat "${pgmout}"
 fi
 
 exit 0

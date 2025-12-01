@@ -28,8 +28,8 @@ def main():
             'DOHYBVAR', 'DOIAU_ENKF', 'IAU_OFFSET', 'DOIAU', 'DO_CA',
             'DO_CALC_INCREMENT', 'assim_freq', 'ARCH_CYC', 'DO_JEDISNOWDA',
             'ARCH_WARMICFREQ', 'ARCH_FCSTICFREQ', 'DOHYBVAR_OCN',
-            'DOLETKF_OCN', 'IAUFHRS_ENKF', 'NET', 'NMEM_ENS_GFS',
-            'atmf_interval', 'ARCHRADSTAT', 'write_spread_diag']
+            'atmf_interval', 'ARCHRADSTAT', 'write_spread_diag', 'EXP_WARM_START',
+            'DOLETKF_OCN', 'IAUFHRS_ENKF', 'NET', 'NMEM_ENS_GFS', 'DO_GSISOILDA', 'DO_LAND_IAU']
 
     archive_dict = AttrDict()
     for key in keys:

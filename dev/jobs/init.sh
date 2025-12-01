@@ -1,21 +1,18 @@
 #! /usr/bin/env bash
 
-source "${HOMEgfs}/ush/preamble.sh"
+set -x
 
-###############################################################
-# Source FV3GFS workflow modules
-. ${HOMEgfs}/ush/load_fv3gfs_modules.sh
+source "${HOMEgfs}/dev/ush/load_modules.sh" run
 status=$?
-if [[ ${status} -ne 0 ]]; then
+if [[ "${status}" -ne 0 ]]; then
     exit "${status}"
 fi
 
 export job="init"
 export jobid="${job}.$$"
 
-###############################################################
 # Execute the JJOB
-${HOMEgfs}/jobs/JGLOBAL_INIT
+"${HOMEgfs}/jobs/JGLOBAL_INIT"
 status=$?
 
 exit "${status}"

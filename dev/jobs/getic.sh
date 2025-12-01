@@ -1,24 +1,19 @@
 #! /usr/bin/env bash
 
-source "${HOMEgfs}/ush/preamble.sh"
+set -x
 
-###############################################################
 # Source FV3GFS workflow modules
-. "${HOMEgfs}"/ush/load_fv3gfs_modules.sh
+source "${HOMEgfs}/dev/ush/load_modules.sh" run
 status=$?
-[[ ${status} -ne 0 ]] && exit "${status}"
-
-###############################################################
-# setup python path for workflow utilities and tasks
-PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}${HOMEgfs}/ush/python"
-export PYTHONPATH
+if [[ "${status}" -ne 0 ]]; then
+    exit "${status}"
+fi
 
 export job="getic"
 export jobid="${job}.$$"
 
-###############################################################
 # Execute the JJOB
-"${HOMEgfs}"/jobs/JGLOBAL_GETIC
+"${HOMEgfs}/jobs/JGLOBAL_GETIC"
 status=$?
 
 exit "${status}"

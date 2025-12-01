@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
+# shellcheck disable=SC2034
 
 # GaeaC6-specific job resources
 
 unset memory
 unset "memory_${RUN}"
-export FI_CXI_RX_MATCH_MODE=hybrid
 
 case ${step} in
   "init")
@@ -16,7 +16,6 @@ case ${step} in
       "C768")
         export ntasks=240
         export threads_per_task=20
-        #export tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
         export tasks_per_node=8
         ;;
       "C1152")
@@ -37,7 +36,7 @@ case ${step} in
       "C1152")
         export threads_per_task=16
         ;;
-      *) 
+      *)
         ;;
     esac
     if [[ "${CASE}" == "C768" || "${CASE}" == "C1152" ]]; then
@@ -51,6 +50,10 @@ case ${step} in
     fi
     ;;
 
+  "atmanlvar" | "atmensanlobs" | "atmensanlsol")
+    export tasks_per_node=48
+    ;;
+
   "marinebmat")
     case ${OCNRES} in
       "025")
@@ -61,11 +64,10 @@ case ${step} in
     esac
     ;;
 
-  "ocnanalecen")
+  "marineanlecen")
     case ${OCNRES} in
       "025")
-        ntasks=288
-        tasks_per_node=12
+        tasks_per_node=24
         ;;
       *)
         ;;

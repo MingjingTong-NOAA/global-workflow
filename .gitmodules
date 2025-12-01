@@ -7,6 +7,7 @@
 [submodule "sorc/gdas.cd"]
   path = sorc/gdas.cd
   url = https://github.com/NOAA-EMC/GDASApp.git
+  ignore = dirty
 [submodule "sorc/gsi_monitor.fd"]
   path = sorc/gsi_monitor.fd
   url = https://github.com/NOAA-EMC/GSI-Monitor.git
@@ -15,7 +16,7 @@
 	url = https://github.com/MingjingTong-NOAA/shield_utils.git
 [submodule "sorc/gfs_utils.fd"]
 	path = sorc/gfs_utils.fd
-	url = https://github.com/MingjingTong-NOAA/gfs-utils.git
+	url = https://github.com/NOAA-EMC/gfs-utils.git
 	branch = gfdl_shield
 [submodule "sorc/ufs_utils.fd"]
 	path = sorc/ufs_utils.fd

@@ -5,6 +5,8 @@
 
 echo "BEGIN: config.marineanlinit"
 
+
 # Get task specific resources
-. "${EXPDIR}/config.resources" marineanlinit
+source "${EXPDIR}/config.resources" marineanlinit
+
 echo "END: config.marineanlinit"

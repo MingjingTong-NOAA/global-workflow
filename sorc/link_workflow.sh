@@ -15,8 +15,8 @@ Usage: ${BASH_SOURCE[0]} [-h][-o][-u][--nest]
     Print this help message and exit
   -o:
     Configure for NCO (copy instead of link)
-  -s:
-    Configure for SHiELD
+  -u:
+    Configure for UFS 
 EOF
   exit 1
 }
@@ -34,7 +34,7 @@ while getopts ":hou-:" option; do
     RUN_ENVIR="nco"
     ;;
   u)
-    echo "-m option received, configuring for SHiELD"
+    echo "-u option received, configuring for UFS"
     MODEL="ufs"
     ;;
   -)
@@ -78,7 +78,7 @@ ${LINK_OR_COPY} "${HOMEgfs}/versions/run.${machine}.ver" "${HOMEgfs}/versions/ru
 #------------------------------
 case "${machine}" in
 "wcoss2") FIX_DIR="/lfs/h2/emc/global/noscrub/emc.global/FIX/fix" ;;
-"hera") FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix" ;;
+"hera" | "ursa") FIX_DIR="/scratch3/NCEPDEV/global/role.glopara/fix" ;;
 "orion") FIX_DIR="/work2/noaa/global/role-global/fix" ;;
 "hercules") FIX_DIR="/work2/noaa/global/role-global/fix" ;;
 "gaeac5") FIX_DIR="/gpfs/f5/ufs-ard/world-shared/global/glopara/data/fix" ;;
@@ -123,7 +123,7 @@ done
 
 # Link fix directories
 if [[ -n "${FIX_DIR}" ]]; then
-  if [[ ! -d "${HOMEgfs}/fix" ]]; then mkdir "${HOMEgfs}/fix" || exit 1; fi
+  mkdir -p "${HOMEgfs}/fix" || exit 1
 fi
 cd "${HOMEgfs}/fix" || exit 1
 for dir in aer \
@@ -215,17 +215,12 @@ done
 
 cd "${HOMEgfs}/scripts" || exit 8
 if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
-  declare -a gdas_scripts=(exglobal_prep_ocean_obs.py
-    exgdas_global_marine_analysis_ecen.py
-  )
+  declare -a gdas_scripts=(exglobal_prep_ocean_obs.py)
   for gdas_script in "${gdas_scripts[@]}"; do
     ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/scripts/${gdas_script}" .
   done
 fi
-cd "${HOMEgfs}/ush" || exit 8
-for file in global_cycle_driver.sh global_cycle.sh; do
-  ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/${file}" .
-done
+cd "${HOMEgfs}/ush" || exit 1
 if [[ "${MODEL}" == "shield" ]]; then
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/global_cycle_shield.sh" .
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/ufs_utils.fd/ush/run_sfcanl_chgres.sh" .
@@ -277,9 +272,7 @@ fi
 #------------------------------
 if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
   cd "${HOMEgfs}/fix" || exit 1
-  if [[ ! -d gdas ]]; then
-      mkdir -p gdas
-  fi
+  mkdir -p gdas
   cd gdas || exit 1
   for gdas_sub in fv3jedi gsibec obs soca aero snow; do
     if [[ -d "${gdas_sub}" ]]; then
@@ -294,8 +287,10 @@ fi
 #--add GDASApp parm directory
 #------------------------------
 if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
-  cd "${HOMEgfs}/parm/gdas" || exit 1
-  declare -a gdasapp_comps=("aero" "atm" "io" "ioda" "snow" "soca" "jcb-gdas" "jcb-algorithms" "stat")
+  cd "${HOMEgfs}/parm" || exit 1
+  mkdir -p gdas
+  cd gdas || exit 1
+  declare -a gdasapp_comps=("aero" "atm" "io" "ioda" "snow" "marine" "jcb-gdas" "jcb-algorithms" "anlstat" "analcalc")
   for comp in "${gdasapp_comps[@]}"; do
     if [[ -d "${comp}" ]]; then
         rm -rf "${comp}"
@@ -305,15 +300,33 @@ if [[ -d "${HOMEgfs}/sorc/gdas.cd" ]]; then
 fi
 
 #------------------------------
+#--add SPOC parm and ush directory
+#------------------------------
+sources=("config" "scripts")
+targets=("parm/gdas" "ush")
+for i in "${!sources[@]}"; do
+  src="${HOMEgfs}/sorc/gdas.cd/sorc/spoc/dump/${sources[${i}]}"
+  dst="${HOMEgfs}/${targets[${i}]}"
+
+  if [[ -d "${src}" ]]; then
+    cd "${dst}" || exit 1
+    ${LINK_OR_COPY} "${src}" "spoc"
+  fi
+done
+
+#------------------------------
 #--add GDASApp files
 #------------------------------
 if [[ -d "${HOMEgfs}/sorc/gdas.cd/build" ]]; then
-  cd "${HOMEgfs}/ush" || exit 1
-  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/soca"                              .
-  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/ufsda"                              .
+  cd "${HOMEgfs}/ush/python" || exit 1
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/soca"  .
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/ufsda" .
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/ioda/bufr2ioda/gen_bufr2ioda_json.py"    .
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/ioda/bufr2ioda/gen_bufr2ioda_yaml.py"    .
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/sorc/da-utils/ush/gsincdiag_to_ioda" .
+  cd "${HOMEgfs}/ush" || exit 1
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/ioda/bufr2ioda/run_bufr2ioda.py"    .
+  ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/ush/snow/bufr_snocvr_snomad.py"         .
   ${LINK_OR_COPY} "${HOMEgfs}/sorc/gdas.cd/build/bin/imsfv3_scf2ioda.py"           .
   declare -a gdasapp_ocn_insitu_profile_platforms=("argo" "bathy" "glider" "marinemammal" "tesac" "xbtctd")
   for platform in "${gdasapp_ocn_insitu_profile_platforms[@]}"; do
@@ -352,11 +365,32 @@ if [[ -d "${HOMEgfs}/sorc/gsi_monitor.fd" ]]; then
   # ${LINK_OR_COPY} "${HOMEgfs}/sorc/gsi_monitor.fd/src/Radiance_Monitor/nwprod/gdas_radmon/parm/gdas_radmon.parm" .
 fi
 
+#-------------------------------------------
+#--Add GSI conv, sat, and oz info parm files
+#-------------------------------------------
+if [[ -d "${HOMEgfs}/sorc/gsi_enkf.fd/fix/build_gsinfo" ]]; then
+
+  cd "${HOMEgfs}/parm" || exit 1
+
+  mkdir -p gsinfo
+
+  cd gsinfo || exit 1
+
+  for dir in convinfo satinfo ozinfo obs_input hirs_fix; do
+    if [[ -d "${dir}" ]]; then
+        rm -rf "${dir}"
+    fi
+    ${LINK_OR_COPY} "${HOMEgfs}/sorc/gsi_enkf.fd/fix/build_gsinfo/${dir}" "${dir}"
+  done
+fi
+
+
 #------------------------------
 #--link executables
 #------------------------------
 
-if [[ ! -d "${HOMEgfs}/exec" ]]; then mkdir "${HOMEgfs}/exec" || exit 1; fi
+mkdir -p "${HOMEgfs}/exec" || exit 1
+
 cd "${HOMEgfs}/exec" || exit 1
 
 for utilexe in fbwndgfs.x gaussian_sfcanl.x gfs_bufr.x supvit.x syndat_getjtbul.x \
@@ -377,7 +411,7 @@ if [[ "${MODEL}" == "shield" ]]; then
   if [[ -f "${HOMEgfs}/sorc/shield.fd/SHiELD_build/Build/bin/${model_exe}" ]]; then
     ${LINK_OR_COPY} "${HOMEgfs}/sorc/shield.fd/SHiELD_build/Build/bin/${model_exe}" "${model_exe}"
   fi
-  for utilexe in fv3_c2g_atms.x gaussian_sfcanl.x gaussian_sfcfcst.x
+  for utilexe in fv3_c2g_atms.x gaussian_sfcfcst.x
   do
     [[ -s "${utilexe}" ]] && rm -f "${utilexe}"
     ${LINK_OR_COPY} "${HOMEgfs}/sorc/shield_utils.fd/install/bin/${utilexe}" .
@@ -471,7 +505,7 @@ fi
 
 # GDASApp libraries
 if [[ -d "${HOMEgfs}/sorc/gdas.cd/install" ]]; then
-  if [[ ! -d "${HOMEgfs}/lib" ]]; then mkdir "${HOMEgfs}/lib" || exit 1; fi
+  mkdir -p "${HOMEgfs}/lib" || exit 1
   cd "${HOMEgfs}/lib" || exit 1
   cp -af "${HOMEgfs}/sorc/gdas.cd/install/lib/." ./
 fi
@@ -480,11 +514,11 @@ fi
 #--link source code directories
 #------------------------------
 cd "${HOMEgfs}/sorc" || exit 8
-if [[ -d ufs_model.fd ]]; then
+if [[ -d ufs_model.fd && "${MODEL}" != "shield" ]]; then
   if [[ -d upp.fd ]]; then
       rm -rf upp.fd
   fi
-  ${LINK} ufs_model.fd/FV3/upp upp.fd
+  ${LINK} ufs_model.fd/UFSATM/upp upp.fd
 fi
 
 if [[ -d gsi_enkf.fd ]]; then

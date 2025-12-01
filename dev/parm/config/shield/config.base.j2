@@ -154,6 +154,7 @@ export SENDSDM=${SENDSDM:-"NO"}
 export SENDDBN_NTC=${SENDDBN_NTC:-"NO"}
 export SENDDBN=${SENDDBN:-"NO"}
 export DBNROOT=${DBNROOT:-${UTILROOT:-}/fakedbn}
+export SENDAWIP=${SENDAWIP:-"NO"}
 
 # APP settings
 export APP="{{ APP }}"
@@ -182,8 +183,12 @@ aero_fcst_runs="gdas" # When to run aerosol forecast: gdas, gfs, or both
 aero_anl_runs="gdas gfs" # When to run aerosol analysis: gdas, gfs, or both
 export DO_AERO_FCST="NO"
 export DO_AERO_ANL="NO"
-export DOBNDPNT_WAVE="NO"
-export DOIBP_WAV="NO" # Option to create point outputs from input boundary points
+if [[ "${RUN}" == "gfs" ]] ; then
+   export DOBNDPNT_WAVE="YES" # Create point outputs for downstream boundary points
+else
+   export DOBNDPNT_WAVE="NO"
+fi
+
 export FRAC_GRID=".false."
 export DO_NEST="NO" # Whether to run a global-nested domain
 if [[ "${DO_NEST:-NO}" == "YES" ]] ; then
@@ -204,6 +209,7 @@ export OPS_RES="C768" # Do not change # TODO: Why is this needed and where is it
 export LEVS=91
 export CASE="{{ CASE_CTL }}"
 export CASE_ENS="{{ CASE_ENS }}"
+export CASE_HIST="{{ CASE_HIST | default('${CASE}') }}"
 export OCNRES="{{ OCNRES }}"
 export ICERES="${OCNRES}"
 
@@ -419,6 +425,8 @@ export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
 export DO_CALC_INCREMENT="NO"
+export USE_BUILD_GSINFO="YES"
+export BUILD_GSINFO_DIR="${PARMgfs}/gsinfo"
 
 # Early-cycle EnKF parameters
 export NMEM_ENS_GFS="{{ NMEM_ENS_GFS }}"
@@ -451,8 +459,13 @@ fi
 export ENKF_SPREAD="YES"
 
 #Soil DA and whether it is (land) IAU
-export DO_GSISOILDA="{{ DO_GSISOILDA }}"
-export DO_LAND_IAU="{{ DO_LAND_IAU }}"
+if [[ "${RUN}" == "gdas" || "${RUN}" == "enkfgdas" ]]; then
+    export DO_GSISOILDA="{{ DO_GSISOILDA }}"
+    export DO_LAND_IAU="{{ DO_LAND_IAU }}"
+else
+    export DO_GSISOILDA="NO"
+    export DO_LAND_IAU=".false."
+fi
 export LSOIL_INCR=2
 
 # Check if cycle is cold starting, DOIAU off, or free-forecast mode
@@ -463,7 +476,9 @@ if [[ "${MODE}" = "cycled" && "${SDATE}" = "${PDY}${cyc}" && ${EXP_WARM_START} =
   export DO_LAND_IAU=".false."
 fi
 
-if [[ "${DOIAU_ENKF}" = "NO" ]]; then export IAUFHRS_ENKF="6,"; fi
+if [[ "${DOIAU_ENKF}" = "NO" ]]; then
+    export IAUFHRS_ENKF="6,"
+fi
 
 # Determine restart intervals
 # For IAU, write restarts at beginning of window also
@@ -502,12 +517,6 @@ fi
 
 # The switch to apply SST elevation correction or not
 export nst_anl=".true."
-
-# Make the nsstbufr file on the fly or use the GDA version
-export MAKE_NSSTBUFR="{{ MAKE_NSSTBUFR }}"
-
-# Make the aircraft prepbufr file on the fly or use the GDA version
-export MAKE_ACFTBUFR="{{ MAKE_ACFTBUFR }}"
 
 # SHiELD (2022, 2024) and GSI analysis (v2, v2fullhydro, v3) versions
 export SHiELD_VERSION="2022"
@@ -599,15 +608,15 @@ if [[ "${DO_JEDIATMVAR}" = "YES" ]]; then
    export DO_VERFOZN="NO"     # Ozone data assimilation monitoring
    export DO_VERFRAD="NO"     # Radiance data assimilation monitoring
    export DO_VMINMON="NO"     # GSI minimization monitoring
-   export DO_ANLSTAT="YES"    # JEDI-based analysis statistics
-else
-   if [[ "${DO_AERO}" = "YES" || "${DO_JEDIOCNVAR}" = "YES" || "${DO_JEDISNOWDA}" = "YES" ]]; then
-     export DO_ANLSTAT="YES"  # JEDI-based analysis statistics
-   fi
+fi
+
+# TODO: Enable METplus on Ursa when verif-global has been upgraded to spack-stack 1.9.x+
+# TODO: Clean this up by allowing DO_METP to be system-specific and/or allow overriding that parameter
+if [[ "${machine}" == "URSA" || "${machine}" == "GAEAC6" || "${machine}" == "ORION" || "${machine}" == "HERCULES" ]]; then
+    export DO_METP=NO
 fi
 
 # If starting ICs that are not at cycle hour
-export REPLAY_ICS="NO"
 export OFFSET_START_HOUR=0
 
 # Number of regional collectives to create soundings for

@@ -199,7 +199,14 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
           status=$?
           [[ $status -ne 0 ]] && exit $status
         fi
-        $NLN ${COMIN_ATMOS_ANALYSIS_PREV}/*abias* ${COMOUT_ATMOS_ANALYSIS_PREV}/
+        for abias_file in ${COMIN_ATMOS_ANALYSIS_PREV}/*abias*; do
+          base_abias_name=$(basename ${abias_file})
+          if [[ "${base_abias_name}" == *".txt" ]]; then
+            $NLN ${COMIN_ATMOS_ANALYSIS_PREV}/${base_abias_name} $COMOUT_ATMOS_ANALYSIS_PREV/${base_abias_name}
+          else
+            $NLN ${COMIN_ATMOS_ANALYSIS_PREV}/${base_abias_name} $COMOUT_ATMOS_ANALYSIS_PREV/${base_abias_name}.txt
+          fi
+        done
      else
         echo "skip pulling previous cycle *abias* "
      fi

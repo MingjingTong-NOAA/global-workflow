@@ -40,14 +40,3 @@ gdas_restartb:
         - "{{ COMIN_ATMOS_RESTART | relpath(ROTDIR) }}/{{ r_prefix }}.coupler.res"
         - "{{ COMIN_ATMOS_RESTART | relpath(ROTDIR) }}/{{ r_prefix }}.fv_core.res.nc"
         {% endfor %}
-
-        # bias correction for anal start (for anal_start)
-        {% if MODE == "cycled" %}
-        {% if not DO_JEDIATMVAR %}
-        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}abias"
-        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}abias_air"
-        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}abias_pc"
-        {% else %}
-        - "{{ COMIN_ATMOS_ANALYSIS | relpath(ROTDIR) }}/{{ head }}rad_varbc_params.tar"
-        {% endif %}
-        {% endif %}

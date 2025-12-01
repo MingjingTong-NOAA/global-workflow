@@ -19,6 +19,7 @@ base:
   FHMAX_HF_GFS: 0
   FCST_BREAKPOINTS: ""
   DO_GSISOILDA: "NO"
+  DO_LAND_IAU: ".false."
   EUPD_CYC: "gdas"
   FHMAX_ENKF_GFS: 12
   DOHYBVAR_OCN: "NO"
@@ -33,23 +34,25 @@ base:
   DO_FETCH_HPSS: "NO"
 
 atmanl:
-  JCB_ALGO_YAML_VAR: "${PARMgfs}/gdas/atm/jcb-prototype_3dvar.yaml.j2"
-  JCB_ALGO_YAML_FV3INC: "${PARMgfs}/gdas/atm/jcb-prototype_3dvar-fv3inc.yaml.j2"
   STATICB_TYPE: "gsibec"
   LAYOUT_X_ATMANL: 8
   LAYOUT_Y_ATMANL: 8
   IO_LAYOUT_X: 1
   IO_LAYOUT_Y: 1
+  OBS_LIST_YAML: "${PARMgfs}/gdas/atm/atm_obs_list.yaml.j2"
+  VAR_JEDI_TEST_YAML: ""
+  FV3INC_JEDI_TEST_YAML: ""
 
 atmensanl:
-  JCB_ALGO_YAML_LETKF: "${PARMgfs}/gdas/atm/jcb-prototype_lgetkf.yaml.j2"
-  JCB_ALGO_YAML_OBS: "${PARMgfs}/gdas/atm/jcb-prototype_lgetkf_observer.yaml.j2"
-  JCB_ALGO_YAML_SOL: "${PARMgfs}/gdas/atm/jcb-prototype_lgetkf_solver.yaml.j2"
-  JCB_ALGO_YAML_FV3INC: "${PARMgfs}/gdas/atm/jcb-prototype_lgetkf-fv3inc.yaml.j2"
   LAYOUT_X_ATMENSANL: 8
   LAYOUT_Y_ATMENSANL: 8
   IO_LAYOUT_X: 1
   IO_LAYOUT_Y: 1
+  OBS_LIST_YAML: "${PARMgfs}/gdas/atm/atm_obs_list.yaml.j2"
+  LETKF_JEDI_TEST_YAML: ""
+  OBS_JEDI_TEST_YAML: ""
+  SOL_JEDI_TEST_YAML: ""
+  FV3INC_JEDI_TEST_YAML: ""
 
 aeroanl:
   IO_LAYOUT_X: 1
@@ -59,18 +62,31 @@ snowanl:
   IO_LAYOUT_X: 1
   IO_LAYOUT_Y: 1
 
+marinebmat:
+  SOCA_INPUT_FIX_DIR: "${FIXgfs}/gdas/soca/72x35x25/soca"
+  SOCA_ANL_GEOM: "${FIXgfs}/gdas/soca/72x35x25/soca"
+
 marineanl:
   SOCA_INPUT_FIX_DIR: "${FIXgfs}/gdas/soca/72x35x25/soca"
   SOCA_ANL_GEOM: "${FIXgfs}/gdas/soca/72x35x25/soca"
-  SOCA_OBS_LIST: "${PARMgfs}/gdas/soca/obs/obs_list.yaml.j2"  # TODO: This is also repeated in oceanprepobs
+  SOCA_OBS_LIST: "${PARMgfs}/gdas/marine/obs/obs_list.yaml.j2"  # TODO: This is also repeated in oceanprepobs
   SOCA_NINNER: 100
-  JCB_ALGO_YAML_VAR: "${PARMgfs}/gdas/soca/marine-jcb-3dfgat.yaml.j2"
+
+marineanlecen:
+  SOCA_INPUT_FIX_DIR: "${FIXgfs}/gdas/soca/72x35x25/soca"
+  SOCA_ANL_GEOM: "${FIXgfs}/gdas/soca/72x35x25/soca"
+
+marineanlletkf:
+  SOCA_INPUT_FIX_DIR: "${FIXgfs}/gdas/soca/72x35x25/soca"
+  SOCA_ANL_GEOM: "${FIXgfs}/gdas/soca/72x35x25/soca"
+  SOCA_OBS_LIST: "${PARMgfs}/gdas/marine/obs/obs_list.yaml.j2"
 
 prepoceanobs:
-  SOCA_INPUT_FIX_DIR: "${FIXgfs}/gdas/soca/72x35x25/soca"
-  OBSPREP_YAML: "${PARMgfs}/gdas/soca/obsprep/obsprep_config.yaml"
   use_exp_obs: "YES"
   dmpdir_exp: "${BASE_DATA}/experimental_obs"
+
+fcst:
+  CHECK_LAND_RESTART_OROG: "YES"
 
 # config.aero has just a system-specific path to add.
 # This is handled by the setup_expt.py, but it has to be told to write to it.

@@ -20,7 +20,6 @@
 #  Set environment.
 
 # Base variables
-CDATE="${PDY}${cyc}"
 GDUMP=${GDUMP:-"gdas"}
 
 # Utilities
@@ -37,10 +36,10 @@ binary_diag=${binary_diag:-".false."}
 
 # Analysis files
 export APREFIX=${APREFIX:-""}
-RADSTAT=${RADSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}radstat}
+RADSTAT=${RADSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}radstat.tar}
 PCPSTAT=${PCPSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}pcpstat}
-CNVSTAT=${CNVSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}cnvstat}
-OZNSTAT=${OZNSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}oznstat}
+CNVSTAT=${CNVSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}cnvstat.tar}
+OZNSTAT=${OZNSTAT:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}oznstat.tar}
 
 # Remove stat file if file already exists
 rm -f "${RADSTAT}" "${PCPSTAT}" "${CNVSTAT}" "${OZNSTAT}"
@@ -65,7 +64,6 @@ REMOVE_DIAG_DIR=${REMOVE_DIAG_DIR:-"NO"}
 # Set script / GSI control parameters
 lrun_subdirs=${lrun_subdirs:-".true."}
 
-pcp_jacobian=${pcp_jacobian:-".false."}
 
 ################################################################################
 # If requested, generate diagnostic files
@@ -80,22 +78,18 @@ if [[ "${GENDIAG}" == "YES" ]] ; then
    fi
 
    # Set up lists and variables for various types of diagnostic files.
-   if [ $pcp_jacobian = ".true." ]; then
-      ntype=5
-      if [ -s $JACSTAT ]; then
-         rm -f $JACSTAT
-      fi
-      if [ -s $JACMSTAT ]; then
-         rm -f $JACMSTAT
-      fi
-   else
-      ntype=3
-   fi
+   ntype=3
 
    diagtype[0]="conv conv_gps conv_ps conv_pw conv_q conv_sst conv_t conv_tcp conv_uv conv_spd"
    diagtype[1]="pcp_ssmi_dmsp pcp_tmi_trmm"
-   diagtype[2]="sbuv2_n16 sbuv2_n17 sbuv2_n18 sbuv2_n19 gome_metop-a gome_metop-b omi_aura mls30_aura ompsnp_npp ompstc8_npp  ompstc8_n20 ompsnp_n20 ompstc8_n21 ompsnp_n21 ompslp_npp gome_metop-c"
-   diagtype[3]="msu_n14 sndr_g08 sndr_g11 sndr_g12 sndr_g13 sndr_g08_prep sndr_g11_prep sndr_g12_prep sndr_g13_prep sndrd1_g11 sndrd2_g11 sndrd3_g11 sndrd4_g11 sndrd1_g12 sndrd2_g12 sndrd3_g12 sndrd4_g12 sndrd1_g13 sndrd2_g13 sndrd3_g13 sndrd4_g13 sndrd1_g14 sndrd2_g14 sndrd3_g14 sndrd4_g14 sndrd1_g15 sndrd2_g15 sndrd3_g15 sndrd4_g15 amsua_n15 amsua_n16 amsua_n17 amsub_n15 amsub_n16 amsub_n17 hsb_aqua airs_aqua amsua_aqua imgr_g08 imgr_g11 imgr_g12 imgr_g14 imgr_g15 ssmi_f13 ssmi_f15 amsua_n18 amsua_metop-a mhs_n18 mhs_metop-a amsre_low_aqua amsre_mid_aqua amsre_hig_aqua ssmis_f16 ssmis_f17 ssmis_f18 ssmis_f19 ssmis_f20 iasi_metop-a amsua_n19 mhs_n19 seviri_m08 seviri_m09 seviri_m10 seviri_m11 cris_npp cris-fsr_npp cris-fsr_n20 atms_npp atms_n20 amsua_metop-b mhs_metop-b iasi_metop-b avhrr_metop-b avhrr_n18 avhrr_n19 avhrr_metop-a amsr2_gcom-w1 gmi_gpm saphir_meghat ahi_himawari8 abi_g16 abi_g17 amsua_metop-c mhs_metop-c iasi_metop-c avhrr_metop-c viirs-m_npp viirs-m_j1 abi_g18 ahi_himawari9 viirs-m_j2 cris-fsr_n21 atms_n21 abi_g19"
+   if [[ ${USE_BUILD_GSINFO} == "YES" ]]; then
+     diagtype[2]=$(cat ${BUILD_GSINFO_DIR}/ozinfo/satellites)
+     diagtype[3]=$(cat ${BUILD_GSINFO_DIR}/satinfo/satellites)
+   else
+     diagtype[2]="sbuv2_n16 sbuv2_n17 sbuv2_n18 sbuv2_n19 gome_metop-a gome_metop-b omi_aura mls30_aura ompsnp_npp ompstc8_npp  ompstc8_n20 ompsnp_n20 ompstc8_n21 ompsnp_n21 ompslp_npp gome_metop-c"
+     diagtype[3]="msu_n14 sndr_g08 sndr_g11 sndr_g12 sndr_g13 sndr_g08_prep sndr_g11_prep sndr_g12_prep sndr_g13_prep sndrd1_g11 sndrd2_g11 sndrd3_g11 sndrd4_g11 sndrd1_g12 sndrd2_g12 sndrd3_g12 sndrd4_g12 sndrd1_g13 sndrd2_g13 sndrd3_g13 sndrd4_g13 sndrd1_g14 sndrd2_g14 sndrd3_g14 sndrd4_g14 sndrd1_g15 sndrd2_g15 sndrd3_g15 sndrd4_g15 amsua_n15 amsua_n16 amsua_n17 amsub_n15 amsub_n16 amsub_n17 hsb_aqua airs_aqua amsua_aqua imgr_g08 imgr_g11 imgr_g12 imgr_g14 imgr_g15 ssmi_f13 ssmi_f15 amsua_n18 amsua_metop-a mhs_n18 mhs_metop-a amsre_low_aqua amsre_mid_aqua amsre_hig_aqua ssmis_f16 ssmis_f17 ssmis_f18 ssmis_f19 ssmis_f20 iasi_metop-a amsua_n19 mhs_n19 seviri_m08 seviri_m09 seviri_m10 seviri_m11 cris_npp cris-fsr_npp cris-fsr_n20 atms_npp atms_n20 amsua_metop-b mhs_metop-b iasi_metop-b avhrr_metop-b avhrr_n18 avhrr_n19 avhrr_metop-a amsr2_gcom-w1 gmi_gpm saphir_meghat ahi_himawari8 abi_g16 abi_g17 amsua_metop-c mhs_metop-c iasi_metop-c avhrr_metop-c viirs-m_npp viirs-m_j1 abi_g18 ahi_himawari9 viirs-m_j2 cris-fsr_n21 atms_n21 abi_g19"
+   fi
+
 
    diaglist[0]=listcnv
    diaglist[1]=listpcp
@@ -111,21 +105,6 @@ if [[ "${GENDIAG}" == "YES" ]] ; then
    numfile[1]=0
    numfile[2]=0
    numfile[3]=0
-
-   if [ $pcp_jacobian = ".true." ]; then
-      diagtype[4]="amsua_n15 amsua_n16 amsua_n17 amsua_aqua amsua_n18 amsua_metop-a amsua_n19 amsua_metop-b atms_npp atms_n20"
-      diagtype[5]="amsua_n15 amsua_n16 amsua_n17 amsua_aqua amsua_n18 amsua_metop-a amsua_n19 amsua_metop-b atms_npp atms_n20"
-   
-      diaglist[4]=listjac
-      diaglist[5]=listjacM
-   
-      diagfile[4]=$JACSTAT
-      diagfile[5]=$JACMSTAT
-   
-      numfile[4]=0
-      numfile[5]=0
-   fi
-
 
    # Set diagnostic file prefix based on lrun_subdirs variable
    if [[ "${lrun_subdirs}" == ".true." ]]; then
@@ -143,15 +122,16 @@ binary_diag=\$2
 type=\$3
 loop=\$4
 string=\$5
-CDATE=\$6
-DIAG_COMPRESS=\$7
-DIAG_SUFFIX=\$8
+PDY=\$6
+cyc=\$7
+DIAG_COMPRESS=\$8
+DIAG_SUFFIX=\$9
 if [[ "\${lrun_subdirs}" == ".true." ]]; then
    prefix=" dir.*/"
 else
    prefix="pe*"
 fi
-file=diag_\${type}_\${string}.\${CDATE}\${DIAG_SUFFIX}
+file=diag_\${type}_\${string}.\${PDY}\${cyc}\${DIAG_SUFFIX}
 if [[ "\${binary_diag}" == ".true." ]]; then
    cat \${prefix}\${type}_\${loop}* > \$file
 else
@@ -184,48 +164,31 @@ EOFdiag
       esac
       echo "$(date) START loop ${string}" >&2
       n=-1
-      while [ $((n+=1)) -le $ntype ] ;do
-         for type in $(echo ${diagtype[n]}); do
-            if [ $n -lt 4 ]; then
-               count=$(ls ${prefix}${type}_${loop}* 2>/dev/null | wc -l)
-            else
-               if [ $n -gt 4 ]; then
-                  count=$(ls ${prefix}${type}_jacobianM_${loop}* | wc -l)
-               else
-                  count=$(ls ${prefix}${type}_jacobian_${loop}* | wc -l)
-               fi
-            fi
-            if [ $count -gt 1 ]; then
-               if [ $n -lt 4 ]; then
-                  if [ $USE_CFP = "YES" ]; then
-                     echo "$nm $DATA/diag.sh $lrun_subdirs $binary_diag $type $loop $string $CDATE $DIAG_COMPRESS $DIAG_SUFFIX" | tee -a $DATA/mp_diag.sh
-		     if [ ${CFP_MP:-"NO"} = "YES" ]; then
-		         nm=$((nm+1))
-		     fi
-                  else
-                     if [ $binary_diag = ".true." ]; then
-                        cat ${prefix}${type}_${loop}* > diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}
-                     else
-                        ${CATEXEC} -o diag_${type}_${string}.${CDATE}${DIAG_SUFFIX} ${prefix}${type}_${loop}*
-                     fi
+      while [[ ${n} -lt ${ntype} ]] ;do
+         n=$(( n + 1 ))
+         for type in $(echo "${diagtype[n]}"); do
+            count=$(ls ${prefix}${type}_${loop}* 2>/dev/null | wc -l)
+            if [[ ${count} -gt 1 ]]; then
+               if [[ "${USE_CFP}" == "YES" ]]; then
+                  echo "${nm} ${DATA}/diag.sh ${lrun_subdirs} ${binary_diag} ${type} ${loop} ${string} ${PDY} ${cyc} ${DIAG_COMPRESS} ${DIAG_SUFFIX}" | tee -a "${DATA}/mp_diag.sh"
+                  if [[ "${CFP_MP:-"NO"}" == "YES" ]]; then
+                     nm=$((nm+1))
                   fi
-                  echo "diag_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
                else
-                  if [ $n -gt 4 ]; then
-                     cat ${prefix}${type}_jacobianM_${loop}* > jacM_${type}_${string}.${CDATE}${DIAG_SUFFIX0}
-                     echo "jacM_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
+                  if [[ "${binary_diag}" == ".true." ]]; then
+                     cat ${prefix}${type}_${loop}* > "diag_${type}_${string}.${PDY}${cyc}${DIAG_SUFFIX}"
                   else
-                     cat ${prefix}${type}_jacobian_${loop}* > jac_${type}_${string}.${CDATE}${DIAG_SUFFIX0}
-                     echo "jac_${type}_${string}.${CDATE}*" >> ${diaglist[n]}
+                     ${CATEXEC} -o "diag_${type}_${string}.${PDY}${cyc}${DIAG_SUFFIX}" "${prefix}${type}_${loop}"*
                   fi
                fi
+               echo "diag_${type}_${string}.${PDY}${cyc}*" >> "${diaglist[n]}"
                numfile[n]=$(expr ${numfile[n]} + 1)
             elif [[ ${count} -eq 1 ]]; then
-                cat ${prefix}${type}_${loop}* > "diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}"
+                cat ${prefix}${type}_${loop}* > "diag_${type}_${string}.${PDY}${cyc}${DIAG_SUFFIX}"
                 if [[ "${DIAG_COMPRESS}" == "YES" ]]; then
-                   ${COMPRESS} "diag_${type}_${string}.${CDATE}${DIAG_SUFFIX}"
+                   ${COMPRESS} "diag_${type}_${string}.${PDY}${cyc}${DIAG_SUFFIX}"
                 fi
-                echo diag_${type}_${string}.${CDATE}* >> ${diaglist[n]}
+                echo "diag_${type}_${string}.${PDY}${cyc}*" >> "${diaglist[n]}"
                 numfile[n]=$(expr "${numfile[n]}" + 1)
             fi
          done
@@ -239,7 +202,8 @@ EOFdiag
    # If requested, compress diagnostic files
    if [[ "${DIAG_COMPRESS}" == "YES" && "${USE_CFP}" == "NO" ]]; then
       echo $(date) START "${COMPRESS}" diagnostic files >&2
-      for file in $(ls diag_*${CDATE}${DIAG_SUFFIX}); do
+      # shellcheck disable=SC2086
+      for file in "diag_"*"${PDY}${cyc}${DIAG_SUFFIX}"; do
          ${COMPRESS} "${file}"
       done
       echo "$(date) END ${COMPRESS} diagnostic files" >&2
@@ -286,7 +250,7 @@ EOFdiag
             TAROPTS="-cvf"
          fi
          if [[ ${numfile[n]} -gt 0 ]]; then
-            tar ${TAROPTS} "${diagfile[n]}" $(cat ${diaglist[n]})
+            tar ${TAROPTS} "${diagfile[n]}" $(cat "${diaglist[n]}")
             export err=$?
             if [[ ${err} -ne 0 ]]; then
                err_exit "Unable to create ${diagfile[n]}!"
@@ -301,13 +265,13 @@ EOFdiag
       fi
 
       # Restrict RADSTAT
-      if [ -s ${RADSTAT} ]; then
-        chmod 750 $RADSTAT
+      if [[ -s ${RADSTAT} ]]; then
+        chmod 750 "${RADSTAT}"
         if [[ "${CHGRP_RSTPROD}" == "YES" ]]; then
-           ${CHGRP_CMD} $RADSTAT
+           ${CHGRP_CMD} "${RADSTAT}"
         fi
       else
-        echo WARNING: $RADSTAT not found
+        echo WARNING: $RADSTAT not found for ${PDY}${cyc}
       fi
 
       echo "$(date) END tar diagnostic files" >&2

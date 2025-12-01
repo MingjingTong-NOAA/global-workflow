@@ -35,20 +35,17 @@ NTHREADS_ENKF=${NTHREADS_ENKF:-${NTHREADS:-1}}
 # Executables
 ENKFEXEC=${ENKFEXEC:-${EXECgfs}/enkf.x}
 
-# Cycling and forecast hour specific parameters
-CDATE=${CDATE:-"2001010100"}
-
 # Filenames.
 GPREFIX=${GPREFIX:-""}
 APREFIX=${APREFIX:-""}
 
 SMOOTH_ENKF=${SMOOTH_ENKF:-"YES"}
 
-GBIASe=${GBIASe:-${APREFIX}abias_int.ensmean}
-CNVSTAT=${CNVSTAT:-${APREFIX}cnvstat}
-OZNSTAT=${OZNSTAT:-${APREFIX}oznstat}
-RADSTAT=${RADSTAT:-${APREFIX}radstat}
-ENKFSTAT=${ENKFSTAT:-${APREFIX}enkfstat}
+GBIASe=${GBIASe:-${APREFIX}abias_int.ensmean.txt}
+CNVSTAT=${CNVSTAT:-${APREFIX}cnvstat.tar}
+OZNSTAT=${OZNSTAT:-${APREFIX}oznstat.tar}
+RADSTAT=${RADSTAT:-${APREFIX}radstat.tar}
+ENKFSTAT=${ENKFSTAT:-${APREFIX}enkfstat.txt}
 
 # Namelist parameters
 USE_CORRELATED_OBERRS=${USE_CORRELATED_OBERRS:-"NO"}
@@ -65,7 +62,7 @@ corrlength=${corrlength:-1250}
 lnsigcutoff=${lnsigcutoff:-2.5}
 analpertwt=${analpertwt:-0.85}
 readin_localization_enkf=${readin_localization_enkf:-".true."}
-reducedgrid=${reducedgrid:-".true."}
+reducedgrid=${reducedgrid:-".false."}
 letkf_flag=${letkf_flag:-".false."}
 getkf=${getkf:-".false."}
 denkf=${denkf:-".false."}
@@ -93,7 +90,7 @@ hofx_2m_sfcfile=${hofx_2m_sfcfile:-".false."}
 
 ################################################################################
 
-ATMGES_ENSMEAN="${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}atmf006.ensmean.nc"
+ATMGES_ENSMEAN="${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}ensmean.atm.f006.nc"
 LONB_ENKF=${LONB_ENKF:-$(${NCLEN} "${ATMGES_ENSMEAN}" grid_xt)} # get LONB_ENKF
 LATB_ENKF=${LATB_ENKF:-$(${NCLEN} "${ATMGES_ENSMEAN}" grid_yt)} # get LATB_ENFK
 LEVS_ENKF=${LEVS_ENKF:-$(${NCLEN} "${ATMGES_ENSMEAN}" pfull)} # get LEVS_ENFK
@@ -152,7 +149,7 @@ else
 fi
 for ftype in \$flist; do
    if [[ "\${memchar}" == "ensmean" ]]; then
-      fname=\${COMOUT_ATMOS_ANALYSIS}/\${ftype}.ensmean
+      fname=\${COMOUT_ATMOS_ANALYSIS}/\${ftype%.tar}.ensmean.tar
    else
       fname=\${COMOUT_ATMOS_ANALYSIS}/\${ftype}
    fi
@@ -176,7 +173,7 @@ if [[ "${USE_CFP}" == "YES" ]]; then
    fi
 else
    for ftype in ${flist}; do
-      fname="${COMIN_ATMOS_ANALYSIS_STAT}/${ftype}.ensmean"
+      fname="${COMIN_ATMOS_ANALYSIS_STAT}/${ftype}.tar"
       tar -xvf "${fname}"
    done
 fi
@@ -196,37 +193,27 @@ for imem in $(seq 1 ${NMEM_ENS}); do
       COMOUT_ATMOS_ANALYSIS_MEM:COM_ATMOS_ANALYSIS_TMPL
 
    mkdir -p "${COMOUT_ATMOS_ANALYSIS_MEM}"
-   
+
    for FHR in ${nfhrs}; do
-      ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}atmf00${FHR}${ENKF_SUFFIX}.nc" \
+      ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}atm.f00${FHR}${ENKF_SUFFIX}.nc" \
          "sfg_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       if [[ "${hofx_2m_sfcfile}" == ".true." ]]; then
-         ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}sfcf00${FHR}${ENKF_SUFFIX}.nc" \
+         ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}sfc.f00${FHR}${ENKF_SUFFIX}.nc" \
              "bfg_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
       if [[ "${cnvw_option}" == ".true." ]]; then
-         ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}sfcf00${FHR}.nc" \
+         ${NLN} "${COMIN_ATMOS_HISTORY_MEM_PREV}/${GPREFIX}sfc.f00${FHR}.nc" \
             "sfgsfc_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
-      if [[ ${FHR} -eq 6 ]]; then
-         if [[ "${DO_CALC_INCREMENT}" == "YES" ]]; then
-            ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}atmanl.nc" \
-               "sanl_${PDY}${cyc}_fhr0${FHR}_${memchar}"
-         else
-            ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}atminc.nc" \
-               "incr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
-         fi
+      if [[ "${DO_CALC_INCREMENT}" == "YES" ]]; then
+         ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}analysis.atm.a00${FHR}.nc" \
+            "sanl_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       else
-         if [[ "${DO_CALC_INCREMENT}" == "YES" ]]; then
-            ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}atma00${FHR}.nc" \
-               "sanl_${PDY}${cyc}_fhr0${FHR}_${memchar}"
-         else
-            ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}atmi00${FHR}.nc" \
-               "incr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
-         fi
+         ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}increment.atm.i00${FHR}.nc" \
+            "incr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
       if [[ "${DO_GSISOILDA}" == "YES" ]]; then
-          ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}sfci00${FHR}.nc" \
+          ${NLN} "${COMOUT_ATMOS_ANALYSIS_MEM}/${APREFIX}increment.sfc.i00${FHR}.nc" \
            "sfcincr_${PDY}${cyc}_fhr0${FHR}_${memchar}"
       fi
    done
@@ -235,16 +222,16 @@ done
 # Ensemble mean guess
 for FHR in ${nfhrs}; do
 
-   ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}atmf00${FHR}.ensmean.nc" \
+   ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}ensmean.atm.f00${FHR}.nc" \
       "sfg_${PDY}${cyc}_fhr0${FHR}_ensmean"
    if [[ "${cnvw_option}" == ".true." ]]; then
-      ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}sfcf00${FHR}.ensmean.nc" \
+      ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}ensmean.sfc.f00${FHR}.nc" \
          "sfgsfc_${PDY}${cyc}_fhr0${FHR}_ensmean"
    fi
    if [[ "${DO_GSISOILDA}" == "YES" ]]; then
-      ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}sfcf00${FHR}.ensmean.nc" \
+      ${NLN} "${COMIN_ATMOS_HISTORY_STAT_PREV}/${GPREFIX}ensmean.sfc.f00${FHR}.nc" \
          "bfg_${PDY}${cyc}_fhr0${FHR}_ensmean"
-      ${NLN} "${COMIN_ATMOS_ANALYSIS_STAT}/${APREFIX}sfci00${FHR}.nc" \
+      ${NLN} "${COMIN_ATMOS_ANALYSIS_STAT}/${APREFIX}increment.sfc.i00${FHR}.nc" \
          "sfcincr_${PDY}${cyc}_fhr0${FHR}_ensmean"
    fi
 done
@@ -269,7 +256,7 @@ cat > enkf.nml << EOFnml
 &nam_enkf
    datestring="${PDY}${cyc}",datapath="${DATA}/",
    analpertwtnh=${analpertwt},analpertwtsh=${analpertwt},analpertwttr=${analpertwt},
-   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=${pseudo_rh:-".true."},iassim_order=0,
+   covinflatemax=1.e2,covinflatemin=1,pseudo_rh=${pseudo_rh:-".false."},iassim_order=0,
    corrlengthnh=${corrlength},corrlengthsh=${corrlength},corrlengthtr=${corrlength},
    lnsigcutoffnh=${lnsigcutoff},lnsigcutoffsh=${lnsigcutoff},lnsigcutofftr=${lnsigcutoff},
    lnsigcutoffpsnh=${lnsigcutoff},lnsigcutoffpssh=${lnsigcutoff},lnsigcutoffpstr=${lnsigcutoff},

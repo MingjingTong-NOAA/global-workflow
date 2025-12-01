@@ -64,6 +64,7 @@ NTHREADS_CYCLE=${NTHREADS_CYCLE:-${NTHREADS:-1}}
 export CYCLVARS=${CYCLVARS:-"FSNOL=-2.,FSNOS=99999.,"}
 export FHOUR=${FHOUR:-0}
 export DELTSFC=${DELTSFC:-6}
+export COUPLED=${COUPLED:-".false."}
 
 APRUN_ESFC=${APRUN_ESFC:-${APRUN:-""}}
 NTHREADS_ESFC=${NTHREADS_ESFC:-${NTHREADS:-1}}
@@ -125,7 +126,7 @@ else
 fi
 
 if [[ "${DONST}" == "YES" ]]; then
-  export NST_FILE=${NST_FILE:-${COMIN_ATMOS_ANALYSIS_DET}/${APREFIX}dtfanl.nc}
+  export NST_FILE=${NST_FILE:-${COMIN_ATMOS_ANALYSIS_DET}/${APREFIX}analysis.dtf.a006.nc}
 else
   export NST_FILE="NULL"
 fi
@@ -158,7 +159,7 @@ orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 
 if [[ "$DOIAU" == "YES" ]]; then
     # Update surface restarts at beginning of window when IAU is ON
-    # For now assume/hold dtfanl.nc is valid at beginning of window.
+    # For now assume/hold analysis.dtf.nc is valid at beginning of window.
 
     for n in $(seq 1 $ntiles); do
 
@@ -187,8 +188,10 @@ if [[ "$DOIAU" == "YES" ]]; then
                 COMIN_SNOW_ANALYSIS_MEM:COM_SNOW_ANALYSIS_TMPL
 
             # determine where the input snow restart files come from
+            snow_prefix=""
             if [[ "${DO_JEDISNOWDA:-}" == "YES" ]]; then
                 sfcdata_dir="${COMIN_SNOW_ANALYSIS_MEM}"
+                snow_prefix="snow_analysis."
             else
                 sfcdata_dir="${COMIN_ATMOS_RESTART_MEM_PREV}"
             fi
@@ -196,7 +199,7 @@ if [[ "$DOIAU" == "YES" ]]; then
             if [[ ${TILE_NUM} -eq 1 ]]; then
                 mkdir -p "${COMOUT_ATMOS_RESTART_MEM}"
             fi
-            cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.sfc_data.tile${n}.nc" \
+            cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
                 "${DATA}/fnbgsi.${cmem}"
             cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
             cpreq "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"     "${DATA}/fngrid.${cmem}"
@@ -205,14 +208,14 @@ if [[ "$DOIAU" == "YES" ]]; then
                ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
             fi
 
-            if [[ "${DO_GSISOILDA}" == "YES" ]]; then
-                 cpreq "${COMIN_ATMOS_ANALYSIS_MEM}/sfci00${LFHR}.tile${n}.nc" \
+            if [[ "${DO_GSISOILDA}" == "YES" && "${GCYCLE_DO_SOILINCR}" == ".true." ]]; then
+                 cpreq "${COMIN_ATMOS_ANALYSIS_MEM}/increment.sfc.i00${LFHR}.tile${n}.nc" \
                    "${DATA}/soil_xainc.${cmem}"
             fi
 
         done # ensembles
 
-        CDATE="${PDY}${cyc}" "${CYCLESH}" && true
+        "${CYCLESH}" && true
         export err=$?
         if [[ ${err} -ne 0 ]]; then
            err_exit "Failed to update surface fields!"
@@ -268,13 +271,15 @@ if [[ "${DOSFCANL_ENKF}" == "YES" ]]; then
                 COMIN_ATMOS_ANALYSIS_MEM:COM_ATMOS_ANALYSIS_TMPL
 
             # determine where the input snow restart files come from
+            snow_prefix=""
             if [[ "${DO_JEDISNOWDA:-}" == "YES" ]]; then
                 sfcdata_dir="${COMIN_SNOW_ANALYSIS_MEM}"
+                snow_prefix="snow_analysis."
             else
                 sfcdata_dir="${COMIN_ATMOS_RESTART_MEM_PREV}"
             fi
 
-            cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.sfc_data.tile${n}.nc" \
+            cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
                 "${DATA}/fnbgsi.${cmem}"
             cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
             cpreq "${FIXgfs}/orog/${CASE}/${CASE}_grid.tile${n}.nc"      "${DATA}/fngrid.${cmem}"
@@ -283,13 +288,13 @@ if [[ "${DOSFCANL_ENKF}" == "YES" ]]; then
               ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
             fi
 
-            if [[ "${DO_GSISOILDA}" == "YES" ]]; then
-                 cpreq "${COMIN_ATMOS_ANALYSIS_MEM}/sfci00${LFHR}.tile${n}.nc" \
+            if [[ "${DO_GSISOILDA}" == "YES" && "${GCYCLE_DO_SOILINCR}" == ".true." ]]; then
+                 cpreq "${COMIN_ATMOS_ANALYSIS_MEM}/${APREFIX}increment.sfc.i00${LFHR}.tile${n}.nc" \
                    "${DATA}/soil_xainc.${cmem}"
             fi
         done
 
-        CDATE="${PDY}${cyc}" "${CYCLESH}" && true
+        "${CYCLESH}" && true
         export err=$?
         if [[ ${err} -ne 0 ]]; then
            err_exit "Failed to update surface increment!"

@@ -208,11 +208,6 @@ class SFSTasks(Tasks):
 
         fhrs = self._get_forecast_hours(self.run, self._configs[config], component)
 
-        # when replaying, atmos component does not have fhr 0, therefore remove 0 from fhrs
-        is_replay = self._configs[config]['REPLAY_ICS']
-        if is_replay and component in ['atmos'] and 0 in fhrs:
-            fhrs.remove(0)
-
         # ocean/ice components do not have fhr 0 as they are averaged output
         if component in ['ocean', 'ice'] and 0 in fhrs:
             fhrs.remove(0)
@@ -278,11 +273,6 @@ class SFSTasks(Tasks):
 
         fhrs = self._get_forecast_hours(self.run, self._configs['atmos_ensstat'])
 
-        # when replaying, atmos component does not have fhr 0, therefore remove 0 from fhrs
-        is_replay = self._configs['atmos_ensstat']['REPLAY_ICS']
-        if is_replay and 0 in fhrs:
-            fhrs.remove(0)
-
         max_tasks = self._configs['atmos_ensstat']['MAX_TASKS']
         fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
 
@@ -318,21 +308,14 @@ class SFSTasks(Tasks):
 
         wave_grid = self._configs['base']['waveGRD']
         history_path = self._template_to_rocoto_cycstring(self._base['COM_WAVE_HISTORY_TMPL'], {'MEMDIR': 'mem#member#'})
-        history_file = f'/{self.run}wave.out_grd.{wave_grid}.@Y@m@d.@H@M@S'
+        history_file = f'{self.run}.t@Hz.{wave_grid}.f#fhr3_last#.log'
 
         deps = []
-        dep_dict = {'type': 'data', 'data': [history_path, history_file], 'offset': [None, '#fhr3_next#:00:00']}
+        dep_dict = {'type': 'data', 'data': f'{history_path}/{history_file}'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.run}_fcst_mem#member#_#seg_dep#'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
+        dependencies = rocoto.create_dependency(dep=deps)
 
         fhrs = self._get_forecast_hours(self.run, self._configs['wavepostsbs'], 'wave')
-
-        # When using replay, output does not start until hour 3
-        is_replay = self._configs['wavepostsbs']['REPLAY_ICS']
-        if is_replay:
-            fhrs = [fhr for fhr in fhrs if fhr not in [0, 1, 2]]
 
         max_tasks = self._configs['wavepostsbs']['MAX_TASKS']
         fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)

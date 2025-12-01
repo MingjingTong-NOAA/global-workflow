@@ -9,7 +9,9 @@
 # Author:        George Gayno       Org: NP23         Date: 2018-01-30
 #
 # Abstract: This script makes a global gaussian grid surface analysis from
-#           fv3gfs surface analysis tiles
+#           fv3gfs surface analysis tiles.  The gaussian grid resolution is
+#           the gaussian equivalent of the history file resolution (may be
+#           different than restart resolution).
 #
 # Script history log:
 # 2018-01-30  Gayno  initial script
@@ -18,7 +20,8 @@
 # Usage:  gaussian_sfcanl.sh
 #
 #   Imported Shell Variables:
-#     CASE          Model resolution.  Defaults to C768.
+#     CASE          Forecast model and restart resolution.  Defaults to C768.
+#     CASE_HIST     History file output resolution.  Defaults to $CASE.
 #     DONST         Process NST fields when 'yes'.  Default is 'no'.
 #     OUTPUT_FILE   Output gaussian analysis file format.  Default is "nemsio"
 #                   Set to "netcdf" for netcdf output file
@@ -37,7 +40,6 @@
 #     LOGSCRIPT     Log posting script.  Defaults to none.
 #     ENDSCRIPT     Postprocessing script
 #                   defaults to none
-#     CDATE         Output analysis date in yyyymmddhh format. Required.
 #     PGMOUT        Executable standard output
 #                   defaults to $pgmout, then to '&1'
 #     PGMERR        Executable standard error
@@ -78,7 +80,7 @@
 #
 #     output data: $PGMOUT
 #                  $PGMERR
-#                  $COMOUT/${APREFIX}sfcanl.nc
+#                  $COMOUT/${APREFIX}analysis.sfc.a006.nc
 #
 # Remarks:
 #
@@ -98,9 +100,10 @@
 ################################################################################
 
 CASE=${CASE:-C768}
-res=$(echo $CASE | cut -c2-)
-LONB_CASE=$((res*4))
-LATB_CASE=$((res*2))
+CASE_HIST=${CASE_HIST:-${CASE}}
+resh=${CASE_HIST:1}
+LONB_CASE=$((resh*4))
+LATB_CASE=$((resh*2))
 LONB_SFC=${LONB_SFC:-$LONB_CASE}
 LATB_SFC=${LATB_SFC:-$LATB_CASE}
 DONST=${DONST:-"NO"}
@@ -108,14 +111,11 @@ LEVS=${LEVS:-64}
 LEVSP1=$(($LEVS+1))
 FIXWGTS=${FIXWGTS:-${FIXorog}/${CASE}/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.neareststod.nc}
 FIXWGTS2=${FIXWGTS2:-${FIXorog}/${CASE}/fv3_SCRIP_${CASE}_GRIDSPEC_lon${LONB_SFC}_lat${LATB_SFC}.gaussian.bilinear.nc}
-DATA=${DATA:-$(pwd)}
 
 #  Filenames.
 XC=${XC:-}
 GAUSFCANLEXE=${GAUSFCANLEXE:-$EXECgfs/gaussian_sfcanl.x}
 SIGLEVEL=${SIGLEVEL:-${FIXgfs}/am/global_hyblev.l${LEVSP1}.txt}
-
-CDATE=${CDATE:?}
 
 #  Other variables.
 export PGMOUT=${PGMOUT:-${pgmout:-'&1'}}
@@ -128,7 +128,6 @@ export REDERR=${REDERR:-'2>'}
 #  Preprocessing
 ${INISCRIPT:-}
 pwd=$(pwd)
-cd "${DATA}" || exit 99
 if [[ ! -d "${COMOUT_ATMOS_ANALYSIS}" ]]; then
    mkdir -p "${COMOUT_ATMOS_ANALYSIS}"
 fi
@@ -170,10 +169,24 @@ ${NLN} "${FIXorog}/${CASE}/${orogfix}_oro_data.tile6.nc" "./orog.tile6.nc"
 ${NLN} "${SIGLEVEL}" "./vcoord.txt"
 
 # output gaussian global surface analysis files
-${NLN} "${COMOUT_ATMOS_ANALYSIS}/${APREFIX}sfcanl.nc" "./sfc.gaussian.analysis.file"
+${NLN} "${COMOUT_ATMOS_ANALYSIS}/${APREFIX}analysis.sfc.a006.nc" "./sfc.gaussian.analysis.file"
 
 # Namelist uses booleans now
 if [[ ${DONST} == "YES" ]]; then do_nst='.true.'; else do_nst='.false.'; fi
+
+#Add soil increments to gdas gaussian sfcanal if they are not added by gcycle (i.e., when landiau=true)
+LSOIL_INCR=${LSOIL_INCR:-2}
+if [[ "${DO_LAND_IAU:-.false.}" == ".true." ]]; then   
+    for i in $(seq 1 6); do
+	sfc_inc="${COMOUT_ATMOS_ANALYSIS}/increment.sfc.i006.tile${i}.nc"
+        if [[ ! -f "${sfc_inc}" ]]; then
+            echo "Error! gaussian sfc analysis missing increment file ${sfc_inc}"
+            exit 1
+        else
+            ${NLN} "${sfc_inc}" "./sfc_inc.tile${i}.nc"
+        fi
+    done
+fi
 
 # Executable namelist
 cat <<EOF > fort.41
@@ -185,6 +198,11 @@ cat <<EOF > fort.41
   igaus=${LONB_SFC},
   jgaus=${LATB_SFC},
   donst=${do_nst},
+  imp_physics=${imp_physics:-8},
+  landsfcmdl=${landsfcmdl:-2},
+  add_soil_inc=${DO_LAND_IAU},
+  lsoil_incr=${LSOIL_INCR},
+  sfc_inc_file="./sfc_inc",
  /
 EOF
 

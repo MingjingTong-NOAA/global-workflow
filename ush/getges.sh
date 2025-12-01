@@ -20,12 +20,12 @@
 # sfcges, sfcgm3, sfcgm2, sfcgm1, sfcgp1, sfcgp2, sfcgp3,
 # biascr, satang, satcnt, gesfil
 # pgbges, pgiges, pgbgm6, pgigm6, pgbgm3, pgigm3, pgbgp3, pgigp3,
-# sigcur, sfccur, pgbcur, pgicur, prepqc, tcvg12, tcvges, tcvitl, 
+# sigcur, sfccur, pgbcur, pgicur, prepqc, tcvg12, tcvges, tcvitl,
 # enggrb, enggri, icegrb, icegri, snogrb, snogrb_high, snogri, sstgrb, sstgri.
 # natges, natgm3, natgm2, natgm1, natgp1, natgp2, natgp3, natcur,
 # nsfges, nsfgm3, nsfgm2, nsfgm1, nsfgp1, nsfgp2, nsfgp3, nsfcur,
 # nstcur, nflges, nflgp3
-# Specify option "-v valid" for the valid date wanted (default $CDATE).
+# Specify option "-v valid" for the valid date wanted (default $PDY$cyc).
 # Currently, the valid hours specified must be a multiple of 3.
 # Either 2-digit or 4-digit years are currently allowed.
 # Specify positional argument to be the file to which to copy the guess.
@@ -37,10 +37,9 @@
 # The script uses the utility command NHOUR.
 #
 # Example 1. Copy the production sigma guess for 1998100100 to the file sges.
-#  getges.sh -e prod -t sigges -v 1998100100 sges 
+#  getges.sh -e prod -t sigges -v 1998100100 sges
 #
 # Example 2. Assign the pressure grib guess for the date 1998100121.
-#  export CDATE=1998100121
 #  export XLFUNIT_12="$(getges.sh -qt pgbges||echo /dev/null)"
 #
 # Example 3. Get the PRX pgb analysis or the best valid guess at 1998100112.
@@ -89,7 +88,7 @@ fhour=any                        # default forecast hour
 quiet=YES                        # default quiet mode
 resol=high                       # default resolution
 typef=sigges                     # default filetype
-valid=${CDATE:-'?'}              # default valid date
+valid=${PDY}${cyc}               # default valid date
 err=0
 
 while getopts n:e:f:qr:t:v: opt;do
@@ -107,7 +106,7 @@ done
 shift $(($OPTIND-1))
 gfile=$1
 if [[ -z $valid ]];then
- echo "$0: either -v option or environment variable CDATE must be set" >&2
+ echo "$0: either -v option or environment variables PDY and cyc must be set" >&2
 elif [[ $# -gt 1 ]];then
  echo "$0: too many positional arguments" >&2
 elif [[ $err -ne 0 ]];then
@@ -144,12 +143,12 @@ if [[ $gfile = '?' || $# -gt 1 || $err -ne 0 || -z $valid ||\
   echo "           nstcur, nflges, nflgp3," >&2
  elif [[ $valid = '?' ]];then
   echo "         valid is the valid date in yyyymmddhh or yymmddhh form" >&2
-  echo "         (default is environmental variable CDATE)" >&2
+  echo "         (default is environmental variable $PDY$cyc)" >&2
  elif [[ $gfile = '?' ]];then
   echo "         gfile is the guess file to write" >&2
   echo "         (default is to write the guess file name to stdout)" >&2
  else
-  echo "         (Note: set a given option to '?' for more details)" >&2 
+  echo "         (Note: set a given option to '?' for more details)" >&2
  fi
  exit 1
 fi
@@ -159,7 +158,7 @@ if [[ $envir != prod && $envir != test && $envir != para && $envir != dump && $e
  envir=prod
  echo '************************************************************' >&2
  echo '* WARNING: Using "-e" is deprecated in this case.          *' >&2
- echo '*          Please use "-n" instead.                        *' >&2       
+ echo '*          Please use "-n" instead.                        *' >&2
  echo '************************************************************' >&2
 fi
 if [[ "$netwk" = "namopl" || "$resol" = "namopl" ]];then
@@ -189,13 +188,13 @@ if [[ $typef = enggrb ]];then
  typef=icegrb
  echo '************************************************************' >&2
  echo '* WARNING: Using "-t enggrb" is now deprecated.            *' >&2
- echo '*          Please use "-t icegrb".                         *' >&2       
+ echo '*          Please use "-t icegrb".                         *' >&2
  echo '************************************************************' >&2
 elif [[ $typef = enggri ]];then
  typef=icegri
  echo '************************************************************' >&2
  echo '* WARNING: Using "-t enggri" is now deprecated.            *' >&2
- echo '*          Please use "-t icegri".                         *' >&2       
+ echo '*          Please use "-t icegri".                         *' >&2
  echo '************************************************************' >&2
 fi
 
@@ -225,26 +224,26 @@ if [[ "$netwk" = "gdas" ]];then
    $COMINgdas/gdas.t${cyc}z.radstat'
    ;;
   pgbges) geslist='
-   $COMINgdas/gdas.t${cyc}z.pgrbh$fh 
+   $COMINgdas/gdas.t${cyc}z.pgrbh$fh
    $COMINgdas/gdas.t${cyc}z.pgrbf$fh'
    ;;
   pg2ges) geslist='
    $COMINgdas/gdas.t${cyc}z.pgrb2.0p25.f$gh'
    ;;
   pgbgm6) geslist='
-   $COMINgdas/gdas.t${cyc}z.pgrbh$fhm6 
+   $COMINgdas/gdas.t${cyc}z.pgrbh$fhm6
    $COMINgdas/gdas.t${cyc}z.pgrbf$fhm6'
    ;;
   pgbgm3) geslist='
-   $COMINgdas/gdas.t${cyc}z.pgrbh$fhm3 
+   $COMINgdas/gdas.t${cyc}z.pgrbh$fhm3
    $COMINgdas/gdas.t${cyc}z.pgrbf$fhm3'
    ;;
   pgbgp3) geslist='
-   $COMINgdas/gdas.t${cyc}z.pgrbh$fhp3 
+   $COMINgdas/gdas.t${cyc}z.pgrbh$fhp3
    $COMINgdas/gdas.t${cyc}z.pgrbf$fhp3'
    ;;
   pgbcur) geslist='
-   $COMINgdas/gdas.t${cyc}z.pgrbh$fh 
+   $COMINgdas/gdas.t${cyc}z.pgrbh$fh
    $COMINgdas/gdas.t${cyc}z.pgrbf$fh'
    fhbeg=00
    ;;
@@ -301,7 +300,7 @@ if [[ "$netwk" = "gdas" ]];then
    $COMINgdas/gdas.t${cyc}z.atmf$gh.nemsio'
    ;;
   natgm3) geslist='
-   $COMINgdas/gdas.t${cyc}z.atmf$ghm3.nemsio'
+   $COMINgdas/gdas.t${cyc}z.atm.f$ghm3.nemsio'
    ;;
   natgm2) geslist='
    $COMINgdas/gdas.t${cyc}z.atmf$ghm2.nemsio'
@@ -447,35 +446,35 @@ elif [[ "$netwk" = "cfs-cdas" ]];then
    $COMINcfs_cdas/cdas1.t${cyc}z.sfluxgrbf$fhp3'
    ;;
   pgbges) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fh 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fh
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbf$fh'
    ;;
   pgiges) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fh 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fh
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbif$fh'
    ;;
   pgbgm6) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhm6 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhm6
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbf$fhm6'
    ;;
   pgigm6) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhm6 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhm6
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbif$fhm6'
    ;;
   pgbgm3) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhm3 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhm3
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbf$fhm3'
    ;;
   pgigm3) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhm3 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhm3
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbif$fhm3'
    ;;
   pgbgp3) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhp3 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fhp3
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbf$fhp3'
    ;;
   pgigp3) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhp3 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fhp3
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbif$fhp3'
    ;;
   sigcur) geslist='
@@ -491,12 +490,12 @@ elif [[ "$netwk" = "cfs-cdas" ]];then
    fhbeg=00
    ;;
   pgbcur) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fh 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbh$fh
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbf$fh'
    fhbeg=00
    ;;
   pgicur) geslist='
-   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fh 
+   $COMINcfs_cdas/cdas1.t${cyc}z.pgrbih$fh
    $COMINcfs_cdas/cdas1.t${cyc}z.pgrbif$fh'
    fhbeg=00
    ;;
@@ -615,7 +614,7 @@ elif [[ "$netwk" = "gfs" ]];then
    fhinc=06
    ;;
   natcur) geslist='
-   $COMINgfs/gfs.t${cyc}z.atmf$gh.nemsio'
+   $COMINgfs/gfs.t${cyc}z.atm.f$gh.nemsio'
    getlist00='
    $COMINgfs/gfs.t${cyc}z.atmanl.nemsio'
    fhbeg=00
@@ -1167,9 +1166,9 @@ elif [[ "$netwk" = "global" ]];then
    $COMINgfs/gfs.t${cyc}z.atmf$gh.nemsio'
    ;;
   natgm3) geslist='
-   $GETGES_NWG/$envir/gdas.$day/gdas.t${cyc}z.atmf$ghm3.nemsio
+   $GETGES_NWG/$envir/gdas.$day/gdas.t${cyc}z.atm.f$ghm3.nemsio
    $COMINgdas/gdas.t${cyc}z.atmf$ghm3.nemsio
-   $GETGES_NWG/$envir/gfs.$day/gfs.t${cyc}z.atmf$ghm3.nemsio
+   $GETGES_NWG/$envir/gfs.$day/gfs.t${cyc}z.atm.f$ghm3.nemsio
    $COMINgfs/gfs.t${cyc}z.atmf$ghm3.nemsio'
    ;;
   natgm2) geslist='
@@ -1403,10 +1402,10 @@ fi
 #-------------------------------------------------------------------------------
 # Either copy guess to a file or write guess name to standard output.
 if [[ -z "$gfile" ]];then
- echo $ges
+ echo ${ges}
  err=$?
 else
- cp $ges $gfile
+ cpfs ${ges} ${gfile}
  err=$?
 fi
 

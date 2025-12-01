@@ -5,20 +5,17 @@ source "${HOMEgfs}/ush/jjob_header.sh" -e "waveawipsbulls" -c "base wave waveawi
 ###################################
 # Set COM Paths
 ###################################
-export SENDDBN_NTC=${SENDDBN_NTC:-YES}
-export SENDDBN=${SENDDBN:-NO}
-export DBNROOT=${DBNROOT:-${UTILROOT}/fakedbn}
 
 YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
     COMIN_WAVE_STATION:COM_WAVE_STATION_TMPL \
     COMOUT_WAVE_WMO:COM_WAVE_WMO_TMPL
 
-if [[ ! -d ${COMOUT_WAVE_WMO} ]]; then mkdir -p "${COMOUT_WAVE_WMO}"; fi
+mkdir -p "${COMOUT_WAVE_WMO}"
 
 ###################################
 # Execute the Script
 
-${SCRgfs}/exgfs_wave_prdgen_bulls.sh && true
+"${SCRgfs}/exgfs_wave_prdgen_bulls.sh" && true
 export err=$?
 if [[ ${err} -ne 0 ]]; then
     err_exit
@@ -27,9 +24,8 @@ fi
 ###################################
 # Remove temp directories
 cd "${DATAROOT}" || true
-if [ "${KEEPDATA}" != "YES" ]; then
-  rm -rf "${DATA}"
+if [[ "${KEEPDATA}" != "YES" ]]; then
+    rm -rf "${DATA}"
 fi
-
 
 exit 0

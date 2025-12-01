@@ -8,10 +8,22 @@ echo "BEGIN: config.prep"
 # Get task specific resources
 source "${EXPDIR}/config.resources" prep
 
-export MAKE_PREPBUFR="NO"   # if NO, will copy prepbufr from globaldump
 export cdate10=${PDY}${cyc}
-if [[ $machine == "GAEA*" || ($MODE != "cycled" && $MODE != "replay") ]]; then
-  export MAKE_PREPBUFR="NO"
+
+# Relocation and syndata QC
+export PROCESS_TROPCY=${PROCESS_TROPCY:-NO}
+export TROPCYQCRELOSH="${SCRgfs}/exglobal_atmos_tropcy_qc_reloc.sh"
+export COMINsyn=${COMINsyn:-$(compath.py "${envir}/com/gfs/${gfs_ver}")/syndat}
+
+# Allow users to control the generation or use of either operational or
+# their processed prepbufr, prepbufr.acft_profiles, nsstbufr files
+export MAKE_PREPBUFR="YES"  # Generate prepbufr, etc. files by executing obsproc
+if [[ "${MAKE_PREPBUFR^^}" != "YES" ]]; then
+  export USE_PREPBUFR_FROM_OPS="YES"  # Copy operational prepbufr, etc files
+  if [[ "${USE_PREPBUFR_FROM_OPS^^}" != "YES" ]]; then
+    # Location of user processed prepbufr, etc files
+    export PREPBUFR_DIR="${DMPDIR:-}"  # Replace DMPDIR with the location of processed files
+  fi
 fi
 
 if [[ $MODE != "cycled" ]]; then
@@ -20,15 +32,7 @@ fi
 
 # prepbufr data pulled from cycled run in getfcst or getic jobs for omf mode
 export pullprepbufrexp="NO"
-if [[ $MODE != "omf" || $MAKE_PREPBUFR == "YES" ]]; then
-   export pullprepbufrexp="NO"
-fi
 export PTARDIR="/NCEPDEV/$HPSS_PROJECT/1year/$USER/$machine/scratch/${RESTARTEXP}/${CDATE}"
-
-# Relocation and syndata QC
-export PROCESS_TROPCY=${PROCESS_TROPCY:-NO}
-export TROPCYQCRELOSH="${SCRgfs}/exglobal_atmos_tropcy_qc_reloc.sh"
-export COMINsyn=${COMINsyn:-$(compath.py "${envir}/com/gfs/${gfs_ver}")/syndat}
 
 # Adjust observation error for GFS v16 parallels
 #

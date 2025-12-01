@@ -42,18 +42,6 @@ local SDAY=${current_cycle:6:2}
 local CHOUR=${current_cycle:8:2}
 local MOM6_OUTPUT_DIR="./MOM6_OUTPUT"
 
-if [[ "${REPLAY_ICS:-NO}" == "YES" ]]; then
-  local current_cycle_p1
-  current_cycle_p1=$(date --utc -d "${current_cycle:0:8} ${current_cycle:8:2} + ${FHOUT_OCN} hours" +%Y%m%d%H)
-  local current_cycle_offset
-  current_cycle_offset=$(date --utc -d "${current_cycle:0:8} ${current_cycle:8:2} + ${OFFSET_START_HOUR} hours" +%Y%m%d%H)
-  local SYEAR1=${current_cycle_p1:0:4}
-  local SMONTH1=${current_cycle_p1:4:2}
-  local SDAY1=${current_cycle_p1:6:2}
-  local CHOUR1=${current_cycle_p1:8:2}
-  local CHOUR_offset=${current_cycle_offset:8:2}
-fi
-
 atparse < "${template}" >> "diag_table"
 
 
@@ -174,6 +162,8 @@ local IMP_PHYSICS=${imp_physics:-"99"}
 local default_dt_inner=$(( DELTIM/2 ))
 local IOVR=${iovr:-"3"}
 local LTAEROSOL=${ltaerosol:-".false."}
+local MRAEROSOL=.false.
+local LTHAILAWARE=.false.
 local LRADAR=${lradar:-".true."}
 local TTENDLIM=${ttendlim:-"-999"}
 local DT_INNER=${dt_inner:-"${default_dt_inner}"}
@@ -188,6 +178,9 @@ local ICLOUD_BL=${icloud_bl:-"1"}
 local BL_MYNN_EDMF=${bl_mynn_edmf:-"1"}
 local BL_MYNN_TKEADVECT=${bl_mynn_tkeadvect:-".true."}
 local BL_MYNN_EDMF_MOM=${bl_mynn_edmf_mom:-"1"}
+local TTE_EDMF=${tte_edmf:-".false."}
+local CSCALE=${cscale:-"1.0"}
+local DO_NGW_EC=${do_ngw_ec:-".false."}
 local DO_UGWP=${do_ugwp:-".false."}
 local DO_TOFD=${do_tofd:-".false."}
 local GWD_OPT=${gwd_opt:-"2"}
@@ -238,7 +231,7 @@ local BETASCU=${betascu:-"8.0"}
 local BETAMCU=${betamcu:-"1.0"}
 local BETADCU=${betadcu:-"2.0"}
 local RAS=${ras:-".false."}
-local CDMBWD=${cdmbgwd:-"3.5,0.25"}
+local CDMBGWD=${cdmbgwd:-"3.5,0.25"}
 local PSL_GWD_DX_FACTOR=${psl_gwd_dx_factor:-"6.0"}
 local PRSLRD0=${prslrd0:-"0."}
 local IVEGSRC=${ivegsrc:-"1"}
@@ -294,6 +287,7 @@ local CPLWAV2ATM=${cplwav2atm:-".false."}
 local USE_MED_FLUX=${use_med_flux:-".false."}
 local CPLLND=${cpllnd:-".false."}
 local CPLLND2ATM=${cpllnd2atm:-".false."}
+local USE_OCEANUV=${use_oceanuv:-".false."}
 
 # CPL CHM options
 if [[ ${cplchm} = ".true." ]]; then
@@ -433,6 +427,7 @@ local FNTSFA="'${FNTSFA:-}'"
 #fv_grid_nml options
 
 #nam stochy options
+local NEW_LSCALE=${new_lscale:-".false."}
 local STOCHINI=${stochini:-".false."}
 local SKEB=${SKEB:-0}
 local ISEED_SKEB=${ISEED_SKEB:-${ISEED}}
@@ -441,12 +436,12 @@ local SKEB_LSCALE=${SKEB_LSCALE:-"-999."}
 local SKEBNORM=${SKEBNORM:-"1"}
 local SKEB_NPASS=${SKEB_NPASS:-"30"}
 local SKEB_VDOF=${SKEB_VDOF:-"5"}
-local SKEBINT=${SKEBINT:-"1800"}
+local SKEBINT=${SKEBINT:-"0"}
 local SHUM=${SHUM:-"-999."}
 local ISEED_SHUM=${ISEED_SHUM:-${ISEED}}
 local SHUM_TAU=${SHUM_TAU:-"-999."}
 local SHUM_LSCALE=${SHUM_LSCALE:-"-999."}
-local SHUMINT=${SHUMINT:-"3600"}
+local SHUMINT=${SHUMINT:-"0"}
 local SPPT=${SPPT:-"-999."}
 local ISEED_SPPT=${ISEED_SPPT:-${ISEED}}
 local SPPT_TAU=${SPPT_TAU:-"-999."}
@@ -454,7 +449,7 @@ local SPPT_LSCALE=${SPPT_LSCALE:-"-999."}
 local SPPT_LOGIT=${SPPT_LOGIT:-".true."}
 local SPPT_SFCLIMIT=${SPPT_SFCLIMIT:-".true."}
 local USE_ZMTNBLCK=${use_zmtnblck:-".true."}
-local SPPTINT=${SPPTINT:-"1800"}
+local SPPTINT=${SPPTINT:-"0"}
 local PBL_TAPER=${pbl_taper:-"0,0,0,0.125,0.25,0.5,0.75"}
 local OCNSPPT=${OCNSPPT:-"0.8,0.4,0.2,0.08,0.04"}
 local OCNSPPT_LSCALE=${OCNSPPT_LSCALE:-"500.E3,1000.E3,2000.E3,2000.E3,2000.E3"}
@@ -485,8 +480,9 @@ local LSOIL_INCR=${LSOIL_INCR:-2}
 local LAND_IAU_FILTER_INC=".false."
 local LAND_IAU_UPD_STC=".true."
 local LAND_IAU_UPD_SLC=".true."
-local LAND_IAU_DP_STCSMC_ADJ=".true."
+local LAND_IAU_DO_STCSMC_ADJ=".true."
 local LAND_IAU_MIN_T_INC=0.0001
+local LAND_IAU_MIN_SLC_INC=0.000001
 
 # Check will need to be modified in the future
 # once GW is ready to add in land IAU

@@ -52,14 +52,20 @@ fix/ref_fcst
 # Ignore parm file symlinks
 #--------------------------
 parm/gdas/aero
+parm/gdas/analcalc
+parm/gdas/anlstat
 parm/gdas/atm
 parm/gdas/io
 parm/gdas/ioda
+parm/gdas/marine
 parm/gdas/snow
 parm/gdas/soca
+parm/gdas/spoc
 parm/gdas/stat
 parm/gdas/jcb-gdas
 parm/gdas/jcb-algorithms
+parm/gsinfo
+parm/gdas/spoc
 parm/monitor
 parm/post/nam_micro_lookup.dat
 parm/post/optics_luts_DUST.dat
@@ -102,6 +108,7 @@ parm/regrid_sfc
 #--------------------------------------------
 sorc/build.xml
 sorc/build.db
+sorc/build.db-journal
 sorc/build_lock.db
 sorc/rocotostat.out
 sorc/*log
@@ -147,7 +154,6 @@ sorc/shield.fd/SHiELD_SRC
 #------------------------------
 # jobs symlinks
 # scripts symlinks
-scripts/exgdas_global_marine_analysis_ecen.py
 scripts/exglobal_prep_ocean_obs.py
 # ush symlinks
 ush/bufr2ioda_insitu_profile_argo.py
@@ -164,23 +170,13 @@ ush/fv3gfs_driver_grid.sh
 ush/fv3gfs_filter_topo.sh
 ush/fv3gfs_make_grid.sh
 ush/fv3gfs_make_orog.sh
-ush/gen_bufr2ioda_json.py
-ush/gen_bufr2ioda_yaml.py
-ush/bufr2ioda_insitu_profile*.py
-ush/bufr2ioda_insitu_surface*.py
 ush/global_chgres.sh
 ush/global_chgres_driver.sh
-ush/global_cycle.sh
 ush/global_cycle_driver.sh
 ush/global_cycle_shield.sh
 ush/jediinc2fv3.py
-ush/ufsda
-ush/soca
-ush/make_NTC_file.pl
-ush/make_ntc_bull.pl
-ush/make_tif.sh
-ush/month_name.sh
 ush/imsfv3_scf2ioda.py
+ush/bufr_snocvr_snomad.py
 ush/atparse.bash
 ush/run_bufr2ioda.py
 ush/bufr2ioda_insitu*
@@ -188,6 +184,13 @@ ush/gaussian_sfcfcst.sh
 ush/gaussian_c2g_atms.sh
 ush/cube2gaussian.sh
 ush/run_sfcanl_chgres.sh
+ush/python/gsincdiag_to_ioda
+ush/python/ufsda
+ush/python/pyiodaconv
+ush/python/soca
+ush/python/gen_bufr2ioda_json.py
+ush/python/gen_bufr2ioda_yaml.py
+ush/spoc
 # ush log file
 ush/fetch-fix-data.log
 

@@ -19,9 +19,6 @@
 
 #  Set environment.
 
-#  Directories.
-cd "${DATA}" || exit 99
-
 # Derived base variables
 
 # Dependent Scripts and Executables
@@ -36,9 +33,9 @@ export SNOW_NUDGE_COEFF=${SNOW_NUDGE_COEFF:-'-2.'}
 export CYCLVARS=${CYCLVARS:-""}
 export FHOUR=${FHOUR:-0}
 export DELTSFC=${DELTSFC:-6}
+export COUPLED=${COUPLED:-".false."}
 
 # Other info used in this script
-export gesenvir=${gesenvir:-${envir}}
 # Ignore possible spelling error (nothing is misspelled)
 # shellcheck disable=SC2153
 GPREFIX="gdas.t${GDATE:8:2}z."
@@ -93,8 +90,10 @@ else
 fi
 
 # determine where the input snow restart files come from
+snow_prefix=""
 if [[ "${DO_JEDISNOWDA:-}" == "YES" ]]; then
     sfcdata_dir="${COMIN_SNOW_ANALYSIS}"
+    snow_prefix="snow_analysis."
 else
     sfcdata_dir="${COMIN_ATMOS_RESTART_PREV}"
 fi
@@ -115,7 +114,7 @@ done
 # There is only a single NSST analysis at the middle of the window
 # For now use/assume it is the same at the beginning of the window if doing IAU
 if [[ "${DONST}" == "YES" ]]; then
-  cpreq "${COMIN_ATMOS_ANALYSIS}/${APREFIX}dtfanl.nc" "${DATA}/dtfanl"
+  cpreq "${COMIN_ATMOS_ANALYSIS}/${APREFIX}analysis.dtf.a006.nc" "${DATA}/dtfanl"
   export NST_FILE="dtfanl"
 else
   export NST_FILE="NULL"
@@ -160,16 +159,16 @@ for hr in "${!gcycle_dates[@]}"; do
 
   datestr="${gcycle_date:0:8}.${gcycle_date:8:2}0000"
 
-  if [[ "${DO_GSISOILDA}" == "YES" ]]; then
+  if [[ "${DO_GSISOILDA}" == "YES" && "${GCYCLE_DO_SOILINCR}" == ".true." ]]; then
         for (( nn=1; nn <= ntiles; nn++ )); do
-        cpreq "${COMIN_ATMOS_ANALYSIS}/sfci00${FHR}.tile${nn}.nc" \
+           cpreq "${COMIN_ATMOS_ANALYSIS}/increment.sfc.i00${FHR}.tile${nn}.nc" \
            "${DATA}/soil_xainc.00${nn}"
         done
   fi
 
   # Copy inputs from COMIN to DATA
   for (( nn=1; nn <= ntiles; nn++ )); do
-    cpreq "${sfcdata_dir}/${datestr}.sfc_data.tile${nn}.nc" "${DATA}/fnbgsi.00${nn}"
+    cpreq "${sfcdata_dir}/${datestr}.${snow_prefix}sfc_data.tile${nn}.nc" "${DATA}/fnbgsi.00${nn}"
     cpreq "${DATA}/fnbgsi.00${nn}"                       "${DATA}/fnbgso.00${nn}"
   done
 
@@ -179,7 +178,7 @@ for hr in "${!gcycle_dates[@]}"; do
     done
   fi
 
-  CDATE="${PDY}${cyc}" ${CYCLESH}
+  "${CYCLESH}" && true
   export err=$?
   if [[ ${err} -ne 0 ]]; then
      err_exit "Unable to update surface data from guess and analysis!"

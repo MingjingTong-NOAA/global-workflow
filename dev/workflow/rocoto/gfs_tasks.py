@@ -72,7 +72,7 @@ class GFSTasks(Tasks):
         dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': 'gdas'})
-        data = f'{atm_hist_path}/gdas.t@Hz.atmf009.nc'
+        data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
         dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -108,11 +108,13 @@ class GFSTasks(Tasks):
 
         dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_hist_path}/gdas.t@Hz.atmf009.nc'
+        data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
         dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
         dep_dict = {'type': 'data', 'data': data}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dep_dict = {'type': 'metatask', 'name': 'gdas_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_prep_sfc']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_prep_sfc'}
@@ -678,12 +680,19 @@ class GFSTasks(Tasks):
     def prepoceanobs(self):
 
         ocean_hist_path = self._template_to_rocoto_cycstring(self._base["COM_OCEAN_HISTORY_TMPL"], {'RUN': 'gdas'})
+        dmpdir = self._configs['prepoceanobs']["DMPDIR"]
 
         deps = []
-        data = f'{ocean_hist_path}/gdas.ocean.t@Hz.inst.f009.nc'
+        data = f'{ocean_hist_path}/gdas.t@Hz.inst.f009.nc'
         dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
+        data = f'{dmpdir}/{self.run}.@Y@m@d/@H/ocean/{self.run}.t@Hz.obsforge_marine_status.log'
+        dep_dict = {'type': 'data', 'data': data}
+        deps.append(rocoto.add_dependency(dep_dict))
+        data = f'{dmpdir}/{self.run}.@Y@m@d/@H/ocean/insitu/{self.run}.t@Hz.obsforge_marine_bufr_status.log'
+        dep_dict = {'type': 'data', 'data': data}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('prepoceanobs')
         task_name = f'{self.run}_prepoceanobs'
@@ -705,9 +714,9 @@ class GFSTasks(Tasks):
     def marineanlletkf(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_prepoceanobs'}
+        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf', '')}_prepoceanobs"}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.run}_marinebmat'}
+        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf', '')}_marinebmat"}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -733,7 +742,7 @@ class GFSTasks(Tasks):
         ocean_hist_path = self._template_to_rocoto_cycstring(self._base["COM_OCEAN_HISTORY_TMPL"], {'RUN': 'gdas'})
 
         deps = []
-        data = f'{ocean_hist_path}/gdas.ocean.t@Hz.inst.f009.nc'
+        data = f'{ocean_hist_path}/gdas.t@Hz.inst.f009.nc'
         dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_hybvar_ocn']:
@@ -834,22 +843,22 @@ class GFSTasks(Tasks):
 
         return task
 
-    def ocnanalecen(self):
+    def marineanlecen(self):
 
         # can run in parallel with marinebmat
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_marinebmatinit'}
+        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf', '')}_marinebmatinit"}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
-        resources = self.get_resource('ocnanalecen')
-        task_name = f'{self.run}_ocnanalecen'
+        resources = self.get_resource('marineanlecen')
+        task_name = f'{self.run}_marineanlecen'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ocnanalecen.sh',
+                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlecen.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -864,11 +873,15 @@ class GFSTasks(Tasks):
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlvar'}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_hybvar_ocn']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_ocnanalecen'}
+        # if DOHYBVAR_OCN: "YES" and EUPD_CYC: "both"
+        if self.options['do_hybvar_ocn'] and \
+                (('gfs' in self.app_config.ens_runs and
+                 'gdas' in self.app_config.ens_runs) or
+                 self.run == "gdas"):
+            dep_dict = {'type': 'task', 'name': f'enkf{self.run}_marineanlecen'}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_mergensst']:
-            data = f'&ROTDIR;/{self.run}.@Y@m@d/@H/atmos/{self.run}.t@Hz.sfcanl.nc'
+            data = f'&ROTDIR;/{self.run}.@Y@m@d/@H/atmos/{self.run}.t@Hz.analysis.sfc.a006.nc'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -992,33 +1005,47 @@ class GFSTasks(Tasks):
 
     def _fcst_cycled(self):
 
+        deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
-        dep = rocoto.add_dependency(dep_dict)
-        dependencies = rocoto.create_dependency(dep=dep)
+        deps.append(rocoto.add_dependency(dep_dict))
 
         if self.options['do_wave']:
             wave_job = 'waveprep' if self.options['app'] in ['ATMW'] else 'waveinit'
             dep_dict = {'type': 'task', 'name': f'{self.run}_{wave_job}'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
 
         if self.options['do_jediocnvar']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlfinal'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
 
         if self.options['do_aero_anl']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_aeroanlfinal'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
 
         if self.options['do_jedisnowda']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_snowanl'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
+            deps.append(rocoto.add_dependency(dep_dict))
 
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
+        dependencies1 = rocoto.create_dependency(dep_condition='and', dep=deps)
 
-        if self.run in ['gdas']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
-            dependencies.append(rocoto.add_dependency(dep_dict))
-            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+        deps.append(rocoto.add_dependency(dep_dict))
+
+        if self.options['do_wave']:
+            wave_job = 'waveprep' if self.options['app'] in ['ATMW'] else 'waveinit'
+            dep_dict = {'type': 'task', 'name': f'{self.run}_{wave_job}'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
+        dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+
+        dependencies2 = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        dependencies = []
+        dependencies.append(dependencies1)
+        dependencies.append(dependencies2)
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
         cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
 
@@ -1065,13 +1092,19 @@ class GFSTasks(Tasks):
 
         atm_anl_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_ANALYSIS_TMPL"])
         deps = []
-        data = f'{atm_anl_path}/{self.run}.t@Hz.atmanl.nc'
+        if self.options['do_jediatmvar']:
+            data = f'{atm_anl_path}/{self.run}.t@Hz.jedi_analysis.atm.a006.nc'
+        else:
+            data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.atm.a006.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_anl_path}/{self.run}.t@Hz.sfcanl.nc'
+        if self.options['do_jediatmvar']:
+            data = f'{atm_anl_path}/{self.run}.t@Hz.jedi_analysis.sfc.a006.nc'
+        else:
+            data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.sfc.a006.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_anl_path}/{self.run}.t@Hz.loganl.txt'
+        data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.done.txt'
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
@@ -1100,7 +1133,7 @@ class GFSTasks(Tasks):
 
         atm_master_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_MASTER_TMPL"])
         deps = []
-        data = f'{atm_master_path}/{self.run}.t@Hz.master.grb2anl'
+        data = f'{atm_master_path}/{self.run}.t@Hz.master.analysis.grib2'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
@@ -1141,13 +1174,13 @@ class GFSTasks(Tasks):
 
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"])
         deps = []
-        data = f'{atm_hist_path}/{self.run}.t@Hz.atmf#fhr#.nc'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.atm.f#fhr#.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_hist_path}/{self.run}.t@Hz.sfcf#fhr#.nc'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.sfc.f#fhr#.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_hist_path}/{self.run}.t@Hz.atm.logf#fhr#.txt'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.log.f#fhr#.txt'
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
@@ -1191,13 +1224,13 @@ class GFSTasks(Tasks):
 
         products_dict = {'atmos': {'config': 'atmos_products',
                                    'history_path_tmpl': 'COM_ATMOS_MASTER_TMPL',
-                                   'history_file_tmpl': f'{self.run}.t@Hz.master.grb2f#fhr3_last#'},
+                                   'history_file_tmpl': f'{self.run}.t@Hz.master.f#fhr3_last#.grib2'},
                          'ocean': {'config': 'oceanice_products',
                                    'history_path_tmpl': 'COM_OCEAN_HISTORY_TMPL',
-                                   'history_file_tmpl': f'{self.run}.ocean.t@Hz.6hr_avg.f#fhr3_next#.nc'},
+                                   'history_file_tmpl': f'{self.run}.t@Hz.6hr_avg.f#fhr3_nextp1#.nc'},
                          'ice': {'config': 'oceanice_products',
                                  'history_path_tmpl': 'COM_ICE_HISTORY_TMPL',
-                                 'history_file_tmpl': f'{self.run}.ice.t@Hz.6hr_avg.f#fhr3_last#.nc'}}
+                                 'history_file_tmpl': f'{self.run}.t@Hz.6hr_avg.f#fhr3_last#.nc'}}
 
         component_dict = products_dict[component]
         config = component_dict['config']
@@ -1214,6 +1247,13 @@ class GFSTasks(Tasks):
             fhrs.remove(0)
 
         fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
+
+        # Delay triggering ocean products task to next next forecast hour to ensure all data is available
+        if component == 'ocean':
+            fhr3_next = fhr_var_dict['fhr3_next'].split(' ')
+            fhr3_nextp1 = fhr3_next[1:]
+            fhr3_nextp1.append(fhr3_next[-1])  # repeat last forecast hour to maintain same number of groups
+            fhr_var_dict['fhr3_nextp1'] = ' '.join(fhr3_nextp1)
 
         # Adjust walltime based on the largest group
         largest_group = max([len(grp.split(',')) for grp in fhr_var_dict['fhr_list'].split(' ')])
@@ -1259,14 +1299,12 @@ class GFSTasks(Tasks):
 
         wave_grid = self._configs['base']['waveGRD']
         history_path = self._template_to_rocoto_cycstring(self._base['COM_WAVE_HISTORY_TMPL'])
-        history_file = f'/{self.run}.wave.t@Hz.{wave_grid}.f#fhr3_next#.bin'
+        history_file = f'{self.run}.t@Hz.{wave_grid}.f#fhr3_last#.log'
 
         deps = []
         dep_dict = {'type': 'data', 'data': f'{history_path}/{history_file}'}
         deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'task', 'name': f'{self.run}_fcst_#seg_dep#'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps, dep_condition='or')
+        dependencies = rocoto.create_dependency(dep=deps)
 
         fhrs = self._get_forecast_hours(self.run, self._configs['wavepostsbs'], 'wave')
         max_tasks = self._configs['wavepostsbs']['MAX_TASKS']
@@ -1303,44 +1341,31 @@ class GFSTasks(Tasks):
         return task
 
     def wavepostbndpnt(self):
-        deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
-
-        resources = self.get_resource('wavepostbndpnt')
-        task_name = f'{self.run}_wavepostbndpnt'
-        task_dict = {'task_name': task_name,
-                     'resources': resources,
-                     'dependency': dependencies,
-                     'envars': self.envars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/wavepostbndpnt.sh',
-                     'job_name': f'{self.pslot}_{task_name}_@H',
-                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
-                     'maxtries': '&MAXTRIES;'
-                     }
-
-        task = rocoto.create_task(task_dict)
-
-        return task
+        return self._wavepostbndpnt('wavepostbndpnt')
 
     def wavepostbndpntbll(self):
+        return self._wavepostbndpnt('wavepostbndpntbll')
 
-        # The wavepostbndpntbll job runs on forecast hours up to FHMAX_WAV_IBP
+    def _wavepostbndpnt(self, name_in):
+
+        # The job runs on forecast hours up to FHMAX_WAV_IBP
+        fhmax_wav_ibp = self._configs[name_in]['FHMAX_WAV_IBP']
+        history_path = self._template_to_rocoto_cycstring(self._base['COM_WAVE_HISTORY_TMPL'])
+        history_file = f'{self.run}.t@Hz.points.f{fhmax_wav_ibp:03d}.log'
+
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
+        dep_dict = {'type': 'data', 'data': f'{history_path}/{history_file}'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
-        resources = self.get_resource('wavepostbndpntbll')
-        task_name = f'{self.run}_wavepostbndpntbll'
+        resources = self.get_resource(name_in)
+        task_name = f'{self.run}_{name_in}'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/wavepostbndpntbll.sh',
+                     'command': f'{self.HOMEgfs}/dev/jobs/{name_in}.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1354,10 +1379,7 @@ class GFSTasks(Tasks):
         deps = []
         dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_wave_bnd']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
-            deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        dependencies = rocoto.create_dependency(dep=deps)
 
         resources = self.get_resource('wavepostpnt')
         task_name = f'{self.run}_wavepostpnt'
@@ -1377,15 +1399,28 @@ class GFSTasks(Tasks):
         return task
 
     def wavegempak(self):
+
+        # wave_gempak tasks depend on wave_postsbs tasks
+        # wave_postsbs runs on different forecast hours than wave_gempak,
+        # so we need to get the forecast hours for wave_postsbs and wave_gempak separately
+
+        # Get the forecast hours for wave_postsbs
+        dep_fhrs = self._get_forecast_hours(self.run, self._configs['wavepostsbs'], 'wave')
+        dep_max_tasks = self._configs['wavepostsbs']['MAX_TASKS']
+        dep_fhr_var_dict = self.get_grouped_fhr_dict(fhrs=dep_fhrs, ngroups=dep_max_tasks)
+
+        # Get the forecast hours for wave_gempak
+        fhrs = self._get_forecast_hours(self.run, self._configs['wavegempak'], 'wave')
+        max_tasks = self._configs['wavegempak']['MAX_TASKS']
+        fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
+
+        # Get the right dependency labels for wave_gempak on wave_postsbs groups
+        fhr_var_dict = self.get_dep_fhr_label(fhr_var_dict, dep_fhr_var_dict)
+
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostsbs_#fhr_label#'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostsbs_#dep_fhr_label#'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
-
-        # Hour groupings need to match gridded post for dependencies to be correct
-        fhrs = self._get_forecast_hours(self.run, self._configs['wavepostsbs'], 'wave')
-        max_tasks = self._configs['wavepostsbs']['MAX_TASKS']
-        fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
 
         wave_post_envars = self.envars.copy()
         postenvar_dict = {'FHR_LIST': '#fhr_list#'}
@@ -1492,13 +1527,13 @@ class GFSTasks(Tasks):
 
         atmos_prod_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_GRIB_GRID_TMPL"], {'RUN': self.run, 'GRID': '0p25'})
         deps = []
-        data = f'{atmos_prod_path}/{self.run}.t@Hz.pgrb2.0p25.f006'
+        data = f'{atmos_prod_path}/{self.run}.t@Hz.pres_a.0p25.f006.grib2'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atmos_prod_path}/{self.run}.t@Hz.pgrb2.0p25.f012'
+        data = f'{atmos_prod_path}/{self.run}.t@Hz.pres_a.0p25.f012.grib2'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atmos_prod_path}/{self.run}.t@Hz.pgrb2.0p25.f024'
+        data = f'{atmos_prod_path}/{self.run}.t@Hz.pres_a.0p25.f024.grib2'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
@@ -1604,14 +1639,27 @@ class GFSTasks(Tasks):
 
     def gempak(self):
 
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_atmos_prod_#fhr_label#'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
+        # gempak tasks depend on atmos_prod tasks
+        # atmos_prod runs on different forecast hours than gempak,
+        # so we need to get the forecast hours for atmos_prod and gempak separately
 
+        # Get the forecast hours for wave_postsbs
+        dep_fhrs = self._get_forecast_hours(self.run, self._configs['atmos_products'])
+        dep_max_tasks = self._configs['atmos_products']['MAX_TASKS']
+        dep_fhr_var_dict = self.get_grouped_fhr_dict(fhrs=dep_fhrs, ngroups=dep_max_tasks)
+
+        # Get the forecast hours for gempak
         fhrs = self._get_forecast_hours(self.run, self._configs['gempak'])
         max_tasks = self._configs['gempak']['MAX_TASKS']
         fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
+
+        # Get the right dependency labels for gempak on atmos_prod groups
+        fhr_var_dict = self.get_dep_fhr_label(fhr_var_dict, dep_fhr_var_dict)
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_atmos_prod_#dep_fhr_label#'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
 
         resources = self.get_resource('gempak')
         # Adjust walltime based on the largest group
@@ -1856,6 +1904,9 @@ class GFSTasks(Tasks):
         if self.options['do_jediatmvar']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
             deps.append(rocoto.add_dependency(dep_dict))
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_jediocnvar']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlfinal'}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -1874,7 +1925,7 @@ class GFSTasks(Tasks):
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': self.run,
+                     'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEgfs}/dev/jobs/anlstat.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -1988,7 +2039,7 @@ class GFSTasks(Tasks):
                 dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_arch_vrfy', 'condition': 'not'}
                 deps2.append(rocoto.add_dependency(dep_dict))
                 for lookback2 in range(1, lookback):
-                    offset = timedelta_to_HMS(-to_timedelta(f'{6*lookback2}H'))
+                    offset = timedelta_to_HMS(-to_timedelta(f'{6 * lookback2}H'))
                     dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': offset}
                     deps2.append(rocoto.add_dependency(dep_dict))
 
@@ -2077,6 +2128,8 @@ class GFSTasks(Tasks):
             if self.options['do_wave_bnd']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
                 deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
+                deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -2097,7 +2150,8 @@ class GFSTasks(Tasks):
 
         return task
 
-    def arch_tars(self):
+    def _arch_tars_deps(self):
+        """Common dependencies for all archive tarball jobs"""
         deps = []
         if self.app_config.mode in ['cycled']:
             if self.run in ['gfs']:
@@ -2105,9 +2159,6 @@ class GFSTasks(Tasks):
                 deps.append(rocoto.add_dependency(dep_dict))
                 if self.options['do_vminmon']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_vminmon'}
-                    deps.append(rocoto.add_dependency(dep_dict))
-                if self.options['do_anlstat']:
-                    dep_dict = {'type': 'task', 'name': f'{self.run}_anlstat'}
                     deps.append(rocoto.add_dependency(dep_dict))
             elif self.run in ['gdas']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlprod'}
@@ -2147,6 +2198,8 @@ class GFSTasks(Tasks):
             if self.options['do_wave_bnd']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
                 deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
+                deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_ocean']:
             if self.run in ['gfs']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_ocean_prod'}
@@ -2183,14 +2236,82 @@ class GFSTasks(Tasks):
         dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
         deps.append(rocoto.add_dependency(dep_dict))
 
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        return rocoto.create_dependency(dep_condition='and', dep=deps)
+
+    def arch_tars(self):
+        """Create individual archive tarball jobs for parallel execution"""
+
+        # Split up the tarball_types based on the run and configuration options
+        # Define all possible tarball types
+        if self.run == 'gfs':
+            tarball_types = ['gfsa', 'gfsb']
+
+            # Add optional tarballs based on configuration
+            if self._configs['arch_tars'].get('ARCH_GAUSSIAN', True):
+                tarball_types.extend(['gfs_flux', 'gfs_netcdfb', 'gfs_pgrb2b'])
+                if self.app_config.mode == 'cycled':
+                    tarball_types.append('gfs_netcdfa')
+
+            if self.options['do_wave']:
+                tarball_types.append('gfswave')
+
+            if self.options['do_aero_fcst']:
+                tarball_types.append('chem')
+
+            if self.options['do_ocean']:
+                tarball_types.extend(['ocean_6hravg', 'ocean_grib2', 'gfs_flux_1p00'])
+                if self.options.get('do_jediocnvar', False) and self.app_config.mode == 'cycled':
+                    tarball_types.append('gfsocean_analysis')
+
+            if self.options['do_ice']:
+                tarball_types.extend(['ice_6hravg', 'ice_grib2'])
+
+            if self.options['do_bufrsnd']:
+                tarball_types.append('gfs_downstream')
+
+            if self.app_config.mode == 'cycled':
+                # Add restart archives (timing logic handled in template)
+                tarball_types.append('gfs_restarta')
+
+        elif self.run == 'gdas':
+            tarball_types = ['gdas']
+
+            if self.options['do_ice']:
+                tarball_types.append('gdasice')
+
+            if self.options['do_ocean']:
+                tarball_types.append('gdasocean')
+
+                if self.options['do_jediocnvar'] and self.app_config.mode == 'cycled':
+                    tarball_types.append('gdasocean_analysis')
+
+            if self.options['do_wave']:
+                tarball_types.append('gdaswave')
+
+            if self.app_config.mode == 'cycled':
+                # Add restart archives (timing logic handled in template)
+                tarball_types.append('gdas_restarta')
+                tarball_types.append('gdas_restartb')
+                if self.options['do_ice']:
+                    tarball_types.append('gdasice_restart')
+                if self.options['do_ocean']:
+                    tarball_types.append('gdasocean_restart')
+                if self.options['do_wave']:
+                    tarball_types.append('gdaswave_restart')
+
+        # Create a metatask that contains all the individual archive jobs
+        dependencies = self._arch_tars_deps()
+
+        archenvars = self.envars.copy()
+        archenvars.append(rocoto.create_envar(name='TARBALL_TYPE', value='#tartype#'))
 
         resources = self.get_resource('arch_tars')
-        task_name = f'{self.run}_arch_tars'
+
+        task_name = f'{self.run}_arch_tar_#tartype#'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
-                     'envars': self.envars,
+                     'envars': archenvars,
                      'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEgfs}/dev/jobs/arch_tars.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
@@ -2198,14 +2319,19 @@ class GFSTasks(Tasks):
                      'maxtries': '&MAXTRIES;'
                      }
 
-        task = rocoto.create_task(task_dict)
+        var_dict = {'tartype': ' '.join(tarball_types)}
+        metatask_dict = {'task_name': f'{self.run}_arch_tars',
+                         'var_dict': var_dict,
+                         'task_dict': task_dict
+                         }
 
+        task = rocoto.create_task(metatask_dict)
         return task
 
     # Globus transfer for HPSS archiving
     def globus_arch(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_arch_tars'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps)
 
@@ -2267,6 +2393,14 @@ class GFSTasks(Tasks):
     # Cleanup
     def cleanup(self):
         deps = []
+        dep_dict = {'type': 'task', 'name': 'gfs_fcst_seg0', 'offset':
+                    f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dep_dict = {'type': 'cycleexist', 'condition': 'not',
+                    'offset': f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dep_next_fcst_seg = rocoto.create_dependency(dep_condition='or', dep=deps)
+        deps = []
         if 'enkf' in self.run:
             dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -2276,6 +2410,8 @@ class GFSTasks(Tasks):
                 else:
                     dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
                 deps.append(rocoto.add_dependency(dep_dict))
+            if self.run in ['enkfgdas'] and self._base["INTERVAL_GFS"] == 6:
+                deps.append(dep_next_fcst_seg)
 
         else:
             if self.app_config.mode in ['cycled']:
@@ -2286,6 +2422,8 @@ class GFSTasks(Tasks):
                         dep_dict = {'type': 'task', 'name': f'{self.run}_vminmon'}
                         deps.append(rocoto.add_dependency(dep_dict))
                 elif self.run in ['gdas']:
+                    if self._base["INTERVAL_GFS"] == 6:
+                        deps.append(dep_next_fcst_seg)
                     dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlprod'}
                     deps.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_fit2obs']:
@@ -2319,6 +2457,8 @@ class GFSTasks(Tasks):
                 deps.append(rocoto.add_dependency(dep_dict))
                 if self.options['do_wave_bnd']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
+                    deps.append(rocoto.add_dependency(dep_dict))
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
                     deps.append(rocoto.add_dependency(dep_dict))
             if self.options['do_ocean']:
                 if self.run in ['gfs']:
@@ -2375,7 +2515,7 @@ class GFSTasks(Tasks):
                 if self.options['do_globusarch']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_globus_arch'}
                 else:
-                    dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
+                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_arch_tars'}
 
                 deps.append(rocoto.add_dependency(dep_dict))
 
@@ -2401,7 +2541,7 @@ class GFSTasks(Tasks):
     # Start of ensemble tasks
     def eobs(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_prep'}
+        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prep'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -2472,7 +2612,7 @@ class GFSTasks(Tasks):
 
     def atmensanlinit(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_prepatmiodaobs'}
+        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prepatmiodaobs'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -2653,7 +2793,7 @@ class GFSTasks(Tasks):
             return grp, dep, lst
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_analcalc'}
+        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -2694,7 +2834,7 @@ class GFSTasks(Tasks):
     def ecen_fv3jedi(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf','')}_atmanlfinal"}
+        dep_dict = {'type': 'task', 'name': f"{self.run.replace('enkf', '')}_atmanlfinal"}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -2754,7 +2894,7 @@ class GFSTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
             deps.append(rocoto.add_dependency(dep_dict))
         else:
-            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf","")}_analcalc'}
+            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
             deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -2792,7 +2932,7 @@ class GFSTasks(Tasks):
         dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_hybvar_ocn']:
-            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_ocnanalecen'}
+            dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlecen'}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
@@ -2836,7 +2976,7 @@ class GFSTasks(Tasks):
         self._is_this_a_gdas_task(self.run, 'echgres')
 
         deps = []
-        dep_dict = {'type': 'metatask', 'name': f'{self.run.replace("enkf","")}_fcst'}
+        dep_dict = {'type': 'metatask', 'name': f'{self.run.replace("enkf", "")}_fcst'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_fcst_mem001'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -2969,6 +3109,9 @@ class GFSTasks(Tasks):
             if not self.options['do_jediatmvar']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
                 deps.append(rocoto.add_dependency(dep_dict))
+            if self._base.get('DOLETKF_OCN', True):
+                dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlletkf'}
+                deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
         else:  # early cycle enkf run (enkfgfs)
             dep_dict = {'type': 'task', 'name': f'{self.run}_esfc'}
@@ -2976,9 +3119,12 @@ class GFSTasks(Tasks):
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_ecmn'}
             deps.append(rocoto.add_dependency(dep_dict))
             if self._base.get('DOHYBVAR_OCN', True):
-                dep_dict = {'type': 'task', 'name': f'gfs_ocnanalecen'}
+                dep_dict = {'type': 'task', 'name': f'enkfgfs_marineanlecen'}
                 deps.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'task', 'name': f'gfs_marineanlfinal'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            if self._base.get('DOLETKF_OCN', True):
+                dep_dict = {'type': 'task', 'name': f'enkfgfs_marineanlletkf'}
                 deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 

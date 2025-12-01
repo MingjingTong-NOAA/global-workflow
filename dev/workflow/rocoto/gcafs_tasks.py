@@ -619,8 +619,9 @@ class GCAFSTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_prep_emissions'}
             dependencies.append(rocoto.add_dependency(dep_dict))
 
-        dep_dict = {'type': 'task', 'name': f'{anldep}_aeroanlfinal'}
-        dependencies.append(rocoto.add_dependency(dep_dict))
+        if self.options['use_aero_anl']:
+            dep_dict = {'type': 'task', 'name': f'{anldep}_aeroanlfinal'}
+            dependencies.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
 
@@ -756,13 +757,13 @@ class GCAFSTasks(Tasks):
 
         atm_anl_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_ANALYSIS_TMPL"])
         deps = []
-        data = f'{atm_anl_path}/{self.run}.t@Hz.atmanl.nc'
+        data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.atm.a006.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_anl_path}/{self.run}.t@Hz.sfcanl.nc'
+        data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.sfc.a006.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_anl_path}/{self.run}.t@Hz.loganl.txt'
+        data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.done.txt'
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
@@ -832,13 +833,13 @@ class GCAFSTasks(Tasks):
 
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"])
         deps = []
-        data = f'{atm_hist_path}/{self.run}.t@Hz.atmf#fhr#.nc'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.atm.f#fhr#.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_hist_path}/{self.run}.t@Hz.sfcf#fhr#.nc'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.sfc.f#fhr#.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{atm_hist_path}/{self.run}.t@Hz.atm.logf#fhr#.txt'
+        data = f'{atm_hist_path}/{self.run}.t@Hz.log.f#fhr#.txt'
         dep_dict = {'type': 'data', 'data': data, 'age': 60}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep=deps, dep_condition='and')
@@ -903,13 +904,7 @@ class GCAFSTasks(Tasks):
         fhout_ice_gfs = self._configs['base']['FHOUT_ICE_GFS']
         products_dict = {'atmos': {'config': 'atmos_products',
                                    'history_path_tmpl': 'COM_ATMOS_MASTER_TMPL',
-                                   'history_file_tmpl': f'{self.run}.t@Hz.master.grb2f#fhr3_last#'},
-                         'ocean': {'config': 'oceanice_products',
-                                   'history_path_tmpl': 'COM_OCEAN_HISTORY_TMPL',
-                                   'history_file_tmpl': f'{self.run}.ocean.t@Hz.{fhout_ocn_gfs}hr_avg.f#fhr3_next#.nc'},
-                         'ice': {'config': 'oceanice_products',
-                                 'history_path_tmpl': 'COM_ICE_HISTORY_TMPL',
-                                 'history_file_tmpl': f'{self.run}.ice.t@Hz.{fhout_ice_gfs}hr_avg.f#fhr3_last#.nc'}}
+                                   'history_file_tmpl': f'{self.run}.t@Hz.master.grb2f#fhr3_last#'}}
 
         component_dict = products_dict[component]
         config = component_dict['config']
@@ -920,11 +915,6 @@ class GCAFSTasks(Tasks):
         resources = self.get_resource(config)
 
         fhrs = self._get_forecast_hours(self.run, self._configs[config], component)
-
-        # when replaying, atmos component does not have fhr 0, therefore remove 0 from fhrs
-        is_replay = self._configs[config]['REPLAY_ICS']
-        if is_replay and component in ['atmos'] and 0 in fhrs:
-            fhrs.remove(0)
 
         # ocean/ice components do not have fhr 0 as they are averaged output
         if component in ['ocean', 'ice'] and 0 in fhrs:
@@ -996,11 +986,6 @@ class GCAFSTasks(Tasks):
 
         fhrs = self._get_forecast_hours(self.run, self._configs['atmos_ensstat'])
 
-        # when replaying, atmos component does not have fhr 0, therefore remove 0 from fhrs
-        is_replay = self._configs['atmos_ensstat']['REPLAY_ICS']
-        if is_replay and 0 in fhrs:
-            fhrs.remove(0)
-
         max_tasks = self._configs['atmos_ensstat']['MAX_TASKS']
         fhr_var_dict = self.get_grouped_fhr_dict(fhrs=fhrs, ngroups=max_tasks)
 
@@ -1043,11 +1028,11 @@ class GCAFSTasks(Tasks):
                 dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_arch_vrfy', 'condition': 'not'}
                 deps2.append(rocoto.add_dependency(dep_dict))
                 for lookback2 in range(1, lookback):
-                    offset = timedelta_to_HMS(-to_timedelta(f'{6*lookback2}H'))
+                    offset = timedelta_to_HMS(-to_timedelta(f'{6 * lookback2}H'))
                     dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': offset}
                     deps2.append(rocoto.add_dependency(dep_dict))
 
-                offset = timedelta_to_HMS(-to_timedelta(f'{6*lookback}H'))
+                offset = timedelta_to_HMS(-to_timedelta(f'{6 * lookback}H'))
                 dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy', 'offset': offset}
                 deps2.append(rocoto.add_dependency(dep_dict))
                 deps.append(rocoto.create_dependency(dep_condition='and', dep=deps2))
@@ -1240,7 +1225,7 @@ class GCAFSTasks(Tasks):
             if self.options['do_anlstat'] and self.options['do_aero_anl']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_anlstat'}
                 deps.append(rocoto.add_dependency(dep_dict))
-            if self.run in ['gcdas']:
+            if self.run in ['gcdas'] and self.options['do_aero_anl']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_aeroanlgenb'}
                 deps.append(rocoto.add_dependency(dep_dict))
         # Post job dependencies

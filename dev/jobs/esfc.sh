@@ -3,8 +3,8 @@
 set -x
 
 ###############################################################
-# Source FV3GFS workflow modules
-. "${HOMEgfs}/ush/load_fv3gfs_modules.sh"
+# Source GSI workflow modules
+source "${HOMEgfs}/dev/ush/load_modules.sh" gsi
 status=$?
 if [[ ${status} -ne 0 ]]; then
     exit "${status}"
@@ -17,6 +17,5 @@ export jobid="${job}.$$"
 # Execute the JJOB
 "${HOMEgfs}/jobs/JGDAS_ENKF_SFC"
 status=$?
-
 
 exit "${status}"

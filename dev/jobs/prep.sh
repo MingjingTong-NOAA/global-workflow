@@ -2,10 +2,10 @@
 
 ###############################################################
 # Source FV3GFS workflow modules
-source "${HOMEgfs}/ush/load_fv3gfs_modules.sh"
+source "${HOMEgfs}/dev/ush/load_modules.sh" run
 status=$?
 if [[ ${status} -ne 0 ]]; then
-    exit "${status}"
+    err_exit "${status}"
 fi
 
 ###############################################################
@@ -14,7 +14,7 @@ export jobid="${job}.$$"
 source "${HOMEgfs}/ush/jjob_header.sh" -e "prep" -c "base prep"
 
 # Strip 'enkf' from RUN for pulling data
-RUN_local="${RUN/enkf}"
+RUN_local="${RUN/enkf/}"
 
 ###############################################################
 # Set script and dependency variables
@@ -51,11 +51,11 @@ fi
 
 #  Ensure previous cycle gdas dumps are available (used by cycle & downstream)
 if [[ ! -s "${COMINobsproc_PREV}/${GDUMP}.t${gcyc}z.updated.status.tm00.bufr_d" ]]; then
-  "${HOMEgfs}/ush/getdump.sh" "${gPDY}" "${gcyc}" "${GDUMP}" "${COMINobsproc_PREV}" "${COMOUT_OBS_PREV}"
-  status=$?
-  if [[ ${status} -ne 0 ]]; then
-      exit "${status}"
-  fi
+    "${HOMEgfs}/ush/getdump.sh" "${gPDY}" "${gcyc}" "${GDUMP}" "${COMINobsproc_PREV}" "${COMOUT_OBS_PREV}"
+    status=$?
+    if [[ ${status} -ne 0 ]]; then
+        exit "${status}"
+    fi
 fi
 # exception handling to ensure no dead link
 # shellcheck disable=SC2312
@@ -66,7 +66,6 @@ fi
 if [[ $(find "${COMINobsproc_PREV}" -xtype l | wc -l) -ge 1 ]]; then
     exit 9
 fi
-
 
 ###############################################################
 
@@ -80,7 +79,7 @@ if [[ ${PROCESS_TROPCY} == "YES" ]]; then
     export ARCHSYND=${ROTDIR}/syndat
     mkdir -p "${ARCHSYND}"
     if [[ ! -s ${ARCHSYND}/syndat_akavit ]]; then
-        for file in syndat_akavit syndat_dateck syndat_stmcat.scr syndat_stmcat syndat_sthisto syndat_sthista ; do
+        for file in syndat_akavit syndat_dateck syndat_stmcat.scr syndat_stmcat syndat_sthisto syndat_sthista; do
             cpreq "${COMINsyn}/${file}" "${ARCHSYND}"/.
         done
     fi
@@ -96,7 +95,6 @@ if [[ ${PROCESS_TROPCY} == "YES" ]]; then
 else
     cpfs "${COMINobsproc}/${RUN_local}.t${cyc}z.syndata.tcvitals.tm00" "${COMOUT_OBS}/"
 fi
-
 
 ###############################################################
 # Generate prepbufr files from dumps and prior gdas guess
@@ -119,29 +117,49 @@ export COMINgfs=${COMIN_ATMOS_HISTORY_GFS}
 
 export COMSP=${COMSP:-"${COMIN_OBS}/${RUN_local}.t${cyc}z."}
 
-# Disable creating NSSTBUFR if desired, copy from DMPDIR instead
-if [[ ${MAKE_NSSTBUFR:-"NO"} = "NO" ]]; then
-    export MAKE_NSSTBUFR="NO"
-fi
-
+# Create or Copy prepbufr, prepbufr.acft_profiles, nsstbufr files
 # Do not fail on external errors
-set +eu
-"${HOMEobsproc}/jobs/JOBSPROC_GLOBAL_PREP" && true
-export err=$?
-if [[ ${err} -ne 0 ]]; then
-   err_exit "JOBSPROC_GLOBAL_PREP job failed!"
-fi
-
-if [[ ! -f "${COMOUT_OBS}/${OPREFIX}prepbufr" ]]; then
-   export err=1
-   err_exit "JOBSPROC_GLOBAL_PREP failed to create the prepbufr file, ABORT!"
-fi
-
-# If creating NSSTBUFR was disabled, copy from DMPDIR if appropriate.
-if [[ ${MAKE_NSSTBUFR:-"NO"} = "NO" ]]; then
-    if [[ ${DONST} = "YES" ]]; then
-       cpfs "${COMINobsproc}/${OPREFIX}nsstbufr" "${COMOUT_OBS}/${OPREFIX}nsstbufr"
+if [[ ${MAKE_PREPBUFR:-"YES"} == "YES" ]]; then
+    set +eu
+    "${HOMEobsproc}/jobs/JOBSPROC_GLOBAL_PREP" && true
+    export err=$?
+    if [[ ${err} -ne 0 ]]; then
+        err_exit "JOBSPROC_GLOBAL_PREP job failed, ABORT!"
     fi
+else
+    if [[ ${USE_PREPBUFR_FROM_OPS:-"YES"} == "YES" ]]; then
+        # If USE_PREPBUFR_FROM_OPS is set, copy prepbufr from COMINobsproc
+        PREPBUFR_DIR="${COMINobsproc}"
+    else
+        # If PREPBUFR_DIR is not set, exit out with an error
+        if [[ -z "${PREPBUFR_DIR}" ]]; then
+            export err=1
+            err_exit "PREPBUFR_DIR is not set!"
+        fi
+
+    fi
+    cpreq "${PREPBUFR_DIR}/${OPREFIX}prepbufr" "${COMOUT_OBS}/${OPREFIX}prepbufr"
+    cpreq "${PREPBUFR_DIR}/${OPREFIX}prepbufr.acft_profiles" "${COMOUT_OBS}/${OPREFIX}prepbufr.acft_profiles"
+    if [[ ${DONST} == "YES" ]]; then
+        cpreq "${PREPBUFR_DIR}/${OPREFIX}nsstbufr" "${COMOUT_OBS}/${OPREFIX}nsstbufr"
+    fi
+fi
+
+# Check if prepbufr, etc files were copied to COMOUT_OBS
+files="prepbufr prepbufr.acft_profiles"
+if [[ ${DONST} == "YES" ]]; then
+    files="${files} nsstbufr"
+fi
+err=0
+for file in ${files}; do
+    if [[ ! -f "${COMOUT_OBS}/${OPREFIX}${file}" ]]; then
+        err=1
+        echo "Failed to obtain/create ${file}, ABORT!"
+    fi
+done
+export err
+if [[ ${err} -ne 0 ]]; then
+    err_exit "Failed to obtain/create ${files}, ABORT!"
 fi
 else
   cpfs "${COMINobsproc}/${OPREFIX}prepbufr"               "${COMOUT_OBS}/${OPREFIX}prepbufr"

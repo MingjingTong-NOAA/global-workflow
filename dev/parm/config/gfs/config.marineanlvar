@@ -6,6 +6,6 @@
 echo "BEGIN: config.marineanlvar"
 
 # Get task specific resources
-. "${EXPDIR}/config.resources" marineanlvar
+source "${EXPDIR}/config.resources" marineanlvar
 
 echo "END: config.marineanlvar"

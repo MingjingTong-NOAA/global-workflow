@@ -25,6 +25,10 @@ else
   export full_hydro="YES"
 fi
 
+# gfs.v16.3.16 setup
+export reducedgrid=".true."
+export pseudo_rh=".true."
+
 export ntasks_enkf=${ntasks}
 
 # Use NAM_ENKF below for serial EnKF
