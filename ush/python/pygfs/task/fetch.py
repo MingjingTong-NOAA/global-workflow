@@ -3,6 +3,7 @@
 import os
 from logging import getLogger
 from typing import Any, Dict, List
+import tarfile
 
 from wxflow import (Task, htar, mkdir_p,
                     logit, parse_j2yaml, chdir)
@@ -133,13 +134,11 @@ class Fetch(Task):
             logger.info(f"Changed working directory to {dest}")
             if on_hpss is True:  # htar all files in fnames
                 htar_obj = htar.Htar()
-                htar_obj.xvf(tarball, f_names_new)
-            else:  # tar all files in fnames
-                raise NotImplementedError("The fetch job does not yet support pulling from local archives")
-
-#                with tarfile.open(dest, "w") as tar:
-#                    for filename in f_names:
-#                        tar.add(filename)
+                htar_obj.xvf(tarball, f_names)
+            else:  # extract from a specified tarball
+                with tarfile.open(tarball, "r") as tar:
+                    members = [m for m in tar.getmembers() if m.name in f_names]
+                    tar.extractall(members=members)
             # Verify all data files were extracted
             missing_files = []
             for f in f_names_new:

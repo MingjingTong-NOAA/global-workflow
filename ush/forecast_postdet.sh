@@ -138,9 +138,6 @@ FV3_postdet() {
   if [[ "${warm_start}" == ".false." ]]; then
 
     if [[ "${USE_ATM_ENS_PERTURB_FILES:-NO}" == "YES" ]]; then
-      if [[ "${REPLAY_ICS:-NO}" == "YES" ]]; then
-        IAU_FHROT=${half_window}  # Replay ICs start at the end of the assimilation window
-      fi
       if (( MEMBER == 0 )); then
         inc_files=()
       else
@@ -218,15 +215,17 @@ EOF
           inc_files=("jedi_increment.atm.i006.tile1.nc" "jedi_increment.atm.i006.tile2.nc" "jedi_increment.atm.i006.tile3.nc" "jedi_increment.atm.i006.tile4.nc" "jedi_increment.atm.i006.tile5.nc" "jedi_increment.atm.i006.tile6.nc")
           increment_file_on_native_grid=".true."
           res_latlon_dynamics="jedi_increment.atm.i006"
+          if [[ "${DO_JEDIATMENS:-NO}" == "NO" ]]; then
+            inc_files=("increment.atm.i006.nc")
+            res_latlon_dynamics="increment.atm.i006.nc"
+            increment_file_on_native_grid=".false."
+          fi
         else
           inc_files=("increment.atm.i006.nc")
           res_latlon_dynamics="increment.atm.i006.nc"
           increment_file_on_native_grid=".false."
         fi
         if [[ "${USE_ATM_ENS_PERTURB_FILES:-NO}" == "YES" ]]; then
-          if [[ "${REPLAY_ICS:-NO}" == "YES" ]]; then
-             IAU_FHROT=${half_window}  # Replay ICs start at the end of the assimilation window
-          fi
           # Control member has no perturbation
           if (( MEMBER == 0 )); then
             inc_files=()
@@ -284,25 +283,18 @@ EOF
             prefix_atminc=""
         fi
 
-        if [[ "${RUN}" = "enkfgfs" ]] || [[ "${RUN}" = "enkfgdas" ]]; then
-           prefix_atminc="recentered_"
-        else
-           prefix_atminc=""
-        fi
-
         local increment_file
         for inc_file in "${inc_files[@]}"; do
           if [[ "${DO_JEDIATMVAR:-NO}" == "YES" ]]; then
             increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
+            if [[ "${DO_JEDIATMENS:-NO}" == "NO" ]]; then
+              increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
+            fi
           else
             if [[ "${RUN}" == "gcafs" ]]; then
               increment_file="${COMIN_ATMOS_ANALYSIS}/gcdas.t${cyc}z.${prefix_atminc}${inc_file}"
             else
-              if [[ ${MODE} == "forecast-only" ]]; then
-                increment_file="${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${cyc}z.${prefix_atminc}${inc_file}"
-              else
-                increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
-              fi
+              increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
             fi
           fi
           cpreq "${increment_file}" "${DATA}/INPUT/${inc_file}"
@@ -392,7 +384,7 @@ EOF
       ${NLN} "${COMOUT_ATMOS_HISTORY}/${RUN}.t${cyc}z.atm.f${FH3}.nc"      "${DATAoutput}/FV3ATM_OUTPUT/atmf${FH3}.nc"
       ${NLN} "${COMOUT_ATMOS_HISTORY}/${RUN}.t${cyc}z.sfc.f${FH3}.nc"      "${DATAoutput}/FV3ATM_OUTPUT/sfcf${FH3}.nc"
       ${NLN} "${COMOUT_ATMOS_HISTORY}/${RUN}.t${cyc}z.log.f${FH3}.txt" "${DATAoutput}/FV3ATM_OUTPUT/log.atm.f${FH3}"
-      if [[ "${DO_JEDIATMVAR:-}" == "YES" ]]; then
+      if [[ "${DO_JEDIATMVAR:-}" == "YES" || "${DO_HISTORY_FILE_ON_NATIVE_GRID:-"NO"}" == "YES" ]]; then
         ${NLN} "${COMOUT_ATMOS_HISTORY}/${RUN}.t${cyc}z.csg_atm.f${FH3}.nc" "${DATAoutput}/FV3ATM_OUTPUT/cubed_sphere_grid_atmf${FH3}.nc"
         ${NLN} "${COMOUT_ATMOS_HISTORY}/${RUN}.t${cyc}z.csg_sfc.f${FH3}.nc" "${DATAoutput}/FV3ATM_OUTPUT/cubed_sphere_grid_sfcf${FH3}.nc"
       fi

@@ -2596,7 +2596,7 @@ class SHiELDTasks(Tasks):
         dep_next_fcst_seg = rocoto.create_dependency(dep_condition='or', dep=deps)
         deps = []
         if 'enkf' in self.run:
-            if not self.app_config.mode in ['ensregrid']:
+            if self.app_config.mode not in ['ensregrid']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
                 deps.append(rocoto.add_dependency(dep_dict))
                 if self.options['do_archcom']:

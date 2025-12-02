@@ -42,7 +42,7 @@ def main():
             'OFFSET_START_HOUR', 'ARCH_EXPDIR', 'EXPDIR', 'ARCH_EXPDIR_FREQ', 'ARCH_HASHES',
             'ARCH_DIFFS', 'SDATE', 'EDATE', 'HOMEgfs', 'DO_GEMPAK', 'DATASETS_YAML',
             'EXP_WARM_START', 'DONST', 'DO_POST', 'DO_OMF', 'FHNCOUT', 'ARCH_RSTPROD',
-            'WAVE_OUT_GRIDS', 'DO_GSISOILDA', 'DO_LAND_IAU', 'TARBALL_TYPE']
+            'WAVE_OUT_GRIDS', 'DO_GSISOILDA', 'DO_LAND_IAU', 'TARBALL_TYPE', 'ATMINC_GRID']
 
     archive_dict = AttrDict()
     for key in keys:

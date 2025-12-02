@@ -46,7 +46,7 @@ class SHiELDDiagRocotoXML(RocotoXML):
         """
         Generate cycle definition strings for Rocoto XML.
 
-        This method creates the cycle definitions for SHiELD omf or ensregrid 
+        This method creates the cycle definitions for SHiELD omf or ensregrid
         cycles based on the configured start dates, end dates, and intervals.
 
         Returns

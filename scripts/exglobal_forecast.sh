@@ -78,12 +78,16 @@
 #######################
 
 # include all subroutines. Executions later.
-source "${USHgfs}/forecast_predet.sh" 	# include functions for variable definition
-source "${USHgfs}/forecast_det.sh"  # include functions for run type determination
-source "${USHgfs}/forecast_postdet.sh"	# include functions for variables after run type determination
-[[ ${NET:-"gfs"} != "shield" ]] && source "${USHgfs}/parsing_ufs_configure.sh"	 # include functions for ufs_configure processing
+source "${USHgfs}/forecast_predet.sh"       # include functions for variable definition
+source "${USHgfs}/forecast_det.sh"          # include functions for run type determination
+source "${USHgfs}/forecast_postdet.sh"      # include functions for variables after run type determination
+if [[ ${NET:-"gfs"} != "shield" ]]; then
+source "${USHgfs}/parsing_ufs_configure.sh" # include functions for ufs_configure processing
+fi
 
-[[ ${NET:-"gfs"} != "shield" ]] && source "${USHgfs}/atparse.bash"  # include function atparse for parsing @[XYZ] templated files
+if [[ ${NET:-"gfs"} != "shield" ]]; then
+source "${USHgfs}/atparse.bash" # include function atparse for parsing @[XYZ] templated files
+fi
 
 # Coupling control switches, for coupling purpose, off by default
 cpl=${cpl:-.false.}
@@ -171,14 +175,18 @@ echo "MAIN: Name lists and model configuration written"
 # run the executable
 
 if [[ "${esmf_profile:-}" == ".true." ]]; then
-  export ESMF_RUNTIME_PROFILE=ON
-  export ESMF_RUNTIME_PROFILE_OUTPUT=SUMMARY
+    export ESMF_RUNTIME_PROFILE=ON
+    export ESMF_RUNTIME_PROFILE_OUTPUT=SUMMARY
 fi
 
 if [[ "${USE_ESMF_THREADING:-}" == "YES" ]]; then
-  unset OMP_NUM_THREADS
+    unset OMP_NUM_THREADS
 else
-  export OMP_NUM_THREADS=${thread_per_task:-1}
+    if [[ ${NET:-"gfs"} == "shield" ]]; then
+        export OMP_NUM_THREADS=${thread_per_task:-1}
+    else
+        export OMP_NUM_THREADS=${UFS_THREADS:-1}
+    fi
 fi
 
 [[ ${DO_CUBE2GAUS:-"NO"} = "YES" ]] && export OMP_NUM_THREADS=${NTHREADS_FV3:-1}
@@ -187,11 +195,11 @@ cpreq "${EXECgfs}/${FCSTEXEC}" "${DATA}/"
 if [[ ${NET:-"gfs"} != "shield" ]]; then
 ${APRUN_UFS} "${DATA}/${FCSTEXEC}" 1>&1 2>&2 && true
 else
-${APRUN_FV3} "${DATA}/${FCSTEXEC}" 1>&1 2>&2
+${APRUN_FV3} "${DATA}/${FCSTEXEC}" 1>&1 2>&2 && true
 fi      
 export err=$?
 if [[ ${err} -ne 0 ]]; then
-   err_exit "The forecast failed to run to completion!"
+    err_exit "The forecast failed to run to completion!"
 fi
 
 FV3_out
