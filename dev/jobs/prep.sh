@@ -113,7 +113,6 @@ else
     cpfs "${COMINobsproc}/${RUN_local}.t${cyc}z.syndata.tcvitals.tm00" "${COMOUT_OBS}/"
 fi
 
-
 ###############################################################
 # If requested, copy bias correction files from source or stait to analysis directories
 # TODO: remove this when JEDI ATM can cycle bias correction coefficents
@@ -133,7 +132,6 @@ if [[ ${RUN} == "gdas" && ${COPY_BIASCOR_STATIC:-"NO"} == "YES" ]]; then
         fi
     done
 fi
-
 
 ###############################################################
 # Generate prepbufr files from dumps and prior gdas guess
@@ -208,7 +206,7 @@ else
   fi
 fi
 
-################################################################################ 
+################################################################################
 # If requested, create radiance bias correction files for JEDI
 if [[ ${RUN} == "gdas" && ${CONVERT_BIASCOR:-"NO"} == "YES" ]]; then
     cd "${DATAROOT}" || true
@@ -217,12 +215,12 @@ if [[ ${RUN} == "gdas" && ${CONVERT_BIASCOR:-"NO"} == "YES" ]]; then
     if [[ ${err} -ne 0 ]]; then
         err_exit "gsi_satbias2ioda failed, ABORT!"
     fi
-    
+
     # Remove temporary working directory
     cd "${DATAROOT}" || true
     if [[ "${KEEPDATA}" == "NO" ]]; then
         rm -rf "${DATA}"
-    fi    
+    fi
 fi
 
 ################################################################################
