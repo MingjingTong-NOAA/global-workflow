@@ -904,7 +904,9 @@ case ${step} in
       ;;
     esac
     tasks_per_node=${ntasks}
-    if [[ "${CASE_HIST}" == "C1152" ]]; then
+    if [[ "${CASE_HIST}" == "C768" ]]; then
+        tasks_per_node=60
+    elif [[ "${CASE_HIST}" == "C1152" ]]; then
         tasks_per_node=40
     fi
 

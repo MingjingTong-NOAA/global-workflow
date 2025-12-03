@@ -558,13 +558,9 @@ export diag_interval="{{ DIAG_INTERVAL }}"
 export OMFCOMINPREV=${ROTDIR}
 export EXPABIAS="NO"
 export FHOMF=6
-if [[ ${MODE} == "omf" ]]; then
+if [[ ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))
   export FHMAX=$(( FHOMF + 3 ))
-  export FHOUT=1
-fi
-
-if [[ ${DO_OMF} == "YES" ]]; then
   export FHOUT=1
 fi
 

@@ -22,7 +22,7 @@ class Tasks:
                    'marineanlinit', 'marineanlletkf', 'marinebmatinit', 'marinebmat', 'marineanlvar',
                    'marineanlecen', 'marineanlchkpt', 'marineanlfinal', 'ocnanalvrfy',
                    'eobs', 'epos', 'esfc', 'eupd',
-                   'efetch', 'eupp', 'eprod', 'ergpos', 
+                   'efetch', 'eupp', 'eprod', 'ergpos',
                    'earc_vrfy', 'earc_tars', 'ecen', 'echgres', 'ediag', 'efcs',
                    'atmensanlinit', 'atmensanlobs', 'atmensanlsol', 'atmensanlletkf', 'atmensanlfv3inc', 'atmensanlfinal', 'atmos_ensstat',
                    'aeroanlinit', 'aeroanlvar', 'aeroanlfinal', 'aeroanlgenb',
