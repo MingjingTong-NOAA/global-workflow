@@ -11,7 +11,7 @@ MEMDIR="ensstat" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
     COMIN_SNOW_ANALYSIS_ENSSTAT:COM_SNOW_ANALYSIS_TMPL
 
 radassim_delay=$(( assim_freq * 2 ))
-SEDATE=$(${NDATE} +"${radassim_delay}" "${SDATE}")
+SEDATE=$(date --utc +%Y%m%d%H -d "${SDATE:0:8} ${SDATE:8:2} +${radassim_delay} hours")
 if [[ "${CDATE}" -le "${SEDATE}" && "${EXP_WARM_START}" = ".false." ]]; then
   export ARCHRADSTAT="NO"
 else

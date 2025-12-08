@@ -41,7 +41,6 @@ RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
     COMINobsproc_PREV:COM_OBSPROC_TMPL \
     COMOUT_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
 
-export MAKE_PREPBUFR=${MAKE_PREPBUFR:-"NO"}
 mkdir -p "${COMOUT_OBS}"
 
 ###############################################################
@@ -135,7 +134,6 @@ fi
 
 ###############################################################
 # Generate prepbufr files from dumps and prior gdas guess
-if [[ ${MAKE_PREPBUFR} == "YES" ]]; then
 rm -f "${COMOUT_OBS}/${OPREFIX}prepbufr"
 rm -f "${COMOUT_OBS}/${OPREFIX}prepbufr.acft_profiles"
 rm -f "${COMOUT_OBS}/${OPREFIX}nsstbufr"
@@ -197,13 +195,6 @@ done
 export err
 if [[ ${err} -ne 0 ]]; then
     err_exit "Failed to obtain/create ${files}, ABORT!"
-fi
-else
-  cpfs "${COMINobsproc}/${OPREFIX}prepbufr"               "${COMOUT_OBS}/${OPREFIX}prepbufr"
-  cpfs "${COMINobsproc}/${OPREFIX}prepbufr.acft_profiles" "${COMOUT_OBS}/${OPREFIX}prepbufr.acft_profile"
-  if [[ ${DONST} = "YES" ]]; then 
-     cpfs "${COMINobsproc}/${OPREFIX}nsstbufr" "${COMOUT_OBS}/${OPREFIX}nsstbufr"
-  fi
 fi
 
 ################################################################################

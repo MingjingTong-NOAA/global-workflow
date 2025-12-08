@@ -134,7 +134,7 @@ class Fetch(Task):
             logger.info(f"Changed working directory to {dest}")
             if on_hpss is True:  # htar all files in fnames
                 htar_obj = htar.Htar()
-                htar_obj.xvf(tarball, f_names)
+                htar_obj.xvf(tarball, f_names_new)
             else:  # extract from a specified tarball
                 with tarfile.open(tarball, "r") as tar:
                     members = [m for m in tar.getmembers() if m.name in f_names]

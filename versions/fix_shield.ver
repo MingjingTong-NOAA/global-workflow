@@ -7,6 +7,6 @@ export sfc_climo_ver=20220805
 export verif_ver=20220805
 export shield_ver=20240515
 export aer_ver=20240213
-export gsi_ver=20250605
+export gsi_ver=20251205
 export aer_shield2022_ver=20221014
 export gsi_v2_ver=20240515

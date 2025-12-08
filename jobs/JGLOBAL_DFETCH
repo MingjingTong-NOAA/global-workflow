@@ -5,7 +5,7 @@ source "${HOMEgfs}/ush/jjob_header.sh" -e "dfetch" -c "base dfetch"
 ##############################################
 # Set variables used in the script
 ##############################################
-export previous_cycle=$(${NDATE} -"${assim_freq}" "${PDY}${cyc}")
+export previous_cycle=$(date --utc -d "${PDY} ${cyc} - ${assim_freq} hours" +%Y%m%d%H)
 # shellcheck disable=
 export gPDY=${previous_cycle:0:8}
 export gcyc=${previous_cycle:8:2}
