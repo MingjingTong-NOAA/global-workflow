@@ -64,10 +64,10 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
   # Pull RESTART files off HPSS
   cd $EXTRACT_DIR
   RESTARTEXP=${RESTARTEXP:-${PSLOT}}
-  if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
-    echo "previous cycle history data directory exists, skip pulling data"
-  else
-    if [[ ${ANAL_START} == "YES" ]]; then
+  if [[ ${ANAL_START} == "YES" ]]; then
+    if [ -d ${COM_ATMOS_HISTORY} ]; then
+      echo "history data directory exists, skip pulling data"
+    else
       if [ ! -d ${ROTDIR}/gdas.${yy}${mm}${dd}/${hh} ]; then
         htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
         status=$?
@@ -76,6 +76,10 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
         status=$?
         [[ $status -ne 0 ]] && exit $status
       fi
+    fi
+  else
+    if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
+      echo "previous cycle history data directory exists, skip pulling data"
     else
       htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
       status=$?

@@ -16,14 +16,14 @@ enkf_grp:
             {% set COMIN_ATMOS_HISTORY_MEM = COMIN_ATMOS_HISTORY_MEM_list[imem] %}
 
             {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
-            - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atmf{{ "%03d" % fhr }}.nc"
+            - "{{ COMIN_ATMOS_HISTORY_MEM | relpath(ROTDIR) }}/{{ head }}atm.f{{ "%03d" % fhr }}.nc"
             {% endfor %}
             {% else %}
             # Construct member COM directories
             {% set COMIN_ATMOS_HISTORY_PREV_MEM = COMIN_ATMOS_HISTORY_PREV_MEM_list[imem] %}
 
             {% for fhr in range(EFHMIN, EFHMAX + 1, 1) %}
-            - "{{ COMIN_ATMOS_HISTORY_PREV_MEM | relpath(ROTDIR) }}/{{ phead }}atmf{{ "%03d" % fhr }}.nc"
+            - "{{ COMIN_ATMOS_HISTORY_PREV_MEM | relpath(ROTDIR) }}/{{ phead }}atm.f{{ "%03d" % fhr }}.nc"
             {% endfor %}
             {% endif %}
             {% endfor %}  # first_group_mem to last_group_mem

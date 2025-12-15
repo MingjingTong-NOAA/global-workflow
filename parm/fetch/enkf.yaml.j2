@@ -17,14 +17,14 @@ enkf:
             {% if RUN == 'enkfgdas' %}
                {% for fhr in range(3, fhmax + 1, 3) %}
                {% if ANAL_START %}
-               - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ head }}atmf{{ '%03d' % fhr }}.ensmean.nc"
-               - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ head }}sfcf{{ '%03d' % fhr }}.ensmean.nc"
+               - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ head }}ensmean.atm.f{{ '%03d' % fhr }}.nc"
+               - "{{ COMIN_ATMOS_HISTORY_ENSSTAT | relpath(ROTDIR) }}/{{ head }}ensmean.sfc.f{{ '%03d' % fhr }}.nc"
                {% else %}
-               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}atmf{{ '%03d' % fhr }}.ensmean.nc"
-               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}sfcf{{ '%03d' % fhr }}.ensmean.nc"
+               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}ensmean.atm.f{{ '%03d' % fhr }}.nc"
+               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ phead }}ensmean.sfc.f{{ '%03d' % fhr }}.nc"
                {% endif %}
                {% endfor %}
             {% else %}
-               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ ephead }}sfcf006.ensmean.nc"
+               - "{{ COMIN_ATMOS_HISTORY_PREV_ENSSTAT | relpath(ROTDIR) }}/{{ ephead }}ensmean.sfc.f006.nc"
             {% endif %}
         destination: "{{ SAVEDIR }}"
