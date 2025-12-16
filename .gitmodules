@@ -33,7 +33,7 @@
 [submodule "sorc/gsi_enkf.fd"]
 	path = sorc/gsi_enkf.fd
 	url = https://github.com/MingjingTong-NOAA/GSI.git
-	branch = gfdl_shield_fullhydro
+	branch = gfdl_shield
 [submodule "sorc/upp.fd"]
 	path = sorc/upp.fd
 	url = https://github.com/NOAA-EMC/UPP.git
