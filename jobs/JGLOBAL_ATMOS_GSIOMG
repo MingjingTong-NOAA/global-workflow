@@ -30,8 +30,13 @@ YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
     COMIN_OBS:COM_OBS_TMPL \
     COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
 
-ROTDIR=${ICSROOT}/output RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+if [[ "${EXPABIAS}" == "YES" ]]; then
+   RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
        COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+else
+   ROTDIR=${ICSROOT}/output RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+       COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+fi
 
 if [[ $MODE == "omf" ]]; then
   ROTDIR=${OMFCOMINPREV} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \

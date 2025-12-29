@@ -19,7 +19,7 @@ def main():
 
     # Pull out all the configuration keys needed to run the rest of archive steps
     keys = ['FETCHDIR', 'current_cycle', 'previous_cycle', 'RUN', 'PDY', 'gPDY',
-            'PSLOT', 'ROTDIR', 'SAVEDIR', 'ICSROOT', 'PARMgfs', 'FCSTMODE',
+            'PSLOT', 'ROTDIR', 'SAVEDIR', 'ICSROOT', 'PARMgfs', 'MODE', 'FCSTMODE',
             'assim_freq', 'FHMIN', 'FHMAX', 'FHOUT', 'EXPABIAS', 'GFSFETCHDIR',
             'gfssubver']
 
