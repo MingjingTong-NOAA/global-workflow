@@ -48,7 +48,7 @@ if [[ ! -f ${ATMGES_ENSMEAN} ]]; then
     err_exit "FILE MISSING: ATMGES_ENSMEAN == ${ATMGES_ENSMEAN}"
 fi
 
-LEVS=$(${NCLEN} "${ATMGES}" pfull) && true
+LEVS=$(${NCLEN} "${ATMGES_ENSMEAN}" pfull) && true
 export err=$?
 set_strict
 

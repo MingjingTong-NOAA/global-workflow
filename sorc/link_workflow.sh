@@ -98,7 +98,8 @@ if [[ "${MODEL}" == "shield" ]]; then
 #--shield fix fields
 #------------------------------
 case "${machine}" in
-  "hera")     FIX_SHiELD_DIR="/scratch2/GFDL/gfdlscr/proj-shared/fix_shield" ;;
+  "hera")     FIX_SHiELD_DIR="/scratch4/GFDL/gfdlscr/proj-shared/fix_shield" ;;
+  "ursa")     FIX_SHiELD_DIR="/scratch4/GFDL/gfdlscr/proj-shared/fix_shield" ;;
   "gaeac5")   FIX_SHiELD_DIR="/gpfs/f5/gfdl_w/proj-shared/Mingjing.Tong/fix_shield" ;;
   "gaeac6")   FIX_SHiELD_DIR="/gpfs/f6/bil-coastal-gfdl/proj-shared/Mingjing.Tong/fix_shield" ;; 
   *)

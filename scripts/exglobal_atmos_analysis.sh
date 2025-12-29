@@ -326,6 +326,56 @@ OBS_INPUT=${OBS_INPUT:-${BUILD_GSINFO_DIR}/obs_input/obs_input_ops.txt}
 HIRS_FIX=${HIRS_FIX:-${CRTM_FIX}}
 BLACKLST=${BLACKLST:-${FIXgfs}/gsi/rejectlist_global.txt}
 
+# CCH: non-Gaussian table also put in fix file directory
+#      can change the filenames here to point to different files:
+
+NG_AMSUA_CH1=${NG_AMSUA_CH1:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch1.txt}
+NG_AMSUA_CH2=${NG_AMSUA_CH2:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch2.txt}
+NG_AMSUA_CH3=${NG_AMSUA_CH3:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch3.txt}
+NG_AMSUA_CH4=${NG_AMSUA_CH4:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch4.txt}
+NG_AMSUA_CH5=${NG_AMSUA_CH5:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch5.txt}
+NG_AMSUA_CH15=${NG_AMSUA_CH15:-${FIXgsi}/non_Gaussian_table/ng_amsua_ch15.txt}
+
+NG_ATMS_CH1=${NG_ATMS_CH1:-${FIXgsi}/non_Gaussian_table/ng_atms_ch1.txt}
+NG_ATMS_CH2=${NG_ATMS_CH2:-${FIXgsi}/non_Gaussian_table/ng_atms_ch2.txt}
+NG_ATMS_CH3=${NG_ATMS_CH3:-${FIXgsi}/non_Gaussian_table/ng_atms_ch3.txt}
+NG_ATMS_CH4=${NG_ATMS_CH4:-${FIXgsi}/non_Gaussian_table/ng_atms_ch4.txt}
+NG_ATMS_CH5=${NG_ATMS_CH5:-${FIXgsi}/non_Gaussian_table/ng_atms_ch5.txt}
+NG_ATMS_CH6=${NG_ATMS_CH6:-${FIXgsi}/non_Gaussian_table/ng_atms_ch6.txt}
+NG_ATMS_CH16=${NG_ATMS_CH16:-${FIXgsi}/non_Gaussian_table/ng_atms_ch16.txt}
+NG_ATMS_CH17=${NG_ATMS_CH17:-${FIXgsi}/non_Gaussian_table/ng_atms_ch17.txt}
+NG_ATMS_CH18=${NG_ATMS_CH18:-${FIXgsi}/non_Gaussian_table/ng_atms_ch18.txt}
+NG_ATMS_CH19=${NG_ATMS_CH19:-${FIXgsi}/non_Gaussian_table/ng_atms_ch19.txt}
+NG_ATMS_CH20=${NG_ATMS_CH20:-${FIXgsi}/non_Gaussian_table/ng_atms_ch20.txt}
+NG_ATMS_CH21=${NG_ATMS_CH21:-${FIXgsi}/non_Gaussian_table/ng_atms_ch21.txt}
+NG_ATMS_CH22=${NG_ATMS_CH22:-${FIXgsi}/non_Gaussian_table/ng_atms_ch22.txt}
+
+
+
+## CCH::
+# GSI namelist (modified version)
+# - VarBC data control:
+varbc_data_control=${varbc_data_control:-"default"}
+cld_cld_varbc_constraint=${cld_cld_varbc_constraint:-"0.05"}
+io_use_bc_clw_for_cloud_mismatch=${io_use_bc_clw_for_cloud_mismatch:-".true."}
+
+# - VarBC cloud predictors:
+io_cld_pred_in_varbc=${io_cld_pred_in_varbc:-".false."}
+cld_varbc_chs=${cld_varbc_chs:-"low_peaking"}
+cld_pred_fn_varbc=${cld_pred_fn_varbc:-"tent"}
+
+# - empirical inflation:
+io_empirical_inflation=${io_empirical_inflation:-".true."}
+
+# - non-Gaussian error:
+io_non_Gaussian_error=${io_non_Gaussian_error:-".false."}
+
+# - save Jacobian for AMSUA/ATMS:
+io_save_jacobian_cch=${io_save_jacobian_cch:-".false."}
+
+# - whether to assimilate scattering affected obs:
+io_scatter_assim=${io_scatter_assim:-".false."}
+
 # GSI namelist
 SETUP=${SETUP:-""}
 FULL_HYDRO=${FULL_HYDRO:-""}
@@ -404,9 +454,9 @@ ${NLN} "${HYBENSINFO}" hybens_info
 ${NLN} "${OBERROR}" errtable
 ${NLN} "${BLACKLST}" blacklist
 
-${NLN} "${FIXgfs}/gsi/AIRS_CLDDET.NL" AIRS_CLDDET.NL
-${NLN} "${FIXgfs}/gsi/CRIS_CLDDET.NL" CRIS_CLDDET.NL
-${NLN} "${FIXgfs}/gsi/IASI_CLDDET.NL" IASI_CLDDET.NL
+#${NLN} "${FIXgfs}/gsi/AIRS_CLDDET.NL" AIRS_CLDDET.NL
+#${NLN} "${FIXgfs}/gsi/CRIS_CLDDET.NL" CRIS_CLDDET.NL
+#${NLN} "${FIXgfs}/gsi/IASI_CLDDET.NL" IASI_CLDDET.NL
 
 #If using correlated error, link to the covariance files
 if [[ "${USE_CORRELATED_OBERRS}" == "YES" ]]; then
@@ -516,7 +566,7 @@ ${NLN} "${ESIASI}" iasibufrears
 ${NLN} "${IASIDB}" iasibufr_db
 ${NLN} "${AMSREBF}" amsrebufr
 ${NLN} "${AMSR2BF}" amsr2bufr
-${NLN} "${GMI1CRBF}" gmibufr
+#${NLN} "${GMI1CRBF}" gmibufr
 ${NLN} "${SAPHIRBF}" saphirbufr
 ${NLN} "${SEVIRIBF}" seviribufr
 ${NLN} "${CRISBF}" crisbufr
@@ -538,17 +588,17 @@ ${NLN} "${AHIBF}" ahibufr
 ${NLN} "${ABIBF}" abibufr
 ${NLN} "${HDOB}" hdobbufr
 ${NLN} "${SSTVIIRS}" sstviirs
-${NLN} "${SAILDRONE}" sdbufr
-${NLN} "${GSBBF}" wbbufr
+#${NLN} "${SAILDRONE}" sdbufr
+#${NLN} "${GSBBF}" wbbufr
 
 # NASA ozone (netcdf) from NNJA
-${NLN} "${OMIEFFNC}" omieffnc
-${NLN} "${OMPSNMEFFNC}" ompsnmeffnc
-${NLN} "${OMPSNPNC}" ompsnpnc
-${NLN} "${OMPSLPNC}" ompslpnc
-${NLN} "${MLS55NC}" mls55nc
+#${NLN} "${OMIEFFNC}" omieffnc
+#${NLN} "${OMPSNMEFFNC}" ompsnmeffnc
+#${NLN} "${OMPSNPNC}" ompsnpnc
+#${NLN} "${OMPSLPNC}" ompslpnc
+#${NLN} "${MLS55NC}" mls55nc
 # NASA airs aqua amsua (bufr) from NNJA
-${NLN} "${AQUAAMUA}" aquabufr
+#${NLN} "${AQUAAMUA}" aquabufr
 
 if [[ "${DONST}" == "YES" ]]; then
     ${NLN} "${NSSTBF}" nsstbufr
@@ -765,10 +815,12 @@ if [[ "${DONST}" == "YES" ]]; then
     NST="nstinfo=${NSTINFO},fac_dtl=${FAC_DTL},fac_tsl=${FAC_TSL},zsea1=${ZSEA1},zsea2=${ZSEA2},${NST}"
 fi
 
-OBS_INPUT_TABLE=$(cat "${OBS_INPUT}")
+#OBS_INPUT_TABLE=$(cat "${OBS_INPUT}")
 
 ##############################################################
 # Create global_gsi namelist
+# CCH: also change here:
+
 cat > gsiparm.anl << EOF
 &SETUP
   miter=2,
@@ -794,6 +846,14 @@ cat > gsiparm.anl << EOF
   write_fv3_incr=${write_fv3_increment},
   nhr_anal=${IAUFHRS},
   ta2tb=${ta2tb},optconv=${optconv},
+  varbc_data_control=${varbc_data_control}, cld_cld_varbc_constraint=${cld_cld_varbc_constraint},
+  io_use_bc_clw_for_cloud_mismatch=${io_use_bc_clw_for_cloud_mismatch},
+  io_cld_pred_in_varbc=${io_cld_pred_in_varbc},
+  cld_varbc_chs=${cld_varbc_chs}, cld_pred_fn_varbc=${cld_pred_fn_varbc},
+  io_empirical_inflation=${io_empirical_inflation},
+  io_non_Gaussian_error=${io_non_Gaussian_error},
+  io_save_jacobian_cch=${io_save_jacobian_cch},
+  io_scatter_assim=${io_scatter_assim},
   ${WRITE_INCR_ZERO}
   ${WRITE_ZERO_STRAT}
   ${WRITE_STRAT_EFOLD}
@@ -841,7 +901,119 @@ cat > gsiparm.anl << EOF
   ${OBSINPUT}
 /
 OBS_INPUT::
-${OBS_INPUT_TABLE}
+!  dfile          dtype       dplat       dsis                dval    dthin dsfcalc
+   prepbufr       ps          null        ps                  0.0     0     0
+   prepbufr       t           null        t                   0.0     0     0
+   prepbufr_profl t           null        t                   0.0     0     0
+   hdobbufr       t           null        t                   0.0     0     0
+   prepbufr       q           null        q                   0.0     0     0
+   prepbufr_profl q           null        q                   0.0     0     0
+   hdobbufr       q           null        q                   0.0     0     0
+   prepbufr       pw          null        pw                  0.0     0     0
+   prepbufr       uv          null        uv                  0.0     0     0
+   prepbufr_profl uv          null        uv                  0.0     0     0
+   satwndbufr     uv          null        uv                  0.0     0     0
+   hdobbufr       uv          null        uv                  0.0     0     0
+   prepbufr       spd         null        spd                 0.0     0     0
+   hdobbufr       spd         null        spd                 0.0     0     0
+   prepbufr       dw          null        dw                  0.0     0     0
+   radarbufr      rw          null        rw                  0.0     0     0
+   nsstbufr       sst         nsst        sst                 0.0     0     0
+   gpsrobufr      gps_bnd     null        gps                 0.0     0     0
+   ssmirrbufr     pcp_ssmi    dmsp        pcp_ssmi            0.0    -1     0
+   tmirrbufr      pcp_tmi     trmm        pcp_tmi             0.0    -1     0
+   sbuvbufr       sbuv2       n16         sbuv8_n16           0.0     0     0
+   sbuvbufr       sbuv2       n17         sbuv8_n17           0.0     0     0
+   sbuvbufr       sbuv2       n18         sbuv8_n18           0.0     0     0
+   gimgrbufr      goes_img    g11         imgr_g11            0.0     1     0
+   gimgrbufr      goes_img    g12         imgr_g12            0.0     1     0
+   airsbufr       airs        aqua        airs_aqua           0.0     1     1
+   amsuabufr      amsua       n15         amsua_n15           0.0     1     1
+   amsuabufr      amsua       n18         amsua_n18           0.0     1     1
+   amsuabufr      amsua       metop-a     amsua_metop-a       0.0     1     1
+   airsbufr       amsua       aqua        amsua_aqua          0.0     1     1
+   amsubbufr      amsub       n17         amsub_n17           0.0     1     1
+   mhsbufr        mhs         n18         mhs_n18             0.0     1     1
+   mhsbufr        mhs         metop-a     mhs_metop-a         0.0     1     1
+   ssmitbufr      ssmi        f15         ssmi_f15            0.0     1     0
+   amsrebufr      amsre_low   aqua        amsre_aqua          0.0     1     0
+   amsrebufr      amsre_mid   aqua        amsre_aqua          0.0     1     0
+   amsrebufr      amsre_hig   aqua        amsre_aqua          0.0     1     0
+   ssmisbufr      ssmis       f16         ssmis_f16           0.0     1     0
+   ssmisbufr      ssmis       f17         ssmis_f17           0.0     1     0
+   ssmisbufr      ssmis       f18         ssmis_f18           0.0     1     0
+   gsnd1bufr      sndrd1      g12         sndrD1_g12          0.0     1     0
+   gsnd1bufr      sndrd2      g12         sndrD2_g12          0.0     1     0
+   gsnd1bufr      sndrd3      g12         sndrD3_g12          0.0     1     0
+   gsnd1bufr      sndrd4      g12         sndrD4_g12          0.0     1     0
+   gsnd1bufr      sndrd1      g11         sndrD1_g11          0.0     1     0
+   gsnd1bufr      sndrd2      g11         sndrD2_g11          0.0     1     0
+   gsnd1bufr      sndrd3      g11         sndrD3_g11          0.0     1     0
+   gsnd1bufr      sndrd4      g11         sndrD4_g11          0.0     1     0
+   gsnd1bufr      sndrd1      g13         sndrD1_g13          0.0     1     0
+   gsnd1bufr      sndrd2      g13         sndrD2_g13          0.0     1     0
+   gsnd1bufr      sndrd3      g13         sndrD3_g13          0.0     1     0
+   gsnd1bufr      sndrd4      g13         sndrD4_g13          0.0     1     0
+   iasibufr       iasi        metop-a     iasi_metop-a        0.0     1     1
+   gomebufr       gome        metop-a     gome_metop-a        0.0     2     0
+   omibufr        omi         aura        omi_aura            0.0     2     0
+   sbuvbufr       sbuv2       n19         sbuv8_n19           0.0     0     0
+   amsuabufr      amsua       n19         amsua_n19           0.0     1     1
+   mhsbufr        mhs         n19         mhs_n19             0.0     1     1
+   tcvitl         tcp         null        tcp                 0.0     0     0
+   seviribufr     seviri      m08         seviri_m08          0.0     1     0
+   seviribufr     seviri      m09         seviri_m09          0.0     1     0
+   seviribufr     seviri      m10         seviri_m10          0.0     1     0
+   seviribufr     seviri      m11         seviri_m11          0.0     1     0
+   amsuabufr      amsua       metop-b     amsua_metop-b       0.0     1     1
+   mhsbufr        mhs         metop-b     mhs_metop-b         0.0     1     1
+   iasibufr       iasi        metop-b     iasi_metop-b        0.0     1     1
+   gomebufr       gome        metop-b     gome_metop-b        0.0     2     0
+   atmsbufr       atms        npp         atms_npp            0.0     1     1
+   atmsbufr       atms        n20         atms_n20            0.0     1     1
+   atmsbufr       atms        n21         atms_n21            0.0     1     1
+   crisbufr       cris        npp         cris_npp            0.0     1     0
+   crisfsbufr     cris-fsr    npp         cris-fsr_npp        0.0     1     0
+   crisfsbufr     cris-fsr    n20         cris-fsr_n20        0.0     1     0
+   crisfsbufr     cris-fsr    n21         cris-fsr_n21        0.0     1     0
+   gsnd1bufr      sndrd1      g14         sndrD1_g14          0.0     1     0
+   gsnd1bufr      sndrd2      g14         sndrD2_g14          0.0     1     0
+   gsnd1bufr      sndrd3      g14         sndrD3_g14          0.0     1     0
+   gsnd1bufr      sndrd4      g14         sndrD4_g14          0.0     1     0
+   gsnd1bufr      sndrd1      g15         sndrD1_g15          0.0     1     0
+   gsnd1bufr      sndrd2      g15         sndrD2_g15          0.0     1     0
+   gsnd1bufr      sndrd3      g15         sndrD3_g15          0.0     1     0
+   gsnd1bufr      sndrd4      g15         sndrD4_g15          0.0     1     0
+   oscatbufr      uv          null        uv                  0.0     0     0
+   mlsbufr        mls30       aura        mls30_aura          0.0     0     0
+   avhambufr      avhrr       metop-a     avhrr3_metop-a      0.0     4     0
+   avhpmbufr      avhrr       n18         avhrr3_n18          0.0     4     0
+   avhambufr      avhrr       metop-b     avhrr3_metop-b      0.0     4     0
+   avhambufr      avhrr       metop-c     avhrr3_metop-c      0.0     4     0
+   avhpmbufr      avhrr       n19         avhrr3_n19          0.0     4     0
+   amsr2bufr      amsr2       gcom-w1     amsr2_gcom-w1       0.0     3     0
+   gmibufr        gmi         gpm         gmi_gpm             0.0     1     0
+   saphirbufr     saphir      meghat      saphir_meghat       0.0     3     0
+   ahibufr        ahi         himawari8   ahi_himawari8       0.0     1     0
+   abibufr        abi         g16         abi_g16             0.0     1     0
+   abibufr        abi         g17         abi_g17             0.0     1     0
+   abibufr        abi         g18         abi_g18             0.0     1     0
+   rapidscatbufr  uv          null        uv                  0.0     0     0
+   ompsnpbufr     ompsnp      npp         ompsnp_npp          0.0     0     0
+   ompslpbufr     ompslp      npp         ompslp_npp          0.0     0     0
+   ompstcbufr     ompstc8     npp         ompstc8_npp         0.0     2     0
+   ompsnpbufr     ompsnp      n20         ompsnp_n20          0.0     0     0
+   ompstcbufr     ompstc8     n20         ompstc8_n20         0.0     2     0
+   amsuabufr      amsua       metop-c     amsua_metop-c       0.0     1     1
+   mhsbufr        mhs         metop-c     mhs_metop-c         0.0     1     1
+   iasibufr       iasi        metop-c     iasi_metop-c        0.0     1     1
+   sstviirs       viirs-m     npp         viirs-m_npp         0.0     4     0
+   sstviirs       viirs-m     j1          viirs-m_j1          0.0     4     0
+   ahibufr        ahi         himawari9   ahi_himawari9       0.0     1     0
+   sstviirs       viirs-m     j2          viirs-m_j2          0.0     4     0
+   ompsnpbufr     ompsnp      n21         ompsnp_n21          0.0     0     0
+   ompstcbufr     ompstc8     n21         ompstc8_n21         0.0     2     0
+   gomebufr       gome        metop-c     gome_metop-c        0.0     2     0
 ::
 &SUPEROB_RADAR
   ${SUPERRAD}
