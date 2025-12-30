@@ -425,7 +425,7 @@ export SMOOTH_ENKF="NO"
 export l4densvar=".true."
 export lwrite4danl=".true."
 export DO_CALC_INCREMENT="NO"
-export USE_BUILD_GSINFO="YES"
+export USE_BUILD_GSINFO="NO"
 export BUILD_GSINFO_DIR="${PARMgfs}/gsinfo"
 
 # Early-cycle EnKF parameters
@@ -556,7 +556,7 @@ export diag_interval="{{ DIAG_INTERVAL }}"
 
 # omf environment parameters
 export OMFCOMINPREV=${ROTDIR}
-export EXPABIAS="NO"
+export EXPABIAS="YES"
 export FHOMF=6
 if [[ ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))

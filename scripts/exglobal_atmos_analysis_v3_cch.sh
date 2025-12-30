@@ -458,6 +458,32 @@ ${NLN} "${BLACKLST}" blacklist
 #${NLN} "${FIXgfs}/gsi/CRIS_CLDDET.NL" CRIS_CLDDET.NL
 #${NLN} "${FIXgfs}/gsi/IASI_CLDDET.NL" IASI_CLDDET.NL
 
+#If using non-Gaussian error, link the non-Gaussian table:
+if [[ "${io_non_Gaussian_error}" == ".true." ]]; then
+    $NLN $NG_AMSUA_CH1  ng_amsua_ch1.txt
+    $NLN $NG_AMSUA_CH2  ng_amsua_ch2.txt
+    $NLN $NG_AMSUA_CH3  ng_amsua_ch3.txt
+    $NLN $NG_AMSUA_CH4  ng_amsua_ch4.txt
+    $NLN $NG_AMSUA_CH5  ng_amsua_ch5.txt
+    $NLN $NG_AMSUA_CH15 ng_amsua_ch15.txt
+fi
+
+if [[ "${io_non_Gaussian_error}" == ".true." ]]; then
+    $NLN $NG_ATMS_CH1   ng_atms_ch1.txt
+    $NLN $NG_ATMS_CH2   ng_atms_ch2.txt
+    $NLN $NG_ATMS_CH3   ng_atms_ch3.txt
+    $NLN $NG_ATMS_CH4   ng_atms_ch4.txt
+    $NLN $NG_ATMS_CH5   ng_atms_ch5.txt
+    $NLN $NG_ATMS_CH6   ng_atms_ch6.txt
+    $NLN $NG_ATMS_CH16  ng_atms_ch16.txt
+    $NLN $NG_ATMS_CH17  ng_atms_ch17.txt
+    $NLN $NG_ATMS_CH18  ng_atms_ch18.txt
+    $NLN $NG_ATMS_CH19  ng_atms_ch19.txt
+    $NLN $NG_ATMS_CH20  ng_atms_ch20.txt
+    $NLN $NG_ATMS_CH21  ng_atms_ch21.txt
+    $NLN $NG_ATMS_CH22  ng_atms_ch22.txt
+fi
+
 #If using correlated error, link to the covariance files
 if [[ "${USE_CORRELATED_OBERRS}" == "YES" ]]; then
     if grep -q "Rcov" "${ANAVINFO}"; then

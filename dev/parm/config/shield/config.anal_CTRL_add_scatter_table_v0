@@ -8,8 +8,8 @@ echo "BEGIN: config.anal"
 ## CCH::
 
 # obs error table:
-obserr_table="default"
-#obserr_table="hydro_v0"
+#obserr_table="default"
+obserr_table="hydro_v0"
 
 # VarBC data control:
 export varbc_data_control="default"
@@ -41,7 +41,7 @@ export io_non_Gaussian_error=".false."   # default = .false.
 export io_save_jacobian_cch=".false."    # default = .false.
 
 # whether to assimilate scattering affected obs:
-export io_scatter_assim=".false."     # default = .false.
+export io_scatter_assim=".true."     # default = .false.
 
 
 

@@ -8,26 +8,26 @@ echo "BEGIN: config.anal"
 ## CCH::
 
 # obs error table:
-obserr_table="default"
-#obserr_table="hydro_v0"
+#obserr_table="default"
+obserr_table="hydro_v0"
 
 # VarBC data control:
-export varbc_data_control="default"
+#export varbc_data_control="default"
 #export varbc_data_control="only_clr_clr"
 #export varbc_data_control="only_clr_clr_low"
 #export varbc_data_control="clr_clr_and_cld_cld"
 #export varbc_data_control="clr_clr_and_cld_cld_low"
-#export varbc_data_control="cld_diff_constraint"
+export varbc_data_control="cld_diff_constraint"
 #export cld_cld_varbc_constraint=0.05     # only used when varbc_data_control includes cld/cld data
-export io_use_bc_clw_for_cloud_mismatch=".true."  # default = true (should not matter much if not using cloud predictor in VarBC?!)
+export io_use_bc_clw_for_cloud_mismatch=".false."  # default = true (should not matter much if not using cloud predictor in VarBC?!)
 
 # VarBC cloud predictor:
-export io_cld_pred_in_varbc=".false."    # default = .false.
+export io_cld_pred_in_varbc=".true."    # default = .false.
 # the following variables are only used if io_cld_pred_in_varbc = .true.
 # ============
 #export cld_varbc_chs="low_peaking"
-#export cld_varbc_chs="all_sky"
-#export cld_pred_fn_varbc="tent"
+export cld_varbc_chs="all_sky"
+export cld_pred_fn_varbc="tent"
 #export cld_pred_fn_varbc="4th_poly"
 # ============
 
@@ -41,7 +41,7 @@ export io_non_Gaussian_error=".false."   # default = .false.
 export io_save_jacobian_cch=".false."    # default = .false.
 
 # whether to assimilate scattering affected obs:
-export io_scatter_assim=".false."     # default = .false.
+export io_scatter_assim=".true."     # default = .false.
 
 
 
