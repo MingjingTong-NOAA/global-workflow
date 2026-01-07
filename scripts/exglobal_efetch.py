@@ -23,7 +23,7 @@ def main():
             'ENSGRP', 'NMEM_EARCGRP', 'NMEM_ENS', 'DO_JEDIATMENS',
             'DO_CALC_INCREMENT', 'DOIAU_ENKF', 'IAUFHRS',
             'lobsdiag_forenkf', 'assim_freq',
-            'ENSREPLAY', 'EXP_WARM_START', 'ANAL_START',
+            'ENSREPLAY', 'EXP_WARM_START', 'ANAL_START', 'ANAL_ONLY',
             'FHMIN_ENKF', 'FHMAX_ENKF', 'FHOUT_ENKF',
             'EFHMIN', 'EFHMAX']
 

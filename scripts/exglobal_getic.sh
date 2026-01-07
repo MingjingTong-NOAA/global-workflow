@@ -69,9 +69,11 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
       echo "history data directory exists, skip pulling data"
     else
       if [ ! -d ${ROTDIR}/gdas.${yy}${mm}${dd}/${hh} ]; then
-        htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
-        status=$?
-        [[ $status -ne 0 ]] && exit $status
+        if {{ ${ANAL_ONLY} != "YES" ]]; then
+          htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
+          status=$?
+          [[ $status -ne 0 ]] && exit $status
+        fi
         htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas.tar
         status=$?
         [[ $status -ne 0 ]] && exit $status
