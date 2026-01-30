@@ -274,6 +274,7 @@ cat >> input.nml << EOF
   do_z0_hwrf17_hwonly = .true.
   debug        = ${gfs_phys_debug:-".false."}
   nstf_name    = ${nstf_name}
+  cap_evap     = ${cap_evap:-".false."}
   do_sppt      = ${do_sppt:-".false."}
   do_shum      = ${do_shum:-".false."}
   do_skeb      = ${do_skeb:-".false."}
