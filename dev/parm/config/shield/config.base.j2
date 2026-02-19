@@ -557,7 +557,7 @@ export diag_interval="{{ DIAG_INTERVAL }}"
 
 # omf environment parameters
 export OMFCOMINPREV=${ROTDIR}
-export EXPABIAS="YES"
+export EXPABIAS="NO" # If NO use GFS bias correction coefficient
 export FHOMF=6
 if [[ ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))
