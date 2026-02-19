@@ -396,7 +396,7 @@ FV3_predet(){
   ISEED=0
   local imem=${MEMBER#0}
   local base_seed=$((current_cycle*10000 + imem*100))
-  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022" ]]; then
+  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022_old" ]]; then
     local base_seed=$((current_cycle*1000 + imem*10))
   fi
 
@@ -469,7 +469,7 @@ FV3_predet(){
   FNABSC=${FNABSC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.maximum_snow_albedo.tileX.nc"}
   FNSMCC=${FNSMCC:-"${FIXgfs}/am/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"}
 
-  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022" ]]; then
+  if [[ ${model,,} == shield* &&  ${SHiELD_VERSION} == "2022_old" ]]; then
     FNALBC2="${FIXam}/global_albedo4.1x1.grb"
     FNTG3C="${FIXam}/global_tg3clim.2.6x1.5.grb"
     FNVEGC="${FIXam}/global_vegfrac.0.144.decpercent.grb"
