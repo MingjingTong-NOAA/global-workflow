@@ -40,6 +40,7 @@ gdas:
         - "logs/{{ cycle_YMDH }}/{{ RUN }}_sfcanl.log"
             {% endif %}
 
+            {% if DO_POST %}
         # Analysis Master GRIB2 data
         - "{{ COMIN_ATMOS_MASTER | relpath(ROTDIR) }}/{{ head }}master.analysis.grib2"
         - "{{ COMIN_ATMOS_MASTER | relpath(ROTDIR) }}/{{ head }}master.analysis.grib2.idx"
@@ -53,6 +54,7 @@ gdas:
         - "{{ COMIN_ATMOS_GRIB_0p25 | relpath(ROTDIR) }}/{{ head }}pres_b.0p25.analysis.grib2.idx"
         - "{{ COMIN_ATMOS_GRIB_1p00 | relpath(ROTDIR) }}/{{ head }}pres_b.1p00.analysis.grib2"
         - "{{ COMIN_ATMOS_GRIB_1p00 | relpath(ROTDIR) }}/{{ head }}pres_b.1p00.analysis.grib2.idx"
+            {% endif %}
 
         # Analysis netCDF (raw) data
             {% if DO_JEDIATMVAR %}
@@ -198,8 +200,10 @@ gdas:
 
 
         # Forecast Master GRIB2 data for F006
+            {% if DO_POST %}
         - "{{ COMIN_ATMOS_MASTER | relpath(ROTDIR) }}/{{ head }}master.f003.grib2"
         - "{{ COMIN_ATMOS_MASTER | relpath(ROTDIR) }}/{{ head }}master.f006.grib2"
+            {% endif %} ## DO_POST
     optional:
         {% if MODE == "cycled" %}
             # Ozone and Radiance diagnostic files may not always be created
