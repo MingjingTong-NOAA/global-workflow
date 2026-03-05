@@ -55,8 +55,11 @@ class SHiELDReplayAppConfig(AppConfig):
             if options['do_sfcanl']:
                 configs += ['sfcanl']
 
+            if options['do_sfcanl'] or options['do_omf']:
+                configs += ['prep']
+
             if options['do_omf']:
-                configs += ['prep', 'gomg', 'analdiag', 'arch_vrfy']
+                configs += ['gomg', 'analdiag', 'arch_vrfy']
 
             if options['do_post']:
                 if options['do_upp']:
@@ -101,8 +104,11 @@ class SHiELDReplayAppConfig(AppConfig):
             if options['do_sfcanl']:
                 tasks += ['sfcanl']
 
+            if options['do_sfcanl'] or options['do_omf']:
+                tasks += ['prep']
+
             if options['do_omf']:
-                tasks += ['prep', 'gomg', 'analdiag']
+                tasks += ['gomg', 'analdiag']
 
             if options['do_post']:
                 if options['do_upp']:
