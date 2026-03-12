@@ -9,7 +9,26 @@ export USE_ESMF_THREADING="YES"  # Toggle to use ESMF-managed threading or tradi
 export COPY_FINAL_RESTARTS="NO" # Toggle to copy restarts from the end of GFS/GEFS Run (GDAS is handled seperately)
 
 # Source model specific information that is resolution dependent
+string="--fv3 ${CASE}"
+if [[ "${DO_OCN}" == "YES" ]]; then
+    string="${string} --mom6 ${OCNRES}"
+fi
+if [[ "${DO_ICE}" == "YES" ]]; then
+    string="${string} --cice6 ${ICERES}"
+fi
+if [[ "${DO_WAVE}" == "YES" ]]; then
+    string="${string} --ww3 ${waveGRD}"
+fi
+if [[ "${DO_AERO_FCST}" == "YES" ]]; then
+    string="${string} --gocart"
+fi
+# We are counting on $string being multiple arguments
+# shellcheck disable=SC2086
+if [[ ${NET} != "shield" ]]; then
+source "${EXPDIR}/config.ufs" ${string}
+else
 source ${EXPDIR}/config.fv3 ${CASE}
+fi
 
 # Forecast length for GFS forecast
 case ${RUN} in
@@ -39,6 +58,9 @@ case ${RUN} in
     exit 1
 esac
 
+#use 2014-2023 mean MERRA2 aerosol
+export MERRA2_6ym=".false."
+
 # Get task specific resources
 source "${EXPDIR}/config.resources" fcst
 export domains_stack_size="16000000"
@@ -48,98 +70,130 @@ if [[ "${DONST}" == "YES" ]]; then
     source "${EXPDIR}/config.nsst"
 fi
 
-#######################################################################
+export esmf_profile=".false."
+export esmf_logkind="ESMF_LOGKIND_MULTI_ON_ERROR" #Options: ESMF_LOGKIND_MULTI_ON_ERROR, ESMF_LOGKIND_MULTI, ESMF_LOGKIND_NONE
 
-export FORECASTSH="${SCRgfs}/exglobal_forecast.sh"
-
-if [ ${SHiELD_VERSION} = "2022" ]; then
-  #export NAMELISTSH="${USHgfs}/parsing_namelists_shield2022.sh"
-  export NAMELISTSH="${USHgfs}/parsing_namelists_shield2022_newstochy.sh"
-  export FCSTEXEC="shield_model_2022.x"
-  export FIXaer="${FIXgfs}/aer_shield2022"
-elif [ ${SHiELD_VERSION} = "2023" ]; then
-  export NAMELISTSH="${USHgfs}/parsing_namelists_shield2023.sh"
-  export FCSTEXEC="shield_model_2023.x"
-else 
-  export NAMELISTSH="${USHgfs}/parsing_namelists_shieldfull.sh"
-  export FCSTEXEC="shield_model.x"
-fi
-export subdir="INPUT/"
 
 #######################################################################
 
-# External IC configuration
-if [[ "${MODE}" != "cycled" ]]; then
-  export ICSDIR=${ICSROOT}/output/${CASE}
+export FORECASTSH="${SCRglobal}/exglobal_forecast.sh"
+#export FORECASTSH="${SCRglobal}/exglobal_forecast.py"  # Temp. while this is worked on
+export FCSTEXEC="gfs_model.x"
+
+if [[ ${NET} == "shield" ]]; then
+   export FIXorog="${FIXglobal}/orog_shield"
+   export FIXaer="${FIXglobal}/aer_shield"
+   if [ ${SHiELD_VERSION} = "2022" ]; then
+     #export NAMELISTSH="${USHglobal}/parsing_namelists_shield2022.sh"
+     export NAMELISTSH="${USHglobal}/parsing_namelists_shield2022_newstochy.sh"
+     export FCSTEXEC="shield_model_2022.x"
+     export FIXaer="${FIXglobal}/aer_shield2022"
+   elif [ ${SHiELD_VERSION} = "2023" ]; then
+     export NAMELISTSH="${USHglobal}/parsing_namelists_shield2023.sh"
+     export FCSTEXEC="shield_model_2023.x"
+   else 
+     export NAMELISTSH="${USHglobal}/parsing_namelists_shieldfull.sh"
+     export FCSTEXEC="shield_model.x"
+   fi
+   export subdir="INPUT/"
 fi
 
-if [ ${gfs_ver:-"v16"} = "v16" ]; then
-  export ncep_levs=${ncep_levs:-128}
-else
-  export ncep_levs=${ncep_levs:-65}
-fi
-
+#######################################################################
 # Model configuration
 export TYPE="nh"
 export MONO="non-mono"
 
-if [[ $MODE == "cycled" ]]; then
-  export k_split=2
-  export n_split=6
-else
-  export k_split=1
-  export n_split=8
-fi
+# Use stratosphere h2o physics
+export h2o_phys=".true."
 
-export d_con_mono=1.
-export npz=$LEVS
-
-# Options of stratosphere O3 physics reaction coefficients (not for SHiELD)
+# Options of stratosphere O3 physics reaction coefficients
 export new_o3forc="YES"
 
+export gwd_opt=2
+
+# --GFS.v16 uGWD.v0, used for suite FV3_GFS_v16 and UFS p6 etc
 # do_ugwp=T: use unified CGWD and OGWD, and turbulent orographic form drag (TOFD)
 # do_ugwp=F: use unified CGWD but old OGWD, TOFD is not uded.
-export do_ugwp=".false."
-export do_tofd=".true."
-export launch_level=$(echo "$LEVS/2.35" |bc)
-
-# Sponge layer settings for L127
-if [ $LEVS = "128" -a "${RUN}" = "gdas" ]; then
-   export  tau=5.0
-   export  rf_cutoff=1.0e3
-   export  d2_bg_k1=0.20
-   export  d2_bg_k2=0.0
+if [[ ${gwd_opt} -eq 1 ]]; then
+    export knob_ugwp_version=0
+    export do_ugwp=".false."
+    export do_tofd=".false."
+    launch_level=$(echo "${LEVS}/2.35" |bc)
+    export launch_level
 fi
 
+
+# -- uGWD.v1, for suite FV3_GFS_v17 and FV3_GFS_v17p8b etc
+if [[ ${gwd_opt} -eq 2 ]]; then
+
+    #--used for UFS p7 and p8a
+    #export  knob_ugwp_version=1
+    #export  do_ugwp=".false."
+    #export  do_tofd=".false."
+    #export  do_ugwp_v0=".false."
+    #export  do_ugwp_v1=".true."
+    #export  do_ugwp_v0_orog_only=".false."
+    #export  do_ugwp_v0_nst_only=".false."
+    #export  do_gsl_drag_ls_bl=".true."
+    #export  do_gsl_drag_ss=".true."
+    #export  do_gsl_drag_tofd=".true."
+    #export  do_ugwp_v1_orog_only=".false."
+
+    #--used for UFS p8
+    export knob_ugwp_version=1
+    export do_ugwp=".false."
+    export do_tofd=".false."
+    export do_ugwp_v0=".false."
+    export do_ugwp_v1=".true."
+    export do_ugwp_v0_orog_only=".false."
+    export do_ugwp_v0_nst_only=".false."
+    export do_gsl_drag_ls_bl=".true."
+    export do_gsl_drag_ss=".false."
+    export do_gsl_drag_tofd=".true."
+    export do_gwd_opt_psl=".true."
+    export do_ugwp_v1_orog_only=".false."
+    launch_level=$(echo "${LEVS}/2.35" |bc)
+    export launch_level
+fi
+
+# Sponge layer settings
+export d2_bg_k1=0.15
+export d2_bg_k2=0.02
+export n_sponge=30
+
 # PBL/turbulance schemes
-export hybedmf=".false."
-export ysupbl=".false."
 export satmedmf=".true."
-export isatmedmf=0
-tbf=""
-if [[ "${satmedmf}" == ".true." ]]; then tbf="_satmedmf" ; fi
+export isatmedmf=1
+export xkgdx=25000.0
+export xkzminv=0.0
+export xkzm_m=1.5
+export xkzm_h=1.5
+export xkzm_ml=1.0
+export xkzm_hl=1.0
+export xkzm_mi=1.5
+export xkzm_hi=1.5
+if [[ ${CASE} == "C192" ]]; then
+  export rlmx=300.0
+else
+  export rlmx=500.0
+fi
 
 #Convection schemes
 export progsigma=".true."
 tbp=""
 if [[ "${progsigma}" == ".true." ]]; then tbp="_progsigma" ; fi
 
-# Land surface model. (2--NoahMP, landice=F); (1--Noah, landice=T) (not for SHiELD)
-export lsm=1
-if [ $lsm -eq 2 ]; then
-    export lheatstrg=".false."
-    export landice=".false."
-else
-    export lheatstrg=".true."
-    export landice=".true."
-fi
+# Radiation options
+IAER=111 # spectral band mapping method for aerosol optical properties
+# RRTMGP radiation scheme
+export do_RRTMGP=.false.
+export doGP_cldoptics_LUT=.false.
+export doGP_lwscat=.false.
 
-# Radiation options 
-export IAER=111     ;#spectral band mapping method for aerosol optical properties
-export iovr_lw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
-export iovr_sw=3    ;#de-correlation length cloud overlap method (Barker, 2008) 
-export icliq_sw=2   ;#cloud optical coeffs from AER's newer version v3.9-v4.0 for hu and stamnes
-
+# LSM configuration
+# NoahMP only
+export iopt_sfc="3"
+export iopt_trs="2"
 
 # Microphysics configuration
 export dnats=0
@@ -150,17 +204,17 @@ export random_clds=".true."
 case ${imp_physics} in
     99) # ZhaoCarr
         export ncld=1
-        export FIELD_TABLE="${PARMgfs}/ufs/fv3/field_table_zhaocarr${tbf}${tbp}"
+        export FIELD_TABLE="${PARMglobal}/ufs/fv3/field_table_zhaocarr${tbf}${tbp}"
         export nwat=2
         ;;
     6)  # WSM6
         export ncld=2
-        export FIELD_TABLE="${PARMgfs}/ufs/fv3/field_table_wsm6${tbf}${tbp}"
+        export FIELD_TABLE="${PARMglobal}/ufs/fv3/field_table_wsm6${tbf}${tbp}"
         export nwat=6
         ;;
     8)  # Thompson
         export ncld=2
-        export FIELD_TABLE="${PARMgfs}/ufs/fv3/field_table_thompson_noaero_tke${tbp}"
+        export FIELD_TABLE="${PARMglobal}/ufs/fv3/field_table_thompson_noaero_tke${tbp}"
         export nwat=6
 
         export cal_pre=".false."
@@ -183,8 +237,8 @@ case ${imp_physics} in
         export dddmp=0.1
         export d4_bg=0.12
 
-        if [[ "${CCPP_SUITE}" == "FV3_global_nest"* ]]; then
-          export FIELD_TABLE="${PARMgfs}/ufs/fv3/field_table_thompson_aero_tke${tbp}"
+        if [[ "${CCPP_SUITE:-"FV3_GFS_v17_p8_ugwpv1"}" == "FV3_global_nest"* ]]; then
+          export FIELD_TABLE="${PARMglobal}/ufs/fv3/field_table_thompson_aero_tke${tbp}"
           export ltaerosol=".true."
           export lcnorm=".true."
           export do_mynnedmf=".true."
@@ -207,10 +261,10 @@ case ${imp_physics} in
         export do_aerosol=".true."
         if [[ ${do_aerosol} == ".true." || ${do_aerosol} == ".T." ]]; then
            export dnats=2
-           export FIELD_TABLE="${PARMgfs}/shield/fv3/field_table_6species_aero"
+           export FIELD_TABLE="${PARMglobal}/shield/fv3/field_table_6species_aero"
         else
            export dnats=1
-           export FIELD_TABLE="${PARMgfs}/shield/fv3/field_table_6species"
+           export FIELD_TABLE="${PARMglobal}/shield/fv3/field_table_6species"
         fi
         export cal_pre=".false."
         export do_sat_adj=".false."
@@ -254,29 +308,16 @@ export min_lakeice="0.15"
 export min_seaice=${min_seaice:-"0.15"}
 export use_cice_alb=${use_cice_alb:-".false."}
 
+export FSICL="99999"
+export FSICS="0"
+
+export pbl_taper="0,0,0,0.1,0.2,0.4,0.6"
+
 #---------------------------------------------------------------------
-
-# ideflate: netcdf zlib lossless compression (0-9): 0 no compression
-# nbits: netcdf lossy compression level (0-32): 0 lossless
-export ideflate=1
-export nbits=14
-export ishuffle=0
-# compression for RESTART files written by FMS 
-export shuffle=1
-export deflate_level=1
-
-# Disable the use of coupler.res; get model start time from model_configure
-export USE_COUPLER_RES="NO"
-
-if [[ $EXP_WARM_START = ".false." && ( "$MODE" = "forecast-only" || "$SDATE" = "$CDATE" ) ]]; then
-   export DIAG_TABLE="${PARMgfs}/shield/fv3/diag_table_shield_ic"
-   export write_first_time_step=".true."
-else
-   export DIAG_TABLE="${PARMgfs}/shield/fv3/diag_table_shield"
-fi
-
-# The following (restart_interval) are for GFS
 if [[ "${RUN}" =~ "gdas" ]] ; then # GDAS cycle specific parameters
+
+    # Variables used in DA cycling
+    export DIAG_TABLE="${PARMglobal}/ufs/fv3/diag_table_da"
 
     # Write gfs restart files to rerun fcst from any break point
     export restart_interval=${restart_interval_gdas:-6}
@@ -286,22 +327,65 @@ if [[ "${RUN}" =~ "gdas" ]] ; then # GDAS cycle specific parameters
 
 elif [[ "${RUN}" =~ "gfs" ]] ; then # GFS cycle specific parameters
 
+    # Write more variables to output
+    export DIAG_TABLE="${PARMglobal}/ufs/fv3/diag_table"
+
     # Write gfs restart files to rerun fcst from any break point
     export restart_interval=${restart_interval_gfs:-12}
 
     # Turn off dry mass adjustment in GFS
     export adjust_dry_mass=".false."
+
+    # Write each restart file in 16 small files to save time
+    if [[ "${CASE}" = C768 ]]; then
+      export io_layout="4,4"
+    else
+      export io_layout="1,1"
+    fi
+
+    # Turn off Land IAU for GFS
+    export DO_LAND_IAU=".false."
+
+fi
+
+# This is used to ensure that the orography in the land restart file matches the orography
+export CHECK_LAND_RESTART_OROG="{{ CHECK_LAND_RESTART_OROG }}"
+
+# Remember config.efcs will over-ride these values for ensemble forecasts
+# if these variables are re-defined there.
+# Otherwise, the ensemble forecast will inherit from config.fcst
+
+# SHiELD configurations
+# External IC configuration
+if [[ "${MODE}" != "cycled" ]]; then
+  export ICSDIR=${ICSROOT}/output/${CASE}
+fi
+
+if [ ${gfs_ver:-"v16"} = "v16" ]; then
+  export ncep_levs=${ncep_levs:-128}
+else
+  export ncep_levs=${ncep_levs:-65}
+fi
+
+export npz=${LEVS}
+if [[ $MODE == "cycled" ]]; then
+  export k_split=2
+  export n_split=6
+else
+  export k_split=1
+  export n_split=8
+fi
+
+if [[ $EXP_WARM_START = ".false." && ( "$MODE" = "forecast-only" || "$SDATE" = "$CDATE" ) ]]; then
+   export DIAG_TABLE="${PARMglobal}/shield/fv3/diag_table_shield_ic"
+   export write_first_time_step=".true."
+else
+   export DIAG_TABLE="${PARMglobal}/shield/fv3/diag_table_shield"
 fi
 
 export ntasks_c2g=$(( (FHMAX-FHMIN)/FHOUT+1 ))
 
-# Global latlon NetCDF to nemsio utility parameters
-export NC2NEMSIOSH="$HOMEgfs/ush/fv3gfs_nc2nemsio.sh"
-
-#export GAUATMSEXE=$EXECgfs/fv3_da_out_32bit.x
-export GAUATMSEXE=$EXECgfs/fv3_c2g_atms.x
-
-export SIGLEVEL="$FIXgsi/global_hyblev.l${LEVS}.txt"
+export GAUATMSEXE=${EXECglobal}/fv3_c2g_atms.x
 
 # cubed-sphere to gaussian regriding
 export rmhydro=".true."
@@ -311,25 +395,6 @@ export phy_data=""
 
 if [[ $phy_data != "" ]]; then
    export nvar3dout=16
-fi
-
-# Remember config.efcs will over-ride these values for ensemble forecasts
-# if these variables are re-defined there.
-# Otherwise, the ensemble forecast will inherit from config.fcst
-
-export isatmedmf=1
-export xkgdx=25000.0
-export xkzminv=0.0
-export xkzm_m=1.5
-export xkzm_h=1.5
-export xkzm_ml=1.0
-export xkzm_hl=1.0
-export xkzm_mi=1.5
-export xkzm_hi=1.5
-if [[ ${CASE} == "C192" ]]; then
-  export rlmx=300.0
-else
-  export rlmx=500.0
 fi
 
 echo "END: config.fcst"

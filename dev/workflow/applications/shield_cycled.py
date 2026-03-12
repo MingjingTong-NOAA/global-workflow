@@ -1,3 +1,10 @@
+"""
+SHiELD cycled application configuration module.
+
+This module defines the configuration for running the Global Forecast System (GFS)
+in cycled mode with data assimilation.
+"""
+
 from applications.applications import AppConfig
 from typing import Dict, Any
 from wxflow import Configuration
@@ -67,6 +74,7 @@ class SHiELDCycledAppConfig(AppConfig):
             run_options[run]['ensreplay'] = base.get('ENSREPLAY', False)
             run_options[run]['do_hybvar'] = base.get('DOHYBVAR', False)
             run_options[run]['do_hybvar_ocn'] = base.get('DOHYBVAR_OCN', False)
+            run_options[run]['do_enkfonly_atm'] = base.get('DOENKFONLY_ATM', False)
             run_options[run]['do_letkf_ocn'] = base.get('DOLETKF_OCN', False)
             run_options[run]['nens'] = base.get('NMEM_ENS', 0)
             run_options[run]['do_tsfc_tile'] = base.get('DO_TSFC_TILE', False)
@@ -81,6 +89,7 @@ class SHiELDCycledAppConfig(AppConfig):
             run_options[run]['do_fit2obs'] = base.get('DO_FIT2OBS', True)
             run_options[run]['do_jediatmvar'] = base.get('DO_JEDIATMVAR', False)
             run_options[run]['do_jediatmens'] = base.get('DO_JEDIATMENS', False)
+            run_options[run]['do_jediatmens_split_obssol'] = base.get('DO_JEDIATMENS_SPLIT_OBSSOL', True)
             run_options[run]['do_jediocnvar'] = base.get('DO_JEDIOCNVAR', False)
             run_options[run]['do_jedisnowda'] = base.get('DO_JEDISNOWDA', False)
             run_options[run]['do_gsisoilda'] = base.get('DO_GSISOILDA', False)
@@ -106,6 +115,11 @@ class SHiELDCycledAppConfig(AppConfig):
 
         configs = ['prep']
 
+        if options['do_enkfonly_atm']:
+            configs += ['fetch', 'prepatmanlbias']
+            if options['do_archcom']:
+                configs += ['earc_tars', 'earc_groups']
+
         if options['do_prep_sfc']:
             configs += ['prep_sfc']
 
@@ -117,16 +131,19 @@ class SHiELDCycledAppConfig(AppConfig):
             configs += ['init']
 
         if options['do_jediatmvar']:
-            configs += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
+            if options['do_jediatmens']:
+                configs += ['atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
+            else:
+                configs += ['atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc']
         else:
             configs += ['anal', 'analdiag', 'analcalc']
 
         if options['do_jediocnvar']:
-            configs += ['prepoceanobs', 'marineanlinit', 'marinebmatinit', 'marinebmat', 'marineanlvar']
+            configs += ['prepoceanobs', 'marinebmatinit', 'marinebmat', 'marineanlinit', 'marineanlvar']
             if options['do_letkf_ocn']:
                 configs += ['marineanlletkf']
             if options['do_hybvar']:
-                configs += ['ocnanalecen']
+                configs += ['marineanlecen']
             configs += ['marineanlchkpt', 'marineanlfinal']
 
         if options['do_ocean'] or options['do_ice']:
@@ -202,8 +219,6 @@ class SHiELDCycledAppConfig(AppConfig):
 
         if options['do_aero_anl']:
             configs += ['aeroanlgenb', 'aeroanlinit', 'aeroanlvar', 'aeroanlfinal']
-            if options['do_prep_obs_aero']:
-                configs += ['prepobsaero']
 
         if options['do_jedisnowda']:
             configs += ['snowanl']
@@ -265,17 +280,15 @@ class SHiELDCycledAppConfig(AppConfig):
                     task_names[run] += ['init']
 
                 if options['do_jediatmvar']:
-                    task_names[run] += ['prepatmiodaobs', 'atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
+                    if options['do_jediatmens']:
+                        task_names[run] += ['atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc_fv3jedi']
+                    else:
+                        task_names[run] += ['atmanlinit', 'atmanlvar', 'atmanlfv3inc', 'atmanlfinal', 'analcalc']
                 else:
                     task_names[run] += ['anal', 'analcalc']
 
                 if options['do_jediocnvar']:
-                    task_names[run] += ['prepoceanobs', 'marineanlinit', 'marinebmatinit', 'marinebmat', 'marineanlvar']
-                    if options['do_letkf_ocn']:
-                        task_names[run] += ['marineanlletkf']
-                    if options['do_hybvar']:
-                        task_names[run] += ['ocnanalecen']
-                    task_names[run] += ['marineanlchkpt', 'marineanlfinal']
+                    task_names[run] += ['prepoceanobs', 'marinebmatinit', 'marinebmat', 'marineanlinit', 'marineanlvar', 'marineanlchkpt', 'marineanlfinal']
 
                 task_names[run] += ['sfcanl']
 
@@ -284,7 +297,6 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 wave_prep_tasks = ['waveinit']
                 wave_bndpnt_tasks = ['wavepostbndpnt', 'wavepostbndpntbll']
-                wave_post_tasks = ['wavepostsbs', 'wavepostpnt']
 
                 # gdas- and gfs-specific analysis tasks
                 if run == 'gdas':
@@ -303,9 +315,6 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 if options['do_aero_anl']:
                     task_names[run] += ['aeroanlinit', 'aeroanlvar', 'aeroanlfinal']
-
-                    if options['do_prep_obs_aero']:
-                        task_names[run] += ['prepobsaero']
 
                 # Staging is gdas-specific
                 if run == 'gdas' and not options['warm_start']:
@@ -339,11 +348,13 @@ class SHiELDCycledAppConfig(AppConfig):
                     if options['do_verfrad']:
                         task_names[run] += ['verfrad']
 
+                # Only do analysis statistics for gdas cycles
+                if run == "gdas":
+                    if options['do_anlstat']:
+                        task_names[run] += ['anlstat']
+
                 if options['do_vminmon']:
                     task_names[run] += ['vminmon']
-
-                if options['do_anlstat']:
-                    task_names[run] += ['anlstat']
 
                 # gfs-only verification/tracking
                 if run == 'gfs':
@@ -360,9 +371,10 @@ class SHiELDCycledAppConfig(AppConfig):
                         task_names[run] += ['metp']
 
                 if options['do_wave']:
+                    task_names[run] += ['wavepostsbs']
                     if options['do_wave_bnd']:
                         task_names[run] += wave_bndpnt_tasks
-                    task_names[run] += wave_post_tasks
+                    task_names[run] += ['wavepostpnt']
                     # wave gempak and awips jobs are gfs-specific
                     if run == 'gfs':
                         if options['do_gempak']:
@@ -395,6 +407,12 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 task_names[run] += ['cleanup']
 
+                # Reset tasks to run enkf-only for atm if do_enkfonly_atm=true
+                if options['do_enkfonly_atm']:
+                    if run == 'gdas':
+                        task_names[run] = []
+                        task_names[run] += ['prep', 'fetchatmanlbias', 'prepatmanlbias']
+
             # Ensemble tasks
             elif 'enkf' in run:
 
@@ -406,7 +424,7 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 if options['do_jediatmens']:
                     task_names[run] += ['atmensanlinit', 'atmensanlfv3inc', 'atmensanlfinal', 'ecen_fv3jedi']
-                    if options['lobsdiag_forenkf']:
+                    if options['do_jediatmens_split_obssol']:
                         task_names[run] += ['atmensanlobs', 'atmensanlsol']
                     else:
                         task_names[run] += ['atmensanlletkf']
@@ -417,6 +435,12 @@ class SHiELDCycledAppConfig(AppConfig):
                     task_names[run] += ['eobs', 'eupd', 'ecen']
                     task_names[run].append('echgres') if 'gdas' in run else 0
                     task_names[run] += ['ediag']
+
+                if options['do_jediocnvar']:
+                    if options['do_letkf_ocn']:
+                        task_names[run] += ['marineanlletkf']
+                    if options['do_hybvar']:
+                        task_names[run] += ['marineanlecen']
 
                 task_names[run].append('esnowanl') if options['do_jedisnowda'] else 0
                 task_names[run].append('efcs') if 'gdas' in run else 0
@@ -432,4 +456,17 @@ class SHiELDCycledAppConfig(AppConfig):
 
                 task_names[run] += ['cleanup']
 
+                # Reset tasks to run enkf-only for atm if do_enkfonly_atm=true
+                if options['do_enkfonly_atm']:
+                    task_names[run] = []
+                    task_names[run] += ['stage_ic']
+                    if options['do_jediatmens']:
+                        task_names[run] += ['atmensanlinit', 'atmensanlfv3inc', 'atmensanlfinal']
+                        if options['do_jediatmens_split_obssol']:
+                            task_names[run] += ['atmensanlobs', 'atmensanlsol']
+                        else:
+                            task_names[run] += ['atmensanlletkf']
+                    else:
+                        task_names[run] += ['eobs', 'eupd', 'ecen', 'ediag']
+                    task_names[run] += ['efcs', 'epos', 'esfc', 'earc_tars', 'cleanup']
         return task_names

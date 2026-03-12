@@ -1,0 +1,58 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "earc_tars" -c "base arch_tars earc_tars earc_groups"
+
+##############################################
+# Set variables used in the script
+##############################################
+# Setup Python path for pygfs
+PYTHONPATH="${HOMEglobal}/ush/python${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH
+
+declare -rx COMIN_ATMOS_ANALYSIS_ENSSTAT="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/analysis/atmos"
+declare -rx COMIN_ATMOS_HISTORY_ENSSTAT="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/model/atmos/history"
+declare -rx COMIN_ICE_ANALYSIS_ENSSTAT="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/analysis/ice"
+declare -rx COMIN_OCEAN_ANALYSIS_ENSSTAT="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/analysis/ocean"
+declare -rx COMIN_SNOW_ANALYSIS_ENSSTAT="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/analysis/snow"
+declare -rx COMIN_CONF="${ROTDIR}/${RUN}.${PDY}/${cyc}/ensstat/conf"
+
+declare -rx COMIN_ATMOS_HISTORY="${ROTDIR}/${RUN/enkf/}.${PDY}/${cyc}/model/atmos/history"
+
+mkdir -p "${COMIN_CONF}"
+
+###############################################################
+# Run archive script
+###############################################################
+
+# Calls an external bash command; do not fail on unassigned/error
+export -n SHELLOPTS
+unset_strict
+"${SCRglobal}/exglobal_enkf_earc_tars.py"
+export err=$?
+set_strict
+if [[ ${err} -ne 0 ]]; then
+    err_exit "Failed to archive the ensemble COM structure"
+fi
+
+###############################################################
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]]; then
+    cat "${pgmout}"
+fi
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || true
+if [[ "${KEEPDATA}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

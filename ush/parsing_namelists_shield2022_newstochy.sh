@@ -7,9 +7,9 @@
 SHiELD_namelists(){
 
 # setup the tables
-DIAG_TABLE=${DIAG_TABLE:-${PARMgfs}/shield/fv3/diag_table_shield}
-DATA_TABLE=${DATA_TABLE:-${PARMgfs}/shield/fv3/data_table}
-FIELD_TABLE=${FIELD_TABLE:-${PARMgfs}/shield/fv3/field_table}
+DIAG_TABLE=${DIAG_TABLE:-${PARMglobal}/shield/fv3/diag_table_shield}
+DATA_TABLE=${DATA_TABLE:-${PARMglobal}/shield/fv3/data_table}
+FIELD_TABLE=${FIELD_TABLE:-${PARMglobal}/shield/fv3/field_table}
 
 # ensure non-prognostic tracers are set
 dnats=${dnats:-2}

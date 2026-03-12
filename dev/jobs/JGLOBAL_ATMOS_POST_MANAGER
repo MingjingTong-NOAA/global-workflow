@@ -1,0 +1,27 @@
+#! /usr/bin/env bash
+
+# TODO (#1227) This job is not used in the rocoto suite
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "post" -c "base post"
+
+####################################
+# Specify NET and RUN Name and model
+####################################
+export NET=${NET:-gfs}
+export RUN=${RUN:-gfs}
+
+###########################
+# Set up EXT variable
+###########################
+export EXT_FCST=NO
+
+declare -rx COMIN_ATMOS_HISTORY="${ROTDIR}/${RUN}.${PDY}/${cyc}/model/atmos/history"
+
+########################################################
+# Execute the script.
+"${SCRglobal}/exglobal_atmos_pmgr.sh" && true
+export err=$?
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
+########################################################

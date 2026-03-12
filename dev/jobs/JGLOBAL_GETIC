@@ -1,0 +1,81 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/preamble.sh"
+source "${HOMEglobal}/ush/jjob_header.sh" -e "getic" -c "base getic"
+
+
+##############################################
+# Set variables used in the script
+##############################################
+# Ignore possible spelling error (nothing is misspelled)
+# shellcheck disable=SC2153
+export CDATE=${PDY}${cyc}
+export GDATE=$(date --utc -d "${PDY} ${cyc} - ${assim_freq} hours" +%Y%m%d%H)
+# shellcheck disable=
+export gPDY=${GDATE:0:8}
+export gcyc=${GDATE:8:2}
+
+export EXTRACT_DIR=${EXTRACT_DIR:-$ICSROOT}
+if [[ $MODE = "forecast-only" || $EXP_WARM_START = ".true." ]]; then
+  export EXTRACT_DIR=$ROTDIR
+fi
+
+if [[ (${ICFROM} = "gfs" && ${gfs_ver:1:2} -le 16) || (${ICFROM} != "gfs" && ${exp_ver} -lt 2024) ]]; then
+  export COMIN_ATMOS_RESTART=${EXTRACT_DIR}/${RUN}.${gPDY}/${gcyc}/${COMPONENT:-"atmos"}
+  export COMIN_ATMOS_ANALYSIS=${EXTRACT_DIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT:-"atmos"}
+  export COMIN_ATMOS_ANALYSIS_RESTART=${EXTRACT_DIR}/${RUN}.${PDY}/${cyc}/${COMPONENT:-"atmos"}/RESTART
+  export COMIN_ATMOS_ANALYSIS_PREV=${EXTRACT_DIR}/${ICDUMP}.${gPDY}/${gcyc}/${COMPONENT:-"atmos"}
+else
+  YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+        COMIN_ATMOS_RESTART:COM_ATMOS_RESTART_TMPL
+  ROTDIR=${EXTRACT_DIR} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+	COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
+  ROTDIR=${EXTRACT_DIR} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+        COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+  ROTDIR=${ICSROOT} RUN=${ICDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+        COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+fi
+export ATMOS_ANALYSIS=${COMIN_ATMOS_ANALYSIS#${EXTRACT_DIR}}
+export ATMOS_ANALYSIS_RESTART=${COMIN_ATMOS_ANALYSIS_RESTART#${EXTRACT_DIR}}
+
+YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+      COMOUT_ATMOS_RESTART:COM_ATMOS_RESTART_TMPL
+ROTDIR=${ICSROOT}/output RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+      COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
+ROTDIR=${ICSROOT}/output RUN=${ICDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+      COMOUT_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+ROTDIR=${ICSROOT} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+      COMOUT_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+
+YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
+      COM_ATMOS_HISTORY_PREV:COM_ATMOS_HISTORY_TMPL
+YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
+      COM_ATMOS_HISTORY:COM_ATMOS_HISTORY_TMPL
+
+###############################################################
+# Run getic script
+###############################################################
+
+${GLOBALGETICSH:-${SCRgfs}/exglobal_getic.sh}
+status=$?
+[[ ${status} -ne 0 ]] && exit "${status}"
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]] ; then
+  cat "${pgmout}"
+fi
+
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || (echo "${DATAROOT} does not exist. ABORT!"; exit 1)
+[[ ${KEEPDATA} = "NO" ]] && rm -rf "${DATA}"
+
+exit 0

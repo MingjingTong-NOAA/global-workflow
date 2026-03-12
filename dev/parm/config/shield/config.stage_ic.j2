@@ -7,7 +7,7 @@ echo "BEGIN: config.stage_ic"
 # Get task specific resources
 source "${EXPDIR}/config.resources" stage_ic
 
-if [[ "${MODE}" == "cycled" && ("${DO_FETCH_HPSS^^}" =~ "Y" || "${DO_FETCH_LOCAL^^}" =~ "Y") ]]; then
+if [[ ("${MODE}" == "cycled" && ("${DO_FETCH_HPSS^^}" =~ "Y") || "${DO_FETCH_LOCAL^^}" =~ "Y") ]]; then
     export ICSDIR="${DATAROOT}"  # fetch untars data into DATAROOT
 else
     export ICSDIR=${ICSROOT}/output/${CASE}
@@ -17,9 +17,9 @@ export ICSANL=${ICSROOT}/output
 
 export BASE_IC="{{ BASE_IC }}" # Platform home for staged ICs
 
-export STAGE_IC_YAML_TMPL="${PARMgfs}/stage/master_gfs.yaml.j2"
+export STAGE_IC_YAML_TMPL="${PARMglobal}/stage/master_${NET}.yaml.j2"
 
-source "${HOMEgfs}/versions/ic.ver"
+source "${HOMEglobal}/versions/ic.ver"
 
 if [[ ${EXP_WARM_START} = ".false." ]] ; then
   export DOIAU="NO"        # Turn off for staging

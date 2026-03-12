@@ -1,0 +1,41 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "waveawipsgridded" -c "base wave waveawipsgridded"
+source "${USHglobal}/wave_domain_grid.sh"
+
+###################################
+# Set COM Paths
+###################################
+
+declare -rx COMIN_WAVE_GRID="${ROTDIR}/${RUN}.${PDY}/${cyc}/products/wave/gridded"
+declare -rx COMOUT_WAVE_WMO="${ROTDIR}/${RUN}.${PDY}/${cyc}/products/wave/wmo"
+
+mkdir -p "${COMOUT_WAVE_WMO}"
+
+if [[ -n "${GEMPAK_GRIDS}" ]]; then
+    for grdID in ${GEMPAK_GRIDS}; do
+        process_grdID "${grdID}"
+        declare -rx "COMIN_WAVE_GRID_${GRDREGION}_${GRDRES}"="${ROTDIR}/${RUN}.${PDY}/${cyc}/products/wave/gridded/${grdNAME}"
+    done
+else
+    echo "GEMPAK_GRIDS are empty. No grids to process."
+fi
+
+###################################
+# Execute the Script
+###################################
+"${SCRglobal}/exgfs_wave_prdgen_gridded.sh" && true
+export err=$?
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
+
+###################################
+# Remove temp directories
+###################################
+cd "${DATAROOT}" || true
+if [[ "${KEEPDATA}" != "YES" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

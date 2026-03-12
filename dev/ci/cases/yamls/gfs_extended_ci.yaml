@@ -1,5 +1,5 @@
 defaults:
-  !INC {{ HOMEgfs }}/dev/parm/config/gfs/yaml/defaults.yaml
+  !INC {{ HOMEglobal }}/dev/parm/config/gfs/yaml/defaults.yaml
 
 base:
   DO_GOES: "YES"
@@ -13,3 +13,4 @@ base:
   FHMAX_GFS: 384
   FHMAX_HF_GFS: 120
   DO_TEST_MODE: "NO"
+  DO_ARCHCOM: "YES"

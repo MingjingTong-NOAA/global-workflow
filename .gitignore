@@ -28,6 +28,7 @@ install*/
 #------------------------------
 fix/0readme
 fix/aer
+fix/aer_shield
 fix/aer_shield2022
 fix/am
 fix/chem
@@ -41,6 +42,7 @@ fix/lut
 fix/mom6
 fix/orog
 fix/orog_nest
+fix/orog_shield
 fix/sfc_climo
 fix/ugwd
 fix/ugwd_nest
@@ -84,6 +86,7 @@ parm/post/post_tag_gfs128
 parm/post/gfs
 parm/post/gefs
 parm/post/sfs
+parm/post/gcafs
 parm/post/ocean.csv
 parm/post/ocean_gefs.csv
 parm/post/ocean_gfs.csv
@@ -100,9 +103,11 @@ parm/ufs/MOM6_data_table.IN
 parm/ufs/ice_in.IN
 parm/ufs/ufs.configure.*.IN
 parm/ufs/post_itag_gfs
+parm/ufs/post_itag_gcafs
 parm/ufs/ww3_shel.nml.IN
 parm/ufs/global_control.nml.IN
 parm/regrid_sfc
+parm/chem/nexus
 
 # Ignore sorc and logs folders from externals
 #--------------------------------------------
@@ -145,6 +150,8 @@ sorc/syndat_maksynrc.fd
 sorc/syndat_qctropcy.fd
 sorc/tave.fd
 sorc/tocsbufr.fd
+sorc/tref_calc.fd
+sorc/upp.fd
 sorc/vint.fd
 sorc/webtitle.fd
 sorc/ocnicepost.fd
@@ -154,7 +161,7 @@ sorc/shield.fd/SHiELD_SRC
 #------------------------------
 # jobs symlinks
 # scripts symlinks
-scripts/exglobal_prep_ocean_obs.py
+dev/scripts/exglobal_prep_ocean_obs.py
 # ush symlinks
 ush/bufr2ioda_insitu_profile_argo.py
 ush/bufr2ioda_insitu_profile_bathy.py
@@ -173,10 +180,10 @@ ush/fv3gfs_make_orog.sh
 ush/global_chgres.sh
 ush/global_chgres_driver.sh
 ush/global_cycle_driver.sh
-ush/global_cycle_shield.sh
 ush/gsi_satbias2ioda_all.sh
 ush/jediinc2fv3.py
 ush/imsfv3_scf2ioda.py
+ush/ghcn_snod2ioda.py
 ush/bufr_snocvr_snomad.py
 ush/atparse.bash
 ush/bufr2ioda_insitu*
@@ -191,6 +198,7 @@ ush/python/soca
 ush/python/gen_bufr2ioda_json.py
 ush/python/gen_bufr2ioda_yaml.py
 ush/python/run_bufr2ioda.py
+ush/python/wxflow
 ush/spoc
 # ush log file
 ush/fetch-fix-data.log

@@ -15,7 +15,7 @@ export ICDUMP=${ICDUMP:-"gdas"}
 export START="cold"
 export OPS_RES=${OPS_RES:-"C768"} # Operational resolution
 
-export UFS_DIR=${HOMEgfs}/sorc/ufs_utils.fd
+export UFS_DIR=${HOMEglobal}/sorc/ufs_utils.fd
 export GDASINIT_DIR=${UFS_DIR}/util/gdas_init
 
 export PRODHPSSDIR=/NCEPPROD/hpssprod/runhistory
@@ -69,7 +69,7 @@ else # Operational input
 fi
 
 if [[ "$ICFROM" != "gfs" ]]; then
-   GETICSH=$HOMEgfs/ush/get_exp_ic.sh
+   GETICSH=${HOMEglobal}/ush/get_exp_ic.sh
 fi
 
 if [[ "$ICFROM" == "gfs" ]]; then

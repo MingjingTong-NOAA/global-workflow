@@ -1,0 +1,46 @@
+#!/bin/bash
+source "${HOMEglobal}/ush/jjob_header.sh" -e "prepoceanobs" -c "base marineanl prepoceanobs"
+
+##############################################
+# Set variables used in the script
+##############################################
+# Setup Python path for pygfs
+PYTHONPATH="${HOMEglobal}/ush/python${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH
+
+declare -rx COMOUT_OBS="${ROTDIR}/${RUN}.${PDY}/${cyc}/obs"
+
+##############################################
+# Begin JOB SPECIFIC work
+##############################################
+
+###############################################################
+# Run relevant script
+
+EXSCRIPT=${GDASPREPOCNOBSPY:-${SCRglobal}/exglobal_prep_ocean_obs.py}
+${EXSCRIPT} && true
+export err=$?
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]]; then
+    cat "${pgmout}"
+fi
+
+##########################################
+# Handle the temporary working directory
+##########################################
+cd "${DATAROOT}" || true
+if [[ "${KEEPDATA}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

@@ -3,17 +3,17 @@
 # Metafile Script : gfs_meta_usext.sh
 #
 
-source "${HOMEgfs}/ush/preamble.sh"
+source "${HOMEglobal}/ush/preamble.sh"
 
 mkdir -p -m 775 "${DATA}/mrfus"
 cd "${DATA}/mrfus" || exit 2
-cpreq "${HOMEgfs}/gempak/fix/datatype.tbl" datatype.tbl
-cpreq "${HOMEgfs}/gempak/fix/ak_sfstns.tbl" alaska.tbl
+cpreq "${HOMEglobal}/gempak/fix/datatype.tbl" datatype.tbl
+cpreq "${HOMEglobal}/gempak/fix/ak_sfstns.tbl" alaska.tbl
 
 #
 # Link data into DATA to sidestep gempak path limits
-# TODO: Replace this
-#
+# TODO: Add only necessary files and remove unneeded ones to minimize data volume
+# TODO: remove live links and refer https://github.com/NOAA-EMC/global-workflow/issues/4406
 export COMIN="${RUN}.${PDY}${cyc}"
 if [[ ! -L ${COMIN} ]]; then
     ${NLN} "${COMIN_ATMOS_GEMPAK_1p00}" "${COMIN}"
@@ -33,13 +33,14 @@ device="nc | mrf.meta"
 #         ;;
 # esac
 
-if [[ "${envir}" = "para" ]] ; then
-   export m_title="GFSP"
+if [[ "${envir}" = "para" ]]; then
+    export m_title="GFSP"
 else
-   export m_title="GFS"
+    export m_title="GFS"
 fi
 
-export pgm=gdplot2_nc; prep_step
+export pgm=gdplot2_nc
+prep_step
 
 "${GEMEXE}/gdplot2_nc" << EOF
 GDFILE	= F-GFS | ${PDY:2}/${cyc}00
@@ -56,7 +57,7 @@ GAREA	= 17.529;-129.296;53.771;-22.374
 PROJ	= str/90;-105;0
 LATLON	= 18/2
 
-restore ${HOMEgfs}/gempak/ush/restore/pmsl_thkn.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/pmsl_thkn.2.nts
 CLRBAR  = 1
 HLSYM   = 2;1.5//21//hw
 TEXT    = 1/21//hw
@@ -64,35 +65,35 @@ TITLE	= 1/-2/~ ? ${m_title} PMSL, 1000-500 MB THICKNESS|~MSLP, 1000-500 THKN!0
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/850mb_hght_tmpc.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/850mb_hght_tmpc.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 TITLE	= 1/-2/~ ? ${m_title} @ HGT, TEMPERATURE AND WIND (KTS)|~@ HGT, TMP, WIND!0
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/700mb_hght_relh_omeg.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/700mb_hght_relh_omeg.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 TITLE	= 1/-2/~ ? ${m_title} @ HGT, REL HUMIDITY AND OMEGA|~@ HGT, RH AND OMEGA!0
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/500mb_hght_absv.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/500mb_hght_absv.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 TITLE	= 1/-2/~ ? ${m_title} @ HGT AND VORTICITY|~@ HGT AND VORTICITY!0
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/500mb_hght_gabsv.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/500mb_hght_gabsv.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 TITLE	= 1/-2/~ ? ${m_title} @ HGT AND GEO ABS VORT|~@ HGT, GEO ABS VORT!0
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/250mb_hght_wnd.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/250mb_hght_wnd.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 TITLE	= 1/-2/~ ? ${m_title} @ HGT, ISOTACHS AND WIND (KTS)|~@ HGT AND WIND!0
@@ -122,7 +123,7 @@ CLEAR   = YES
 l
 run
 
-restore ${HOMEgfs}/gempak/ush/restore/precip.2.nts
+restore ${HOMEglobal}/gempak/ush/restore/precip.2.nts
 CLRBAR  = 1
 TEXT    = 1/21//hw
 HILO    = 31;0/x#2/.25-10///y
@@ -218,23 +219,24 @@ STNPLT  =
 
 exit
 EOF
-export err=$?; err_chk
+export err=$?
+err_chk
 
 #####################################################
 # GEMPAK DOES NOT ALWAYS HAVE A NON ZERO RETURN CODE
 # WHEN IT CAN NOT PRODUCE THE DESIRED GRID.  CHECK
 # FOR THIS CASE HERE.
 #####################################################
-if (( err != 0 )) || [[ ! -s mrf.meta ]] &> /dev/null; then
+if [[ "${err}" -ne 0 ]] || [[ ! -s mrf.meta ]] &> /dev/null; then
     echo "FATAL ERROR: Failed to create gempak meta file mrf.meta"
-    exit $(( err + 100 ))
+    exit $((err + 100))
 fi
 
 mv mrf.meta "${COMOUT_ATMOS_GEMPAK_META}/gfs_${PDY}_${cyc}_usext"
-if [[ "${SENDDBN}" == "YES" ]] ; then
+if [[ "${SENDDBN}" == "YES" ]]; then
     "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
         "${COMOUT_ATMOS_GEMPAK_META}/gfs_${PDY}_${cyc}_usext"
-    if [[ ${DBN_ALERT_TYPE} == "GFS_METAFILE_LAST" ]] ; then
+    if [[ ${DBN_ALERT_TYPE} == "GFS_METAFILE_LAST" ]]; then
         DBN_ALERT_TYPE=GFS_METAFILE
         "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
             "${COMOUT_ATMOS_GEMPAK_META}/gfs_${PDY}_${cyc}_usext"

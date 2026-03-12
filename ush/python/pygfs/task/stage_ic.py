@@ -41,10 +41,10 @@ class Stage(Task):
         base_keys = [
             'RUN', 'MODE', 'EXP_WARM_START', 'NMEM_ENS',
             'assim_freq', 'current_cycle', 'previous_cycle',
-            'ROTDIR', 'ICSDIR', 'STAGE_IC_YAML_TMPL', 'DO_JEDIATMVAR',
-            'OCNRES', 'waveGRD', 'ntiles', 'DOIAU', 'ATMINC_GRID',
+            'ROTDIR', 'ICSDIR', 'STAGE_IC_YAML_TMPL', 'DO_JEDIATMVAR', 'DO_JEDIATMENS',
+            'OCNRES', 'waveGRD', 'ntiles', 'DOIAU', 'ATMINC_GRID', 'DOENKFONLY_ATM',
             'DO_JEDIOCNVAR', 'DO_STARTMEM_FROM_JEDIICE',
-            'DO_WAVE', 'DO_OCN', 'DO_ICE', 'DO_NEST', 'DO_CA', 'DO_AERO_ANL',
+            'DO_WAVE', 'DO_OCN', 'DO_ICE', 'DO_NEST', 'DO_CA', 'DO_AERO_ANL', 'MOM6_INTERP_ICS',
             'USE_ATM_ENS_PERTURB_FILES', 'USE_OCN_ENS_PERTURB_FILES', 'DO_GSISOILDA', 'DO_LAND_IAU'
         ]
 
@@ -220,6 +220,16 @@ class Stage(Task):
 
         stage_set = parse_j2yaml(stage_dict.STAGE_IC_YAML_TMPL, stage_dict, allow_missing=False)
 
+        # Parse staging yaml to get list of files to stage
+        stage_set = parse_j2yaml(self.task_config.STAGE_IC_YAML_TMPL, stage_dict, allow_missing=False)
+        logger.info(stage_set)
+
+        # Write stage_set to a file in DATA for debugging
+        stage_yaml = f"./stage{stage_dict.member:03}.yaml"
+        stage_set.save(stage_yaml)
+        logger.debug(f"Staging yaml written to '{stage_yaml}' for debugging purposes.")
+
+        # stage files to ROTDIR
         for key in stage_set.keys():
             FileHandler(stage_set[key]).sync()
 

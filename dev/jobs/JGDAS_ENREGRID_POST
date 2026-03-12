@@ -1,0 +1,49 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "epos" -c "base ergpos"
+
+
+##############################################
+# Set variables used in the script
+##############################################
+
+
+##############################################
+# Begin JOB SPECIFIC work
+##############################################
+export GFS_NCIO=${GFS_NCIO:-"YES"}
+
+export PREFIX="${RUN}.t${cyc}z."
+
+###############################################################
+# Run relevant script
+
+${ENREGRIDPOSTSH:-${SCRglobal}/exgdas_enregrid_post.sh} && true
+export err=$?
+err_chk
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+grid=${grid:-"1p00"}
+prod_nc_dir="COMIN_ATMOS_GRIB_${grid}_nc"
+GRID="${grid}_nc" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx "${prod_nc_dir}:COM_ATMOS_GRIB_GRID_TMPL"
+
+##############################################
+# Final processing
+##############################################
+if [ -e "${pgmout}" ] ; then
+  cat ${pgmout}
+fi
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || true
+if [[ "${KEEPDATA}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+
+exit 0

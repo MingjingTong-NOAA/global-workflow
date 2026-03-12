@@ -1,7 +1,8 @@
 #! /usr/bin/env bash
 set -eux
 
-cwd=$(pwd)
+# shellcheck disable=SC2155
+readonly HOMEglobal_=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}")")" && git rev-parse --show-toplevel)
 
 # Default settings
 CONFIG="shieldda"
@@ -49,14 +50,14 @@ while getopts ":che:j:t:" option; do
   esac
 done
 
-cd "${cwd}/shield.fd/SHiELD_build"
+cd "${HOMEglobal_}/sorc/shield.fd/SHiELD_build"
 git submodule update --init mkmf
 
-if [ ! -d ${cwd}/shield.fd/SHiELD_SRC ]; then
+if [ ! -d ${HOMEglobal_}/sorc/shield.fd/SHiELD_SRC ]; then
   ./CHECKOUT_code
 fi
 
-cd "${cwd}/shield.fd/SHiELD_build/Build"
+cd "${HOMEglobal_}/sorc/shield.fd/SHiELD_build/Build"
 ./COMPILE $BUILD_TYPE $BUILD_CLEAN $COMPILER
 
 exit

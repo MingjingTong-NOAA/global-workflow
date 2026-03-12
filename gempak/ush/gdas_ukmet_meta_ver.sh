@@ -13,16 +13,19 @@
 # M. Klein/HPC   11/2006   Modify to run in production.
 #
 
-source "${HOMEgfs}/ush/preamble.sh"
+source "${HOMEglobal}/ush/preamble.sh"
 
-export pgm=gdplot2_nc;. prep_step
+export pgm=gdplot2_nc
+source prep_step
 
 device="nc | ukmetver_12.meta"
-cpreq "${HOMEgfs}/gempak/fix/datatype.tbl" datatype.tbl
+cpreq "${HOMEglobal}/gempak/fix/datatype.tbl" datatype.tbl
 
 # SET CURRENT CYCLE AS THE VERIFICATION GRIDDED FILE.
+# TODO: Add only necessary files and remove unneeded ones to minimize data volume
+# TODO: remove live links and refer https://github.com/NOAA-EMC/global-workflow/issues/4406
 export COMIN="gdas.${PDY}${cyc}"
-if [[ ! -L ${COMIN} ]]; then
+if [[ ! -L "${COMIN}" ]]; then
     ${NLN} "${COMIN_ATMOS_GEMPAK_1p00}" "${COMIN}"
 fi
 vergrid="F-GDAS | ${PDY:2}/0600"
@@ -33,7 +36,7 @@ areas="SAM NAM"
 
 # GENERATING THE METAFILES.
 for area in ${areas}; do
-    if [[ "${area}" == "NAM" ]] ; then
+    if [[ "${area}" == "NAM" ]]; then
         garea="5.1;-124.6;49.6;-11.9"
         proj="STR/90.0;-95.0;0.0"
         latlon="0"
@@ -54,6 +57,7 @@ for area in ${areas}; do
         cyclenum=${stime:6}
 
         if [[ ! -L "ukmet.20${sdatenum}" ]]; then
+            # TODO: remove live links and refer https://github.com/NOAA-EMC/global-workflow/issues/4406
             ${NLN} "${COMINukmet}/ukmet.20${sdatenum}/gempak" "ukmet.20${sdatenum}"
         fi
         gdfile="ukmet.20${sdatenum}/ukmet_20${sdatenum}${cyclenum}${dgdattim}"
@@ -150,19 +154,19 @@ export err=$?
 # WHEN IT CAN NOT PRODUCE THE DESIRED GRID.  CHECK
 # FOR THIS CASE HERE.
 #####################################################
-if (( err != 0 )) || [[ ! -s ukmetver_12.meta ]]; then
+if [[ "${err}" -ne 0 ]] || [[ ! -s ukmetver_12.meta ]]; then
     echo "FATAL ERROR: Failed to create ukmet meta file"
     exit "${err}"
 fi
 
 mv ukmetver_12.meta "${COMOUT_ATMOS_GEMPAK_META}/ukmetver_${PDY}_12"
 export err=$?
-if (( err != 0 )) ; then
+if [[ "${err}" -ne 0 ]]; then
     echo "FATAL ERROR: Failed to move meta file to ${COMOUT_ATMOS_GEMPAK_META}/ukmetver_${PDY}_12"
     exit "${err}"
 fi
 
-if [[ "${SENDDBN}" == "YES" ]] ; then
+if [[ "${SENDDBN}" == "YES" ]]; then
     "${DBNROOT}/bin/dbn_alert" MODEL UKMETVER_HPCMETAFILE "${job}" \
         "${COMOUT_ATMOS_GEMPAK_META}/ukmetver_${PDY}_12"
 fi

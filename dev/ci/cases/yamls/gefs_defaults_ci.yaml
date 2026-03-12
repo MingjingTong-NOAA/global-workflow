@@ -1,5 +1,5 @@
 defaults:
-  !INC {{ HOMEgfs }}/dev/parm/config/gefs/yaml/defaults.yaml
+  !INC {{ HOMEglobal }}/dev/parm/config/gefs/yaml/defaults.yaml
 base:
   SFS_POST: "NO"
   FHOUT_GFS: 6
@@ -8,5 +8,4 @@ base:
   DO_BUFRSND: "NO"
   DO_GEMPAK: "NO"
   DO_AWIPS: "NO"
-ocn:
   MOM6_INTERP_ICS: "NO"

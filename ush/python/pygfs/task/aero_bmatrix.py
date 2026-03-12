@@ -47,7 +47,7 @@ class AerosolBMatrix(Analysis):
                 'npz_anl': self.task_config['LEVS'] - 1,
                 'npz': self.task_config.LEVS - 1,
                 'BERROR_YAML': f'aero_background_error_static_{self.task_config.STATICB_TYPE}',
-                'BERROR_DATA_DIR': f'{self.task_config.FIXgfs}/gdas/aero/clim_b',
+                'BERROR_DATA_DIR': f'{self.task_config.FIXglobal}/gdas/aero/clim_b',
                 'AERO_BMATRIX_RESCALE_YAML': 'aero_gen_bmatrix_rescale_default.yaml.j2',
             }
         ))
@@ -83,9 +83,9 @@ class AerosolBMatrix(Analysis):
 
         # initialize JEDI applications
         logger.info(f"Initializing JEDI applications")
-        self.jedi_dict['aero_interpbkg'].initialize(self.task_config)
-        self.jedi_dict['aero_diagb'].initialize(self.task_config)
-        self.jedi_dict['aero_diffusion'].initialize(self.task_config)
+        self.jedi_dict['aero_interpbkg'].initialize()
+        self.jedi_dict['aero_diagb'].initialize()
+        self.jedi_dict['aero_diffusion'].initialize()
 
     @logit(logger)
     def execute(self) -> None:

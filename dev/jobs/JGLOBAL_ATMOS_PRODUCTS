@@ -1,0 +1,66 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "atmos_products" -c "base atmos_products"
+
+##############################################
+# Begin JOB SPECIFIC work
+##############################################
+
+# Construct COM variables
+# shellcheck disable=SC2309
+if [[ 10#${ENSMEM:--1} -ge 0 ]]; then
+    memdir=$(printf "mem%03d" $((10#${ENSMEM})))
+    export COMIN="${ROTDIR}/${RUN}.${PDY}/${cyc}/${memdir}"
+    export COMOUT="${ROTDIR}/${RUN}.${PDY}/${cyc}/${memdir}"
+else
+    export COMIN="${ROTDIR}/${RUN}.${PDY}/${cyc}"
+    export COMOUT="${ROTDIR}/${RUN}.${PDY}/${cyc}"
+fi
+
+# Construct COM variables from templates
+declare -rx COMIN_ATMOS_ANALYSIS="${COMIN}/analysis/atmos"
+declare -rx COMIN_ATMOS_HISTORY="${COMIN}/model/atmos/history"
+declare -rx COMIN_ATMOS_MASTER="${COMIN}/model/atmos/master"
+
+for grid in '0p25' '0p50' '1p00'; do
+    prod_dir="COMOUT_ATMOS_GRIB_${grid}"
+    declare -rx "COMOUT_ATMOS_GRIB_${grid}"="${COMOUT}/products/atmos/grib2/${grid}"
+    mkdir -m 775 -p "${!prod_dir}"
+  if [[ ${MODE} == "ensregrid" ]]; then
+    prod_nc_dir="COMOUT_ATMOS_GRIB_${grid}_nc"
+    GRID="${grid}_nc" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx "${prod_nc_dir}:COM_ATMOS_GRIB_GRID_TMPL"
+    mkdir -m 775 -p "${!prod_nc_dir}"
+  fi
+done
+
+# Variables used in this job
+export PREFIX="${RUN}.t${cyc}z."
+
+###############################################################
+# Run exglobal script
+"${SCRglobal}/exglobal_atmos_products.sh" && true
+export err=$?
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]]; then
+    cat "${pgmout}"
+fi
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || exit 1
+if [[ "${KEEPDATA:-NO}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

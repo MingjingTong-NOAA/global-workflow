@@ -26,7 +26,32 @@ class SHiELDTasks(Tasks):
                      'resources': resources,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/fetch.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fetch.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    def fetchatmanlbias(self):
+        deps = []
+        dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        cycledef = self.run
+
+        resources = self.get_resource('fetch')
+        task_name = f'{self.run}_fetchatmanlbias'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fetch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -60,7 +85,7 @@ class SHiELDTasks(Tasks):
                      'resources': resources,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/stage_ic.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/stage_ic.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;',
@@ -89,7 +114,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run,
-                     'command': f'{self.HOMEgfs}/dev/jobs/prep_sfc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/prep_sfc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -103,20 +128,28 @@ class SHiELDTasks(Tasks):
 
         dump_suffix = self._base["DUMP_SUFFIX"]
         dmpdir = self._base["DMPDIR"]
+        iodadir = self._base["IODADIR"]
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': 'gdas'})
         atm_restart_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'RUN': self.run})
         dump_path = self._template_to_rocoto_cycstring(self._base["COM_OBSPROC_TMPL"],
                                                        {'DMPDIR': dmpdir, 'DUMP_SUFFIX': dump_suffix})
+        ioda_path = self._template_to_rocoto_cycstring(self._base["COM_OBSFORGE_TMPL"],
+                                                       {'IODADIR': iodadir, 'DUMP_SUFFIX': dump_suffix})
+
+        gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
+
+        deps = []
 
         if self.app_config.mode == "cycled":
-            gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
-
-            deps = []
-            dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
-            deps.append(rocoto.add_dependency(dep_dict))
-            data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
-            dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_enkfonly_atm']:
+                dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+                data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
+                dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
             data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -138,7 +171,6 @@ class SHiELDTasks(Tasks):
             if self.run in ['gfs'] and gfs_enkf and self._base['INTERVAL_GFS'] != 6:
                 cycledef = 'gdas'
         elif self.app_config.mode == "replay":
-            deps = []
             data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
             dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -150,13 +182,11 @@ class SHiELDTasks(Tasks):
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
             cycledef = self.run
         elif self.app_config.mode == "omf":
-            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_dfetch'}
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps)
             cycledef = self.run
         else:
-            deps = []
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
@@ -171,7 +201,31 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/prep.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/prep.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    def prepatmanlbias(self):
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_fetchatmanlbias'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep=deps)
+
+        resources = self.get_resource('prepatmanlbias')
+        task_name = f'{self.run}_prepatmanlbias'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/prepatmanlbias.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -201,7 +255,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/waveinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/waveinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -225,7 +279,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/waveprep.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/waveprep.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -277,7 +331,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/aerosol_init.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/aerosol_init.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -313,7 +367,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/anal.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/anal.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -325,8 +379,8 @@ class SHiELDTasks(Tasks):
 
     def sfcanl(self):
 
+        deps = []
         if self.app_config.mode == "cycled":
-            deps = []
             if self.options['do_jediatmvar']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
             else:
@@ -343,7 +397,6 @@ class SHiELDTasks(Tasks):
             else:
                 dependencies = rocoto.create_dependency(dep=deps)
         else:
-            deps = []
             if self.options['do_omf']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
             else:
@@ -366,7 +419,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/sfcanl.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/sfcanl.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -379,7 +432,10 @@ class SHiELDTasks(Tasks):
     def analcalc(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
+        if self.options['do_jediatmvar'] and not self.options['do_jediatmens']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
         deps.append(rocoto.add_dependency(dep_dict))
@@ -395,7 +451,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/analcalc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analcalc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -407,12 +463,11 @@ class SHiELDTasks(Tasks):
 
     def analdiag(self):
 
+        deps = []
         if self.app_config.mode == "cycled":
-            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
             deps.append(rocoto.add_dependency(dep_dict))
         else:
-            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'}
             deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -428,32 +483,8 @@ class SHiELDTasks(Tasks):
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/analdiag.sh',
-                     'job_name': f'{self.pslot}_{task_name}_@H',
-                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
-                     'maxtries': '&MAXTRIES;'
-                     }
-
-        task = rocoto.create_task(task_dict)
-
-        return task
-
-    def prepatmiodaobs(self):
-
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep=deps)
-
-        resources = self.get_resource('prepatmiodaobs')
-        task_name = f'{self.run}_prepatmiodaobs'
-        task_dict = {'task_name': task_name,
-                     'resources': resources,
-                     'dependency': dependencies,
-                     'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/prepatmiodaobs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analdiag.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -466,7 +497,7 @@ class SHiELDTasks(Tasks):
     def atmanlinit(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_prepatmiodaobs'}
+        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
         deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_hybvar']:
             dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
@@ -489,7 +520,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmanlinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmanlinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -513,7 +544,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmanlvar.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmanlvar.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -537,7 +568,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmanlfv3inc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmanlfv3inc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -561,30 +592,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmanlfinal.sh',
-                     'job_name': f'{self.pslot}_{task_name}_@H',
-                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
-                     'maxtries': '&MAXTRIES;'
-                     }
-
-        task = rocoto.create_task(task_dict)
-
-        return task
-
-    def prepobsaero(self):
-        deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-
-        resources = self.get_resource('prepobsaero')
-        task_name = f'{self.run}_prepobsaero'
-        task_dict = {'task_name': task_name,
-                     'resources': resources,
-                     'dependency': dependencies,
-                     'envars': self.envars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/prepobsaero.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmanlfinal.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -608,7 +616,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': 'gdas_half,gdas',
-                     'command': f'{self.HOMEgfs}/dev/jobs/aeroanlgenb.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/aeroanlgenb.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -626,9 +634,6 @@ class SHiELDTasks(Tasks):
         dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
         deps.append(rocoto.add_dependency(dep_dict))
 
-        if self.options['do_prep_obs_aero']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_prepobsaero'}
-            deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         resources = self.get_resource('aeroanlinit')
@@ -638,7 +643,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/aeroanlinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/aeroanlinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -669,7 +674,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/aeroanlvar.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/aeroanlvar.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -693,7 +698,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/aeroanlfinal.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/aeroanlfinal.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -717,7 +722,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/snowanl.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/snowanl.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -742,7 +747,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/esnowanl.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/esnowanl.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -775,7 +780,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/prepoceanobs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/prepoceanobs.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -801,7 +806,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlletkf.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlletkf.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -831,7 +836,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marinebmatinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marinebmatinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -855,7 +860,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marinebmat.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marinebmat.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -883,7 +888,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -907,7 +912,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlvar.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlvar.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -932,7 +937,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlecen.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlecen.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -967,7 +972,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlchkpt.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlchkpt.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -991,7 +996,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/marineanlfinal.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/marineanlfinal.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1068,7 +1073,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': fcst_vars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/fcst.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fcst.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1158,7 +1163,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': fcst_vars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/fcst.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fcst.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1223,7 +1228,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': fcst_vars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/fcst.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fcst.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1249,13 +1254,13 @@ class SHiELDTasks(Tasks):
 
         atm_anl_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_ANALYSIS_TMPL"])
         deps = []
-        if self.options['do_jediatmvar']:
+        if self.options['do_jediatmvar'] and self.options['do_jediatmens']:
             data = f'{atm_anl_path}/{self.run}.t@Hz.jedi_analysis.atm.a006.nc'
         else:
             data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.atm.a006.nc'
         dep_dict = {'type': 'data', 'data': data, 'age': 120}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_jediatmvar']:
+        if self.options['do_jediatmvar'] and self.options['do_jediatmens']:
             data = f'{atm_anl_path}/{self.run}.t@Hz.jedi_analysis.sfc.a006.nc'
         else:
             data = f'{atm_anl_path}/{self.run}.t@Hz.analysis.sfc.a006.nc'
@@ -1272,7 +1277,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': postenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/upp.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/upp.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1301,7 +1306,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': postenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmos_products.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmos_products.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1353,7 +1358,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': postenvars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/upp.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/upp.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1383,8 +1388,8 @@ class SHiELDTasks(Tasks):
     def _atmosoceaniceprod(self, component: str):
 
         products_dict = {'atmos': {'config': 'atmos_products',
-                                   'history_path_tmpl': 'COM_ATMOS_MASTER_TMPL',
-                                   'history_file_tmpl': f'{self.run}.t@Hz.master.f#fhr3_last#.grib2'},
+                                   'history_path_tmpl': 'COM_ATMOS_HISTORY_TMPL',
+                                   'history_file_tmpl': f'{self.run}.t@Hz.log.f#fhr3_last#.txt'},
                          'ocean': {'config': 'oceanice_products',
                                    'history_path_tmpl': 'COM_OCEAN_HISTORY_TMPL',
                                    'history_file_tmpl': f'{self.run}.t@Hz.6hr_avg.f#fhr3_nextp1#.nc'},
@@ -1449,7 +1454,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': postenvars,
                      'cycledef': cycledef,
-                     'command': f"{self.HOMEgfs}/dev/jobs/{config}.sh",
+                     'command': f"{self.HOMEglobal}/dev/job_cards/rocoto/{config}.sh",
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1494,7 +1499,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': wave_post_envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/wavepostsbs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/wavepostsbs.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1533,7 +1538,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/{name_in}.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/{name_in}.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1556,7 +1561,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/wavepostpnt.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/wavepostpnt.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1606,7 +1611,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': wave_post_envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/wavegempak.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/wavegempak.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1635,7 +1640,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/waveawipsbulls.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/waveawipsbulls.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1658,7 +1663,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/waveawipsgridded.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/waveawipsgridded.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1681,7 +1686,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/postsnd.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/postsnd.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1718,7 +1723,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/fbwind.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fbwind.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1790,7 +1795,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': awipsenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/awips_20km_1p0deg.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/awips_20km_1p0deg.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1845,7 +1850,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': gempak_vars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/gempak.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gempak.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1872,7 +1877,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/gempakmeta.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gempakmeta.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1895,7 +1900,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/gempakmetancdc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gempakmetancdc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1918,7 +1923,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/gempakncdcupapgif.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gempakncdcupapgif.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1946,7 +1951,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': gempak_vars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/gempakgrb2spec.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gempakgrb2spec.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -1988,7 +1993,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/npoess.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/npoess.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2011,7 +2016,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/verfozn.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/verfozn.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2034,7 +2039,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/verfrad.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/verfrad.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2057,7 +2062,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/vminmon.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/vminmon.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2094,7 +2099,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/anlstat.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/anlstat.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2117,7 +2122,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/tracker.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/tracker.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2140,7 +2145,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/genesis.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/genesis.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2163,7 +2168,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/genesis_fsu.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/genesis_fsu.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2186,7 +2191,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/fit2obs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fit2obs.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2200,24 +2205,48 @@ class SHiELDTasks(Tasks):
         deps = []
         dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
         deps.append(rocoto.add_dependency(dep_dict))
-        if self._base["interval_gfs"] < to_timedelta("24H"):
-            n_lookback = self._base["interval_gfs"] // to_timedelta("6H")
-            for lookback in range(1, n_lookback + 1):
-                deps2 = []
-                dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_arch_vrfy', 'condition': 'not'}
-                deps2.append(rocoto.add_dependency(dep_dict))
-                for lookback2 in range(1, lookback):
-                    offset = timedelta_to_HMS(-to_timedelta(f'{6 * lookback2}H'))
-                    dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': offset}
-                    deps2.append(rocoto.add_dependency(dep_dict))
+        interval_gfs = self._base.get('interval_gfs')
+        assim_freq = self._base['assim_freq']
 
-                edate_gfs = self._base['EDATE']
-                edate_metp = edate_gfs.replace(hour=18)
-                edate_metp_diff = edate_metp - edate_gfs
-                offset = timedelta_to_HMS(-to_timedelta(f'{edate_metp_diff}H'))
-                dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy', 'offset': offset}
+        if interval_gfs < to_timedelta("24H"):
+            n_lookback = int(interval_gfs // to_timedelta(f"{assim_freq}H")) - 1
+            # Check if the previous up to `n_lookback` arch_vrfy tasks have completed
+            # For interval=6, there are no lookbacks
+            # For interval=12, check lookback=1
+            # For interval=18, check lookback=1,2
+            # Only lookback if arch_vrfy is not valid for this cycle
+            if n_lookback > 0:
+                dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_arch_vrfy', 'condition': 'not'}
+                deps2 = []
                 deps2.append(rocoto.add_dependency(dep_dict))
-                deps.append(rocoto.create_dependency(dep_condition='and', dep=deps2))
+                deps3 = []
+                for lookback in range(n_lookback):
+                    offset = timedelta_to_HMS(-to_timedelta(f'{assim_freq * (lookback + 1)}H'))
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy', 'offset': offset}
+                    deps3.append(rocoto.add_dependency(dep_dict))
+
+                deps2.append(rocoto.create_dependency(dep=deps3, dep_condition='or'))
+                deps.append(rocoto.create_dependency(dep=deps2, dep_condition='and'))
+
+        # Lastly, check that the last arch_vrfy job is done
+        # This only happens if the metp cycle is not aligned with the last_gfs cycle
+        sdate_gfs = self._base.get('SDATE_GFS')
+        edate = self._base.get('EDATE')
+        edate_metp = self._base.get('EDATE').replace(hour=(24 - assim_freq))
+        n_intervals = int((edate - sdate_gfs) // interval_gfs)
+        edate_gfs = sdate_gfs + n_intervals * interval_gfs
+        metp_gfs_offset = edate_metp - edate_gfs
+        if metp_gfs_offset > to_timedelta("0H") and metp_gfs_offset < to_timedelta("24H"):
+            deps2 = []
+            dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_arch_vrfy', 'condition': 'not'}
+            deps2.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy', 'offset': timedelta_to_HMS(-metp_gfs_offset)}
+            deps2.append(rocoto.add_dependency(dep_dict))
+            for i in range(1, int((metp_gfs_offset.seconds / 3600) // assim_freq)):
+                dep_dict = {'type': 'cycleexist', 'offset': timedelta_to_HMS(-to_timedelta(f'{assim_freq * i}H')), 'condition': 'not'}
+                deps2.append(rocoto.add_dependency(dep_dict))
+
+            deps.append(rocoto.create_dependency(dep=deps2, dep_condition='and'))
 
         dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
 
@@ -2240,14 +2269,13 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': metpenvars,
                      'cycledef': 'metp,last_gfs',
-                     'command': f'{self.HOMEgfs}/dev/jobs/metp.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/metp.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
                      }
 
         metatask_dict = {'task_name': f'{self.run}_metp',
-                         'is_serial': True,
                          'task_dict': task_dict,
                          'var_dict': var_dict,
                          }
@@ -2319,7 +2347,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/arch_vrfy.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/arch_vrfy.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2417,6 +2445,19 @@ class SHiELDTasks(Tasks):
                         dep_dict = {'type': 'metatask', 'name': f'{self.run}_gempakgrb2spec'}
                         deps.append(rocoto.add_dependency(dep_dict))
 
+        if self.options['do_awips'] and self.run in ['gfs']:
+
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_awips_20km_1p0deg'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'task', 'name': f'{self.run}_fbwind'}
+            deps.append(rocoto.add_dependency(dep_dict))
+
+            if self.options['do_wave']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsbulls'}
+                deps.append(rocoto.add_dependency(dep_dict))
+                dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsgridded'}
+                deps.append(rocoto.add_dependency(dep_dict))
+
         if self.options['do_metp'] and self.run in ['gfs']:
             deps2 = []
             # taskvalid only handles regular tasks, so just check the first metp job exists
@@ -2453,12 +2494,12 @@ class SHiELDTasks(Tasks):
                 tarball_types.append('chem')
 
             if self.options['do_ocean']:
-                tarball_types.extend(['ocean_6hravg', 'ocean_grib2', 'gfs_flux_1p00'])
+                tarball_types.extend(['ocean_6hravg', 'ocean_native', 'gfs_flux_1p00'])
                 if self.options.get('do_jediocnvar', False) and self.app_config.mode == 'cycled':
                     tarball_types.append('gfsocean_analysis')
 
             if self.options['do_ice']:
-                tarball_types.extend(['ice_6hravg', 'ice_grib2'])
+                tarball_types.extend(['ice_6hravg', 'ice_native'])
 
             if self.options['do_bufrsnd']:
                 tarball_types.append('gfs_downstream')
@@ -2507,7 +2548,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': archenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/arch_tars.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/arch_tars.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2536,7 +2577,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/globus_arch.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/globus_arch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2569,7 +2610,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': earcenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/globus_earc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/globus_earc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2586,150 +2627,244 @@ class SHiELDTasks(Tasks):
 
     # Cleanup
     def cleanup(self):
-        deps = []
-        dep_dict = {'type': 'task', 'name': 'gfs_fcst_seg0', 'offset':
-                    f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_dict = {'type': 'cycleexist', 'condition': 'not',
-                    'offset': f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
-        deps.append(rocoto.add_dependency(dep_dict))
-        dep_next_fcst_seg = rocoto.create_dependency(dep_condition='or', dep=deps)
-        deps = []
+
+        # We'll need the first half cycle in YMDH for cycled dependencies
+        sdate = self._base.get('SDATE')
+        if self.app_config.mode in ['cycled']:
+            first_half_cycle = self._base.get('SDATE').strftime("%Y%m%d%H")
+
+        # Build a dependency on the next GFS forecast.
+        # This will only be used for GDAS/ENKFGDAS cycles with 6-hourly GFS intervals
+        #     to prevent clobbering files needed by the GFS forecast prematurely.
+        assim_freq = self._base.get('assim_freq', 6)
+        interval_gfs = int(self._base.get('INTERVAL_GFS', 0))
+
+        # Build a dependency for the next forecast cycle
+        # This only applies for the last GFS cycle
+        dep_next_fcst_seg = None
+        if interval_gfs >= assim_freq:
+            deps = []
+            dep_dict = {'type': 'task', 'name': 'gfs_fcst_seg0', 'offset':
+                        f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'cycleexist', 'condition': 'not',
+                        'offset': f"{timedelta_to_HMS(self._base['interval_gfs'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            # Only start checking this if we are at/past the first GFS cycle
+            sdate_gfs = self._base.get('SDATE_GFS')
+            if sdate_gfs:
+                n_cycles = int((sdate_gfs - sdate).total_seconds() // 3600 // assim_freq)
+                # Start at the first full cycle (1 cycle after SDATE)
+                # End two cycles before SDATE_gfs
+                #     One cycle before SDATE_gfs must depend on the next forecast segment.
+                for cycle in range(1, n_cycles - 1):
+                    offset = timedelta_to_HMS(to_timedelta(f'{cycle * assim_freq}H'))
+                    skip_date = (sdate + to_timedelta(f'{cycle * assim_freq}H')).strftime("%Y%m%d%H")
+                    dep_dict = {'type': 'streq', 'left': '@Y@m@d@H', 'right': skip_date}
+                    deps.append(rocoto.add_dependency(dep_dict))
+
+            dep_next_fcst_seg = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        # Now start building RUN-specific dependencies
+        # Full-cycle dependencies
+        deps_full = []
+        # First half-cycle dependencies
+        deps_half = []
+        # All of the dependencies (half, full, and common)
+        deps_all = []
         if 'enkf' in self.run:
             if self.app_config.mode not in ['ensregrid']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                if not self.options['do_enkfonly_atm']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_earc_vrfy'}
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                 if self.options['do_archcom']:
                     if self.options['do_globusarch']:
                         dep_dict = {'type': 'metatask', 'name': f'{self.run}_globus_earc'}
                     else:
                         dep_dict = {'type': 'metatask', 'name': f'{self.run}_earc_tars'}
-                    deps.append(rocoto.add_dependency(dep_dict))
-                if self.run in ['enkfgdas'] and self._base["INTERVAL_GFS"] == 6:
-                    deps.append(dep_next_fcst_seg)
+                    deps_full.append(rocoto.add_dependency(dep_dict))
+                if self.run == 'enkfgdas':
+                    # Date dependency for the first half cycle (only GDAS ensemble runs on the first half cycle)
+                    dep_dict = {'type': 'streq', 'left': '@Y@m@d@H', 'right': f'{first_half_cycle}'}
+                    deps_half.append(rocoto.add_dependency(dep_dict))
+    
+                    # Add the next forecast segment dependency for ALL cycles (enkfgdas only)
+                    if dep_next_fcst_seg is not None:
+                        deps_all.append(dep_next_fcst_seg)
+    
+                    # earc_vrfy runs on the full cycles, so the dependency does not exist
+                    # for the half cycle. Instead, we will need to depend on the epmn
+                    # metatask and the echgres task for the half cycle.
+                    dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
+                    deps_half.append(rocoto.add_dependency(dep_dict))
+                    if not self.options['do_jediatmvar']:
+                        if not self.options['do_enkfonly_atm']:
+                            dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+                            deps_half.append(rocoto.add_dependency(dep_dict))
             else:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'task', 'name': f'{self.run}_arch_tars'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
         else:
             if self.app_config.mode in ['cycled']:
                 if self.run in ['gfs']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlprod'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_vminmon']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_vminmon'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
                 elif self.run in ['gdas']:
-                    if self._base["INTERVAL_GFS"] == 6:
-                        deps.append(dep_next_fcst_seg)
+                    # The gdas files are needed by the next forecast segment.
+                    if dep_next_fcst_seg is not None:
+                        deps_all.append(dep_next_fcst_seg)
+
+                    # Date dependency for the first half cycle
+                    dep_dict = {'type': 'streq', 'left': '@Y@m@d@H', 'right': f'{first_half_cycle}'}
+                    deps_half.append(rocoto.add_dependency(dep_dict))
+
+                    # Full-cycle dependencies
                     dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlprod'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_fit2obs']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_fit2obs'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_verfozn']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_verfozn'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_verfrad']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_verfrad'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_vminmon']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_vminmon'}
-                        deps.append(rocoto.add_dependency(dep_dict))
-            if self.run in ['gfs'] and self.options['do_tracker']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_tracker'}
-                deps.append(rocoto.add_dependency(dep_dict))
-            if self.run in ['gfs'] and self.options['do_genesis']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_genesis'}
-                deps.append(rocoto.add_dependency(dep_dict))
-            if self.run in ['gfs'] and self.options['do_genesis_fsu']:
-                dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
-                deps.append(rocoto.add_dependency(dep_dict))
-            # Post job dependencies
+                        deps_full.append(rocoto.add_dependency(dep_dict))
+
+            if self.run == 'gfs':
+                if self.options['do_tracker']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_tracker'}
+                    deps_full.append(rocoto.add_dependency(dep_dict))
+                if self.options['do_genesis']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_genesis'}
+                    deps_full.append(rocoto.add_dependency(dep_dict))
+                if self.options['do_genesis_fsu']:
+                    dep_dict = {'type': 'task', 'name': f'{self.run}_genesis_fsu'}
+                    deps_full.append(rocoto.add_dependency(dep_dict))
+
+            # Post-processing job dependencies
+            # Atmosphere post-processing happens on all cycles
             if self.options['do_post']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_atmos_prod'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_all.append(rocoto.add_dependency(dep_dict))
+
+            # Other components only happen on full cycles
             if self.options['do_wave']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavepostsbs'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostpnt'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
                 if self.options['do_wave_bnd']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpnt'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                     dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
             if self.options['do_ocean']:
                 if self.run in ['gfs']:
                     dep_dict = {'type': 'metatask', 'name': f'{self.run}_ocean_prod'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
             if self.options['do_ice']:
                 if self.run in ['gfs']:
                     dep_dict = {'type': 'metatask', 'name': f'{self.run}_ice_prod'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
             if self.options['do_gempak']:
                 if self.run in ['gdas']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_gempakmetancdc'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                 elif self.run in ['gfs']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_gempakmeta'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.app_config.mode in ['cycled']:
                         dep_dict = {'type': 'task', 'name': f'{self.run}_gempakncdcupapgif'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
                         if self.options['do_goes']:
                             dep_dict = {'type': 'task', 'name': f'{self.run}_npoess_pgrb2_0p5deg'}
-                            deps.append(rocoto.add_dependency(dep_dict))
+                            deps_full.append(rocoto.add_dependency(dep_dict))
                             dep_dict = {'type': 'metatask', 'name': f'{self.run}_gempakgrb2spec'}
-                            deps.append(rocoto.add_dependency(dep_dict))
+                            deps_full.append(rocoto.add_dependency(dep_dict))
                     if self.options['do_wave']:
                         dep_dict = {'type': 'metatask', 'name': f'{self.run}_wavegempak'}
-                        deps.append(rocoto.add_dependency(dep_dict))
+                        deps_full.append(rocoto.add_dependency(dep_dict))
 
             if self.options['do_metp'] and self.run in ['gfs']:
-                deps2 = []
+                deps_metp = []
                 # taskvalid only handles regular tasks, so just check the first metp job exists
                 dep_dict = {'type': 'taskvalid', 'name': f'{self.run}_metpg2g1', 'condition': 'not'}
-                deps2.append(rocoto.add_dependency(dep_dict))
+                deps_metp.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_metp'}
-                deps2.append(rocoto.add_dependency(dep_dict))
-                deps.append(rocoto.create_dependency(dep_condition='or', dep=deps2))
+                deps_metp.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.create_dependency(dep_condition='or', dep=deps_metp))
 
             if self.options['do_awips'] and self.run in ['gfs']:
 
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_awips_20km_1p0deg'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'task', 'name': f'{self.run}_fbwind'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
 
                 if self.options['do_wave']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsbulls'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
                     dep_dict = {'type': 'task', 'name': f'{self.run}_waveawipsgridded'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    deps_full.append(rocoto.add_dependency(dep_dict))
 
             if self.options['do_post']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_arch_vrfy'}
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
             if self.options['do_archcom']:
                 if self.options['do_globusarch']:
                     dep_dict = {'type': 'task', 'name': f'{self.run}_globus_arch'}
                 else:
                     dep_dict = {'type': 'metatask', 'name': f'{self.run}_arch_tars'}
 
-                deps.append(rocoto.add_dependency(dep_dict))
+                deps_full.append(rocoto.add_dependency(dep_dict))
 
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+        # Build the rocoto dependencies
+
+        deps_list = []
+        # Add half-cycle dependencies if they exist
+        if len(deps_half) > 1:
+            dependencies_half = rocoto.create_dependency(dep_condition='and', dep=deps_half)
+            dependencies_full = rocoto.create_dependency(dep_condition='and', dep=deps_full)
+            deps_list = [dependencies_half, dependencies_full]
+            # Combine half and full cycle dependencies with OR
+            deps_full_half = rocoto.create_dependency(dep_condition='or', dep=deps_list)
+
+        elif len(deps_half) == 1:
+            dependencies_half = rocoto.create_dependency(dep=deps_half)
+            dependencies_full = rocoto.create_dependency(dep_condition='and', dep=deps_full)
+            deps_list = [dependencies_half, dependencies_full]
+
+            # Combine half and full cycle dependencies with OR
+            deps_full_half = rocoto.create_dependency(dep_condition='or', dep=deps_list)
+
+        else:
+            deps_full_half = rocoto.create_dependency(dep=deps_full)
+
+        # Add full- and half-cycle to the complete list
+        deps_all.append(deps_full_half)
+
+        # Combine with AND
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps_all)
 
         resources = self.get_resource('cleanup')
+        cycledef = self.run.replace('enkf', '')
+        cycledef = f'gdas_half,{cycledef}' if 'gdas' in cycledef else cycledef
         task_name = f'{self.run}_cleanup'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/cleanup.sh',
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/cleanup.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2746,6 +2881,9 @@ class SHiELDTasks(Tasks):
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['do_enkfonly_atm']:
+            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prepatmanlbias'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.options['anal_start']:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_efmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -2762,7 +2900,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/eobs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/eobs.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2785,7 +2923,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ediag.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/ediag.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2808,7 +2946,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/eupd.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/eupd.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2820,10 +2958,13 @@ class SHiELDTasks(Tasks):
 
     def atmensanlinit(self):
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prepatmiodaobs'}
+        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prep'}
         deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
         deps.append(rocoto.add_dependency(dep_dict))
+        if self.options['do_enkfonly_atm']:
+            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_prepatmanlbias'}
+            deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         cycledef = "gdas"
@@ -2834,7 +2975,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlinit.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlinit.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2860,7 +3001,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlobs.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlobs.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2886,7 +3027,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlsol.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlsol.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2912,7 +3053,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlletkf.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlletkf.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2925,7 +3066,7 @@ class SHiELDTasks(Tasks):
     def atmensanlfv3inc(self):
 
         deps = []
-        if self.options['lobsdiag_forenkf']:
+        if self.options['do_jediatmens_split_obssol']:
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlsol'}
         else:
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlletkf'}
@@ -2941,7 +3082,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlfv3inc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlfv3inc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -2965,7 +3106,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmensanlfinal.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmensanlfinal.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3001,8 +3142,9 @@ class SHiELDTasks(Tasks):
             return grp, dep, lst
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
-        deps.append(rocoto.add_dependency(dep_dict))
+        if not self.options['do_enkfonly_atm']:
+            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
+            deps.append(rocoto.add_dependency(dep_dict))
         dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
@@ -3025,7 +3167,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': ecenenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ecen.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/ecen.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3055,7 +3197,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ecen_fv3jedi.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/ecen_fv3jedi.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3085,7 +3227,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/analcalc_fv3jedi.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analcalc_fv3jedi.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3102,8 +3244,9 @@ class SHiELDTasks(Tasks):
             dep_dict = {'type': 'task', 'name': f'{self.run}_atmensanlfinal'}
             deps.append(rocoto.add_dependency(dep_dict))
         else:
-            dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if not self.options['do_enkfonly_atm']:
+                dep_dict = {'type': 'task', 'name': f'{self.run.replace("enkf", "")}_analcalc'}
+                deps.append(rocoto.add_dependency(dep_dict))
             dep_dict = {'type': 'task', 'name': f'{self.run}_eupd'}
             deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_jedisnowda']:
@@ -3118,7 +3261,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/esfc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/esfc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3132,8 +3275,9 @@ class SHiELDTasks(Tasks):
 
         deps = []
         if self.options['do_jediatmens']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_ecen_fv3jedi'}
-            deps.append(rocoto.add_dependency(dep_dict))
+            if not self.options['do_enkfonly_atm']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_ecen_fv3jedi'}
+                deps.append(rocoto.add_dependency(dep_dict))
         else:
             dep_dict = {'type': 'metatask', 'name': f'{self.run}_ecmn'}
             deps.append(rocoto.add_dependency(dep_dict))
@@ -3171,7 +3315,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': efcsenvars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/fcst.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fcst.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3216,7 +3360,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/echgres.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/echgres.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3278,7 +3422,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': eposenvars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/epos.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/epos.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3318,7 +3462,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': earcenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/earc_vrfy.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/earc_vrfy.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3336,8 +3480,9 @@ class SHiELDTasks(Tasks):
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_epmn'}
                 deps.append(rocoto.add_dependency(dep_dict))
                 if not self.options['do_jediatmvar']:
-                    dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
-                    deps.append(rocoto.add_dependency(dep_dict))
+                    if not self.options['do_enkfonly_atm']:
+                        dep_dict = {'type': 'task', 'name': f'{self.run}_echgres'}
+                        deps.append(rocoto.add_dependency(dep_dict))
                 if self._base.get('DOLETKF_OCN', True):
                     dep_dict = {'type': 'task', 'name': f'{self.run}_marineanlletkf'}
                     deps.append(rocoto.add_dependency(dep_dict))
@@ -3378,7 +3523,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': earcenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/earc_tars.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/earc_tars.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3440,7 +3585,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/getic.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/getic.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3481,7 +3626,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/init.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/init.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3510,7 +3655,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run,
-                     'command': f'{self.HOMEgfs}/dev/jobs/dfetch.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/dfetch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3536,7 +3681,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/analinc.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analinc.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3570,7 +3715,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/analdiag.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analdiag.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3602,7 +3747,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/gomg.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gomg.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3659,7 +3804,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': efetchenvars,
                      'cycledef': cycledef,
-                     'command': f'{self.HOMEgfs}/dev/jobs/efetch.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/efetch.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3698,7 +3843,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': euppenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/upp.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/upp.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3736,7 +3881,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': eprodenvars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/atmos_products.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/atmos_products.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -3766,7 +3911,7 @@ class SHiELDTasks(Tasks):
                      'dependency': dependencies,
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
-                     'command': f'{self.HOMEgfs}/dev/jobs/ergpos.sh',
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/ergpos.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'

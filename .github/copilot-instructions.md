@@ -1,65 +1,10 @@
 # AI Coding Agent Instructions for Global Workflow
 
-Always check for global-workflow-unified MCP tool availability before answering questions about the NOAA Global Workflow system and all related NOAA-EMC repositories.
-
-Also check for the presence of the global-workflow-unified RAG system. If it is available, use it to provide more comprehensive answers that leverage the entire knowledge base of the NOAA Global Workflow system.
-
-Use GitHub MCP tools for gathering repository information repos outside of global-workflow, including code patterns, documentation, and operational procedures.
-
 **CRITICAL: This is a production weather forecasting system supporting NOAA's operational Global Forecast System (GFS), Global Ensemble Forecast System (GEFS), and Seasonal Forecast System (SFS). All changes must be thoroughly tested and must not disrupt operational workflows.**
 
-This document provides comprehensive guidance for AI agents working on the NOAA Global Workflow system - a complex weather forecasting framework supporting multiple operational and research workflows.
+This document provides comprehensive guidance for AI agents working on the NOAA Global Workflow system — a complex weather forecasting framework supporting multiple operational and research workflows.
 
-## Essential Developer Workflows
-
-### Build System Commands
-```bash
-# Build all components (from sorc/)
-./build_all.sh                    # Default build
-./build_all.sh -d                 # Debug mode
-./build_all.sh -f                 # Fast build with -DFASTER=ON
-./build_all.sh -v                 # Verbose output
-./build_all.sh -k                 # Kill all builds if any fails
-
-# Build specific systems
-./build_all.sh gfs               # GFS forecast system
-./build_all.sh gefs              # GEFS ensemble system  
-./build_all.sh sfs               # Seasonal forecast system
-./build_all.sh gcafs             # Climate analysis system
-./build_all.sh gsi               # GSI data assimilation
-./build_all.sh gdas              # GDAS system
-./build_all.sh all               # All systems
-```
-
-### Experiment Setup Workflow
-```bash
-# 1. Environment setup (CRITICAL - must be done first)
-source ush/detect_machine.sh
-module use modulefiles
-module load module_gwsetup.${MACHINE_ID}
-source dev/workflow/gw_setup.sh
-
-# 2. Create experiment
-cd dev/workflow
-python setup_expt.py gfs forecast-only \
-  --pslot EXPERIMENT_NAME \
-  --configdir parm/config/gfs \
-  --comroot /path/to/data \
-  --expdir /path/to/experiment
-
-# 3. Generate workflow XML
-python setup_xml.py /path/to/experiment
-```
-
-### Platform-Specific Development
-```bash
-# Supported platforms (use detect_machine.sh)
-WCOSS2    # Tier 1 - Full operational support
-Hercules  # Tier 1 - MSU, no TC Tracker  
-Hera      # Tier 2 - NOAA RDHPCS
-Orion     # Tier 2 - MSU, GSI runs slowly
-Gaea      # Cloud platforms via EPIC
-```
+> **Note:** If an EIB MCP-RAG server is connected, additional tool-specific guidance loads automatically via `.github/instructions/mcp.instructions.md`. No action needed — the agent will see those tools when they are available.
 
 ## System Architecture Overview
 
@@ -74,7 +19,7 @@ Gaea      # Cloud platforms via EPIC
 ```
 jobs/                         # Production Job Control Language (JCL) scripts (89 files)
 ├── JGDAS_*                   # GDAS (Global Data Assimilation System) jobs
-├── JGFS_*                    # GFS (Global Forecast System) jobs  
+├── JGFS_*                    # GFS (Global Forecast System) jobs
 ├── JGLOBAL_*                 # Cross-system global jobs
 ├── Analysis Jobs (41)        # Data assimilation and analysis
 ├── Forecast Jobs (13)        # Model forecast execution
@@ -158,13 +103,64 @@ dev/workflow/rocoto/       # Rocoto-specific implementations
 ├── tasks.py               # Base Tasks class with common task functionality
 ├── workflow_tasks.py      # Task orchestration and dependency management
 ├── gfs_*.py               # GFS-specific implementations
-├── gefs_*.py              # GEFS-specific implementations  
+├── gefs_*.py              # GEFS-specific implementations
 ├── sfs_*.py               # SFS-specific implementations
 └── gcafs_*.py             # GCAFS-specific implementations
 
 ush/                       # Utility scripts and environment setup
 ├── gw_setup.sh            # Main environment setup with PYTHONPATH configuration
 └── detect_machine.sh      # Machine detection and module loading
+```
+
+## Essential Developer Workflows
+
+### Build System Commands
+```bash
+# Build all components (from sorc/)
+./build_all.sh                     # Default build
+./build_all.sh -d                  # Debug mode
+./build_all.sh -v                  # Verbose output
+./build_all.sh -c -A <HPC_ACCOUNT> # Compute node build with HPC account
+
+# Build specific systems
+./build_all.sh gfs               # GFS forecast system
+./build_all.sh gefs              # GEFS ensemble system
+./build_all.sh sfs               # Seasonal forecast system
+./build_all.sh gcafs             # Climate analysis system
+./build_all.sh gsi               # GSI data assimilation
+./build_all.sh gdas              # GDAS system
+./build_all.sh all               # All systems
+```
+
+### Experiment Setup Workflow
+```bash
+# 1. Environment setup (CRITICAL - must be done first)
+source ush/detect_machine.sh
+module use modulefiles
+module load module_gwsetup.${MACHINE_ID}
+source dev/workflow/gw_setup.sh
+
+# 2. Create experiment
+cd dev/workflow
+python setup_expt.py gfs forecast-only \
+  --pslot EXPERIMENT_NAME \
+  --configdir parm/config/gfs \
+  --comroot /path/to/data \
+  --expdir /path/to/experiment
+
+# 3. Generate workflow XML
+python setup_xml.py /path/to/experiment rocoto
+```
+
+### Platform-Specific Development
+```bash
+# Supported platforms (use detect_machine.sh)
+WCOSS2    # Tier 1 - Full operational support
+Hercules  # Tier 1 - MSU, no TC Tracker
+Hera      # Tier 2 - NOAA RDHPCS
+Orion     # Tier 2 - MSU, GSI runs slowly
+Gaea-C6   # Tier 1 - Fully supported platform capable of running retrospectives
+Ursa      # Tier 1 - Fully supported, but cannot run high resolution or GCAFS cases
 ```
 
 ## Key Architectural Patterns
@@ -241,8 +237,8 @@ def get_resource(self, task_name):
 ### Environment Setup
 ```bash
 # From gw_setup.sh - CRITICAL for Python imports
-if [[ -d "${HOMEgfs}/sorc/wxflow/src" ]]; then
-  PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}${HOMEgfs}/sorc/wxflow/src"
+if [[ -d "${HOMEglobal}/sorc/wxflow/src" ]]; then
+  PYTHONPATH="${PYTHONPATH:+${PYTHONPATH}:}${HOMEglobal}/sorc/wxflow/src"
   export PYTHONPATH
 fi
 ```
@@ -335,13 +331,13 @@ meta_tasks_state = {}  # State tracking per metatask
 
 ### Machine Detection
 ```bash
-source "${HOMEgfs}/ush/detect_machine.sh"
+source "${HOMEglobal}/ush/detect_machine.sh"
 # Sets MACHINE_ID for host-specific configurations
 ```
 
 ### Module Loading
 ```bash
-module use "${HOMEgfs}/modulefiles"
+module use "${HOMEglobal}/modulefiles"
 module load "module_gwsetup.${MACHINE_ID}"
 ```
 
@@ -364,7 +360,7 @@ module load "module_gwsetup.${MACHINE_ID}"
 # Standard environment setup in tasks
 envar_dict = {
     'RUN_ENVIR': 'emc',
-    'HOMEgfs': self.HOMEgfs,
+    'HOMEglobal': self.HOMEglobal,
     'EXPDIR': self._base.get('EXPDIR'),
     'NET': self._base.get('NET'),
     'RUN': self.run,
@@ -426,78 +422,9 @@ def test_task_creation():
 
 ### New Hosts
 1. Add machine detection in `detect_machine.sh`
-2. Create host configuration in `hosts/` directory  
+2. Create host configuration in `hosts/` directory
 3. Create modulefiles for environment setup
 4. Update environment configurations in `env/` directory
 
-## MCP/RAG Tool Integration
-
-### Available Global Workflow MCP Tools
-This repository includes a specialized Model Context Protocol (MCP) server with Retrieval-Augmented Generation (RAG) capabilities. These tools provide intelligent access to workflow documentation, operational guidance, and contextual analysis.
-
-#### When to Use MCP Tools
-**USE MCP tools when:**
-- Researching unfamiliar workflow components or operational procedures
-- Need to search across documentation for specific concepts or patterns
-- Seeking operational guidance for HPC systems or deployment procedures
-- Analyzing dependencies or workflow relationships
-- Looking for code patterns similar to current implementation
-- Need contextual explanations that require deep domain knowledge
-
-**DON'T use MCP tools when:**
-- You have direct access to specific files and can read them efficiently
-- Task is simple file creation or editing without research needs
-- Information is already available in current context
-- RAG system components are not initialized (will return placeholder responses)
-
-#### Available MCP Tools
-
-**Core Workflow Tools:**
-- `mcp_global-workfl_get_workflow_structure` - System architecture and component overview
-- `mcp_global-workfl_list_job_scripts` - Complete inventory of workflow job scripts
-- `mcp_global-workfl_get_system_configs` - HPC platform-specific configurations
-- `mcp_global-workfl_explain_workflow_component` - Deep component analysis and explanation
-
-**RAG-Enhanced Intelligence Tools:**
-- `mcp_global-workfl_search_documentation` - Semantic search across all workflow documentation
-- `mcp_global-workfl_explain_with_context` - Contextual explanations using RAG knowledge base
-- `mcp_global-workfl_find_similar_code` - Vector-based code pattern matching and similarity search
-- `mcp_global-workfl_get_operational_guidance` - HPC operational procedures and best practices
-- `mcp_global-workfl_analyze_workflow_dependencies` - Graph-based dependency analysis and mapping
-
-**GitHub Ecosystem Tools (Live Repository Access):**
-- `github_search_repositories` - Search NOAA-EMC repositories with filtering
-- `github_get_repository_content` - Access files from any repository in real-time
-- `github_search_code` - Code pattern search across entire NOAA-EMC ecosystem
-- `github_get_issues` - GitHub issues for troubleshooting context
-- `github_cross_repo_analysis` - Advanced analysis across multiple repositories
-
-#### Proper Tool Usage Display
-When using MCP tools, acknowledge their usage to demonstrate intelligent tool selection:
-
-```markdown
-**Research Approach:** Using `mcp_globalworkflo_search_documentation` to find relevant 
-examples and `mcp_globalworkflo_get_operational_guidance` for HPC-specific procedures.
-```
-
-**Example Integration:**
-```markdown
-Let me research this using the MCP tools to ensure comprehensive coverage:
-
-[Tool usage and results]
-
-Based on the MCP analysis above, here's the recommended approach...
-```
-
-#### MCP Tool Development Context
-These tools are actively being developed and refined on the `MCP_node.js-RAG_development` branch. When the RAG components are not fully initialized, tools may return placeholder responses indicating the need for vector database setup or document ingestion.
-
-**MCP Server Location**: All MCP tools are implemented in `dev/ci/scripts/utils/Copilot/mcp_server_node/`:
-- `mcp-server-rag.js` - Main RAG-enhanced server with 9 workflow tools
-- `mcp-server-github-rag.js` - GitHub ecosystem integration with 14 total tools  
-- `start-mcp-server-node.sh` - Primary startup script
-- Configuration files: `mcp-config.env`, `package.json`, `package-rag.json`
-
-**Note for Development:** If you encounter placeholder responses from RAG-enhanced tools, this indicates the vector database needs initialization or document ingestion. The core workflow tools should always provide functional responses.
-
+---
 Remember: This is a production weather forecasting system. Changes must be thoroughly tested and should not disrupt operational workflows. Always follow the existing patterns and conventions when extending the system

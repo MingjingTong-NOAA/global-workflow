@@ -34,6 +34,11 @@
 	path = sorc/gsi_enkf.fd
 	url = https://github.com/MingjingTong-NOAA/GSI.git
 	branch = gfdl_shield
-[submodule "sorc/upp.fd"]
-	path = sorc/upp.fd
-	url = https://github.com/NOAA-EMC/UPP.git
+[submodule "sorc/nexus.fd"]
+  path = sorc/nexus.fd
+  url = https://github.com/NOAA-OAR-ARL/NEXUS.git
+  branch = feature/gcafs
+[submodule "sorc/ufs_model.fd"]
+	path = sorc/ufs_model.fd
+	url = https://github.com/ufs-community/ufs-weather-model
+	ignore = dirty

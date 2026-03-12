@@ -1,47 +1,30 @@
 #! /usr/bin/env bash
 set -eux
 
-function usage() {
-  cat << EOF
-Builds the SHiELD utility programs.
-
-Usage: ${BASH_SOURCE[0]} [-d][-h][-j n][-v]
-  -d:
-    Build with debug options
-  -h:
-    Print this help message and exit
-  -j:
-    Build with n build jobs
-  -v:
-    Turn on verbose output
-EOF
-  exit 1
-}
+# shellcheck disable=SC2155
+readonly HOMEglobal_=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}")")" && git rev-parse --show-toplevel)
 
 OPTIND=1
-while getopts ":j:dvh" option; do
-  case "${option}" in
-    d) BUILD_TYPE="Debug";;
-    v) BUILD_VERBOSE="YES";;
-    j) BUILD_JOBS="${OPTARG}";;
-    h)
-      usage
-      ;;
-    :)
-      echo "[${BASH_SOURCE[0]}]: ${option} requires an argument"
-      usage
-      ;;
-    *)
-      echo "[${BASH_SOURCE[0]}]: Unrecognized option: ${option}"
-      usage
-      ;;
-  esac
+while getopts ":j:dv" option; do
+    case "${option}" in
+        d) BUILD_TYPE="Debug" ;;
+        j) BUILD_JOBS="${OPTARG}" ;;
+        v) BUILD_VERBOSE="YES" ;;
+        :)
+            echo "[${BASH_SOURCE[0]}]: ${option} requires an argument"
+            ;;
+        *)
+            echo "[${BASH_SOURCE[0]}]: Unrecognized option: ${option}"
+            ;;
+    esac
 done
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
+
+source "${HOMEglobal_}/ush/detect_machine.sh"
 
 BUILD_TYPE=${BUILD_TYPE:-"Release"} \
-BUILD_VERBOSE=${BUILD_VERBOSE:-"NO"} \
-BUILD_JOBS=${BUILD_JOBS:-1} \
-"./shield_utils.fd/ush/build.sh"
+    BUILD_VERBOSE=${BUILD_VERBOSE:-"NO"} \
+    BUILD_JOBS=${BUILD_JOBS:-1} \
+    "${HOMEglobal_}/sorc/shield_utils.fd/ush/build.sh"
 
 exit

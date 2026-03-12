@@ -25,7 +25,7 @@ if [[ "${DO_AERO_FCST}" == "YES" ]]; then
 fi
 # We are counting on $string being multiple arguments
 # shellcheck disable=SC2086
-source $EXPDIR/config.fv3 ${CASE}
+source ${EXPDIR}/config.fv3 ${CASE}
 
 # Get task specific resources
 . "${EXPDIR}/config.resources" efcs
@@ -70,9 +70,9 @@ export SPPT_LOGIT=".true."
 export SPPT_SFCLIMIT=".true."
 
 if [[ "${QUILTING}" == ".true." ]] && [[ "${OUTPUT_GRID}" == "gaussian_grid" ]]; then
-    export DIAG_TABLE="${PARMgfs}/ufs/fv3/diag_table_da"
+    export DIAG_TABLE="${PARMglobal}/ufs/fv3/diag_table_da"
 else
-    export DIAG_TABLE=${DIAG_TABLE:-"${PARMgfs}/ufs/fv3/diag_table_da_orig"}
+    export DIAG_TABLE=${DIAG_TABLE:-"${PARMglobal}/ufs/fv3/diag_table_da_orig"}
 fi
 
 # Model config option for Ensemble

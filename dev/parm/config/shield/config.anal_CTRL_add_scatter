@@ -84,42 +84,42 @@ export SSMITBF=${SSMITBF:-/dev/null}
 export AMSR2BF=${AMSR2BF:-/dev/null}
 
 if [[ $GSIVER == "v2" ]]; then
-  export GSIEXEC=${EXECgfs}/gsi.x_crtm2.3
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
-  export FIXgsi=${FIXgfs}/gsi_v2
+  export GSIEXEC=${EXECglobal}/gsi.x_crtm2.3
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis_v2.sh
+  export FIXgsi=${FIXglobal}/gsi_v2
   export full_hydro="NO"
 elif [[ $GSIVER == "v2fullhydro" ]]; then
-  export GSIEXEC=${EXECgfs}/gsi.x
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v2.sh
-  export FIXgsi=${FIXgfs}/gsi_v2
+  export GSIEXEC=${EXECglobal}/gsi.x
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis_v2.sh
+  export FIXgsi=${FIXglobal}/gsi_v2
   export full_hydro="YES"
   export cao_check=".true."
   export ta2tb=".false."
 elif [[ $GSIVER == "v3" ]]; then
-  export GSIEXEC=${EXECgfs}/gsi.x
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v3.sh
-  export FIXgsi=${FIXgfs}/gsi
+  export GSIEXEC=${EXECglobal}/gsi.x
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis_v3.sh
+  export FIXgsi=${FIXglobal}/gsi
   export full_hydro="YES"
   export cao_check=".true."
   export ta2tb=".true."
 elif [[ $GSIVER == "v3_cch" ]]; then
-  export GSIEXEC=${EXECgfs}/gsi.x_cch
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_v3_cch.sh
-  export FIXgsi=${FIXgfs}/gsi
+  export GSIEXEC=${EXECglobal}/gsi.x_cch
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis_v3_cch.sh
+  export FIXgsi=${FIXglobal}/gsi
   export full_hydro="YES"
   export cao_check=".true."
   export ta2tb=".true."
 elif [[ $GSIVER == "dev" ]]; then
-  export GSIEXEC=${EXECgfs}/gsi.x_dev
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis_dev.sh
-  export FIXgsi=${FIXgfs}/gsi
+  export GSIEXEC=${EXECglobal}/gsi.x_dev
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis_dev.sh
+  export FIXgsi=${FIXglobal}/gsi
   export full_hydro="YES"
   export cao_check=".true."
   export ta2tb=".true."
 else
-  export GSIEXEC=${EXECgfs}/gsi.x
-  export ANALYSISSH=${SCRgfs}/exglobal_atmos_analysis.sh
-  export FIXgsi=${FIXgfs}/gsi
+  export GSIEXEC=${EXECglobal}/gsi.x
+  export ANALYSISSH=${SCRglobal}/exglobal_atmos_analysis.sh
+  export FIXgsi=${FIXglobal}/gsi
   export full_hydro="YES"
   export cao_check=".true."
   export ta2tb=".true."
@@ -146,10 +146,26 @@ elif [[ $obserr_table == "hydro_v0" ]]; then
     export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info_hydro_v0.txt
 fi
 
+export BERROR=${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77
+export SATANGL=${FIXgsi}/global_satangbias.txt
+export SATINFO=${FIXgsi}/global_satinfo.txt
+export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info.txt
+export ATMSFILTER=${FIXgsi}/atms_beamwidth.txt
+export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.txt
+export CONVINFO=${FIXgsi}/global_convinfo.txt
+export vqcdat=${FIXgsi}/vqctp001.dat
+export INSITUINFO=${FIXgsi}/global_insituinfo.txt
+export OZINFO=${FIXgsi}/global_ozinfo.txt
+export PCPINFO=${FIXgsi}/global_pcpinfo.txt
+export AEROINFO=${FIXgsi}/global_aeroinfo.txt
+export SCANINFO=${FIXgsi}/global_scaninfo.txt
+export HYBENSINFO=${FIXgsi}/global_hybens_info.l${LEVS}.txt
 export OBERROR=${FIXgsi}/prepobs_errtable.global
 
+# Use 2m diagnostic for screen level obs
+export hofx_2m_sfcfile=".true."
+
 if [[ ${DO_GSISOILDA} = "YES" ]]; then
-    export hofx_2m_sfcfile=".true."
     export reducedgrid=".false." # not possible for sfc analysis, Jeff Whitaker says it's not useful anyway
     # NOTE: convinfo here will be over-written by date-specific files below.
     export CONVINFO=${FIXgsi}/global_convinfo_2mObs.txt
@@ -247,6 +263,23 @@ if [[ ${RUN_ENVIR} == "emc" ]]; then
   #     export SATINFO=${FIXgsi}/gfsv16_historical/global_satinfo.txt.2021110312
   #   fi
 fi
+
+if [[ ${USE_BUILD_GSINFO} == "YES" ]]; then
+   # these will be set based on date in scripts/exglobal_atmos_analysis.sh
+   export SATINFO="generate"
+   export CONVINFO="generate"
+   export OZINFO="generate"
+   # this can be over-ridden, for example to use NASA's netcdf ozone files use obs_input_reanl_nasa_ozone.txt.
+   export OBS_INPUT="${BUILD_GSINFO_DIR}/obs_input/obs_input_reanl_ncep_ozone.txt"
+
+   # Use 2m observations when constructing conventional obs info file
+   # can use 2m obs without enabling soil DA by setting USE_2M_OBS=YES in config.base
+   export USE_2M_OBS="${USE_2M_OBS:-${DO_GSISOILDA}}"
+else
+   export OBS_INPUT="${BUILD_GSINFO_DIR}/obs_input/obs_input_ops.txt"
+fi
+# path to "fixed" crtm coefficient files (needed for crtm < 3)
+export HIRS_FIX="${BUILD_GSINFO_DIR}/hirs_fix"
 
 # Flag to turn on (.true.) or off (.false.) the infrared cloud and aerosol detection software
 # for AIRS, CrIS, and IASI.  Default is .false.

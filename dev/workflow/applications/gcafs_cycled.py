@@ -77,11 +77,10 @@ class GCAFSCycledAppConfig(AppConfig):
 
             run_options[run]['do_hybvar'] = base.get('DOHYBVAR', False)
             run_options[run]['nens'] = base.get('NMEM_ENS', 0)
-            if run_options[run]['do_hybvar']:
-                run_options[run]['lobsdiag_forenkf'] = base.get('lobsdiag_forenkf', False)
 
             run_options[run]['do_jediatmvar'] = base.get('DO_JEDIATMVAR', False)
             run_options[run]['do_jediatmens'] = base.get('DO_JEDIATMENS', False)
+            run_options[run]['do_jediatmens_split_obssol'] = base.get('DO_JEDIATMENS_SPLIT_OBSSOL', True)
             run_options[run]['do_mergensst'] = base.get('DO_MERGENSST', False)
 
         return run_options
@@ -136,6 +135,7 @@ class GCAFSCycledAppConfig(AppConfig):
         if options['do_aero_anl']:
             configs += ['aeroanlgenb', 'aeroanlinit', 'aeroanlvar', 'aeroanlfinal']
             configs += ['prep']
+            configs += ['analcalc']
 
         if options['do_anlstat']:
             configs += ['anlstat']
@@ -204,6 +204,8 @@ class GCAFSCycledAppConfig(AppConfig):
                     task_names[run] += ['aeroanlgenb']
                     task_names[run] += ['aeroanlinit', 'aeroanlvar', 'aeroanlfinal']
                     task_names[run] += ['prep']
+                    task_names[run] += ['analcalc']
+                    task_names[run] += ['atmanlupp', 'atmanlprod']
 
                 if options['do_anlstat']:
                     task_names[run] += ['anlstat']

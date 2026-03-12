@@ -27,7 +27,7 @@ export JENKINS_WORK_DIR="${GFS_CI_ROOT}/Jenkins/workspace"
 
 # NOTE: JENKINS custom_workspace directory where CI jobs are run
 # /gpfs/f6/drsa-precip3/proj-shared/global/CI
-# and is defined in $HOMEgfs/dev/ci/Jenkinsfile
+# and is defined in $HOMEglobal/dev/ci/Jenkinsfile
 
 
 #########################################################################
@@ -61,3 +61,14 @@ export max_concurrent_pr=4    # number of concurrent pull requests
 
 # HPC account information - For job submission
 export HPC_ACCOUNT=${HPC_ACCOUNT:-drsa-precip3}
+
+#########################################################################
+# System-specific settings
+# Platform-specific paths and utilities for CI/CD operations
+#########################################################################
+
+# Utilities path for custom builds and role account tools
+export GFS_CI_UTIL_PATH="/gpfs/f6/drsa-precip3/world-shared/role.glopara/utils"
+
+# Custom Rocoto build path for testing
+export GFS_CI_ROCOTO_PATH="${GFS_CI_UTIL_PATH}/rocoto_dryrun_nodaemon/bin"

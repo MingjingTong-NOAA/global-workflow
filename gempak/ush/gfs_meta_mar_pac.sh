@@ -5,16 +5,16 @@
 # Set up Local Variables
 #
 
-source "${HOMEgfs}/ush/preamble.sh"
+source "${HOMEglobal}/ush/preamble.sh"
 
 mkdir -p -m 775 "${DATA}/MAR_PAC"
 cd "${DATA}/MAR_PAC" || exit 2
-cpreq "${HOMEgfs}/gempak/fix/datatype.tbl" datatype.tbl
+cpreq "${HOMEglobal}/gempak/fix/datatype.tbl" datatype.tbl
 
 #
 # Link data into DATA to sidestep gempak path limits
-# TODO: Replace this
-#
+# TODO: Add only necessary files and remove unneeded ones to minimize data volume
+# TODO: remove live links and refer https://github.com/NOAA-EMC/global-workflow/issues/4406
 export COMIN="${RUN}.${PDY}${cyc}"
 if [[ ! -L ${COMIN} ]]; then
     ${NLN} "${COMIN_ATMOS_GEMPAK_1p00}" "${COMIN}"
@@ -26,7 +26,8 @@ metatype="mar_pac"
 metaname="${mdl}_${metatype}_${cyc}.meta"
 device="nc | ${metaname}"
 
-export pgm=gdplot2_nc;. prep_step
+export pgm=gdplot2_nc
+source prep_step
 
 "${GEMEXE}/gdplot2_nc" << EOFplt
 \$MAPFIL=mepowo.gsf+mehsuo.ncp+mereuo.ncp+himouo.nws
@@ -259,24 +260,23 @@ run
 exit
 EOFplt
 
-export err=$?;err_chk
+export err=$?
+err_chk
 
 #####################################################
 # GEMPAK DOES NOT ALWAYS HAVE A NON ZERO RETURN CODE
 # WHEN IT CAN NOT PRODUCE THE DESIRED GRID.  CHECK
 # FOR THIS CASE HERE.
 #####################################################
-if (( err != 0 )) || [[ ! -s "${metaname}" ]] &> /dev/null; then
+if [[ "${err}" -ne 0 ]] || [[ ! -s "${metaname}" ]] &> /dev/null; then
     echo "FATAL ERROR: Failed to create gempak meta file ${metaname}"
-    exit $(( err + 100 ))
+    exit $((err + 100))
 fi
 
 mv "${metaname}" "${COMOUT_ATMOS_GEMPAK_META}/${mdl}_${PDY}_${cyc}_mar_pac"
-if [[ "${SENDDBN}" == "YES" ]] ; then
+if [[ "${SENDDBN}" == "YES" ]]; then
     "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
         "${COMOUT_ATMOS_GEMPAK_META}/${mdl}_${PDY}_${cyc}_mar_pac"
 fi
 
 exit
-
-

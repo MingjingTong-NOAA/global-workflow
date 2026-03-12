@@ -5,11 +5,11 @@
 # Set up Local Variables
 #
 
-source "${HOMEgfs}/ush/preamble.sh"
+source "${HOMEglobal}/ush/preamble.sh"
 
 mkdir -p -m 775 "${DATA}/BWX"
 cd "${DATA}/BWX" || exit 2
-cpreq "${HOMEgfs}/gempak/fix/datatype.tbl" datatype.tbl
+cpreq "${HOMEglobal}/gempak/fix/datatype.tbl" datatype.tbl
 
 metatype="bwx"
 metaname="${RUN}_${PDY}_${cyc}_us_${metatype}"
@@ -17,16 +17,17 @@ device="nc | ${metaname}"
 
 #
 # Link data into DATA to sidestep gempak path limits
-# TODO: Replace this
-#
+# TODO: Add only necessary files and remove unneeded ones to minimize data volume
+# TODO: remove live links and refer https://github.com/NOAA-EMC/global-workflow/issues/4406
 export COMIN="${RUN}.${PDY}${cyc}"
-if [[ ! -L ${COMIN} ]]; then
+if [[ ! -L "${COMIN}" ]]; then
     ${NLN} "${COMIN_ATMOS_GEMPAK_1p00}" "${COMIN}"
 fi
 
 fend=F180
 
-export pgm=gdplot2_nc;. prep_step
+export pgm=gdplot2_nc
+source prep_step
 "${GEMEXE}/gdplot2_nc" << EOFplt
 gdfile   = F-${RUN} | ${PDY:2}/${cyc}00
 gdattim  = F00-${fend}-6
@@ -342,19 +343,19 @@ export err=$?
 # WHEN IT CAN NOT PRODUCE THE DESIRED GRID.  CHECK
 # FOR THIS CASE HERE.
 #####################################################
-if (( err != 0 )) || [[ ! -s "${metaname}" ]]; then
+if [[ "${err}" -ne 0 ]] || [[ ! -s "${metaname}" ]]; then
     echo "FATAL ERROR: Failed to create bwx meta file"
-    exit $(( err + 100 ))
+    exit $((err + 100))
 fi
 
 mv "${metaname}" "${COMOUT_ATMOS_GEMPAK_META}/${metaname}"
-if [[ "${SENDDBN}" == "YES" ]] ; then
+if [[ "${SENDDBN}" == "YES" ]]; then
     "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
         "${COMOUT_ATMOS_GEMPAK_META}/${metaname}"
-    if [[ ${DBN_ALERT_TYPE} = "GFS_METAFILE_LAST" ]] ; then
+    if [[ ${DBN_ALERT_TYPE} = "GFS_METAFILE_LAST" ]]; then
         DBN_ALERT_TYPE=GFS_METAFILE
-            "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
-                "${COMOUT_ATMOS_GEMPAK_META}/${metaname}"
+        "${DBNROOT}/bin/dbn_alert" MODEL "${DBN_ALERT_TYPE}" "${job}" \
+            "${COMOUT_ATMOS_GEMPAK_META}/${metaname}"
     fi
 fi
 exit

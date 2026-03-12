@@ -1,0 +1,63 @@
+#! /usr/bin/env bash
+
+source "${HOMEglobal}/ush/jjob_header.sh" -e "oceanice_products" -c "base oceanice_products"
+
+# Setup Python path for pygfs
+PYTHONPATH="${HOMEglobal}/ush/python${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONPATH
+
+##############################################
+# Begin JOB SPECIFIC work
+##############################################
+
+# Construct COM variables
+# shellcheck disable=SC2309
+if [[ 10#${ENSMEM:--1} -ge 0 ]]; then
+    memdir=$(printf "mem%03d" $((10#${ENSMEM})))
+    export COMIN="${ROTDIR}/${RUN}.${PDY}/${cyc}/${memdir}"
+    export COMOUT="${ROTDIR}/${RUN}.${PDY}/${cyc}/${memdir}"
+else
+    export COMIN="${ROTDIR}/${RUN}.${PDY}/${cyc}"
+    export COMOUT="${ROTDIR}/${RUN}.${PDY}/${cyc}"
+fi
+
+if [[ -z "${COMPONENT:-}" ]]; then
+    export err=1
+    err_exit "COMPONENT variable is not set."
+elif [[ "${COMPONENT}" == "ice" || "${COMPONENT}" == "ocean" ]]; then
+    declare -rx "COMIN_${COMPONENT^^}_HISTORY"="${COMIN}/model/${COMPONENT}/history"
+    declare -rx "COMOUT_${COMPONENT^^}_GRIB"="${COMOUT}/products/${COMPONENT}/grib2"
+    declare -rx "COMOUT_${COMPONENT^^}_NETCDF"="${COMOUT}/products/${COMPONENT}/netcdf"
+else
+    export err=1
+    err_exit "COMPONENT variable '${COMPONENT}' is invalid. Must be 'ice' or 'ocean'."
+fi
+
+###############################################################
+# Run exglobal script
+"${SCRglobal}/exglobal_oceanice_products.py" && true
+export err=$?
+if [[ ${err} -ne 0 ]]; then
+    err_exit
+fi
+
+##############################################
+# End JOB SPECIFIC work
+##############################################
+
+##############################################
+# Final processing
+##############################################
+if [[ -e "${pgmout}" ]]; then
+    cat "${pgmout}"
+fi
+
+##########################################
+# Remove the Temporary working directory
+##########################################
+cd "${DATAROOT}" || exit 1
+if [[ "${KEEPDATA:-NO}" == "NO" ]]; then
+    rm -rf "${DATA}"
+fi
+
+exit 0

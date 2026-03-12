@@ -8,7 +8,7 @@ echo "BEGIN: config.init"
 # Get task specific resources
 source "${EXPDIR}/config.resources" init
 
-export UFS_DIR=${HOMEgfs}/sorc/ufs_utils.fd
+export UFS_DIR=${HOMEglobal}/sorc/ufs_utils.fd
 export GDAS_INIT_DIR=${UFS_DIR}/util/gdas_init
 
 export CRES_HIRES=$CASE
