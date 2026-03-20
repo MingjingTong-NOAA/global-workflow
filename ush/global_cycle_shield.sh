@@ -277,6 +277,10 @@ ln -fs "${FNSALC}" salclm
 
 # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
 [[ ! -f $FNALBC ]] && FNALBC="${FIXglobal}/am/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
+[[ ! -f $FNVETC ]] && FNVETC="${FIXglobal}/am/global_vegtype.igbp.t1534.3072.1536.rg.grb"
+[[ ! -f $FNSOTC ]] && FNSOTC="${FIXglobal}/am/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
+[[ ! -f $FNABSC ]] && FNABSC="${FIXglobal}/am/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
+[[ ! -f $FNSMCC ]] && FNSMCC="${FIXglobal}/am/global_soilmgldas.statsgo.t1534.3072.1536.grb"
 
 ################################################################################
 #  Make surface analysis
