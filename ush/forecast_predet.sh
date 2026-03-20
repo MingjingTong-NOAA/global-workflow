@@ -462,6 +462,27 @@ FV3_predet() {
     FNABSC=${FNABSC:-"${FIXorog}/${CASE}/${sfcfix}/${orogfix}.maximum_snow_albedo.tileX.nc"}
     FNSMCC=${FNSMCC:-"${FIXglobal}/am/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"}
 
+    if [[ ${NET} == "shield" &&  ${SHiELD_VERSION} == "2022" ]]; then
+       FNALBC2="${FIXglobal}/am/global_albedo4.1x1.grb"
+       FNTG3C="${FIXglobal}/am/global_tg3clim.2.6x1.5.grb"
+       FNVEGC="${FIXglobal}/am/global_vegfrac.0.144.decpercent.grb"
+       FNMSKH="${FIXglobal}/am/global_slmask.t1534.3072.1536.grb"
+       FNVMNC="${FIXglobal}/am/global_shdmin.0.144x0.144.grb"
+       FNVMXC="${FIXglobal}/am/global_shdmax.0.144x0.144.grb"
+       FNSLPC="${FIXglobal}/am/global_slope.1x1.grb"
+       FNALBC="${FIXglobal}/am/global_snowfree_albedo.bosu.t${JCAP}.${LONB}.${LATB}.rg.grb"
+       FNVETC="${FIXglobal}/am/global_vegtype.igbp.t${JCAP}.${LONB}.${LATB}.rg.grb"
+       FNSOTC="${FIXglobal}/am/global_soiltype.statsgo.t${JCAP}.${LONB}.${LATB}.rg.grb"
+       FNABSC="${FIXglobal}/am/global_mxsnoalb.uariz.t${JCAP}.${LONB}.${LATB}.rg.grb"
+       FNSMCC="${FIXglobal}/am/global_soilmgldas.statsgo.t${JCAP}.${LONB}.${LATB}.grb"
+   
+       [[ ! -f $FNALBC ]] && FNALBC="${FIXglobal}/am/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
+       [[ ! -f $FNVETC ]] && FNVETC="${FIXglobal}/am/global_vegtype.igbp.t1534.3072.1536.rg.grb"
+       [[ ! -f $FNSOTC ]] && FNSOTC="${FIXglobal}/am/global_soiltype.statsgo.t1534.3072.1536.rg.grb"
+       [[ ! -f $FNABSC ]] && FNABSC="${FIXglobal}/am/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb"
+       [[ ! -f $FNSMCC ]] && FNSMCC="${FIXglobal}/am/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+    fi
+
     # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
     if [[ ! -f "${FNSMCC}" ]]; then
         FNSMCC="${FIXglobal}/am/global_soilmgldas.statsgo.t1534.3072.1536.grb"

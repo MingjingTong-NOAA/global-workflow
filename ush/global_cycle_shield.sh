@@ -214,7 +214,7 @@ DELTSFC=${DELTSFC:-0}
 
 LSOIL=${LSOIL:-4}
 LSOIL_INCR=${LSOIL_INCR:-2}
-FSMCL2=${FSMCL2:-99999.}
+FSMCL2=${FSMCL2:-60}
 FSLPL=${FSLPL:-99999.}
 FSOTL=${FSOTL:-99999.}
 FVETL=${FVETL:-99999.}
@@ -241,27 +241,24 @@ COUPLED=${COUPLED:-.false.}
 USE_TREF=${USE_TREF:-.false.}
 PERTURB_TSFC=${PERTURB_TSFC:-.false.}
 
-sfcfix=${sfcfix:-"sfc"}
-orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
-
 FNGLAC=${FNGLAC:-${FIXglobal}/am/global_glacier.2x2.grb}
 FNMXIC=${FNMXIC:-${FIXglobal}/am/global_maxice.2x2.grb}
 FNTSFC=${FNTSFC:-${FIXglobal}/am/RTGSST.1982.2012.monthly.clim.grb}
 FNSALC=${FNSALC:-${FIXglobal}/am/global_salclm.t1534.3072.1536.nc}
 FNSNOC=${FNSNOC:-${FIXglobal}/am/global_snoclim.1.875.grb}
 FNZORC=${FNZORC:-igbp}
-FNAISC=${FNAISC:-${FIXglobal}/am/IMS-NIC.blended.ice.monthly.clim.grb}
-FNSMCC=${FNSMCC:-${FIXglobal}/am/global_soilmgldas.statsgo.t${JCAP_CASE}.${LONB_CASE}.${LATB_CASE}.grb}
-FNALBC2=${FNALBC2:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.facsf.tileX.nc}
-FNTG3C=${FNTG3C:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.substrate_temperature.tileX.nc}
-FNVEGC=${FNVEGC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc}
-FNALBC=${FNALBC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.snowfree_albedo.tileX.nc}
-FNVETC=${FNVETC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_type.tileX.nc}
-FNSOTC=${FNSOTC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.soil_type.tileX.nc}
-FNABSC=${FNABSC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.maximum_snow_albedo.tileX.nc}
-FNVMNC=${FNVMNC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc}
-FNVMXC=${FNVMXC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.vegetation_greenness.tileX.nc}
-FNSLPC=${FNSLPC:-${FIXorog}/${CASE}/${sfcfix}/${orogfix}.slope_type.tileX.nc}
+FNALBC2=${FNALBC2:-${FIXglobal}/am/global_albedo4.1x1.grb}
+FNAISC=${FNAISC:-${FIXglobal}/am/CFSR.SEAICE.1982.2012.monthly.clim.grb}
+FNTG3C=${FNTG3C:-${FIXglobal}/am/global_tg3clim.2.6x1.5.grb}
+FNVEGC=${FNVEGC:-${FIXglobal}/am/global_vegfrac.0.144.decpercent.grb}
+FNALBC=${FNALBC:-${FIXglobal}/am/global_snowfree_albedo.bosu.t$JCAP_CASE.$LONB_CASE.$LATB_CASE.rg.grb}
+FNVETC=${FNVETC:-${FIXglobal}/am/global_vegtype.igbp.t$JCAP_CASE.$LONB_CASE.$LATB_CASE.rg.grb}
+FNSOTC=${FNSOTC:-${FIXglobal}/am/global_soiltype.statsgo.t$JCAP_CASE.$LONB_CASE.$LATB_CASE.rg.grb}
+FNSMCC=${FNSMCC:-${FIXglobal}/am/global_soilmgldas.statsgo.t$JCAP_CASE.$LONB_CASE.$LATB_CASE.grb}
+FNABSC=${FNABSC:-${FIXglobal}/am/global_mxsnoalb.uariz.t$JCAP_CASE.$LONB_CASE.$LATB_CASE.rg.grb}
+FNVMNC=${FNVMNC:-${FIXglobal}/am/global_shdmin.0.144x0.144.grb}
+FNVMXC=${FNVMXC:-${FIXglobal}/am/global_shdmax.0.144x0.144.grb}
+FNSLPC=${FNSLPC:-${FIXglobal}/am/global_slope.1x1.grb}
 FNMSKH=${FNMSKH:-${FIXglobal}/am/global_slmask.t1534.3072.1536.grb}
 NST_FILE=${NST_FILE:-"NULL"}
 SFCANL_FILE=${SFCANL_FILE:-"NULL"}
@@ -279,7 +276,7 @@ ln -fs "${FNTSFC}" sstclm
 ln -fs "${FNSALC}" salclm
 
 # If the appropriate resolution fix file is not present, use the highest resolution available (T1534)
-[[ ! -f ${FNSMCC} ]] && FNSMCC="${FIXglobal}/am/global_soilmgldas.statsgo.t1534.3072.1536.grb"
+[[ ! -f $FNALBC ]] && FNALBC="${FIXglobal}/am/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb"
 
 ################################################################################
 #  Make surface analysis
