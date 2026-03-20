@@ -21,42 +21,31 @@ if [[ $MODE = "forecast-only" || $EXP_WARM_START = ".true." ]]; then
 fi
 
 if [[ (${ICFROM} = "gfs" && ${gfs_ver:1:2} -le 16) || (${ICFROM} != "gfs" && ${exp_ver} -lt 2024) ]]; then
-  export COMIN_ATMOS_RESTART=${EXTRACT_DIR}/${RUN}.${gPDY}/${gcyc}/${COMPONENT:-"atmos"}
-  export COMIN_ATMOS_ANALYSIS=${EXTRACT_DIR}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT:-"atmos"}
-  export COMIN_ATMOS_ANALYSIS_RESTART=${EXTRACT_DIR}/${RUN}.${PDY}/${cyc}/${COMPONENT:-"atmos"}/RESTART
-  export COMIN_ATMOS_ANALYSIS_PREV=${EXTRACT_DIR}/${ICDUMP}.${gPDY}/${gcyc}/${COMPONENT:-"atmos"}
+  declare -rx  COMIN_ATMOS_RESTART="${EXTRACT_DIR}/${RUN}.${gPDY}/${gcyc}/atmos"
+  declare -rx  COMIN_ATMOS_ANALYSIS="${EXTRACT_DIR}/${ICDUMP}.${PDY}/${cyc}/atmos"
+  declare -rx  COMIN_ATMOS_ANALYSIS_RESTART="${EXTRACT_DIR}/${RUN}.${PDY}/${cyc}/atmos/RESTART"
+  declare -rx  COMIN_ATMOS_ANALYSIS_PREV="${EXTRACT_DIR}/${ICDUMP}.${gPDY}/${gcyc}/atmos"
 else
-  YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-        COMIN_ATMOS_RESTART:COM_ATMOS_RESTART_TMPL
-  ROTDIR=${EXTRACT_DIR} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-	COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
-  ROTDIR=${EXTRACT_DIR} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-        COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
-  ROTDIR=${ICSROOT} RUN=${ICDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-        COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+  declare -rx  COMIN_ATMOS_RESTART="${ROTDIR}/${RUN}.${gPDY}/${gcyc}/model/atmos/restart"
+  declare -rx  COMIN_ATMOS_ANALYSIS="${ICSROOT}/output/${ICDUMP}.${PDY}/${cyc}/analysis/atmos"
+  declare -rx  COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/${RUN}.${PDY}/${cyc}/model/atmos/restart"
+  declare -rx  COMIN_ATMOS_ANALYSIS_PREV="${ICSROOT}/output/${ICDUMP}.${gPDY}/${gcyc}/analysis/atmos"
 fi
 export ATMOS_ANALYSIS=${COMIN_ATMOS_ANALYSIS#${EXTRACT_DIR}}
 export ATMOS_ANALYSIS_RESTART=${COMIN_ATMOS_ANALYSIS_RESTART#${EXTRACT_DIR}}
 
-YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMOUT_ATMOS_RESTART:COM_ATMOS_RESTART_TMPL
-ROTDIR=${ICSROOT}/output RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-      COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
-ROTDIR=${ICSROOT}/output RUN=${ICDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMOUT_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
-ROTDIR=${ICSROOT} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-      COMOUT_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+declare -rx  COMOUT_ATMOS_ANALYSIS="${ICSROOT}/output/${ICDUMP}.${PDY}/${cyc}/analysis/atmos"
+declare -rx  COMOUT_ATMOS_ANALYSIS_PREV="${ICSROOT}/output/${ICDUMP}.${gPDY}/${gcyc}/analysis/atmos"
+declare -rx  COMOUT_ATMOS_ANALYSIS_RESTART="${ICSROOT}/${RUN}.${PDY}/${cyc}/model/atmos/restart"
 
-YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COM_ATMOS_HISTORY_PREV:COM_ATMOS_HISTORY_TMPL
-YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-      COM_ATMOS_HISTORY:COM_ATMOS_HISTORY_TMPL
+declare -rx  COM_ATMOS_HISTORY_PREV="${ROTDIR}/${RUN}.${gPDY}/${gcyc}/model/atmos/history"
+declare -rx  COM_ATMOS_HISTORY="${ROTDIR}/${RUN}..${PDY}/${cyc}/model/atmos/history"
 
 ###############################################################
 # Run getic script
 ###############################################################
 
-${GLOBALGETICSH:-${SCRgfs}/exglobal_getic.sh}
+${GLOBALGETICSH:-${SCRglobal}/exglobal_getic.sh}
 status=$?
 [[ ${status} -ne 0 ]] && exit "${status}"
 

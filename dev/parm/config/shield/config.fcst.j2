@@ -184,7 +184,8 @@ tbp=""
 if [[ "${progsigma}" == ".true." ]]; then tbp="_progsigma" ; fi
 
 # Radiation options
-IAER=111 # spectral band mapping method for aerosol optical properties
+export IAER=111 # spectral band mapping method for aerosol optical properties
+
 # RRTMGP radiation scheme
 export do_RRTMGP=.false.
 export doGP_cldoptics_LUT=.false.

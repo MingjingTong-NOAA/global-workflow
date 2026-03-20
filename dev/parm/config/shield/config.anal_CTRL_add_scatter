@@ -127,9 +127,12 @@ fi
 
 # Set default values for info files and observation error
 #  NOTE:  Remember to set PRVT in config.prep as OBERROR is set below
+export SATINFO=${FIXgsi}/global_satinfo.txt
+export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info.txt
+export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.txt
 export CONVINFO=${FIXgsi}/global_convinfo.txt
 export OZINFO=${FIXgsi}/global_ozinfo.txt
-#export SATINFO=${FIXgsi}/global_satinfo.txt
+export OBERROR=${FIXgsi}/prepobs_errtable.global
 # CCH:: change satellite obs error table here:
 if [[ $obserr_table == "default" ]]; then
     export SATINFO=${FIXgsi}/global_satinfo.txt
@@ -146,24 +149,8 @@ elif [[ $obserr_table == "hydro_v0" ]]; then
     export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info_hydro_v0.txt
 fi
 
-export BERROR=${FIXgsi}/Big_Endian/global_berror.l${LEVS}y${NLAT_A}.f77
-export SATANGL=${FIXgsi}/global_satangbias.txt
-export SATINFO=${FIXgsi}/global_satinfo.txt
-export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info.txt
-export ATMSFILTER=${FIXgsi}/atms_beamwidth.txt
-export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.txt
-export CONVINFO=${FIXgsi}/global_convinfo.txt
-export vqcdat=${FIXgsi}/vqctp001.dat
-export INSITUINFO=${FIXgsi}/global_insituinfo.txt
-export OZINFO=${FIXgsi}/global_ozinfo.txt
-export PCPINFO=${FIXgsi}/global_pcpinfo.txt
-export AEROINFO=${FIXgsi}/global_aeroinfo.txt
-export SCANINFO=${FIXgsi}/global_scaninfo.txt
-export HYBENSINFO=${FIXgsi}/global_hybens_info.l${LEVS}.txt
-export OBERROR=${FIXgsi}/prepobs_errtable.global
-
 # Use 2m diagnostic for screen level obs
-export hofx_2m_sfcfile=".true."
+export hofx_2m_sfcfile=".false."
 
 if [[ ${DO_GSISOILDA} = "YES" ]]; then
     export reducedgrid=".false." # not possible for sfc analysis, Jeff Whitaker says it's not useful anyway

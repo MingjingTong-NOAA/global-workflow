@@ -28,7 +28,8 @@ for grid in '0p25' '0p50' '1p00'; do
     mkdir -m 775 -p "${!prod_dir}"
   if [[ ${MODE} == "ensregrid" ]]; then
     prod_nc_dir="COMOUT_ATMOS_GRIB_${grid}_nc"
-    GRID="${grid}_nc" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx "${prod_nc_dir}:COM_ATMOS_GRIB_GRID_TMPL"
+    GRID="${grid}_nc"
+    declare -rx "COMOUT_ATMOS_GRIB_${grid}_nc"="${COMOUT}/products/atmos/grib2/${GRID}/${grid}"
     mkdir -m 775 -p "${!prod_nc_dir}"
   fi
 done

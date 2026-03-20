@@ -26,45 +26,46 @@ export APREFIX="${rCDUMP}.t${cyc}z."
 export GPREFIX_ENS="${GDUMP_ENS}.t${gcyc}z."
 
 # Generate COM variables from templates
-YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-    COMIN_OBS:COM_OBS_TMPL \
-    COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
+declare -rx COMIN_OBS="${ROTDIR}/${RUN}.${PDY}/${cyc}/obs"
+declare -rx COMOUT_ATMOS_ANALYSIS="${ROTDIR}/${RUN}.${PDY}/${cyc}/analysis/atmos"
 
 if [[ "${EXPABIAS}" == "YES" ]]; then
-   RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-       COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+   declare -rx COMIN_ATMOS_ANALYSIS_PREV="${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/analysis/atmos"
 else
-   ROTDIR=${ICSROOT}/output RUN=${GDUMP} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-       COMIN_ATMOS_ANALYSIS_PREV:COM_ATMOS_ANALYSIS_TMPL
+   declare -rx COMIN_ATMOS_ANALYSIS_PREV="${ICSROOT}/output/${GDUMP}.${gPDY}/${gcyc}/analysis/atmos"
 fi
 
-if [[ $MODE == "omf" ]]; then
-  ROTDIR=${OMFCOMINPREV} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMIN_ATMOS_HISTORY_PREV:COM_ATMOS_HISTORY_TMPL
+if [[ $MODE != "omf" ]]; then
+   declare -rx COMIN_ATMOS_HISTORY_PREV="${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/model/atmos/history"
+
+   declare -rx COMIN_ATMOS_HISTORY_ENS_PREV="${ROTDIR}/${GDUMP_ENS}.${gPDY}/${gcyc}/ensstat/model/atmos/history"
 else
-  YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMIN_ATMOS_HISTORY_PREV:COM_ATMOS_HISTORY_TMPL
+   declare -rx COMIN_ATMOS_HISTORY_PREV="${OMFCOMINPREV}/${GDUMP}.${gPDY}/${gcyc}/model/atmos/history"
+   declare -rx COMIN_ATMOS_HISTORY_ENS_PREV="${OMFCOMINPREV}/${GDUMP_ENS}.${gPDY}/${gcyc}/ensstat/model/atmos/history"
 fi
 
-if [[ $MODE == "omf" ]]; then
-  ROTDIR=${OMFCOMINPREV} MEMDIR='ensstat' RUN=${GDUMP_ENS} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMIN_ATMOS_HISTORY_ENS_PREV:COM_ATMOS_HISTORY_TMPL
-else
-  MEMDIR='ensstat' RUN=${GDUMP_ENS} YMD=${gPDY} HH=${gcyc} declare_from_tmpl -rx \
-      COMIN_ATMOS_HISTORY_ENS_PREV:COM_ATMOS_HISTORY_TMPL
-fi
-
+# shellcheck disable=SC2153
 mkdir -p "${COMOUT_ATMOS_ANALYSIS}"
 
 export ATMGES="${COMIN_ATMOS_HISTORY_PREV}/${GPREFIX}atm.f006.nc"
 if [[ ! -f "${ATMGES}" ]]; then
+
     export err=1
     err_exit "FILE MISSING: ATMGES == ${ATMGES}"
 fi
 
+export GENDIAG="${GENDIAG:-YES}"
+
+# Create a DATAROOT directory variable for the gsidiags if GENDIAG is YES
+if [[ "${GENDIAG}" == "YES" ]]; then
+    pCOMOUT_ATMOS_ANALYSIS="$(dataroot_com_path "${COMOUT_ATMOS_ANALYSIS}")"
+    export pCOMOUT_ATMOS_ANALYSIS
+fi
+
 # Get LEVS
-export LEVS=$(${NCLEN} ${ATMGES} pfull)
-err=$?
+export LEVS
+LEVS=$(${NCLEN} "${ATMGES}" pfull) && true
+export err=$?
 if [[ ${err} -ne 0 ]]; then
     err_exit
 fi
@@ -88,6 +89,11 @@ if [[ ${DONST} == "YES" ]]; then
 fi
 export PREPQCPF="${COMIN_OBS}/${OPREFIX}prepbufr.acft_profiles"
 
+# Copy fix file for obsproc  # TODO: Why is this necessary?
+if [[ ${RUN} == "gfs" ]]; then
+    mkdir -p "${ROTDIR}/fix"
+    cpreq "${FIXglobal}/gsi/prepobs_errtable.global" "${ROTDIR}/fix/"
+fi
 
 ###############################################################
 # Run relevant script

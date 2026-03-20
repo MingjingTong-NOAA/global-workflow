@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-
+set -x
 source "${HOMEglobal}/ush/jjob_header.sh" -e "sfcanl" -c "base sfcanl"
 
 ##############################################
@@ -23,11 +23,9 @@ declare -rx COMIN_ATMOS_ANALYSIS="${ROTDIR}/${RUN}.${PDY}/${cyc}/analysis/atmos"
 declare -rx COMIN_SNOW_ANALYSIS="${ROTDIR}/${RUN}.${PDY}/${cyc}/analysis/snow"
 
 if [[ $CASE == $OPS_RES ]]; then
-  ROTDIR=${ICSROOT} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-         COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+  declare -rx COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/${RUN}.${PDY}/${cyc}/model/atmos/restart"
 else
-  ROTDIR=${ICSROOT}/output/${CASE} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-         COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+  declare -rx COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/output/${CASE}/${RUN}.${PDY}/${cyc}/model/atmos/restart"
 fi
 
 declare -rx COMOUT_ATMOS_RESTART="${ROTDIR}/${RUN}.${PDY}/${cyc}/model/atmos/restart"

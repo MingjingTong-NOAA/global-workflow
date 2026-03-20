@@ -8,22 +8,26 @@ echo "BEGIN: config.eupd"
 # Get task specific resources
 source "${EXPDIR}/config.resources" eupd
 
+export FIXgsi=${FIXglobal}/gsi
+export full_hydro="YES"
 if [[ $GSIVER == "v2" ]]; then
   export ENKFEXEC=${EXECglobal}/enkf.x_crtm2.3
-  export ENKFUPDSH=${SCRglobal}/exgdas_enkf_update_v2.sh
+  export ENKFUPDSH=${SCRglobal}/exglobal_enkf_update_v2.sh
   export FIXgsi=${FIXglobal}/gsi_v2
   export full_hydro="NO"
 elif [[ $GSIVER == "v2fullhydro" ]]; then
   export ENKFEXEC=${EXECglobal}/enkf.x
-  export ENKFUPDSH=${SCRglobal}/exgdas_enkf_update_v2.sh
+  export ENKFUPDSH=${SCRglobal}/exglobal_enkf_update_v2.sh
   export FIXgsi=${FIXglobal}/gsi_v2
   export full_hydro="YES"
-else
-  export ENKFEXEC=${EXECglobal}/enkf.x
-  export ENKFUPDSH=${SCRglobal}/exgdas_enkf_update.sh
-  export FIXgsi=${FIXglobal}/gsi
-  export full_hydro="YES"
 fi
+
+# Set default values for info files and observation error
+export SATINFO=${FIXgsi}/global_satinfo.txt
+export CONVINFO=${FIXgsi}/global_convinfo.txt
+export OZINFO=${FIXgsi}/global_ozinfo.txt
+export ANAVINFO=${FIXgsi}/global_anavinfo.l${LEVS}.txt
+export VLOCALEIG=${FIXgsi}/vlocal_eig_l${LEVS}.dat
 
 # gfs.v16.3.16 setup
 export reducedgrid=".true."
@@ -36,7 +40,6 @@ export ntasks_enkf=${ntasks}
 
 # LETKF specific settings with model space localization
 export modelspace_vloc=".true."  # model space localization
-export VLOCALEIG=${FIXgsi}/vlocal_eig_l${LEVS}.dat
 export letkf_flag=".true."       # use LETKF instead of serial filter
 export getkf=".true."            # Gain form of LETKF (needed for model-space localization)
 export denkf=".true."            # EnKF approximation (beneficial since less spread removed by analysis)

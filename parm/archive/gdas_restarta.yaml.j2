@@ -43,7 +43,7 @@ gdas_restarta:
             'abias_int.txt',
             'analysis.done.txt'
         ] + (['increment.dtf.i006.nc'] if DONST else []) %}
-            File: {{ suffix }}
+        - "{{ COMIN_ATMOS_ANALYSIS }}/{{ head }}{{ suffix }}"
         {% endfor %}
         {% else %}
         - "{{ COMIN_ATMOS_ANALYSIS }}/{{ head }}varbc_params.tar"

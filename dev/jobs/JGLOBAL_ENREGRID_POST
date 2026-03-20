@@ -28,7 +28,8 @@ err_chk
 
 grid=${grid:-"1p00"}
 prod_nc_dir="COMIN_ATMOS_GRIB_${grid}_nc"
-GRID="${grid}_nc" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx "${prod_nc_dir}:COM_ATMOS_GRIB_GRID_TMPL"
+GRID="${grid}_nc"
+declare -rx "COMIN_ATMOS_GRIB_${grid}_nc"="${ROTDIR}/${RUN}.${PDY}/${cyc}/products/atmos/grib2/${GRID}/${grid}"
 
 ##############################################
 # Final processing

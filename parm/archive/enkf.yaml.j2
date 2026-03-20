@@ -74,11 +74,11 @@ enkf:
         # Ensemble mean state
         {% if not DO_JEDIATMENS %}
             {% set da_stat_files = ["enkfstat.txt",
-                                    "gsistat.ensmean.txt",
-                                    "cnvstat.ensmean.tar",
-                                    "oznstat.ensmean.tar"] %}
+                                    "gsistat_ensmean.txt",
+                                    "cnvstat_ensmean.tar",
+                                    "oznstat_ensmean.tar"] %}
             {% if (current_cycle - SDATE).total_seconds() / 3600 > 12 or EXP_WARM_START %}
-            {% set da_stat_files = da_stat_files + ["radstat.ensmean.tar"] %} 
+            {% set da_stat_files = da_stat_files + ["radstat_ensmean.tar"] %} 
             {% endif %}
             {% if write_spread_diag %}
             {% set da_files = da_files + ["cnvsprd", "oznsprd", "radsprd"] %}

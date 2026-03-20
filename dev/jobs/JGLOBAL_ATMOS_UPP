@@ -1,4 +1,5 @@
 #! /usr/bin/env bash
+set -x
 
 if (( 10#${ENSMEM:-0} > 0 )); then
   source "${HOMEglobal}/ush/jjob_header.sh" -e "upp" -c "base eupp"
@@ -19,10 +20,9 @@ export PYTHONPATH
 
 # Construct COM variables from templates
 if (( 10#${ENSMEM:-0} > 0 )); then
-  MEMDIR=${MEMDIR} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-     COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL \
-     COMIN_ATMOS_HISTORY:COM_ATMOS_HISTORY_TMPL \
-     COMOUT_ATMOS_MASTER:COM_ATMOS_MASTER_TMPL
+  declare -rx COMIN_ATMOS_ANALYSIS="${MEMDIR}/${RUN}.${PDY}/${cyc}/analysis/atmos"
+  declare -rx COMIN_ATMOS_HISTORY="${MEMDIR}/${RUN}.${PDY}/${cyc}/model/atmos/history"
+  declare -rx COMOUT_ATMOS_MASTER="${MEMDIR}/${RUN}.${PDY}/${cyc}/model/atmos/master"
 else
   declare -rx COMIN_ATMOS_ANALYSIS="${ROTDIR}/${RUN}.${PDY}/${cyc}/analysis/atmos"
   declare -rx COMIN_ATMOS_HISTORY="${ROTDIR}/${RUN}.${PDY}/${cyc}/model/atmos/history"

@@ -1,4 +1,5 @@
 #! /usr/bin/env bash
+set -x
 
 source "${HOMEglobal}/ush/jjob_header.sh" -e "esfc" -c "base esfc"
 
@@ -37,8 +38,7 @@ declare -rx COMIN_ATMOS_ANALYSIS_DET_PREV="${ROTDIR}/${GDUMP}.${gPDY}/${gcyc}/an
 # Use CFP to stage and save files in parallel
 export USE_CFP=YES
 
-ROTDIR=${ICSROOT}/output/${CASE} RUN="gdas" YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-      COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
+declare -rx COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/output/${CASE}/gdas.${PDY}/${cyc}/model/atmos/restart"
 
 ###############################################################
 # Run relevant script

@@ -74,7 +74,7 @@ build:
     memory: "40G"
 
   shield_model:
-    command: "./build_shield.sh"
+    command: "./build_shield.sh -e shield_model.x"
     cores: 1
     walltime: "00:40:00"
     memory: "40G"

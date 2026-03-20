@@ -214,12 +214,14 @@ class ArchiveTarVars:
                 'ENKF_SPREAD', 'DOIAU_ENKF', 'IAU_OFFSET', 'IAUFHRS_ENKF',
                 # EnKF restart intervals
                 'restart_interval_enkfgdas', 'restart_interval_enkfgfs',
+                # Other
+                'atmf_interval', 'write_spread_diag', 'EXP_WARM_START',
             ])
         else:
             # Archive-specific keys (only in exglobal_archive_tars.py)
             config_keys.extend([
                 # Forecast configuration
-                'FHMIN', 'FHMAX', 'FHOUT',
+                'FHMIN', 'FHMAX', 'FHOUT', 'EXP_WARM_START',
                 'FHMIN_GFS', 'FHMAX_GFS', 'FHOUT_GFS', 'FHOUT_HF_GFS', 'FHMAX_HF_GFS',
                 'FHOUT_OCN', 'FHOUT_ICE', 'FHOUT_OCN_GFS', 'FHOUT_ICE_GFS',
                 'FHOUT_WAV', 'FHOUT_WAV_GFS', 'FHOUT_HF_WAV', 'FHMAX_WAV', 'FHMAX_HF_WAV', 'FHMAX_WAV_GFS',
@@ -228,18 +230,18 @@ class ArchiveTarVars:
                 # Model components
                 'DO_OCN', 'DO_ICE', 'DO_WAVE', 'DO_PREP_OBS_AERO', 'WRITE_DOPOST',
                 # Data assimilation
-                'DO_JEDIATMVAR', 'DO_JEDIOCNVAR', 'DO_AERO_ANL', 'DO_AERO_FCST', 'ATMINC_GRID',
+                'DO_JEDIATMVAR', 'DO_JEDIOCNVAR', 'DO_AERO_ANL', 'DO_AERO_FCST', 'ATMINC_GRID', 'DONST',
                 # Restart intervals
                 'restart_interval_gdas', 'restart_interval_gfs',
                 # Archive control
                 'ARCH_GAUSSIAN', 'ARCH_GAUSSIAN_FHMAX', 'ARCH_GAUSSIAN_FHINC',
-                'ARCH_EXPDIR', 'ARCH_EXPDIR_FREQ', 'ARCH_HASHES', 'ARCH_DIFFS',
+                'ARCH_EXPDIR', 'ARCH_EXPDIR_FREQ', 'ARCH_HASHES', 'ARCH_DIFFS', 'ARCH_RSTPROD',
                 # Grid and resolution
                 'OCNRES', 'ICERES', 'waveGRD', 'WAVE_OUT_GRIDS',
                 # Other
                 'DO_BUFRSND', 'NUM_SND_COLLECTIVES', 'DOBNDPNT_WAVE',
                 'OFFSET_START_HOUR', 'EXPDIR', 'EDATE', 'HOMEglobal',
-                'DO_GEMPAK', 'DATASETS_YAML', 'TARBALL_TYPE',
+                'DO_GEMPAK', 'DATASETS_YAML', 'TARBALL_TYPE', 'DO_POST', 'DO_OMF',
             ])
 
         # Extract keys if they exist in config_dict

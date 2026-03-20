@@ -3,17 +3,17 @@
 set -x
 
 # Source FV3GFS workflow modules
-source "${HOMEgfs}/dev/ush/load_modules.sh" run
+source "${HOMEglobal}/dev/ush/load_modules.sh" run
 status=$?
-if [[ "${status}" -ne 0 ]]; then
+if [[ ${status} -ne 0 ]]; then
     exit "${status}"
 fi
 
-export job="dfetch"
+export job="getic"
 export jobid="${job}.$$"
 
 # Execute the JJOB
-"${HOMEgfs}/jobs/JGLOBAL_DFETCH"
+"${HOMEglobal}/dev/jobs/JGLOBAL_GETIC"
 status=$?
 
 exit "${status}"

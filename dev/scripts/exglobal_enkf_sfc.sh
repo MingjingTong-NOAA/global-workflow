@@ -152,6 +152,7 @@ fi
 export APRUNCY=${APRUN_CYCLE:-${APRUN_ESFC}}
 export OMP_NUM_THREADS_CY=${NTHREADS_CYCLE:-${NTHREADS_ESFC}}
 export MAX_TASKS_CY=${NMEM_ENS}
+FIXorog=${FIXorog:-"${FIXglobal}/orog"}
 orogfix=${orogfix:-"${CASE}.mx${OCNRES}"}
 
 if [[ "${DOIAU}" == "YES" ]]; then
@@ -192,21 +193,13 @@ if [[ "${DOIAU}" == "YES" ]]; then
             if [[ ${TILE_NUM} -eq 1 ]]; then
                 mkdir -p "${COMOUT_ATMOS_RESTART_MEM}"
             fi
-            if [[ ${NET} == "shield" ]]; then
-                cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                      "${DATA}/fnbgsi.${cmem}"
-                cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
-                cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
-                cpreq "${FIXglobal}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
-                if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
-                   ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
-                fi
-            else
-                cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                      "${DATA}/sfc_data_cycle.${cmem}"
-                cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
-                cpreq "${FIXglobal}/orog/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
-            fi
+            cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
+                  "${DATA}/sfc_data_cycle.${cmem}"
+            cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
+            cpreq "${FIXorog}/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+	    if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
+	       ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
+	    fi
 
             if [[ "${DO_GSISOILDA}" == "YES" ]] && [[ "${GCYCLE_DO_SOILINCR}" == ".true." ]]; then
                 cpreq "${COMIN_ATMOS_ANALYSIS_MEM}/increment.sfc.i00${LFHR}.tile${n}.nc" \
@@ -276,21 +269,13 @@ if [[ "${DOSFCANL_ENKF}" == "YES" ]]; then
             else
                 sfcdata_dir="${COMIN_ATMOS_RESTART_MEM_PREV}"
             fi
-            if [[ ${NET} == "shield" ]]; then
-               cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                     "${DATA}/fnbgsi.${cmem}"
-               cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/fnbgso.${cmem}"
-               cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
-               cpreq "${FIXglobal}/orog/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
-               if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
-                 ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
-               fi
-            else
-               cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                     "${DATA}/fnbgsi.${cmem}"
-               cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/sfc_data_cycle.${cmem}"
-               cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
-               cpreq "${FIXglobal}/orog/${CASE}/${CASE}.mx${OCNRES}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+            cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
+                  "${DATA}/fnbgsi.${cmem}"
+            cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/sfc_data_cycle.${cmem}"
+            cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
+            cpreq "${FIXorog}/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
+	    if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
+	        ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
             fi
 
             if [[ "${DO_GSISOILDA}" == "YES" ]] && [[ "${GCYCLE_DO_SOILINCR}" == ".true." ]]; then

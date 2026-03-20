@@ -136,11 +136,10 @@ class SHiELDTasks(Tasks):
         ioda_path = self._template_to_rocoto_cycstring(self._base["COM_OBSFORGE_TMPL"],
                                                        {'IODADIR': iodadir, 'DUMP_SUFFIX': dump_suffix})
 
-        gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
-
         deps = []
 
         if self.app_config.mode == "cycled":
+            gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
             if self.options['do_enkfonly_atm']:
                 dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
                 deps.append(rocoto.add_dependency(dep_dict))

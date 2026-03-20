@@ -166,7 +166,8 @@ for loop in ${loops}; do
         n=$((n + 1))
         for dtype in ${diagtype[n]}; do
             if [[ "${dtype}" == *"avhrr"* ]]; then # recast dtype in avhrr form
-                dtype="avhrr${dtype##avhrr[23]}"
+                #dtype="avhrr${dtype##avhrr[23]}" original 
+		dtype="avhrr_${dtype#*_}"
             fi
             # -L to follow symlinks, as dir.* are symlinks to gsidiags/dir.*
             count=$(find -L ./dir.* -path "./dir.*/${dtype}_${loop}*" -type f -printf "." | wc -c)

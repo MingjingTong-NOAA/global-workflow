@@ -43,6 +43,7 @@ fi
 export SFCANALSH="${HOMEglobal}/scripts/exglobal_atmos_sfcanl.sh"
 export CYCLESH="${USHglobal}/global_cycle_shield.sh"
 export FIXorog="${FIXglobal}/orog_shield"
+export sfcfix="fix_sfc"
 export orogfix="${CASE}"
 
 echo "END: config.sfcanl"

@@ -10,6 +10,9 @@ source "${EXPDIR}/config.resources" analcalc
 
 export cliptracers="NO"
 
+LEVSP1=$((LEVS + 1))
+export SIGLEVEL="${FIXshield}/global_hyblev.l${LEVSP1}.txt"
+export FIXorog="${FIXglobal}/orog_shield"
 export orogfix="${CASE}"
 
 echo "END: config.analcalc"

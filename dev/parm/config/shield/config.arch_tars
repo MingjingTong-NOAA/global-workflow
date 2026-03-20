@@ -33,7 +33,4 @@ fi
 # archive restricted product
 export ARCH_RSTPROD='NO'
 
-# Time interval to archive forecast output on gaussian grid (*atmf* and *sfcf*)
-export FHNCOUT=1
-
 echo "END: config.arch_tars"

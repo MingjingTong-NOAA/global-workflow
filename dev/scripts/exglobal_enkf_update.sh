@@ -74,14 +74,14 @@ else
 fi
 LATA_ENKF=${LATA_ENKF:-${LATB_ENKF}}
 LONA_ENKF=${LONA_ENKF:-${LONB_ENKF}}
-SATANGL=${SATANGL:-${FIXgsi}/global_satangbias.txt}
-SATINFO=${SATINFO:-${FIXgsi}/global_satinfo.txt}
-CONVINFO=${CONVINFO:-${FIXgsi}/global_convinfo.txt}
-OZINFO=${OZINFO:-${FIXgsi}/global_ozinfo.txt}
-SCANINFO=${SCANINFO:-${FIXgsi}/global_scaninfo.txt}
-HYBENSINFO=${HYBENSINFO:-${FIXgsi}/global_hybens_info.l${LEVS_ENKF}.txt}
-ANAVINFO=${ANAVINFO:-${FIXgsi}/global_anavinfo.l${LEVS_ENKF}.txt}
-VLOCALEIG=${VLOCALEIG:-${FIXgsi}/vlocal_eig_l${LEVS_ENKF}.dat}
+SATANGL=${SATANGL:-${FIXglobal}/gsi/global_satangbias.txt}
+SATINFO=${SATINFO:-${FIXglobal}/gsi/global_satinfo.txt}
+CONVINFO=${CONVINFO:-${FIXglobal}/gsi/global_convinfo.txt}
+OZINFO=${OZINFO:-${FIXglobal}/gsi/global_ozinfo.txt}
+SCANINFO=${SCANINFO:-${FIXglobal}/gsi/global_scaninfo.txt}
+HYBENSINFO=${HYBENSINFO:-${FIXglobal}/gsi/global_hybens_info.l${LEVS_ENKF}.txt}
+ANAVINFO=${ANAVINFO:-${FIXglobal}/gsi/global_anavinfo.l${LEVS_ENKF}.txt}
+VLOCALEIG=${VLOCALEIG:-${FIXglobal}/gsi/vlocal_eig_l${LEVS_ENKF}.dat}
 ENKF_SUFFIX="s"
 if [[ "${SMOOTH_ENKF:-YES}" == "NO" ]]; then
     ENKF_SUFFIX=""

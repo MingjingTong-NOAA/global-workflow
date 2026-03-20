@@ -17,23 +17,16 @@ if [[ $MODE = "forecast-only" && $EXP_WARM_START = ".true." ]]; then
 fi
 
 if [[ (${ICFROM} = "gfs" && ${gfs_ver:1:2} -le 16) || (${ICFROM} != "gfs" && ${exp_ver} -lt 2024) ]]; then
-  export COMIN_ATMOS_ANALYSIS=${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT:-"atmos"}
-  export COMIN_ATMOS_ANALYSIS_RESTART=${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/${COMPONENT:-"atmos"}/RESTART
+  declare -rx COMIN_ATMOS_ANALYSIS="${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/atmos"
+  declare -rx COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/atmos/RESTART"
 else
-  ROTDIR=${ICSROOT} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-         COMIN_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL 
-  ROTDIR=${ICSROOT} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-         COMIN_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL   
+  declare -rx COMIN_ATMOS_ANALYSIS="${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/analysis/atmos"
+  declare -rx COMIN_ATMOS_ANALYSIS_RESTART="${ICSROOT}/${ICDUMP}.${PDY}/${cyc}/analysis/atmos/RESTART"
 fi
-
-ROTDIR=${ICSROOT}/output/${CASE} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-	COMOUT_ATMOS_INPUT:COM_ATMOS_INPUT_TMPL 
-ROTDIR=${ICSROOT}/output RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-        COMOUT_ATMOS_ANALYSIS:COM_ATMOS_ANALYSIS_TMPL
-ROTDIR=${ICSROOT}/output/${CASE} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-        COMOUT_ATMOS_ANALYSIS_RESTART:COM_ATMOS_RESTART_TMPL
-ROTDIR=${ICSROOT}/output/${CASE_ENS} RUN=${ICDUMP} YMD=${PDY} HH=${cyc} declare_from_tmpl -rx \
-        COMOUT_ATMOS_ANALYSIS_RESTART_ENS:COM_ATMOS_RESTART_TMPL
+declare -rx COMOUT_ATMOS_INPUT="${ICSROOT}/output/${CASE}/${ICDUMP}.${PDY}/${cyc}/model/atmos/input"
+declare -rx COMOUT_ATMOS_ANALYSIS="${ICSROOT}/output/${ICDUMP}.${PDY}/${cyc}/analysis/atmos"
+declare -rx COMOUT_ATMOS_ANALYSIS_RESTART="${ICSROOT}/output/${CASE}/${ICDUMP}.${PDY}/${cyc}/model/atmos/restart"
+declare -rx COMOUT_ATMOS_ANALYSIS_RESTART_ENS="${ICSROOT}/output/${CASE_ENS}/${ICDUMP}.${PDY}/${cyc}/model/atmos/restart"
 
 ###############################################################
 # Run init script

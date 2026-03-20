@@ -194,7 +194,8 @@ gdas:
         - "{{ COMIN_ATMOS_HISTORY }}/{{ head }}log.f{{ fhr3 }}.txt"
         {% endfor %}
         # Raw netCDF forecasts
-        {% for fhr in range(FHMIN, FHMAX + 1, FHNCOUT) %}
+        {% for fhr in range(FHMIN, FHMAX + 1, FHOUT) %}
+            {% set fhr3 = '%03d' % fhr %}
         - "{{ COMIN_ATMOS_HISTORY }}/{{ head }}atm.f{{ fhr3 }}.nc"
         - "{{ COMIN_ATMOS_HISTORY }}/{{ head }}sfc.f{{ fhr3 }}.nc"
         {% endfor %}
