@@ -194,8 +194,8 @@ if [[ "${DOIAU}" == "YES" ]]; then
                 mkdir -p "${COMOUT_ATMOS_RESTART_MEM}"
             fi
             cpreq "${sfcdata_dir}/${bPDY}.${bcyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                  "${DATA}/sfc_data_cycle.${cmem}"
-            cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
+                "${DATA}/sfc_data_cycle.${cmem}"
+            cpreq "${FIXorog}/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
             cpreq "${FIXorog}/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
 	    if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
 	       ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${bPDY}.${bcyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
@@ -270,9 +270,8 @@ if [[ "${DOSFCANL_ENKF}" == "YES" ]]; then
                 sfcdata_dir="${COMIN_ATMOS_RESTART_MEM_PREV}"
             fi
             cpreq "${sfcdata_dir}/${PDY}.${cyc}0000.${snow_prefix}sfc_data.tile${n}.nc" \
-                  "${DATA}/fnbgsi.${cmem}"
-            cpreq "${DATA}/fnbgsi.${cmem}" "${DATA}/sfc_data_cycle.${cmem}"
-            cpreq "${FIXglobal}/orog/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
+	        "${DATA}/sfc_data_cycle.${cmem}"
+            cpreq "${FIXorog}/${CASE}/${CASE}_grid.tile${n}.nc" "${DATA}/fngrid.${cmem}"
             cpreq "${FIXorog}/${CASE}/${orogfix}_oro_data.tile${n}.nc" "${DATA}/fnorog.${cmem}"
 	    if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
 	        ${NLN} ${COMIN_ATMOS_ANALYSIS_RESTART}/${PDY}.${cyc}0000.sfcanl_data.tile${n}.nc ${DATA}/fntile.${cmem}
