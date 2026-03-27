@@ -82,7 +82,7 @@ class Fetch(Task):
 
         self.htar = htar.Htar()
 
-        fetch_parm = os.path.join(fetch_dict.PARMgfs, "fetch")
+        fetch_parm = os.path.join(fetch_dict.PARMglobal, "fetch")
         master_yaml = "master_" + fetch_dict.RUN + ".yaml.j2"
 
         parsed_sets = parse_j2yaml(os.path.join(fetch_parm, master_yaml),
