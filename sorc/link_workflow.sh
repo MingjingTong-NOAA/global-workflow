@@ -192,7 +192,7 @@ if [[ "${MODEL}" == "shield" ]]; then
   done
   ${LINK_OR_COPY} "${FIX_SHiELD_DIR}/ref_fcst" "ref_fcst"
   cd ${HOMEglobal}/sorc/ufs_utils.fd/fix
-  ./link_fixdirs.sh shield ${machine}
+  ./link_fixdirs.sh ${RUN_ENVIR} ${machine}
 fi
 
 #---------------------------------------
@@ -483,7 +483,7 @@ if [[ -s "upp.x" ]]; then
 fi
 ${LINK_OR_COPY} "${HOMEglobal}/sorc/upp.fd/exec/upp.x" .
 
-for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube_shield fregrid regridStates.x; do
+for ufs_utilsexe in emcsfc_ice_blend emcsfc_snow2mdl global_cycle chgres_cube chgres_cube_shield fregrid regridStates.x; do
     if [[ -s "${ufs_utilsexe}" ]]; then
         rm -f "${ufs_utilsexe}"
     fi

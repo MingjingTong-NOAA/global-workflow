@@ -19,6 +19,7 @@ rocoto_xml_factory = Factory('RocotoXML')
 # Register XML generators for different workflow types
 rocoto_xml_factory.register('gfs_cycled', GFSCycledRocotoXML)
 rocoto_xml_factory.register('gfs_forecast-only', GFSForecastOnlyRocotoXML)
+rocoto_xml_factory.register('gfs_replay', GFSCycledRocotoXML)
 rocoto_xml_factory.register('gefs_forecast-only', GEFSRocotoXML)
 rocoto_xml_factory.register('shield_cycled', GFSCycledRocotoXML)
 rocoto_xml_factory.register('shield_forecast-only', GFSForecastOnlyRocotoXML)

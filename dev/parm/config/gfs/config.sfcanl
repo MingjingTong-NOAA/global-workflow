@@ -33,4 +33,8 @@ if [[ "${DO_GSISOILDA}" == "YES" ]]; then
     export REGRID_EXEC="${HOMEglobal}/exec/regridStates.x"
 fi
 
+if [[ ${MODE} == "replay" ]]; then
+   export READ_TREF=".true."
+fi
+
 echo "END: config.sfcanl"

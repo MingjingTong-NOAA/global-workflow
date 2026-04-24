@@ -43,8 +43,6 @@ export io_save_jacobian_cch=".false."    # default = .false.
 # whether to assimilate scattering affected obs:
 export io_scatter_assim=".true."     # default = .false.
 
-
-
 # Get task specific resources
 source "${EXPDIR}/config.resources" anal
 
@@ -67,10 +65,6 @@ elif [[ ${LEVS} = "91" ]]; then
   export GRIDOPTS="nlayers(90)=2,nlayers(91)=3,"
   export SETUP="gpstop=45,nsig_ext=24,${SETUP:-}"
 fi
-
-# Set namelist option for LETKF
-export lobsdiag_forenkf=".false."  # anal does not need to write out jacobians
-                                   # set to .true. in config.eobs and config.eupd
 
 # Reduce number of iterations for testing mode
 if [[ ${DO_TEST_MODE} = "YES" ]]; then
@@ -150,7 +144,7 @@ elif [[ $obserr_table == "hydro_v0" ]]; then
 fi
 
 # Use 2m diagnostic for screen level obs
-export hofx_2m_sfcfile=".false."
+export hofx_2m_sfcfile=".true."
 
 if [[ ${DO_GSISOILDA} = "YES" ]]; then
     export reducedgrid=".false." # not possible for sfc analysis, Jeff Whitaker says it's not useful anyway

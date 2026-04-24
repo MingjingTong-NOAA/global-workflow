@@ -20,13 +20,7 @@ FV3_postdet() {
         echo "Copying FV3 cold start files for 'RUN=${RUN}' at '${current_cycle}' from '${COMIN_ATMOS_INPUT}'"
         local fv3_file
         for fv3_file in ${file_list}; do
-            if [[ $DONST != "YES" && ${USE_TREF:-".false."} == ".true." && "${fv3_file:0:3}" == "sfc" ]]; then
-               ${NLN} "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/sfc_org"
-               ncrename -O -v tsea,tsea_org $DATA/INPUT/sfc_org out.nc
-               ncrename -O -v tref,tsea out.nc ${DATA}/INPUT/${fv3_file}
-            else
-               cpreq "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/${fv3_file}"
-            fi
+           cpreq "${COMIN_ATMOS_INPUT}/${fv3_file}" "${DATA}/INPUT/${fv3_file}"
         done
         if [ "$ICFROM" = "ifs" ]; then
            cpreq "${ECICSDIR}/IFS_AN0_${PDY}.${cyc}Z.nc" "$DATA/INPUT/gk03_CF0.nc" \
@@ -73,16 +67,8 @@ FV3_postdet() {
             for ((nn = 1; nn <= ntiles; nn++)); do
                 if [[ -f "${COMIN_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" ]]; then
                     rm -f "${DATA}/INPUT/sfc_data.tile${nn}.nc"
-                    if [[ ${DONST:-"NO"} == "YES" || ${DO_SFCANL:-"NO"} == "YES" || (${MODE} = "forecast-only" && ${IAU_OFFSET} -ne 0) \
-                       || ${USE_TREF:-".false."} != ".true." ]]; then
-                       cpreq "${COMIN_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
-                           "${DATA}/INPUT/sfc_data.tile${nn}.nc"
-                    else
-                       cpreq "${COMOUT_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
-                           "${DATA}/INPUT/sfc_org"
-                       ncrename -O -v tsea,tsea_org ${DATA}/INPUT/sfc_org out.nc
-                       ncrename -O -v tref,tsea out.nc ${DATA}/INPUT/sfc_data.tile${nn}.nc
-                    fi
+                    cpreq "${COMIN_ATMOS_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" \
+                          "${DATA}/INPUT/sfc_data.tile${nn}.nc"
                 # GCAFS does not run the sfcanl, only GCDAS
                 elif [[ ${DO_AERO_FCST} == "YES" && -f "${COMIN_TRACER_RESTART}/${restart_date:0:8}.${restart_date:8:2}0000.sfcanl_data.tile${nn}.nc" ]]; then
                     rm -f "${DATA}/INPUT/sfc_data.tile${nn}.nc"

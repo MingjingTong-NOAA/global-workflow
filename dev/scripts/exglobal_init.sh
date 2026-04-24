@@ -15,8 +15,6 @@
 #
 ###############################################################
 
-source "${USHglobal}/preamble.sh"
-
 # Directories.
 pwd=$(pwd)
 
@@ -75,7 +73,7 @@ else
   fi
     
   # Interpolate GFS surface analysis file to be used by gcycle to replace tsfc with tref for replay or DA cycling
-  if [[ "${MODE}" != "forecast-only" && ("${DO_TSFC_TILE}" == "YES" || "${DO_SFCANL}" != "YES" ) && ("${CDATE}" != "$SDATE" || "${EXP_WARM_START}" == ".true.") ]]; then
+  if [[ "${MODE}" != "forecast-only" && ("${DO_TSFC_TILE:-"NO"}" == "YES" || "${DO_SFCANL}" != "YES" ) && ("${CDATE}" != "$SDATE" || "${EXP_WARM_START}" == ".true.") ]]; then
     if [[ $CASE != $OPS_RES && ! -s ${COMOUT_ATMOS_ANALYSIS_RESTART}/${iPDY}.${icyc}0000.sfcanl_data.tile6.nc ]]; then
       sh ${RUNSFCANLSH} ${ICDUMP} ${IAUSDATE} ${CASE} ${COMOUT_ATMOS_ANALYSIS_RESTART} 
       status=$?

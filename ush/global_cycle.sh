@@ -325,7 +325,7 @@ cat << EOF > fort.36
   deltsfc=${DELTSFC},ialb=${IALB},use_ufo=${use_ufo},donst="${DONST}",
   do_sfccycle=${DO_SFCCYCLE},do_landincr=${DO_LANDINCR},isot=${ISOT},ivegsrc=${IVEGSRC},
   zsea1_mm=${zsea1},zsea2_mm=${zsea2},MAX_TASKS=${MAX_TASKS_CY},
-  frac_grid=${FRAC_GRID},coupled=${COUPLED}
+  frac_grid=${FRAC_GRID},coupled=${COUPLED},read_tref=${READ_TREF:-.false.}
  /
 EOF
 

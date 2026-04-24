@@ -1,0 +1,37 @@
+#! /usr/bin/env bash
+
+########## config.gomg ##########
+# Analysis specific
+
+echo "BEGIN: config.gomg"
+
+# Get task specific resources
+source "${EXPDIR}/config.resources" gomg
+
+if [[ ${DONST} = "YES" ]]; then
+  source "${EXPDIR}/config.nsst"
+fi
+
+# GSI namelist options
+export DOHYBVAR="NO"
+export USE_CORRELATED_OBERRS="NO"
+export write_fv3_increment=".false."
+
+export USE_RADSTAT="NO" # This can be only used when bias correction is not-zero.
+export GENDIAG="YES"
+export SETUP="diag_rad=.true.,diag_pcp=.true.,diag_conv=.true.,diag_ozone=.true.,${SETUP:-}"
+
+# GSI Namelist options for observation operator only
+export SETUP="miter=0,niter=1,thin4d=.true.,l4densvar=.true.,${SETUP}"
+export BKGVERR="bkgv_flowdep=.false."
+export STRONGOPTS="tlnmc_option=0,nstrong=0,nvmodes_keep=0,baldiag_full=.false.,baldiag_inc=.false.,"
+
+export USE_CORRELATED_OBERRS="NO"
+
+res=$(echo $CASE | cut -c2-)
+# help resolution
+export JCAP_A=$((res-2))
+export LATA=$res
+export LONA=$((res*2))
+
+echo "END: config.gomg"

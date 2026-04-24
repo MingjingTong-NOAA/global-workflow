@@ -17,7 +17,7 @@ if (( $# != 1 )); then
     echo "atmensanlinit atmensanlobs atmensanlsol atmensanlletkf atmensanlfv3inc atmensanlfinal ecen_fv3jedi analcalc_fv3jedi"
     echo "snowanl esnowanl"
     echo "aeroanlinit aeroanlvar aeroanlfinal aeroanlgenb"
-    echo "anal sfcanl analcalc analdiag anlstat fcst echgres"
+    echo "anal sfcanl analcalc analdiag anlstat fcst echgres analinc"
     echo "upp atmos_products"
     echo "tracker genesis genesis_fsu"
     echo "verfozn verfrad vminmon fit2obs metp arc_vrfy arc_tars cleanup"
@@ -785,6 +785,20 @@ case ${step} in
     memory="150GB"
     ;;
 
+  "analinc")
+    walltime="00:15:00"
+    if [[ "$REPLAY_4DIAU" == "YES" ]]; then
+       ntasks=3
+    else
+       ntasks=1
+    fi
+    threads_per_task=64
+    if (( threads_per_task > max_tasks_per_node )); then
+      threads_per_task=${max_tasks_per_node}
+    fi
+    tasks_per_node=$(( max_tasks_per_node / threads_per_task ))
+    ;;
+
   "sfcanl")
     walltime="00:20:00"
     ntasks=${ntiles:-6}
@@ -1240,7 +1254,7 @@ case ${step} in
     is_exclusive=True
     ;;
 
-  "eobs")
+  "eobs" | "gomg")
     walltime="00:15:00"
 
     case ${CASE} in

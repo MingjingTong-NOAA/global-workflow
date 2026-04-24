@@ -279,6 +279,14 @@ if [[ "${DO_AERO}" == "YES" ]]; then
   fi
 fi
 
+# Surface cycle update frequency
+if [[ "${RUN}" =~ "gdas" ]] ; then
+   export FHCYC=1
+   export FTSFS=10
+elif [[ "${RUN}" =~ "gfs" ]] ; then
+   export FHCYC=24
+fi
+
 # Initial condition setup (for forecast-only and replay)
 export ICFROM="gfs"   # could be gfs, shield, ifs or experiment name
 export gfs_ver="v16"  # gfs version
@@ -402,9 +410,7 @@ export lobsdiag_forenkf=".true."
 
 # run gcycle for DA or replay (only work with gfsv16 ICs)
 export DO_SFCANL="YES"
-export DO_RTGSST="NO"
 export DO_TSFC_TILE="YES"
-export USE_TREF=".false."
 
 # Microphysics Options: 99-ZhaoCarr, 8-Thompson; 6-WSM6, 10-MG, 11-GFDL
 export imp_physics=11
@@ -460,7 +466,7 @@ if [[ "${DOHYBVAR}" = "YES" ]]; then
 fi
 
 # if 3DVAR and IAU
-if [[ ${DOHYBVAR} == "NO" && ${DOIAU} == "YES"  ]]; then
+if [[ ${DOHYBVAR} == "NO" && ${DOIAU} == "YES" && ${MODE} == "cycled" ]]; then
     export IAUFHRS="6,"
     export IAU_FHROT="3"
     export IAU_FILTER_INCREMENTS=".true."
@@ -519,19 +525,11 @@ if [[ "${DONST}" = "YES" ]]; then
   export DOMLO=".false."
 fi
 
-# Surface cycle update frequency
-if [[ "${RUN}" == "gdas" && ${DONST} = "YES" ]] ; then
-   export FHCYC=1
-   export FTSFS=10
-else
-   export FHCYC=24
-fi
-
 # The switch to apply SST elevation correction or not
 export nst_anl=".true."
 
 # SHiELD (2022, 2024) and GSI analysis (v2, v2fullhydro, v3) versions
-export SHiELD_VERSION="2024"
+export SHiELD_VERSION="2022"
 export GSIVER="gfdl"
 export update_hydro="NO"
 

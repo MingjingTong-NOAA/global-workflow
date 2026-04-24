@@ -15,8 +15,6 @@
 #
 ###############################################################
 
-source "${USHglobal}/preamble.sh"
-
 # Directories.
 pwd=$(pwd)
 
@@ -46,7 +44,6 @@ export COMPONENT="atmos"
 export gfs_ver=${gfs_ver:-"v16"}
 export OPS_RES=${OPS_RES:-"C768"}
 export GETICSH=${GETICSH:-${GDASINIT_DIR}/get_v16.data.sh}
-export DOGCYCLE=${DOGCYCLE:-"YES"}
 export REPLAY_4DIAU=${REPLAY_4DIAU:-"NO"}
 
 if [ $CDATE -ge 2022062700 ]; then
@@ -250,7 +247,7 @@ cd ${ICSROOT}
 # need to check the condition below, always use operational surface analysis for now
 #if [[ $gfs_ver == "v16" ]]; then
   getsfcanl="NO"
-  if [[  $MODE != "forecast-only" && ($DO_TSFC_TILE == "YES" || $DOGCYCLE != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START == ".true.") ]]; then
+  if [[  $MODE != "forecast-only" && (${DO_TSFC_TILE:-"NO"} == "YES" || ${DO_SFCANL} != "YES" ) && ("$CDATE" != "$SDATE" || $EXP_WARM_START == ".true.") ]]; then
      getsfcanl="YES" 
   fi
   runchgres="NO" 
@@ -275,7 +272,7 @@ cd ${ICSROOT}
                   echo ".${ATMOS_ANALYSIS_RESTART}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${n}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                elif [ $fsize -gt $fsize1 ]; then
                   getdata="YES"
-                  m = $((n - 1))
+                  m=$((n - 1))
                   echo ".${ATMOS_ANALYSIS_RESTART}/${iyy}${imm}${idd}.${ihh}0000.sfcanl_data.tile${m}.nc" >>${ROTDIR}/logs/${CDATE}/list.txt
                   fsize1=$fsize
                fi

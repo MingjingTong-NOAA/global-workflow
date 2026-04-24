@@ -77,7 +77,8 @@ if __name__ == '__main__':
     ExecNC = os.getenv('CALCINCNCEXEC', './calc_increment_ens_ncio.x')
     Inc2Zero = os.getenv('INCREMENTS_TO_ZERO', '"NONE"')
     ExecCMD = os.getenv('APRUN_CALCINC', '')
-    IAUHrs = list(map(int, os.getenv('IAUFHRS', '6').split(',')))
+    iau_env = os.getenv('IAUFHRS', '6')
+    IAUHrs = [int(x) for x in iau_env.split(',') if x.strip()]
 
     Exec = ExecNC
 

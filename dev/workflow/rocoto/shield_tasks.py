@@ -465,10 +465,9 @@ class SHiELDTasks(Tasks):
         deps = []
         if self.app_config.mode == "cycled":
             dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
-            deps.append(rocoto.add_dependency(dep_dict))
         else:
             dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'}
-            deps.append(rocoto.add_dependency(dep_dict))
+        deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         if self.app_config.mode == "forecast-only":
@@ -2855,14 +2854,12 @@ class SHiELDTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps_all)
 
         resources = self.get_resource('cleanup')
-        cycledef = self.run.replace('enkf', '')
-        cycledef = f'gdas_half,{cycledef}' if 'gdas' in cycledef else cycledef
         task_name = f'{self.run}_cleanup'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': cycledef,
+                     'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/cleanup.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -3692,14 +3689,12 @@ class SHiELDTasks(Tasks):
 
     def analdiag(self):
 
+        deps = []
         if self.app_config.mode == "cycled":
-            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
-            deps.append(rocoto.add_dependency(dep_dict))
         else:
-            deps = []
             dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'}
-            deps.append(rocoto.add_dependency(dep_dict))
+        deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
         if self.app_config.mode == "forecast-only":

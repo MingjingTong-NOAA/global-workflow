@@ -64,6 +64,16 @@ copy_opt:
     {% endif %}
 {% endif %}
 
+{% if DO_OMF == True %}
+    {% if DO_JEDIATMVAR == True %}
+    - ["{{ COMIN_ATMOS_ANALYSIS }}/{{ head }}atmos_analysis.ioda_hofx.tar.gz",
+       "{{ ARCDIR }}/atmstat.{{ RUN }}.{{ cycle_YMDH }}"]
+    {% else %}
+    - ["{{ COMIN_ATMOS_ANALYSIS }}/{{ head }}gsistat.txt",
+       "{{ ARCDIR }}/gsistat.{{ RUN }}.{{ cycle_YMDH }}"]
+    {% endif %}
+{% endif %}
+
 {% if RUN == "gfs" %}
     # GFS forecast files
     {% for fhr in range(0, FHMAX_GFS + 1, FHOUT_GFS) %}

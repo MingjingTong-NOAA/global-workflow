@@ -58,9 +58,11 @@ fi
 
 export EXTRACT_DIR=$ICSROOT
 
-export CHGRESEXEC=${EXECglobal}/chgres_cube_shield
-export FIX_ORO=${FIXglobal}/orog_shield
-export FIX_SFC="fix_sfc"
-export oro_fix="_"
+if [[ ${MODE} == "replay" ]]; then
+  export CHGRESEXEC=${EXECglobal}/chgres_cube_shield
+  export FIX_ORO=${FIXglobal}/orog_shield
+  export FIX_SFC="fix_sfc"
+  export oro_fix="_"
+fi
 
 echo "END: config.init"

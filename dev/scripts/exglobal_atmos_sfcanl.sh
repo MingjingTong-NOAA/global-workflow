@@ -176,7 +176,7 @@ for hr in "${!gcycle_dates[@]}"; do
         cpreq "${DATA}/fnbgsi.00${nn}" "${DATA}/sfc_data_cycle.00${nn}"
     done
 
-    if [[ $DO_TSFC_TILE == "YES" ]]; then
+    if [[ ${DO_TSFC_TILE:-"NO"} == "YES" ]]; then
       for n in $(seq 1 $ntiles); do
         $NLN ${COMIN_ATMOS_ANALYSIS_RESTART}/${gcycle_date:0:8}.${gcycle_date:8:2}0000.sfcanl_data.tile${n}.nc $DATA/fntile.00$n
       done

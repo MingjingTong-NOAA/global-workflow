@@ -67,7 +67,7 @@ class GFSTasks(Tasks):
         if self.options['do_fetch_hpss'] or self.options['do_fetch_local']:
             deps = []
             dep_dict = {
-                'type': 'task', 'name': f'{self.run}_fetch',
+                'type': 'task', 'name': f'{self.run}_init',
             }
             deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep=deps)
@@ -125,48 +125,60 @@ class GFSTasks(Tasks):
         dmpdir = self._base["DMPDIR"]
         iodadir = self._base["IODADIR"]
         atm_hist_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_HISTORY_TMPL"], {'RUN': 'gdas'})
+        atm_restart_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'RUN': self.run})
         dump_path = self._template_to_rocoto_cycstring(self._base["COM_OBSPROC_TMPL"],
                                                        {'DMPDIR': dmpdir, 'DUMP_SUFFIX': dump_suffix})
         ioda_path = self._template_to_rocoto_cycstring(self._base["COM_OBSFORGE_TMPL"],
                                                        {'IODADIR': iodadir, 'DUMP_SUFFIX': dump_suffix})
 
-        gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
-
         deps = []
 
-        if self.options['do_enkfonly_atm']:
-            dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        if self.app_config.mode == "cycled":
+            gfs_enkf = True if self.options['do_hybvar'] and 'gfs' in self.app_config.ens_runs else False
+            if self.options['do_enkfonly_atm']:
+                dep_dict = {'type': 'metatask', 'name': 'enkfgdas_epmn', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+                data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
+                dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+                deps.append(rocoto.add_dependency(dep_dict))
+            data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
+            dep_dict = {'type': 'data', 'data': data}
+            if self.options['do_jediatmvar']:
+                data = f'{ioda_path}/atmos/{self.run}.t@Hz.obsforge_atmos_bufr_status.log'
+                dep_dict = {'type': 'data', 'data': data}
+                deps.append(rocoto.add_dependency(dep_dict))
+            # TODO enable this for marine observations when ready
+            # if self.options['do_jediocnvar']:
+            #     data = f'{ioda_path}/ocean/{self.run}.t@Hz.obsforge_marine_status.log'
+            #     dep_dict = {'type': 'data', 'data': data}
+            #     deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_aero_anl']:
+                data = f'{ioda_path}/chem/{self.run}.t@Hz.obsforge_aod_status.log'
+                dep_dict = {'type': 'data', 'data': data}
+                deps.append(rocoto.add_dependency(dep_dict))
             deps.append(rocoto.add_dependency(dep_dict))
-        else:
-            dep_dict = {'type': 'metatask', 'name': 'gdas_atmos_prod', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            if self.options['do_prep_sfc']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_prep_sfc'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+    
+            cycledef = self.run
+            if self.run in ['gfs'] and gfs_enkf and self._base['INTERVAL_GFS'] != 6:
+                cycledef = 'gdas'
+        elif self.app_config.mode == "replay":
+            data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
             deps.append(rocoto.add_dependency(dep_dict))
-            data = f'{atm_hist_path}/gdas.t@Hz.atm.f009.nc'
-            dep_dict = {'type': 'data', 'data': data, 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
-            deps.append(rocoto.add_dependency(dep_dict))
-        data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
-        dep_dict = {'type': 'data', 'data': data}
-        if self.options['do_jediatmvar']:
-            data = f'{ioda_path}/atmos/{self.run}.t@Hz.obsforge_atmos_bufr_status.log'
+            data = f'{dump_path}/{self.run}.t@Hz.updated.status.tm00.bufr_d'
             dep_dict = {'type': 'data', 'data': data}
             deps.append(rocoto.add_dependency(dep_dict))
-        # TODO enable this for marine observations when ready
-        # if self.options['do_jediocnvar']:
-        #     data = f'{ioda_path}/ocean/{self.run}.t@Hz.obsforge_marine_status.log'
-        #     dep_dict = {'type': 'data', 'data': data}
-        #     deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_aero_anl']:
-            data = f'{ioda_path}/chem/{self.run}.t@Hz.obsforge_aod_status.log'
-            dep_dict = {'type': 'data', 'data': data}
+            dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
             deps.append(rocoto.add_dependency(dep_dict))
-        deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_prep_sfc']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_prep_sfc'}
-            deps.append(rocoto.add_dependency(dep_dict))
-        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-
-        cycledef = self.run
-        if self.run in ['gfs'] and gfs_enkf and self._base['INTERVAL_GFS'] != 6:
-            cycledef = 'gdas'
+            dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            cycledef = self.run
 
         resources = self.get_resource('prep')
         task_name = f'{self.run}_prep'
@@ -346,21 +358,35 @@ class GFSTasks(Tasks):
     def sfcanl(self):
 
         deps = []
-        if self.options['do_jediatmvar']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
+        if self.app_config.mode == "cycled":
+            if self.options['do_jediatmvar']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_atmanlfinal'}
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
+            deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_jedisnowda']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_snowanl'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_gsisoilda'] and self.run in ['gdas']:
+                dep_dict = {'type': 'task', 'name': 'enkfgdas_eupd'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['do_jedisnowda'] or (self.options['do_gsisoilda'] and self.run in ['gdas']):
+                dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+            else:
+                dependencies = rocoto.create_dependency(dep=deps)
         else:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
-        deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_jedisnowda']:
-            dep_dict = {'type': 'task', 'name': f'{self.run}_snowanl'}
+            if self.options['do_omf']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
+            else:
+                dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
             deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_gsisoilda'] and self.run in ['gdas']:
-            dep_dict = {'type': 'task', 'name': 'enkfgdas_eupd'}
-            deps.append(rocoto.add_dependency(dep_dict))
-        if self.options['do_jedisnowda'] or (self.options['do_gsisoilda'] and self.run in ['gdas']):
+            if self.options['do_tsfc_tile']:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            else:
+                dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
+                deps.append(rocoto.add_dependency(dep_dict))
             dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
-        else:
-            dependencies = rocoto.create_dependency(dep=deps)
 
         resources = self.get_resource('sfcanl')
         task_name = f'{self.run}_sfcanl'
@@ -411,10 +437,39 @@ class GFSTasks(Tasks):
 
         return task
 
+    def analinc(self):
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        resources = self.get_resource('analinc')
+        task_name = f'{self.run}_analinc'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': self.run.replace('enkf', ''),
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analinc.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
     def analdiag(self):
 
         deps = []
-        dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
+        if self.app_config.mode == "cycled":
+            dep_dict = {'type': 'task', 'name': f'{self.run}_anal'}
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_gomg'}
         deps.append(rocoto.add_dependency(dep_dict))
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -426,6 +481,38 @@ class GFSTasks(Tasks):
                      'envars': self.envars,
                      'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/analdiag.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    def gomg(self):
+
+        deps = []
+        dep_dict = {'type': 'task', 'name': f'{self.run}_prep'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.mode != "omf":
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        if self.app_config.mode == "forecast-only":
+            cycledef = 'gfs_omf'
+        else:
+            cycledef = self.run.replace('enkf', '')
+
+        resources = self.get_resource('gomg')
+        task_name = f'{self.run}_gomg'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/gomg.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
                      'maxtries': '&MAXTRIES;'
@@ -950,7 +1037,8 @@ class GFSTasks(Tasks):
     def fcst(self):
 
         fcst_map = {'forecast-only': self._fcst_forecast_only,
-                    'cycled': self._fcst_cycled}
+                    'cycled': self._fcst_cycled,
+                    'replay': self._fcst_replay}
 
         try:
             task = fcst_map[self.app_config.mode]()
@@ -1066,6 +1154,71 @@ class GFSTasks(Tasks):
         dependencies.append(dependencies1)
         dependencies.append(dependencies2)
         dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
+
+        cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
+
+        if self.run in ['gfs']:
+            num_fcst_segments = len(self.options['fcst_segments']) - 1
+        else:
+            num_fcst_segments = 1
+
+        fcst_vars = self.envars.copy()
+        fcst_envars_dict = {'FCST_SEGMENT': '#seg#'}
+        for key, value in fcst_envars_dict.items():
+            fcst_vars.append(rocoto.create_envar(name=key, value=str(value)))
+
+        resources = self.get_resource('fcst')
+        task_name = f'{self.run}_fcst_seg#seg#'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': fcst_vars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/fcst.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        seg_var_dict = {'seg': ' '.join([f"{seg}" for seg in range(0, num_fcst_segments)])}
+        metatask_dict = {'task_name': f'{self.run}_fcst',
+                         'is_serial': True,
+                         'var_dict': seg_var_dict,
+                         'task_dict': task_dict
+                         }
+
+        task = rocoto.create_task(metatask_dict)
+
+        return task
+
+    def _fcst_replay(self):
+
+        atm_restart_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'RUN': self.run})
+        if self.options['do_sfcanl']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_sfcanl'}
+        else:
+            data = [atm_restart_path, '/@Y@m@d.@H0000.sfcanl_data.tile6.nc']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': ['', '-03:00:00']}
+        dep = rocoto.add_dependency(dep_dict)
+        dependencies = rocoto.create_dependency(dep=dep)
+
+        if self.options['compute_iau_inc']:
+            if self.options['icfrom'] == 'gfs' or self.options['icfrom'] == 'shield':
+                dep_dict = {'type': 'task', 'name': f'{self.run}_init'}
+            else:
+                data = f'{self._base["ECICSDIR"]}/IFS_AN0_@Y@m@d.@HZ.nc'
+                dep_dict = {'type': 'data', 'data': data}
+        else:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analinc'}
+        dep = rocoto.add_dependency(dep_dict)
+        dependencies.append(rocoto.add_dependency(dep_dict))
+
+        dependencies = rocoto.create_dependency(dep_condition='and', dep=dependencies)
+
+        if self.run in ['gdas'] and not self.options['warm_start']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_stage_ic'}
+            dependencies.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=dependencies)
 
         cycledef = 'gdas_half,gdas' if self.run in ['gdas'] else self.run
 
@@ -2173,6 +2326,9 @@ class GFSTasks(Tasks):
                 deps.append(rocoto.add_dependency(dep_dict))
                 dep_dict = {'type': 'task', 'name': f'{self.run}_wavepostbndpntbll'}
                 deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.mode == 'replay' and self.options['do_omf']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
+            deps.append(rocoto.add_dependency(dep_dict))
 
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps)
 
@@ -2251,6 +2407,9 @@ class GFSTasks(Tasks):
             if self.run in ['gfs']:
                 dep_dict = {'type': 'metatask', 'name': f'{self.run}_ice_prod'}
                 deps.append(rocoto.add_dependency(dep_dict))
+        if self.app_config.mode == 'replay' and self.options['do_omf']:
+            dep_dict = {'type': 'task', 'name': f'{self.run}_analdiag'}
+            deps.append(rocoto.add_dependency(dep_dict))
         if self.options['do_gempak']:
             if self.run in ['gdas']:
                 dep_dict = {'type': 'task', 'name': f'{self.run}_gempakmetancdc'}
@@ -2671,14 +2830,12 @@ class GFSTasks(Tasks):
         dependencies = rocoto.create_dependency(dep_condition='and', dep=deps_all)
 
         resources = self.get_resource('cleanup')
-        cycledef = self.run.replace('enkf', '')
-        cycledef = f'gdas_half,{cycledef}' if 'gdas' in cycledef else cycledef
         task_name = f'{self.run}_cleanup'
         task_dict = {'task_name': task_name,
                      'resources': resources,
                      'dependency': dependencies,
                      'envars': self.envars,
-                     'cycledef': cycledef,
+                     'cycledef': self.run.replace('enkf', ''),
                      'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/cleanup.sh',
                      'job_name': f'{self.pslot}_{task_name}_@H',
                      'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
@@ -3320,3 +3477,102 @@ class GFSTasks(Tasks):
         task = rocoto.create_task(metatask_dict)
 
         return task
+
+    def getic(self):
+
+        cycledef = 'gdas' if self.run in ['gdas', 'enkfgdas'] else self.run
+
+        atm_input_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_INPUT_TMPL"], {'RUN': self.options['icdump']})
+        atm_restart_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'RUN': self.run})
+        if self.app_config.mode == "forecast-only":
+            deps = []
+            data = f"{atm_input_path}/sfc_data.tile6.nc"
+            dep_dict = {'type': 'data', 'data': data}
+            deps.append(rocoto.add_dependency(dep_dict))
+            data = f"{atm_restart_path}/@Y@m@d.@H0000.sfcanl_data.tile6.nc"
+            dep_dict = {'type': 'data', 'data': data}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='nor', dep=deps)
+        elif self.app_config.mode == "replay":
+            cycledef = 'gdas_half,gdas'
+            deps = []
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+        else:
+            if self.options['warm_start']:
+                cycledef = 'gdas_half,gdas'
+            deps = []
+            dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+            deps.append(rocoto.add_dependency(dep_dict))
+            data = [atm_restart_path, '/@Y@m@d.@H0000.coupler.res']
+            dep_dict = {'type': 'data', 'data': data, 'age': 30, 'offset': [f"-{timedelta_to_HMS(self._base['interval_gdas'])}", '']}
+            deps.append(rocoto.add_dependency(dep_dict))
+            if self.options['warm_start']:
+                dep_dict = {'type': 'cycleexist', 'condition': 'not', 'offset': '-06:00:00'}
+                deps.append(rocoto.add_dependency(dep_dict))
+            dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        resources = self.get_resource('getic')
+        task_name = f'{self.run}_getic'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/getic.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+
+    def init(self):
+
+        cycledef = 'gdas_half,gdas' if self.app_config.mode == "replay" else self.run
+        if self._base['gfs_ver'] == "v16":
+            ic_path = f'{self._base["ICSROOT"]}/{self.options["icdump"]}.@Y@m@d/@H/atmos/RESTART'
+        else:
+            ic_path = self._template_to_rocoto_cycstring(self._base["COM_ATMOS_RESTART_TMPL"], {'ROTDIR': self._base["ICSROOT"], 'RUN': self.options['icdump']})
+
+        deps = []
+        dep_dict = {'type': 'metatask', 'name': f'{self.run}_fcst', 'offset': f"-{timedelta_to_HMS(self._base['interval_gdas'])}"}
+        deps.append(rocoto.add_dependency(dep_dict))
+        data = f'{ic_path}/@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+        dep_dict = {'type': 'data', 'data': data, 'age': 30}
+        deps.append(rocoto.add_dependency(dep_dict))
+        data = f'{ic_path}/'
+        data2 = '@Y@m@d.@H0000.sfcanl_data.tile6.nc'
+        dep_dict = {'type': 'data', 'data': [data, data2], 'age': 30, 'offset': ['', '-03:00:00']}
+        deps.append(rocoto.add_dependency(dep_dict))
+        deps = rocoto.create_dependency(dep_condition='and', dep=deps)
+
+        dep_dict = {'type': 'task', 'name': f'{self.run}_getic'}
+        deps.append(rocoto.add_dependency(dep_dict))
+        dependencies = rocoto.create_dependency(dep_condition='or', dep=deps)
+
+        resources = self.get_resource('init')
+        task_name = f'{self.run}_init'
+        task_dict = {'task_name': task_name,
+                     'resources': resources,
+                     'dependency': dependencies,
+                     'envars': self.envars,
+                     'cycledef': cycledef,
+                     'command': f'{self.HOMEglobal}/dev/job_cards/rocoto/init.sh',
+                     'job_name': f'{self.pslot}_{task_name}_@H',
+                     'log': f'{self.rotdir}/logs/@Y@m@d@H/{task_name}.log',
+                     'maxtries': '&MAXTRIES;'
+                     }
+
+        task = rocoto.create_task(task_dict)
+
+        return task
+

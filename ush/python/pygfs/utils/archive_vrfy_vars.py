@@ -124,8 +124,8 @@ class ArchiveVrfyVars:
         config_keys = ['current_cycle', 'RUN', 'PSLOT', 'ROTDIR', 'PARMglobal',
                        'ARCDIR', 'MODE', 'DO_JEDIATMENS', 'DO_FIT2OBS', 'DO_JEDIATMVAR',
                        'DO_JEDISNOWDA', 'DO_AERO_ANL', 'DO_PREP_OBS_AERO', 'NET',
-                       'FHOUT_GFS', 'FHMAX_HF_GFS', 'FHMAX_FITS', 'FHMAX', 'FHOUT',
-                       'FHMAX_GFS', 'DO_GSISOILDA', 'DO_LAND_IAU']
+                       'FHOUT_GFS', 'FHMAX_HF_GFS', 'FHMAX_FITS', 'FHMIN', 'FHMAX', 'FHOUT',
+                       'FHMAX_GFS', 'DO_GSISOILDA', 'DO_LAND_IAU', 'DO_OMF']
 
         # Add FHMIN_GFS only if RUN does not contain 'enkf'
         if 'enkf' not in config_dict.get('RUN', ''):

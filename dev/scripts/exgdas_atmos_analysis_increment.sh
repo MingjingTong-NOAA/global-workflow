@@ -18,8 +18,6 @@
 
 #  Set environment.
 
-source "${USHglobal}/preamble.sh"
-
 #  Directories.
 pwd=$(pwd)
 
@@ -67,11 +65,15 @@ ATMANLFRES06=${ATMANL06_CHGRES:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma06_fcstre
 ATMANLFRES09=${ATMANL09_CHGRES:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}atma09_fcstres.nc}
 
 # chgres forecast
-ATMF03ENS=${ATMF03ENS:-${COMIN_ATMOS_HISTORY_PREV}/${APREFIX}atmf003.ensres.nc}
-ATMF06ENS=${ATMF06ENS:-${COMIN_ATMOS_HISTORY_PREV}/${APREFIX}atmf006.ensres.nc}
-ATMF09ENS=${ATMF09ENS:-${COMIN_ATMOS_HISTORY_PREV}/${APREFIX}atmf009.ensres.nc}
+ATMF03ENS=${ATMF03ENS:-${COMIN_ATMOS_HISTORY_PREV}/${GPREFIX}atmf003.ensres.nc}
+ATMF06ENS=${ATMF06ENS:-${COMIN_ATMOS_HISTORY_PREV}/${GPREFIX}atmf006.ensres.nc}
+ATMF09ENS=${ATMF09ENS:-${COMIN_ATMOS_HISTORY_PREV}/${GPREFIX}atmf009.ensres.nc}
 ENSRES=$(( ${OPS_RES:1}/2 ))
-ATMFCST_ENSRES=${ATMFCST_ENSRES:-${FIXglobal}/ref_fcst/shield.C${ENSRES}.atmf006.nc}
+if [[ ${NET} == "shield" ]]; then
+   ATMFCST_ENSRES=${ATMFCST_ENSRES:-${FIXglobal}/ref_fcst/shield.C${ENSRES}.atmf006.nc}
+else
+   ATMFCST_ENSRES=$ATMANLENS06
+fi
 
 # analysis increment
 ATMINC=${ATMINC:-${COMOUT_ATMOS_ANALYSIS}/${APREFIX}increment.atm.i006.nc}
@@ -104,6 +106,9 @@ if [[ $LONB_FCST -ne $LONB_ANAL || $LATB_FCST -ne $LATB_ANAL || $LEVS_FCST -ne $
   REGRID_ANALYSIS="YES"
   if [[ $LONB_FCST -gt $LONB_ANAL || $LATB_FCST -gt $LATB_ANAL ]]; then
     REGRID_FORECAST="YES"
+    if [[ $LEVS_FCST -eq $LEVS_ANAL ]]; then
+      REGRID_ANALYSIS="NO"
+    fi
   fi
 fi
 
@@ -145,7 +150,7 @@ if [[ $REGRID_ANALYSIS == "YES" ]]; then
   
   nfhrs=$(echo $IAUFHRS | sed 's/,/ /g')
   for FHR in $nfhrs; do
-     echo "Regridding deterministic forecast for forecast hour $FHR"
+     echo "Regridding analysis for forecast hour $FHR"
      rm -f chgres_nc_gauss0$FHR.nml
      cat > chgres_nc_gauss0$FHR.nml << EOF
 &chgres_setup

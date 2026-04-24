@@ -47,11 +47,9 @@ if [[ ${DO_GSISOILDA} == "YES" ]]; then
     export REGRID_EXEC="${HOMEglobal}/exec/regridStates.x"
 fi
 
-if [[ ${DO_RTGSST:-"NO"} == "NO" ]]; then
-   export FNTSFA="        "
-   if [[ ${DO_TSFC_TILE} != "YES" ]]; then
-     export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
-   fi
+export FNTSFA="        "
+if [[ ${DO_TSFC_TILE} != "YES" ]]; then
+   export SFCANL_FILE="${ICSDIR}/gdas.${PDY}/${cyc}/atmos/gdas.t${cyc}z.sfcanl.nc"
 fi
 
 # SHiELD setup

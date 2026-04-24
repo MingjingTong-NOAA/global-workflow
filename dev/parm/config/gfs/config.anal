@@ -5,6 +5,44 @@
 
 echo "BEGIN: config.anal"
 
+## CCH::
+
+# obs error table:
+#obserr_table="default"
+obserr_table="hydro_v0"
+
+# VarBC data control:
+export varbc_data_control="default"
+#export varbc_data_control="only_clr_clr"
+#export varbc_data_control="only_clr_clr_low"
+#export varbc_data_control="clr_clr_and_cld_cld"
+#export varbc_data_control="clr_clr_and_cld_cld_low"
+#export varbc_data_control="cld_diff_constraint"
+#export cld_cld_varbc_constraint=0.05     # only used when varbc_data_control includes cld/cld data
+export io_use_bc_clw_for_cloud_mismatch=".true."  # default = true (should not matter much if not using cloud predictor in VarBC?!)
+
+# VarBC cloud predictor:
+export io_cld_pred_in_varbc=".false."    # default = .false.
+# the following variables are only used if io_cld_pred_in_varbc = .true.
+# ============
+#export cld_varbc_chs="low_peaking"
+#export cld_varbc_chs="all_sky"
+#export cld_pred_fn_varbc="tent"
+#export cld_pred_fn_varbc="4th_poly"
+# ============
+
+# empirical inflation:
+export io_empirical_inflation=".true."   # default = .true.
+
+# non-Gaussian error:
+export io_non_Gaussian_error=".false."   # default = .false.
+
+# save Jacobian for AMSUA/ATMS:
+export io_save_jacobian_cch=".false."    # default = .false.
+
+# whether to assimilate scattering affected obs:
+export io_scatter_assim=".true."     # default = .false.
+
 # Get task specific resources
 source "${EXPDIR}/config.resources" anal
 
@@ -43,6 +81,17 @@ export CONVINFO=${FIXglobal}/gsi/global_convinfo.txt
 export OZINFO=${FIXglobal}/gsi/global_ozinfo.txt
 export SATINFO=${FIXglobal}/gsi/global_satinfo.txt
 export OBERROR=${FIXglobal}/gsi/prepobs_errtable.global
+# CCH:: change satellite obs error table here:
+if [[ $obserr_table == "default" ]]; then
+    export SATINFO=${FIXgsi}/global_satinfo.txt
+    export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info.txt
+elif [[ $obserr_table == "hydro" ]]; then
+    export SATINFO=${FIXgsi}/global_satinfo_hydro.txt
+    export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info_hydro.txt
+elif [[ $obserr_table == "hydro_v0" ]]; then
+    export SATINFO=${FIXgsi}/global_satinfo_hydro_v0.txt
+    export RADCLOUDINFO=${FIXgsi}/cloudy_radiance_info_hydro_v0.txt
+fi
 
 # Use 2m diagnostic for screen level obs
 export hofx_2m_sfcfile=".true."

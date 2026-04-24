@@ -152,6 +152,8 @@ def map_inputs_to_configs(inputs):
 
     if inputs.mode in ['cycled']:
         dict_out.DOHYBVAR = "YES" if dict_out.NMEM_ENS > 0 else "NO"
+    else:
+        dict_out.DOHYBVAR = "NO"
 
     return dict_out
 
@@ -476,6 +478,7 @@ def input_args(*argv):
     gfsmodeparser = gfs.add_subparsers(dest='mode')
     gfscycled = gfsmodeparser.add_parser('cycled', help='arguments for cycled mode')
     gfsforecasts = gfsmodeparser.add_parser('forecast-only', help='arguments for forecast-only mode')
+    gfsreplay = gfsmodeparser.add_parser('replay', help='arguments for replay mode')
 
     gefsmodeparser = gefs.add_subparsers(dest='mode')
     gefsforecasts = gefsmodeparser.add_parser('forecast-only', help='arguments for forecast-only mode')
@@ -495,13 +498,13 @@ def input_args(*argv):
     gcafscycled = gcafsmodeparser.add_parser('cycled', help='arguments for cycled mode')
 
     # Common arguments across all modes
-    for subp in [gfscycled, gfsforecasts, gefsforecasts, sfsforecasts, gcafsforecasts, gcafscycled]:
+    for subp in [gfscycled, gfsreplay, gfsforecasts, gefsforecasts, sfsforecasts, gcafsforecasts, gcafscycled]:
         subp = _common_args(subp)
     for subp in [shieldcycled, shieldreplay, shieldforecasts, shieldomf, shieldensregrid]:
         subp = _common_args(subp)
 
     # GFS-only arguments
-    for subp in [gfscycled, gfsforecasts]:
+    for subp in [gfscycled, gfsreplay, gfsforecasts]:
         subp = _gfs_args(subp)
 
     # SHiELD-only argumnets
@@ -513,7 +516,7 @@ def input_args(*argv):
         subp = _any_ensemble_args(subp)
 
     # GFS/GEFS forecast-only additional arguments
-    for subp in [gfsforecasts, gefsforecasts, sfsforecasts, gcafsforecasts]:
+    for subp in [gfsforecasts, gfsreplay, gefsforecasts, sfsforecasts, gcafsforecasts]:
         subp = _any_forecast_args(subp)
 
     # SHiELD forecast additional arguments

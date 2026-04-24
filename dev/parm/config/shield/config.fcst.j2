@@ -91,9 +91,12 @@ if [[ ${NET} == "shield" ]]; then
    elif [ ${SHiELD_VERSION} = "2023" ]; then
      export NAMELISTSH="${USHglobal}/parsing_namelists_shield2023.sh"
      export FCSTEXEC="shield_model_2023.x"
-   else 
+   elif [ ${SHiELD_VERSION} = "2024" ]; then
      export NAMELISTSH="${USHglobal}/parsing_namelists_shieldfull.sh"
      export FCSTEXEC="shield_model.x"
+   else
+     export NAMELISTSH="${USHglobal}/parsing_namelists_shield2026.sh"
+     export FCSTEXEC="shield_model_2026.x"
    fi
    export subdir="INPUT/"
 fi
