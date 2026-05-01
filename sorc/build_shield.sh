@@ -54,7 +54,7 @@ cd "${HOMEglobal_}/sorc/shield.fd/SHiELD_build"
 git submodule update --init mkmf
 
 if [ ! -d ${HOMEglobal_}/sorc/shield.fd/SHiELD_SRC ]; then
-  ./CHECKOUT_code
+  ./CHECKOUT_code_da
 fi
 
 cd "${HOMEglobal_}/sorc/shield.fd/SHiELD_build/Build"
