@@ -302,7 +302,11 @@ EOF
                        if [[ "${RUN}" == "gcafs" ]]; then
                            increment_file="${COMIN_ATMOS_ANALYSIS}/gcdas.t${cyc}z.${prefix_atminc}${inc_file}"
                        else
-                           increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
+			   if [[ "${MODE}" != "forecast-only" ]]; then
+                               increment_file="${COMIN_ATMOS_ANALYSIS}/${RUN}.t${cyc}z.${prefix_atminc}${inc_file}"
+			   else
+			       increment_file="${COMIN_ATMOS_ANALYSIS}/${rCDUMP}.t${cyc}z.${prefix_atminc}${inc_file}"
+			   fi
                        fi
                    fi
                    cpreq "${increment_file}" "${DATA}/INPUT/${inc_file}"

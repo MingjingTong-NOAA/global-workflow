@@ -27,3 +27,5 @@ base:
   DO_POST: "NO"
   DO_FETCH_HPSS: "YES"
   REPLAY_4DIAU: "YES"
+  RESTARTEXP: "CTRL"
+  RESTART_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"

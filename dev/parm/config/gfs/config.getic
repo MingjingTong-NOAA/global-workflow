@@ -86,7 +86,4 @@ if [[ "$MODE" = "replay" && $REPLAY_4DIAU = "NO" ]]; then
    export IAUFHRS="6"
 fi
 
-#export HPSSEXPDIR=$(dirname "$ATARDIR")
-export HPSSEXPDIR=/NCEPDEV/emc-da/2year/Mingjing.Tong/GAEAC6/scratch
-
 echo "END: config.getic"

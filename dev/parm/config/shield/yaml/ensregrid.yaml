@@ -28,3 +28,4 @@ base:
   DO_FETCH_HPSS: "YES"
   DIAG_INTERVAL: 12
   RESTARTEXP: "shield2022v3_cycled_C768"
+  RESTART_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"

@@ -30,6 +30,7 @@ base:
   NMEM_ENS_GFS: 30
   NMEM_ENS_GFS_OFFSET: 20
   RESTARTEXP: "shield_cycled_exp"
+  RESTART_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"
   ENSREPLAY: "NO"
   DO_OMF: "NO"
   DO_POST: "YES"

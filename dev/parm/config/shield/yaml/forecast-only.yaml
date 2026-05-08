@@ -26,4 +26,5 @@ base:
   DO_OMF: "NO"
   DO_POST: "YES"
   DO_FETCH_HPSS: "YES"
-  RESTARTEXP: "shield2022v3_cycled_C192"
+  RESTARTEXP: "CTRL"
+  RESTART_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"

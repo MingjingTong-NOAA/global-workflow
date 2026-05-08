@@ -20,6 +20,8 @@ pwd=$(pwd)
 
 set -x
 
+unset_strict
+
 ###############################################################
 # Set script and dependency variables
 
@@ -67,11 +69,11 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
     else
       if [ ! -d ${ROTDIR}/gdas.${yy}${mm}${dd}/${hh} ]; then
         if {{ ${ANAL_ONLY} != "YES" ]]; then
-          htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
+          htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
           status=$?
           [[ $status -ne 0 ]] && exit $status
         fi
-        htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas.tar
+        htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas.tar
         status=$?
         [[ $status -ne 0 ]] && exit $status
       fi
@@ -80,10 +82,10 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
     if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
       echo "previous cycle history data directory exists, skip pulling data"
     else
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+      htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
       status=$?
       [[ $status -ne 0 ]] && exit $status
-      htar -xvf ${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+      htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi
@@ -95,14 +97,14 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      cd ${ROTDIR}
      if [[ $EXP_WARM_START == ".true." ]]; then
         # warm start from experiment
-        gdasb=${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+        gdasb=${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
         htar -xvf $gdasb
-        gdasa=${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+        gdasa=${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
         htar -tvf $gdasa > ${ROTDIR}/logs/${CDATE}/list1
         >${ROTDIR}/logs/${CDATE}/list2
         grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
         grep sfcanl ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
-        grep atmi ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
+        grep increment ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
         htar -xvf $gdasa -L ${ROTDIR}/logs/${CDATE}/list2
      else
         # cold start from GFS analysis
@@ -125,8 +127,8 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      # replay mode: cold or warm start first cycle or 3D replay
      if [[ $EXP_WARM_START == ".true." && "$CDATE" == "$SDATE" ]]; then
         # pull warm start files
-        gdasb=${HPSSEXPDIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
-        gdasa=${HPSSEXPDIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+        gdasb=${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+        gdasa=${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
         if [ ! -d ${COMIN_ATMOS_RESTART} ]; then
            htar -xvf $gdasb
            [[ ! -d ${COMOUT_ATMOS_RESTART} ]] && mkdir -p ${COMOUT_ATMOS_RESTART}
@@ -164,7 +166,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
            tarball="com_gfs_${gfssubver}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_nc.tar"
         else
            # replay to SHiELD or GFS retro analysis
-           directory=${HPSSEXPDIR}/${ICFROM}/${CDATE}
+           directory=${RESTART_HPSS_DIR}/${ICFROM}/${CDATE}
            tarball="${ICDUMP}.tar"
         fi
         if [ ! -s ${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.atmanl.ensres.nc ]; then
@@ -190,7 +192,7 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
         directory=/NCEPPROD/hpssprod/runhistory/rh${gyy}/${gyy}${gmm}/${gyy}${gmm}${gdd}
         tarball=com_gfs_${gfssubver}_gdas.${gyy}${gmm}${gdd}_${ghh}.gdas_restart.tar
      else
-        directory=${HPSSEXPDIR}/${ICFROM}/${GDATE}
+        directory=${RESTART_HPSS_DIR}/${ICFROM}/${GDATE}
         tarball="${ICDUMP}.tar"
      fi
      if [[ ! -s ${COMOUT_ATMOS_ANALYSIS_PREV}/${ICDUMP}.t${ghh}z.abias_air ]]; then
@@ -230,7 +232,7 @@ dtfanl=${COMIN_ATMOS_ANALYSIS}/${ICDUMP}.t${hh}z.dtfanl.nc
 if [[ $MODE = "replay" && $DO_SFCANL = "YES" && $DONST = "YES" && ! -s $dtfanl ]]; then
    if [[ ${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500" ]]; then
       export tarball="${ICDUMP}_restarta.tar"
-      htar -xvf ${HPSSEXPDIR}/${CDATE}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
+      htar -xvf ${RESTART_HPSS_DIR}/${CDATE}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc  
    else
       export tarball="com_gfs_${gfssubver}_${ICDUMP}.${yy}${mm}${dd}_${hh}.${ICDUMP}_restart.tar"
       htar -xvf ${PRODHPSSDIR}/rh${yy}/${yy}${mm}/${yy}${mm}${dd}/${tarball} ./${ICDUMP}.${yy}${mm}${dd}/${hh}/${COMPONENT}/${ICDUMP}.t${hh}z.dtfanl.nc
@@ -321,7 +323,7 @@ cd ${ICSROOT}
        echo '$RETRO ' $RETRO
        if [[ (${RETRO:-"NO"} = "YES" && "$CDATE" -lt "2021032500") || ${REDUCEDRES:-"NO"} = "YES" ]]; then
           export tarball="${ICDUMP}_restarta.tar"
-          htar -xvf ${HPSSEXPDIR}/${yy}${mm}${dd}${hh}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt 
+          htar -xvf ${RESTART_HPSS_DIR}/${yy}${mm}${dd}${hh}/${tarball} -L ${ROTDIR}/logs/${CDATE}/list.txt 
           status=$?
           [[ $status -ne 0 ]] && exit $status
        else   
