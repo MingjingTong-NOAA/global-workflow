@@ -88,15 +88,12 @@ if [[ ${NET} == "shield" ]]; then
      export NAMELISTSH="${USHglobal}/parsing_namelists_shield2022_newstochy.sh"
      export FCSTEXEC="shield_model_2022.x"
      export FIXaer="${FIXglobal}/aer_shield2022"
-   elif [ ${SHiELD_VERSION} = "2023" ]; then
-     export NAMELISTSH="${USHglobal}/parsing_namelists_shield2023.sh"
-     export FCSTEXEC="shield_model_2023.x"
    elif [ ${SHiELD_VERSION} = "2024" ]; then
      export NAMELISTSH="${USHglobal}/parsing_namelists_shieldfull.sh"
-     export FCSTEXEC="shield_model.x"
+     export FCSTEXEC="shield_model_2024.x"
    else
      export NAMELISTSH="${USHglobal}/parsing_namelists_shield2026.sh"
-     export FCSTEXEC="shield_model_2026.x"
+     export FCSTEXEC="shield_model.x"
    fi
    export subdir="INPUT/"
 fi

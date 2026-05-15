@@ -280,7 +280,7 @@ if [[ "${DO_AERO}" == "YES" ]]; then
 fi
 
 # Surface cycle update frequency
-if [[ "${RUN}" =~ "gdas" && "{NET}" != "shield" ]] ; then
+if [[ "${RUN}" =~ "gdas" && "${NET}" != "shield" ]] ; then
    export FHCYC=1
    export FTSFS=10
 elif [[ "${RUN}" =~ "gfs" ]] ; then
