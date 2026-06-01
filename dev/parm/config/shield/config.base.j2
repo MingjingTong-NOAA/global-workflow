@@ -137,7 +137,7 @@ if [[ "${PDY}${cyc}" -ge "2019092100" && "${PDY}${cyc}" -le "2019110700" ]]; the
 fi
 export ARCDIR="${NOSCRUB}/archive/${PSLOT}"
 export ATARDIR="{{ ATARDIR }}"
-export FETCHDIR=$(dirname "${ATARDIR}")/${RESTARTEXP}
+export FETCHDIR="{{ FETCH_HPSS_DIR }}/${RESTARTEXP}"
 
 # Commonly defined parameters in JJOBS
 export envir=${envir:-"prod"}
@@ -566,7 +566,7 @@ export diag_interval="{{ DIAG_INTERVAL }}"
 
 # omf environment parameters
 export OMFCOMINPREV=${ROTDIR}
-export EXPABIAS="NO" # If NO use GFS bias correction coefficient
+export EXPABIAS="YES" # If NO use GFS bias correction coefficient
 export FHOMF=6
 if [[ ${DO_OMF} == "YES" ]]; then
   export FHMIN=$(( FHOMF - 3 ))
@@ -599,7 +599,7 @@ fi
 # TODO: replace these options with DO_FETCH and FETCH_FROM
 export DO_FETCH_HPSS="{{ DO_FETCH_HPSS }}"    # Copy from HPSS (on HPSS-accessible machines) onto COM
 export DO_FETCH_LOCAL="NO"   # Copy from local disk onto COM
-export RESTART_HPSS_DIR="{{RESTART_HPSS_DIR}}" # HPSS directory to fetch restart forecast data 
+export RESTART_HPSS_DIR=${FETCH_HPSS_DIR:-"{{RESTART_HPSS_DIR}}"} # HPSS directory to fetch restart forecast data 
 
 # Archiving options
 export DO_ARCHCOM="{{ DO_ARCHCOM }}"    # Tar and archive the COM directories

@@ -31,7 +31,7 @@ base:
   NMEM_ENS_GFS_OFFSET: 20
   ENSREPLAY: "YES"
   ENSFROMEXP: "s2022_C192_v2p5_edmf1ens0"
-  RESTART_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"
+  FETCH_HPSS_DIR: "/NCEPDEV/emc-da/2year/Mingjing.Tong/URSA/scratch"
   DO_OMF: "NO"
   DO_POST: "YES"
   DO_FETCH_HPSS: "NO"
