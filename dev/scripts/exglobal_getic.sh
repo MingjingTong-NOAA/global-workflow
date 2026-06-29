@@ -68,12 +68,12 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
       echo "history data directory exists, skip pulling data"
     else
       if [ ! -d ${ROTDIR}/gdas.${yy}${mm}${dd}/${hh} ]; then
-        if {{ ${ANAL_ONLY} != "YES" ]]; then
-          htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restartb.tar
+        if [[ ${ANAL_ONLY} != "YES" ]]; then
+          htar -xvf ${RESTART_HPSS_DIR}/${CDATE}/gdas_restartb.tar
           status=$?
           [[ $status -ne 0 ]] && exit $status
         fi
-        htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas.tar
+        htar -xvf ${RESTART_HPSS_DIR}/${CDATE}/gdas.tar
         status=$?
         [[ $status -ne 0 ]] && exit $status
       fi
@@ -82,10 +82,10 @@ if [[ $MODE = "cycled" && $EXP_WARM_START = ".true." && "$CDATE" = "$SDATE" ]]; 
     if [ -d ${COM_ATMOS_HISTORY_PREV} ]; then
       echo "previous cycle history data directory exists, skip pulling data"
     else
-      htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+      htar -xvf ${RESTART_HPSS_DIR}/${GDATE}/gdas_restartb.tar
       status=$?
       [[ $status -ne 0 ]] && exit $status
-      htar -xvf ${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+      htar -xvf ${RESTART_HPSS_DIR}/${CDATE}/gdas_restarta.tar
       status=$?
       [[ $status -ne 0 ]] && exit $status
     fi
@@ -97,9 +97,9 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      cd ${ROTDIR}
      if [[ $EXP_WARM_START == ".true." ]]; then
         # warm start from experiment
-        gdasb=${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
+        gdasb=${RESTART_HPSS_DIR}/${GDATE}/gdas_restartb.tar
         htar -xvf $gdasb
-        gdasa=${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+        gdasa=${RESTART_HPSS_DIR}/${CDATE}/gdas_restarta.tar
         htar -tvf $gdasa > ${ROTDIR}/logs/${CDATE}/list1
         >${ROTDIR}/logs/${CDATE}/list2
         grep abias ${ROTDIR}/logs/${CDATE}/list1 | awk '{ print $7 }' >> ${ROTDIR}/logs/${CDATE}/list2
@@ -127,8 +127,8 @@ elif [ $MODE != "cycled" ]; then # Pull chgres cube inputs for cold start IC gen
      # replay mode: cold or warm start first cycle or 3D replay
      if [[ $EXP_WARM_START == ".true." && "$CDATE" == "$SDATE" ]]; then
         # pull warm start files
-        gdasb=${RESTART_HPSS_DIR}/${RESTARTEXP}/${GDATE}/gdas_restartb.tar
-        gdasa=${RESTART_HPSS_DIR}/${RESTARTEXP}/${CDATE}/gdas_restarta.tar
+        gdasb=${RESTART_HPSS_DIR}/${GDATE}/gdas_restartb.tar
+        gdasa=${RESTART_HPSS_DIR}/${CDATE}/gdas_restarta.tar
         if [ ! -d ${COMIN_ATMOS_RESTART} ]; then
            htar -xvf $gdasb
            [[ ! -d ${COMOUT_ATMOS_RESTART} ]] && mkdir -p ${COMOUT_ATMOS_RESTART}

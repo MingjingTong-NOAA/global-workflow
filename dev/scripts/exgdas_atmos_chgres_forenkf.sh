@@ -84,6 +84,11 @@ else
     exit 0
 fi
 
+if [[ ${ANAL_START} == "YES" && -s ${ATMF06ENS} && -s ${ATMF06ENS} && ${ATMF06ENS} ]]; then
+    echo "forecast files at ensemble resolution exist, will exit without regridding deterministic forecast"
+    exit 0
+fi    
+
 ################################################################################
 ################################################################################
 

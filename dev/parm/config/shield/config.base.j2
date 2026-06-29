@@ -599,7 +599,7 @@ fi
 # TODO: replace these options with DO_FETCH and FETCH_FROM
 export DO_FETCH_HPSS="{{ DO_FETCH_HPSS }}"    # Copy from HPSS (on HPSS-accessible machines) onto COM
 export DO_FETCH_LOCAL="NO"   # Copy from local disk onto COM
-export RESTART_HPSS_DIR=${FETCH_HPSS_DIR:-"{{RESTART_HPSS_DIR}}"} # HPSS directory to fetch restart forecast data 
+export RESTART_HPSS_DIR=${FETCHDIR:-"{{RESTART_HPSS_DIR}}"} # HPSS directory to fetch restart forecast data 
 
 # Archiving options
 export DO_ARCHCOM="{{ DO_ARCHCOM }}"    # Tar and archive the COM directories
